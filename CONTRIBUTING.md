@@ -2,7 +2,7 @@
 
 ## Pré-requisitos
 
-- Node.js `20` (ver `.nvmrc`)
+- Node.js `24.14.0` (LTS) (ver `.nvmrc`)
 - npm
 
 ## Fluxo recomendado
