@@ -7,7 +7,7 @@ mirror_to_github:
     - mirror
   script:
     - git remote remove github 2>/dev/null || true
-    - git remote add github https://$GITHUB_TOKEN@github.com/GuilhermeGMV/T1OtAlg_ratinhos.git
+    - git remote add github https://$GITHUB_TOKEN@github.com/GuilhermeGMV/mapa-digital-frontend.git
     - git push github HEAD:$CI_COMMIT_REF_NAME
   only:
     - main
