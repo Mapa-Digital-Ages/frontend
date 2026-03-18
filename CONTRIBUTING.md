@@ -7,20 +7,20 @@
 
 ## Padrão de Nome de Branch
 
-As branches devem ter uma breve descrição da tarefa em inglês, em kebab-case:
+As branches devem ter as iniciais do nome do responsavel pela branch seguida por uma breve descrição da tarefa em inglês, em kebab-case:
 
 ```
-short-task-description
+gv/short-task-description
 ```
 
 Exemplos:
 
 ```
-user-authentication
-login-redirect-fix
-update-eslint-config
-api-service-layer
-update-readme-docker
+gg/user-authentication
+nd/login-redirect-fix
+js/update-eslint-config
+am/api-service-layer
+ps/update-readme-docker
 ```
 
 ## Padrões de Nomenclatura
