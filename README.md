@@ -63,8 +63,8 @@ A aplicação estará disponível em `http://localhost:5173`
 
 1. Clone o repositório:
 ```bash
-git clone <url-do-repositorio>
-cd <nome-do-projeto>
+git clone https://github.com/Mapa-Digital-Ages/frontend.git
+cd frontend
 ```
 
 2. Copie o arquivo de variáveis de ambiente:
