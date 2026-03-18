@@ -20,11 +20,11 @@ function LoginForm({ isSubmitting = false, onSubmit }: LoginFormProps) {
   const [mode, setMode] = useState<LoginMode>('login')
   const [values, setValues] = useState<AuthCredentials>({
     email: 'aluno@mapadigital.com',
-    password: '123456',
+    password: '12345678',
     role: 'student',
   })
   const [fullName, setFullName] = useState('Lucas Silva')
-  const [confirmPassword, setConfirmPassword] = useState('123456')
+  const [confirmPassword, setConfirmPassword] = useState('12345678')
   const [errors, setErrors] = useState<LoginFormErrors>({})
 
   function updateField<K extends keyof AuthCredentials>(
@@ -52,8 +52,8 @@ function LoginForm({ isSubmitting = false, onSubmit }: LoginFormProps) {
       nextErrors.email = 'Informe um e-mail válido.'
     }
 
-    if (!hasMinLength(values.password, 6)) {
-      nextErrors.password = 'A senha deve ter pelo menos 6 caracteres.'
+    if (!hasMinLength(values.password, 8)) {
+      nextErrors.password = 'A senha deve ter pelo menos 8 caracteres.'
     }
 
     if (mode === 'register' && values.password !== confirmPassword) {
