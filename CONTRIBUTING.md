@@ -23,6 +23,28 @@ api-service-layer
 update-readme-docker
 ```
 
+## Padrões de Nomenclatura
+
+### Pastas
+
+- Letras minúsculas, separadas por hífen se necessário
+- Organizadas por domínio/funcionalidade (ex: `admin`, `auth`, `student`)
+
+### Arquivos
+
+| Tipo                 | Padrão                        | Exemplo           |
+| -------------------- | ----------------------------- | ----------------- |
+| Componentes `.tsx`   | PascalCase                    | `LoginForm.tsx`   |
+| Páginas `.tsx`       | PascalCase + sufixo `Page`    | `LoginPage.tsx`   |
+| Layouts `.tsx`       | PascalCase + sufixo `Layout`  | `AuthLayout.tsx`  |
+| Hooks `.ts`          | camelCase prefixado com `use` | `useAuth.ts`      |
+| Serviços `.ts`       | camelCase + sufixo `.service` | `auth.service.ts` |
+| Contextos `.ts/.tsx` | camelCase + sufixo `Context`  | `AuthContext.tsx` |
+| Tipos `.ts`          | camelCase descritivo          | `user.ts`         |
+| Utilitários `.ts`    | camelCase, plural             | `formatters.ts`   |
+| Constantes `.ts`     | camelCase descritivo          | `routes.ts`       |
+| Estilos `.css/.ts`   | camelCase                     | `theme.ts`        |
+
 ## Fluxo recomendado
 
 1. Trabalhe na raiz do repositório.
