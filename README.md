@@ -13,30 +13,82 @@ Projeto React + Vite + TypeScript + Material-UI (MUI)
 - **Prettier** - Formatador de código
 - **GitHub Actions** - CI/CD pipeline
 
-## 📦 Instalação
+## 📦 Dependências e Como Rodar Localmente
 
+### Pré-requisitos
+
+- [Node.js](https://nodejs.org/) v24
+- [npm](https://www.npmjs.com/) v9 ou superior (já incluído com o Node.js)
+
+Verifique se já possui as versões corretas instaladas:
 ```bash
-npm install
+node -v
+npm -v
 ```
 
-Opcional:
+### Instalação
 
+1. Clone o repositório:
+```bash
+git clone https://github.com/Mapa-Digital-Ages/frontend.git
+cd frontend
+```
+
+2. Instale as dependências:
+```bash
+npm i
+```
+
+3. Copie o arquivo de variáveis de ambiente:
 ```bash
 cp .env.example .env
 ```
 
-## 🛠️ Scripts Disponíveis
-
-### Desenvolvimento
-
+### Rodando em Desenvolvimento
 ```bash
 npm run dev
 ```
 
-Inicia o servidor de desenvolvimento com hot-reload em `http://localhost:5173`
+A aplicação estará disponível em `http://localhost:5173`
+
+
+## 🐳 Rodando com Docker
+
+### Pré-requisitos
+
+- [Docker](https://docs.docker.com/get-docker/) instalado
+- [Docker Compose](https://docs.docker.com/compose/install/) instalado
+
+### Passos
+
+1. Clone o repositório:
+```bash
+git clone <url-do-repositorio>
+cd <nome-do-projeto>
+```
+
+2. Copie o arquivo de variáveis de ambiente:
+```bash
+cp .env.example .env
+```
+
+3. Suba a aplicação:
+```bash
+docker compose up -d
+```
+
+A aplicação estará disponível em `http://localhost:5173`
+
+### Outros comandos úteis
+```bash
+docker compose logs -f           # Acompanhar logs em tempo real
+docker compose down              # Parar e remover os containers
+docker compose down -v           # Parar e remover containers e volumes
+```
+
+## 🛠️ Scripts Disponíveis
 
 ### Build de Produção
-
 ```bash
 npm run build
 ```
@@ -44,7 +96,6 @@ npm run build
 Cria a versão otimizada para produção na pasta `dist/`
 
 ### Typecheck
-
 ```bash
 npm run typecheck
 ```
@@ -52,7 +103,6 @@ npm run typecheck
 Executa a validação de tipos com TypeScript
 
 ### Preview da Build
-
 ```bash
 npm run preview
 ```
@@ -60,28 +110,23 @@ npm run preview
 Visualiza a build de produção localmente
 
 ### Lint
-
 ```bash
 npm run lint          # Verifica problemas no código
 npm run lint:fix      # Corrige problemas automaticamente
 ```
 
 ### Formatação
-
 ```bash
 npm run format        # Formata o código com Prettier
 npm run format:check  # Verifica se o código está formatado
 ```
 
 ### Validação Completa
-
 ```bash
-npm run validate      # Executa lint e verificação de formatação
+npm run validate      # Executa lint, format:check e typecheck
 ```
 
-Executa `lint`, `format:check` e `typecheck`
-
-## Arquitetura de Rotas
+## 🗂️ Arquitetura de Rotas
 
 - As rotas são agregadas em `src/router/index.tsx`
 - Cada domínio possui seu próprio arquivo `route.tsx` em `src/pages/<dominio>/`
@@ -90,36 +135,34 @@ Executa `lint`, `format:check` e `typecheck`
 - Componentes globais ficam em `src/components/ui` e `src/components/common`
 - Componentes específicos de domínio ficam em `src/pages/<dominio>/components`
 
-## Estrutura do Projeto
-
+## 📁 Estrutura do Projeto
 ```
 .
 ├── .github/           # GitHub Actions
 ├── public/            # Arquivos estáticos
 ├── src/
-│   ├── assets/         # Imagens, ícones e logos
-│   ├── components/     # Componentes globais e reutilizáveis
-│   ├── constants/      # Constantes da aplicação
-│   ├── context/        # Contextos globais
-│   ├── hooks/          # Hooks customizados
-│   ├── layouts/        # Layouts base
-│   ├── pages/          # Páginas por domínio e componentes locais
-│   ├── router/         # Agregador central do router
-│   ├── services/       # Serviços e camada HTTP
-│   ├── styles/         # Tema MUI e estilos globais
-│   ├── types/          # Tipagens compartilhadas
-│   ├── utils/          # Funções utilitárias
-│   ├── App.tsx         # Componente principal
-│   └── main.tsx        # Entry point
-├── dist/               # Build de produção (gerado)
+│   ├── assets/        # Imagens, ícones e logos
+│   ├── components/    # Componentes globais e reutilizáveis
+│   ├── constants/     # Constantes da aplicação
+│   ├── context/       # Contextos globais
+│   ├── hooks/         # Hooks customizados
+│   ├── layouts/       # Layouts base
+│   ├── pages/         # Páginas por domínio e componentes locais
+│   ├── router/        # Agregador central do router
+│   ├── services/      # Serviços e camada HTTP
+│   ├── styles/        # Tema MUI e estilos globais
+│   ├── types/         # Tipagens compartilhadas
+│   ├── utils/         # Funções utilitárias
+│   ├── App.tsx        # Componente principal
+│   └── main.tsx       # Entry point
+├── dist/              # Build de produção (gerado)
 ├── package.json
 └── vite.config.ts
 ```
 
-## Material-UI
+## 🎨 Material-UI
 
 O projeto está configurado com Material-UI. Exemplo de uso:
-
 ```tsx
 import { Button, Typography } from '@mui/material'
 
@@ -133,7 +176,23 @@ function MyComponent() {
 }
 ```
 
-## Configuração do Editor
+## 🌿 Padrão de Nome de Branch
+
+As branches devem ter uma breve descrição da tarefa em inglês, em kebab-case:
+```
+short-task-description
+```
+
+Exemplos:
+```
+user-authentication
+login-redirect-fix
+update-eslint-config
+api-service-layer
+update-readme-docker
+```
+
+## ⚙️ Configuração do Editor
 
 Recomenda-se usar as seguintes extensões no VS Code:
 
@@ -141,10 +200,10 @@ Recomenda-se usar as seguintes extensões no VS Code:
 - Prettier - Code formatter
 - ES7+ React/Redux/React-Native snippets
 
-## Contribuindo
+## 🤝 Contribuindo
 
 1. Certifique-se de que o código está formatado: `npm run format`
 2. Verifique se não há erros de lint: `npm run lint`
 3. Execute a validação completa: `npm run validate`
 4. Teste a build: `npm run build`
-5. GitHub é o repositório principal; qualquer item de GitLab/mirror está `skipped` por enquanto
+5. GitHub é o repositório principal
