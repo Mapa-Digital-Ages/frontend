@@ -76,12 +76,20 @@ function AdminDashboardPage() {
     return <LoadingScreen />
   }
 
+  const getStatById = (id: AdminStat['id']) =>
+    stats.find((stat) => stat.id === id)
+
+  const usersActiveStat = getStatById('users-active')
+  const criticalAlertsStat = getStatById('critical-alerts')
+  const pendingActionsStat = getStatById('pending-actions')
+  const uptimeStat = getStatById('uptime')
+
   const cards = [
     {
       id: 'users-active',
       title: 'Usuários Ativos',
-      value: stats[0]?.value ?? '1.248',
-      helper: stats[0]?.description ?? 'últimas 24h',
+      value: usersActiveStat?.value ?? '1.248',
+      helper: usersActiveStat?.description ?? 'últimas 24h',
       icon: <GroupsRoundedIcon />,
       iconTone: 'bg-blue-100 text-blue-600',
       helperTone: 'text-slate-500',
@@ -89,8 +97,8 @@ function AdminDashboardPage() {
     {
       id: 'critical-alerts',
       title: 'Alertas Críticos',
-      value: stats[1]?.value ?? '12',
-      helper: stats[1]?.description ?? 'monitoramento em tempo real',
+      value: criticalAlertsStat?.value ?? '12',
+      helper: criticalAlertsStat?.description ?? 'monitoramento em tempo real',
       icon: <NotificationsActiveRoundedIcon />,
       iconTone: 'bg-rose-100 text-rose-600',
       helperTone: 'text-rose-600',
@@ -98,8 +106,8 @@ function AdminDashboardPage() {
     {
       id: 'pending-actions',
       title: 'Ações Pendentes',
-      value: stats[2]?.value ?? '34',
-      helper: stats[2]?.description ?? 'fila de revisão',
+      value: pendingActionsStat?.value ?? '34',
+      helper: pendingActionsStat?.description ?? 'fila de revisão',
       icon: <PlaylistAddCheckRoundedIcon />,
       iconTone: 'bg-amber-100 text-amber-600',
       helperTone: 'text-slate-500',
@@ -107,8 +115,8 @@ function AdminDashboardPage() {
     {
       id: 'uptime',
       title: 'Disponibilidade',
-      value: stats[3]?.value ?? '99,9%',
-      helper: stats[3]?.description ?? 'últimos 30 dias',
+      value: uptimeStat?.value ?? '99,9%',
+      helper: uptimeStat?.description ?? 'últimos 30 dias',
       icon: <InsightsRoundedIcon />,
       iconTone: 'bg-emerald-100 text-emerald-600',
       helperTone: 'text-emerald-600',
