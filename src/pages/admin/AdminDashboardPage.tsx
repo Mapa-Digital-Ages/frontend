@@ -77,7 +77,7 @@ function AdminDashboardPage() {
   }
 
   const getStatById = (id: AdminStat['id']) =>
-    stats.find((stat) => stat.id === id)
+    stats.find(stat => stat.id === id)
 
   const usersActiveStat = getStatById('users-active')
   const criticalAlertsStat = getStatById('critical-alerts')
