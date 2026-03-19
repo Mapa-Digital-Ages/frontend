@@ -2,16 +2,7 @@ import { Box, CircularProgress, Typography } from '@mui/material'
 
 function LoadingScreen() {
   return (
-    <Box
-      sx={{
-        alignItems: 'center',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 2,
-        justifyContent: 'center',
-        minHeight: '50vh',
-      }}
-    >
+    <Box className="flex min-h-[50vh] flex-col items-center justify-center gap-2">
       <CircularProgress />
       <Typography color="text.secondary">Carregando ambiente...</Typography>
     </Box>

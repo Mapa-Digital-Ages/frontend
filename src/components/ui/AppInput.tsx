@@ -1,7 +1,15 @@
 import TextField, { type TextFieldProps } from '@mui/material/TextField'
 
-function AppInput(props: TextFieldProps) {
-  return <TextField fullWidth size="medium" variant="outlined" {...props} />
+function AppInput({ className, ...props }: TextFieldProps) {
+  return (
+    <TextField
+      {...props}
+      className={['w-full', className].filter(Boolean).join(' ')}
+      fullWidth
+      size="medium"
+      variant="outlined"
+    />
+  )
 }
 
 export default AppInput

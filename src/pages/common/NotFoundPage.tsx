@@ -8,8 +8,8 @@ import { APP_ROUTES } from '@/constants/routes'
 function NotFoundPage() {
   return (
     <AppPageContainer>
-      <AppCard contentSx={{ p: 5 }}>
-        <Stack spacing={2}>
+      <AppCard contentClassName="gap-2 p-5">
+        <Stack className="gap-2">
           <Typography color="primary.main" variant="overline">
             404
           </Typography>
@@ -18,9 +18,9 @@ function NotFoundPage() {
             A rota solicitada não existe nesta demonstração.
           </Typography>
           <AppButton
+            className="self-start"
             component={RouterLink}
             to={APP_ROUTES.root}
-            sx={{ alignSelf: 'flex-start' }}
           >
             Voltar para o login
           </AppButton>

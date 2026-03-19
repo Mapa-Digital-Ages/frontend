@@ -8,8 +8,8 @@ import { APP_ROUTES } from '@/constants/routes'
 function UnauthorizedPage() {
   return (
     <AppPageContainer>
-      <AppCard contentSx={{ p: 5 }}>
-        <Stack spacing={2}>
+      <AppCard contentClassName="gap-2 p-5">
+        <Stack className="gap-2">
           <Typography color="warning.main" variant="overline">
             Acesso restrito
           </Typography>
@@ -21,9 +21,9 @@ function UnauthorizedPage() {
             corresponde à área solicitada.
           </Typography>
           <AppButton
+            className="self-start"
             component={RouterLink}
             to={APP_ROUTES.root}
-            sx={{ alignSelf: 'flex-start' }}
           >
             Ir para o login
           </AppButton>

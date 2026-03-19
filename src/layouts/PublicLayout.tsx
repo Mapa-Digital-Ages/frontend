@@ -18,10 +18,18 @@ function PublicLayout() {
     : APP_ROUTES.auth.login
 
   return (
-    <Box sx={{ minHeight: '100vh' }}>
+    <Box className="min-h-screen">
       <AppTopbar
+        leading={
+          <Box>
+            <Typography variant="h6">{APP_CONFIG.name}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Acesso, autorização e navegação base do frontend.
+            </Typography>
+          </Box>
+        }
         actions={
-          <Stack alignItems="center" direction="row" spacing={1}>
+          <Stack className="flex-row items-center gap-1">
             {isAuthenticated ? (
               <>
                 <AppButton
@@ -49,11 +57,9 @@ function PublicLayout() {
             </IconButton>
           </Stack>
         }
-        subtitle="Acesso, autorização e navegação base do frontend."
-        title={APP_CONFIG.name}
       />
 
-      <Container maxWidth="lg" sx={{ py: { md: 6, xs: 4 } }}>
+      <Container className="py-4 md:py-6" maxWidth="lg">
         <Outlet />
       </Container>
     </Box>

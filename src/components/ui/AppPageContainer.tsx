@@ -1,13 +1,13 @@
 import { Box, type BoxProps } from '@mui/material'
 
-function AppPageContainer({ children, sx, ...boxProps }: BoxProps) {
+function AppPageContainer({ children, className, sx, ...boxProps }: BoxProps) {
   return (
     <Box
       {...boxProps}
-      sx={[
-        { display: 'grid', gap: 3, width: '100%' },
-        ...(Array.isArray(sx) ? sx : [sx]),
-      ]}
+      className={['mx-auto grid w-full max-w-[1260px] gap-5', className]
+        .filter(Boolean)
+        .join(' ')}
+      sx={Array.isArray(sx) ? sx : [sx]}
     >
       {children}
     </Box>

@@ -1,4 +1,4 @@
-import { useState, type PropsWithChildren } from 'react'
+import { useEffect, useState, type PropsWithChildren } from 'react'
 import { CssBaseline, type PaletteMode } from '@mui/material'
 import { ThemeProvider } from '@mui/material/styles'
 import { STORAGE_KEYS } from '@/constants/storage'
@@ -13,6 +13,12 @@ function getInitialMode(): PaletteMode {
 export function AppThemeProvider({ children }: PropsWithChildren) {
   const [mode, setMode] = useState<PaletteMode>(getInitialMode)
   const theme = createAppTheme(mode)
+
+  useEffect(() => {
+    const rootElement = document.documentElement
+    rootElement.dataset.theme = mode
+    rootElement.classList.toggle('dark', mode === 'dark')
+  }, [mode])
 
   function toggleMode() {
     setMode(currentMode => {

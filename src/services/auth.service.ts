@@ -18,16 +18,8 @@ const MOCK_PROFILES: Record<UserRole, { name: string; organization: string }> =
       name: 'Carlos Souza',
       organization: 'Comunidade Escolar',
     },
-    school: {
-      name: 'Juliana Mota',
-      organization: 'Escola Horizonte',
-    },
-    partner: {
-      name: 'Instituto Ponte',
-      organization: 'Rede Parceira',
-    },
     admin: {
-      name: 'Equipe Administrativa',
+      name: 'Admin',
       organization: 'Gestão Mapa Digital',
     },
   }

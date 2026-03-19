@@ -1,72 +1,73 @@
 import type { PaletteMode, ThemeOptions } from '@mui/material'
+import { AppColors } from './AppColors'
 
 const lightPalette: ThemeOptions['palette'] = {
   primary: {
-    main: '#1F4B99',
-    light: '#4C74BD',
-    dark: '#14356D',
+    main: AppColors.light.primary,
+    light: AppColors.light.primaryLight,
+    dark: AppColors.light.primaryDark,
     contrastText: '#FFFFFF',
   },
   secondary: {
-    main: '#117C74',
-    light: '#43A79F',
-    dark: '#0C5953',
+    main: AppColors.light.secondary,
+    light: AppColors.light.secondaryLight,
+    dark: AppColors.light.secondaryDark,
     contrastText: '#FFFFFF',
   },
   success: {
-    main: '#2E7D4F',
+    main: AppColors.light.success,
   },
   warning: {
-    main: '#C7831C',
+    main: AppColors.light.warning,
   },
   error: {
-    main: '#C14953',
+    main: AppColors.light.error,
   },
   info: {
-    main: '#3E7CB1',
+    main: AppColors.light.info,
   },
   background: {
-    default: '#F4F7FB',
-    paper: '#FFFFFF',
+    default: AppColors.light.backgroundDefault,
+    paper: AppColors.light.backgroundPaper,
   },
   text: {
-    primary: '#102A43',
-    secondary: '#52606D',
+    primary: AppColors.light.textPrimary,
+    secondary: AppColors.light.textSecondary,
   },
 }
 
 const darkPalette: ThemeOptions['palette'] = {
   primary: {
-    main: '#8CB4FF',
-    light: '#B1CCFF',
-    dark: '#5D90E8',
+    main: AppColors.dark.primary,
+    light: AppColors.dark.primaryLight,
+    dark: AppColors.dark.primaryDark,
     contrastText: '#08111F',
   },
   secondary: {
-    main: '#78D3C8',
-    light: '#A2E5DD',
-    dark: '#4DA89E',
+    main: AppColors.dark.secondary,
+    light: AppColors.dark.secondaryLight,
+    dark: AppColors.dark.secondaryDark,
     contrastText: '#041816',
   },
   success: {
-    main: '#6BD38B',
+    main: AppColors.dark.success,
   },
   warning: {
-    main: '#F0B35A',
+    main: AppColors.dark.warning,
   },
   error: {
-    main: '#F08B94',
+    main: AppColors.dark.error,
   },
   info: {
-    main: '#80B7F0',
+    main: AppColors.dark.info,
   },
   background: {
-    default: '#0D1626',
-    paper: '#132238',
+    default: AppColors.dark.backgroundDefault,
+    paper: AppColors.dark.backgroundPaper,
   },
   text: {
-    primary: '#F4F7FB',
-    secondary: '#B6C2CF',
+    primary: AppColors.dark.textPrimary,
+    secondary: AppColors.dark.textSecondary,
   },
 }
 

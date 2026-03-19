@@ -1,11 +1,13 @@
 import type { PaletteMode } from '@mui/material'
 import { alpha, createTheme } from '@mui/material/styles'
+import { AppColors } from './AppColors'
 import { getPalette } from './palette'
 import { appTypography } from './typography'
 
 export function createAppTheme(mode: PaletteMode = 'light') {
   const palette = getPalette(mode)
-  const primaryMain = mode === 'dark' ? '#8CB4FF' : '#1F4B99'
+  const primaryMain =
+    mode === 'dark' ? AppColors.dark.primary : AppColors.light.primary
 
   return createTheme({
     palette,
@@ -74,6 +76,27 @@ export function createAppTheme(mode: PaletteMode = 'light') {
       MuiTextField: {
         defaultProps: {
           fullWidth: true,
+        },
+      },
+      MuiOutlinedInput: {
+        styleOverrides: {
+          root: {
+            borderRadius: 12,
+            backgroundColor:
+              mode === 'dark'
+                ? alpha(AppColors.neutral.card, 0.03)
+                : 'rgba(148, 163, 184, 0.08)',
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: alpha(primaryMain, 0.14),
+            },
+            '&:hover .MuiOutlinedInput-notchedOutline': {
+              borderColor: alpha(primaryMain, 0.26),
+            },
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+              borderColor: primaryMain,
+              borderWidth: 1.5,
+            },
+          },
         },
       },
     },

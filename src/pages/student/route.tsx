@@ -4,7 +4,6 @@ import RoleRoute from '@/components/common/RoleRoute'
 import { APP_ROUTES } from '@/constants/routes'
 import DashboardLayout from '@/layouts/DashboardLayout'
 import StudentDashboardPage from '@/pages/student/StudentDashboardPage'
-import StudentTasksPage from '@/pages/student/StudentTasksPage'
 
 export const studentRoutes: RouteObject[] = [
   {
@@ -19,10 +18,6 @@ export const studentRoutes: RouteObject[] = [
               {
                 path: APP_ROUTES.student.dashboard,
                 element: <StudentDashboardPage />,
-              },
-              {
-                path: APP_ROUTES.student.tasks,
-                element: <StudentTasksPage />,
               },
             ],
           },

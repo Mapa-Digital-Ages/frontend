@@ -1,157 +1,106 @@
-import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined'
-import AssignmentRoundedIcon from '@mui/icons-material/AssignmentRounded'
+import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded'
 import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded'
-import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined'
-import Diversity3RoundedIcon from '@mui/icons-material/Diversity3Rounded'
-import GroupRoundedIcon from '@mui/icons-material/GroupRounded'
-import HubRoundedIcon from '@mui/icons-material/HubRounded'
-import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined'
-import ManageAccountsRoundedIcon from '@mui/icons-material/ManageAccountsRounded'
-import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded'
-import { Box, Chip, IconButton, Stack, Typography } from '@mui/material'
-import { useContext, useState } from 'react'
+import { Box, IconButton, Typography } from '@mui/material'
+import { useState } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
-import AppButton from '@/components/ui/AppButton'
 import AppSidebar from '@/components/ui/AppSidebar'
 import AppTopbar from '@/components/ui/AppTopbar'
-import { ThemeContext } from '@/context/theme-context'
+import { APP_CONFIG } from '@/constants/app'
 import { APP_ROUTES } from '@/constants/routes'
 import { useAuth } from '@/hooks/useAuth'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 import { useUserRole } from '@/hooks/useUserRole'
+import { AppColors } from '@/styles/AppColors'
 import type { SidebarItem } from '@/types/common'
+import type { UserRole } from '@/types/user'
 
-interface DashboardLayoutProps {
-  variant?: 'default' | 'admin'
+const AVATAR_BG_BY_ROLE: Record<UserRole, string> = {
+  student: AppColors.role.student.primary,
+  parent: AppColors.role.parent.primary,
+  admin: AppColors.role.admin.primary,
 }
 
-const navigationItems: SidebarItem[] = [
-  {
-    label: 'Dashboard',
-    path: APP_ROUTES.student.dashboard,
-    icon: <DashboardRoundedIcon />,
-    roles: ['student'],
-    description: 'Visão geral',
-  },
-  {
-    label: 'Tarefas',
-    path: APP_ROUTES.student.tasks,
-    icon: <AssignmentRoundedIcon />,
-    roles: ['student'],
-    description: 'Entregas pendentes',
-  },
-  {
-    label: 'Dashboard',
-    path: APP_ROUTES.parent.dashboard,
-    icon: <Diversity3RoundedIcon />,
-    roles: ['parent'],
-    description: 'Filhos e alertas',
-  },
-  {
-    label: 'Dashboard',
-    path: APP_ROUTES.school.dashboard,
-    icon: <SchoolRoundedIcon />,
-    roles: ['school'],
-    description: 'Turmas e engajamento',
-  },
-  {
-    label: 'Dashboard',
-    path: APP_ROUTES.partner.dashboard,
-    icon: <HubRoundedIcon />,
-    roles: ['partner'],
-    description: 'Projetos da rede',
-  },
-  {
-    label: 'Dashboard',
-    path: APP_ROUTES.admin.dashboard,
-    icon: <ManageAccountsRoundedIcon />,
-    roles: ['admin'],
-    description: 'Visão executiva',
-  },
-  {
-    label: 'Usuários',
-    path: APP_ROUTES.admin.users,
-    icon: <GroupRoundedIcon />,
-    roles: ['admin'],
-    description: 'Gestão de perfis',
-  },
-]
+const NAVIGATION_BY_ROLE: Record<UserRole, SidebarItem[]> = {
+  student: [
+    {
+      label: 'Dashboard',
+      path: APP_ROUTES.student.dashboard,
+      icon: <DashboardRoundedIcon />,
+    },
+  ],
+  parent: [
+    {
+      label: 'Dashboard',
+      path: APP_ROUTES.parent.dashboard,
+      icon: <DashboardRoundedIcon />,
+    },
+  ],
+  admin: [
+    {
+      label: 'Dashboard',
+      path: APP_ROUTES.admin.dashboard,
+      icon: <DashboardRoundedIcon />,
+    },
+  ],
+}
 
-function DashboardLayout({ variant = 'default' }: DashboardLayoutProps) {
+function DashboardLayout() {
   const { isMobile } = useBreakpoint()
   const { logout, user } = useAuth()
-  const { role, roleLabel } = useUserRole()
-  const themeContext = useContext(ThemeContext)
+  const { role } = useUserRole()
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
-
-  const sidebarItems = navigationItems.filter(item =>
-    role ? item.roles?.includes(role) : false
-  )
-
-  function handleLogout() {
-    logout()
-    navigate(APP_ROUTES.root)
-  }
+  const currentRole = role ?? APP_CONFIG.defaultRole
+  const sidebarItems = NAVIGATION_BY_ROLE[currentRole]
+  const userInitial = user?.name?.charAt(0).toUpperCase() ?? 'M'
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+    <Box className="flex min-h-screen bg-slate-100">
       <AppSidebar
         isMobile={isMobile}
         items={sidebarItems}
         mobileOpen={mobileOpen}
         onClose={() => setMobileOpen(false)}
-        roleLabel={roleLabel}
-        variant={variant}
+        onLogout={logout}
+        role={currentRole}
       />
 
       <Box
-        sx={{
-          display: 'flex',
-          flex: 1,
-          flexDirection: 'column',
-          ml: { md: `${288}px` },
-          minWidth: 0,
-        }}
+        className="ml-0 flex min-w-0 flex-1 flex-col"
+        style={{ marginLeft: isMobile ? 0 : APP_CONFIG.drawerWidth }}
       >
         <AppTopbar
-          title="Mapa Digital"
           actions={
-            <Stack alignItems="center" direction="row" spacing={1.5}>
-              <IconButton color="inherit" onClick={themeContext?.toggleMode}>
-                {themeContext?.mode === 'dark' ? (
-                  <LightModeOutlinedIcon />
-                ) : (
-                  <DarkModeOutlinedIcon />
-                )}
-              </IconButton>
-              <Chip color="primary" label={roleLabel} variant="outlined" />
-              <Stack
-                alignItems="center"
-                direction="row"
-                spacing={1}
-                sx={{ display: { md: 'flex', xs: 'none' } }}
+            <Box className="flex items-center gap-2 sm:gap-3">
+              <Box
+                className="grid size-9 place-items-center rounded-full text-sm font-semibold text-white"
+                style={{ backgroundColor: AVATAR_BG_BY_ROLE[currentRole] }}
               >
-                <AccountCircleOutlinedIcon color="action" />
-                <Box>
-                  <Typography sx={{ fontWeight: 600 }} variant="body2">
-                    {user?.name}
-                  </Typography>
-                  <Typography color="text.secondary" variant="caption">
-                    {user?.organization}
-                  </Typography>
-                </Box>
-              </Stack>
-              <AppButton onClick={handleLogout} variant="outlined">
-                Sair
-              </AppButton>
-            </Stack>
+                {userInitial}
+              </Box>
+              <Typography
+                className="hidden max-w-[12rem] text-sm font-semibold text-slate-900 sm:block md:max-w-[16rem] md:text-base"
+                noWrap
+              >
+                {user?.name}
+              </Typography>
+            </Box>
+          }
+          leading={
+            <IconButton
+              aria-label="Voltar"
+              className="text-slate-500"
+              onClick={() => navigate(-1)}
+              size="small"
+            >
+              <ChevronLeftRoundedIcon />
+            </IconButton>
           }
           onMenuClick={() => setMobileOpen(true)}
           showMenuButton
         />
 
-        <Box component="main" sx={{ flex: 1, px: { md: 4, xs: 2 }, py: 3 }}>
+        <Box className="flex-1 px-3 py-4 md:px-5 lg:px-6" component="main">
           <Outlet />
         </Box>
       </Box>

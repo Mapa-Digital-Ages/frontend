@@ -1,7 +1,6 @@
-import { Alert, MenuItem, Stack } from '@mui/material'
+import { Box, Button, MenuItem, Stack, Typography } from '@mui/material'
 import { useState, type FormEvent } from 'react'
 import AppButton from '@/components/ui/AppButton'
-import AppCard from '@/components/ui/AppCard'
 import AppInput from '@/components/ui/AppInput'
 import { ROLE_LABELS, USER_ROLES } from '@/constants/roles'
 import type { AuthCredentials } from '@/types/auth'
@@ -12,14 +11,20 @@ interface LoginFormProps {
   onSubmit: (values: AuthCredentials) => Promise<void>
 }
 
-type LoginFormErrors = Partial<Record<keyof AuthCredentials, string>>
+type LoginMode = 'login' | 'register'
+type LoginFormErrors = Partial<
+  Record<keyof AuthCredentials | 'confirmPassword' | 'fullName', string>
+>
 
 function LoginForm({ isSubmitting = false, onSubmit }: LoginFormProps) {
+  const [mode, setMode] = useState<LoginMode>('login')
   const [values, setValues] = useState<AuthCredentials>({
     email: 'aluno@mapadigital.com',
-    password: '123456',
+    password: '12345678',
     role: 'student',
   })
+  const [fullName, setFullName] = useState('Lucas Silva')
+  const [confirmPassword, setConfirmPassword] = useState('12345678')
   const [errors, setErrors] = useState<LoginFormErrors>({})
 
   function updateField<K extends keyof AuthCredentials>(
@@ -39,12 +44,20 @@ function LoginForm({ isSubmitting = false, onSubmit }: LoginFormProps) {
   function validate() {
     const nextErrors: LoginFormErrors = {}
 
+    if (mode === 'register' && !isRequired(fullName)) {
+      nextErrors.fullName = 'Informe seu nome completo.'
+    }
+
     if (!isRequired(values.email) || !isValidEmail(values.email)) {
       nextErrors.email = 'Informe um e-mail válido.'
     }
 
-    if (!hasMinLength(values.password, 6)) {
-      nextErrors.password = 'A senha mock deve ter pelo menos 6 caracteres.'
+    if (!hasMinLength(values.password, 8)) {
+      nextErrors.password = 'A senha deve ter pelo menos 8 caracteres.'
+    }
+
+    if (mode === 'register' && values.password !== confirmPassword) {
+      nextErrors.confirmPassword = 'As senhas devem ser iguais.'
     }
 
     if (!isRequired(values.role)) {
@@ -52,7 +65,6 @@ function LoginForm({ isSubmitting = false, onSubmit }: LoginFormProps) {
     }
 
     setErrors(nextErrors)
-
     return Object.keys(nextErrors).length === 0
   }
 
@@ -67,19 +79,84 @@ function LoginForm({ isSubmitting = false, onSubmit }: LoginFormProps) {
   }
 
   return (
-    <AppCard contentSx={{ p: 4 }}>
-      <Stack component="form" onSubmit={handleSubmit} spacing={2.5}>
-        <Alert severity="info">Use o e-mail e senha mockados para teste.</Alert>
+    <Stack className="gap-4" component="form" onSubmit={handleSubmit}>
+      <Box className="grid grid-cols-2 gap-1 rounded-2xl border border-slate-200 bg-slate-200 p-1">
+        <Button
+          className={[
+            'rounded-xl py-2 text-base font-semibold transition',
+            mode === 'login' ? 'bg-white text-slate-900' : 'text-slate-500',
+          ].join(' ')}
+          onClick={() => setMode('login')}
+          type="button"
+        >
+          Login
+        </Button>
+        <Button
+          className={[
+            'rounded-xl py-2 text-base font-semibold transition',
+            mode === 'register' ? 'bg-white text-slate-900' : 'text-slate-500',
+          ].join(' ')}
+          onClick={() => setMode('register')}
+          type="button"
+        >
+          Cadastro
+        </Button>
+      </Box>
 
+      {mode === 'register' && (
         <AppInput
-          error={Boolean(errors.email)}
-          helperText={errors.email}
-          label="E-mail"
-          onChange={event => updateField('email', event.target.value)}
-          placeholder="voce@mapadigital.com"
-          value={values.email}
+          error={Boolean(errors.fullName)}
+          helperText={errors.fullName}
+          label="Nome completo"
+          onChange={event => {
+            setFullName(event.target.value)
+            setErrors(currentErrors => ({
+              ...currentErrors,
+              fullName: undefined,
+            }))
+          }}
+          placeholder="Ex.: Lucas Silva"
+          value={fullName}
         />
+      )}
 
+      <AppInput
+        error={Boolean(errors.email)}
+        helperText={errors.email}
+        label="E-mail"
+        onChange={event => updateField('email', event.target.value)}
+        placeholder="voce@exemplo.com"
+        value={values.email}
+      />
+
+      {mode === 'register' ? (
+        <Box className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <AppInput
+            error={Boolean(errors.password)}
+            helperText={errors.password}
+            label="Senha"
+            onChange={event => updateField('password', event.target.value)}
+            placeholder="Mín. 8 caracteres"
+            type="password"
+            value={values.password}
+          />
+          <AppInput
+            error={Boolean(errors.confirmPassword)}
+            helperText={errors.confirmPassword}
+            label="Confirmar senha"
+            onChange={event => {
+              setConfirmPassword(event.target.value)
+              setErrors(currentErrors => ({
+                ...currentErrors,
+                confirmPassword: undefined,
+              }))
+            }}
+            placeholder="Repita a senha"
+            type="password"
+            value={confirmPassword}
+          />
+        </Box>
+      ) : (
         <AppInput
           error={Boolean(errors.password)}
           helperText={errors.password}
@@ -88,29 +165,44 @@ function LoginForm({ isSubmitting = false, onSubmit }: LoginFormProps) {
           type="password"
           value={values.password}
         />
+      )}
 
-        <AppInput
-          error={Boolean(errors.role)}
-          helperText={errors.role}
-          label="Perfil"
-          onChange={event =>
-            updateField('role', event.target.value as AuthCredentials['role'])
-          }
-          select
-          value={values.role}
-        >
-          {USER_ROLES.map(role => (
-            <MenuItem key={role} value={role}>
-              {ROLE_LABELS[role]}
-            </MenuItem>
-          ))}
-        </AppInput>
+      <AppInput
+        error={Boolean(errors.role)}
+        helperText={errors.role}
+        label={mode === 'register' ? 'Perfil de acesso' : 'Perfil'}
+        onChange={event =>
+          updateField('role', event.target.value as AuthCredentials['role'])
+        }
+        select
+        value={values.role}
+      >
+        {USER_ROLES.map(role => (
+          <MenuItem key={role} value={role}>
+            {ROLE_LABELS[role]}
+          </MenuItem>
+        ))}
+      </AppInput>
 
-        <AppButton disabled={isSubmitting} size="large" type="submit">
-          {isSubmitting ? 'Entrando...' : 'Entrar'}
-        </AppButton>
-      </Stack>
-    </AppCard>
+      <AppButton
+        className="mt-1"
+        disabled={isSubmitting}
+        size="large"
+        type="submit"
+      >
+        {isSubmitting
+          ? 'Processando...'
+          : mode === 'login'
+            ? 'Entrar'
+            : 'Criar conta'}
+      </AppButton>
+
+      <Typography className="text-center text-sm text-slate-500">
+        {mode === 'login'
+          ? 'Use as credenciais mockadas para acessar.'
+          : 'Cadastro em modo demonstrativo para validação visual.'}
+      </Typography>
+    </Stack>
   )
 }
 

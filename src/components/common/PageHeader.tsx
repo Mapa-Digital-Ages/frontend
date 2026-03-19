@@ -10,17 +10,12 @@ interface PageHeaderProps {
 
 function PageHeader({ actions, eyebrow, subtitle, title }: PageHeaderProps) {
   return (
-    <Stack
-      alignItems={{ md: 'center', xs: 'flex-start' }}
-      direction={{ md: 'row', xs: 'column' }}
-      justifyContent="space-between"
-      spacing={2}
-    >
-      <Box>
+    <Stack className="flex-col items-start justify-between gap-2 md:flex-row md:items-center">
+      <Box className="min-w-0">
         {eyebrow && (
           <Typography
+            className="mb-0.5 tracking-[0.12em]"
             color="primary.main"
-            sx={{ letterSpacing: 1.2, mb: 0.5 }}
             variant="overline"
           >
             {eyebrow}
@@ -28,7 +23,7 @@ function PageHeader({ actions, eyebrow, subtitle, title }: PageHeaderProps) {
         )}
         <Typography variant="h3">{title}</Typography>
         {subtitle && (
-          <Typography color="text.secondary" sx={{ mt: 1 }} variant="body1">
+          <Typography className="mt-1" color="text.secondary" variant="body1">
             {subtitle}
           </Typography>
         )}

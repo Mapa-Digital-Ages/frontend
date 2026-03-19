@@ -1,8 +1,6 @@
 import { Alert, Box } from '@mui/material'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import PageHeader from '@/components/common/PageHeader'
-import AppPageContainer from '@/components/ui/AppPageContainer'
 import { DEFAULT_ROUTE_BY_ROLE } from '@/constants/routes'
 import { useAuth } from '@/hooks/useAuth'
 import type { AuthCredentials } from '@/types/auth'
@@ -35,18 +33,9 @@ function LoginPage() {
   }
 
   return (
-    <Box sx={{ alignSelf: 'center' }}>
-      <AppPageContainer>
-        <PageHeader
-          eyebrow="Login"
-          subtitle="A autenticação real ainda não foi implementada."
-          title="Entre com a sua conta"
-        />
-
-        {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
-
-        <LoginForm isSubmitting={isSubmitting} onSubmit={handleSubmit} />
-      </AppPageContainer>
+    <Box className="grid gap-3 rounded-3xl border border-slate-300 bg-[#f3f4f6]/95 p-4 md:p-6">
+      {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
+      <LoginForm isSubmitting={isSubmitting} onSubmit={handleSubmit} />
     </Box>
   )
 }

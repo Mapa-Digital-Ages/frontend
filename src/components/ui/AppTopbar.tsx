@@ -4,7 +4,6 @@ import {
   Box,
   IconButton,
   Toolbar,
-  Typography,
   type AppBarProps,
 } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
@@ -12,6 +11,7 @@ import type { ReactNode } from 'react'
 
 interface AppTopbarProps extends AppBarProps {
   actions?: ReactNode
+  leading?: ReactNode
   onMenuClick?: () => void
   showMenuButton?: boolean
   subtitle?: string
@@ -20,10 +20,9 @@ interface AppTopbarProps extends AppBarProps {
 
 function AppTopbar({
   actions,
+  leading,
   onMenuClick,
   showMenuButton = false,
-  subtitle,
-  title,
   ...appBarProps
 }: AppTopbarProps) {
   const theme = useTheme()
@@ -35,55 +34,30 @@ function AppTopbar({
       {...appBarProps}
       sx={[
         {
-          backdropFilter: 'blur(14px)',
-          backgroundColor: alpha(theme.palette.background.default, 0.82),
-          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
+          backdropFilter: 'blur(8px)',
+          backgroundColor: alpha(theme.palette.background.paper, 0.92),
+          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.9)}`,
         },
         ...(Array.isArray(appBarProps.sx) ? appBarProps.sx : [appBarProps.sx]),
       ]}
     >
-      <Toolbar
-        sx={{
-          alignItems: 'center',
-          gap: 2,
-          justifyContent: 'space-between',
-          minHeight: 80,
-        }}
-      >
-        {showMenuButton && (
-          <IconButton
-            aria-label="Abrir navegação"
-            color="inherit"
-            onClick={onMenuClick}
-            sx={{ display: { md: 'none' } }}
-          >
-            <MenuRoundedIcon />
-          </IconButton>
-        )}
-
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          {title && (
-            <Typography noWrap variant="h6">
-              {title}
-            </Typography>
+      <Toolbar className="min-h-[72px] items-center justify-between gap-2 md:gap-4">
+        <Box className="flex items-center gap-2">
+          {showMenuButton && (
+            <IconButton
+              aria-label="Abrir menu lateral"
+              onClick={onMenuClick}
+              size="small"
+              sx={{ display: { md: 'none' } }}
+            >
+              <MenuRoundedIcon />
+            </IconButton>
           )}
-          {subtitle && (
-            <Typography color="text.secondary" noWrap variant="body2">
-              {subtitle}
-            </Typography>
-          )}
+          {leading && <Box className="hidden md:flex">{leading}</Box>}
         </Box>
 
         {actions && (
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              ml: 'auto',
-            }}
-          >
-            {actions}
-          </Box>
+          <Box className="ml-auto flex items-center justify-end">{actions}</Box>
         )}
       </Toolbar>
     </AppBar>
