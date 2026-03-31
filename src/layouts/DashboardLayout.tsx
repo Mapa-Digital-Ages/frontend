@@ -1,5 +1,6 @@
 import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded'
 import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded'
+import WidgetsRoundedIcon from '@mui/icons-material/WidgetsRounded'
 import { Box, IconButton, Typography } from '@mui/material'
 import { useState } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
@@ -26,6 +27,11 @@ const NAVIGATION_BY_ROLE: Record<UserRole, SidebarItem[]> = {
       label: 'Dashboard',
       path: APP_ROUTES.student.dashboard,
       icon: <DashboardRoundedIcon />,
+    },
+    {
+      label: 'Componentes',
+      path: APP_ROUTES.student.components,
+      icon: <WidgetsRoundedIcon />,
     },
   ],
   parent: [
