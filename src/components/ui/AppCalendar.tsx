@@ -34,6 +34,10 @@ function CustomDay(props: PickersDayProps<Dayjs>) {
         '&.MuiPickersDay-today': {
           border: theme => `2px solid ${theme.palette.primary.main}`,
         },
+        '&:focus': {
+          outline: 'none',
+          backgroundColor: isFuture ? 'transparent' : 'background.paper',
+        },
       }}
     />
   )
