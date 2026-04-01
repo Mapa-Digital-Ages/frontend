@@ -1,18 +1,14 @@
-import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined'
-import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined'
-import { Box, Container, IconButton, Stack, Typography } from '@mui/material'
+import { Box, Container, Stack, Typography } from '@mui/material'
 import { Link as RouterLink, Outlet } from 'react-router-dom'
 import AppButton from '@/components/ui/AppButton'
 import AppTopbar from '@/components/ui/AppTopbar'
+import ThemeModeToggle from '@/components/ui/ThemeMode'
 import { APP_CONFIG } from '@/constants/app'
 import { DEFAULT_ROUTE_BY_ROLE, APP_ROUTES } from '@/constants/routes'
-import { ThemeContext } from '@/context/theme-context'
 import { useAuth } from '@/hooks/useAuth'
-import { useContext } from 'react'
 
 function PublicLayout() {
   const { isAuthenticated, logout, user } = useAuth()
-  const themeContext = useContext(ThemeContext)
   const dashboardPath = user
     ? DEFAULT_ROUTE_BY_ROLE[user.role]
     : APP_ROUTES.auth.login
@@ -48,13 +44,7 @@ function PublicLayout() {
                 Ir para login
               </AppButton>
             )}
-            <IconButton color="inherit" onClick={themeContext?.toggleMode}>
-              {themeContext?.mode === 'dark' ? (
-                <LightModeOutlinedIcon />
-              ) : (
-                <DarkModeOutlinedIcon />
-              )}
-            </IconButton>
+            <ThemeModeToggle />
           </Stack>
         }
       />

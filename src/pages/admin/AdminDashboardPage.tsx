@@ -167,9 +167,7 @@ function AdminDashboardPage() {
         <AppCard
           contentClassName="gap-4 p-5"
           title="Atividade Recente"
-          titleTypographyProps={{
-            className: 'text-2xl font-bold text-slate-900 md:text-3xl',
-          }}
+          titleClassName="text-2xl font-bold text-slate-900 md:text-3xl"
         >
           {RECENT_ACTIVITY.map(activity => (
             <Box className="flex items-start gap-3" key={activity.id}>
@@ -196,9 +194,7 @@ function AdminDashboardPage() {
         <AppCard
           contentClassName="gap-3 p-5"
           title="Ações rápidas"
-          titleTypographyProps={{
-            className: 'text-2xl font-bold text-slate-900 md:text-3xl',
-          }}
+          titleClassName="text-2xl font-bold text-slate-900 md:text-3xl"
         >
           {QUICK_ACTIONS.map(action => (
             <Box

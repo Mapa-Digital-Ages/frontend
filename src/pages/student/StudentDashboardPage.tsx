@@ -7,41 +7,44 @@ import TrackChangesRoundedIcon from '@mui/icons-material/TrackChangesRounded'
 import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded'
 import WorkspacePremiumRoundedIcon from '@mui/icons-material/WorkspacePremiumRounded'
 import { Box, Typography } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import { useEffect, useState } from 'react'
 import LoadingScreen from '@/components/common/LoadingScreen'
 import AppButton from '@/components/ui/AppButton'
 import AppCard from '@/components/ui/AppCard'
 import AppPageContainer from '@/components/ui/AppPageContainer'
+import { AppSubjectTag } from '@/components/ui/AppSubjectsTags'
+import ProgressBar from '@/components/ui/ProgressBar'
 import { studentService } from '@/services/student.service'
 import { AppColors } from '@/styles/AppColors'
+import { getSubjectTheme, SUBJECTS } from '@/utils/subjectThemes'
 import type { StudentTask, SummaryMetric } from '@/types/common'
 
 const DISCIPLINE_PROGRESS = [
-  { id: 'math', label: 'Matemática', progress: 72, tone: 'bg-blue-500' },
-  { id: 'portuguese', label: 'Português', progress: 85, tone: 'bg-violet-500' },
-  { id: 'science', label: 'Ciências', progress: 58, tone: 'bg-emerald-500' },
-  { id: 'history', label: 'História', progress: 64, tone: 'bg-amber-500' },
+  {
+    id: 'math',
+    progress: 72,
+    subject: SUBJECTS.matematica,
+  },
+  {
+    id: 'portuguese',
+    progress: 85,
+    subject: SUBJECTS.portugues,
+  },
+  {
+    id: 'science',
+    progress: 58,
+    subject: SUBJECTS.ciencias,
+  },
+  {
+    id: 'history',
+    progress: 64,
+    subject: SUBJECTS.historia,
+  },
 ] as const
 
-const TASK_SUBJECT_STYLES: Record<
-  string,
-  { badge: string; iconContainer: string }
-> = {
-  Matemática: {
-    badge: 'bg-blue-100 text-blue-700',
-    iconContainer: 'bg-blue-100 text-blue-600',
-  },
-  Português: {
-    badge: 'bg-violet-100 text-violet-700',
-    iconContainer: 'bg-violet-100 text-violet-600',
-  },
-  Ciências: {
-    badge: 'bg-emerald-100 text-emerald-700',
-    iconContainer: 'bg-emerald-100 text-emerald-600',
-  },
-}
-
 function StudentDashboardPage() {
+  const theme = useTheme()
   const [summary, setSummary] = useState<SummaryMetric[]>([])
   const [tasks, setTasks] = useState<StudentTask[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -84,7 +87,8 @@ function StudentDashboardPage() {
       value: '7º Ano',
       helper: '',
       icon: <WorkspacePremiumRoundedIcon />,
-      iconTone: 'bg-blue-100 text-blue-600',
+      iconBackground: 'rgba(219, 234, 254, 1)',
+      iconColor: 'rgba(37, 99, 235, 1)',
     },
     {
       id: 'study',
@@ -92,7 +96,8 @@ function StudentDashboardPage() {
       value: keyMetric ? `${keyMetric.value}` : '340 min',
       helper: keyMetric?.helperText ?? '+12% vs semana anterior',
       icon: <BoltRoundedIcon />,
-      iconTone: 'bg-sky-100 text-sky-600',
+      iconBackground: 'rgba(224, 242, 254, 1)',
+      iconColor: 'rgba(2, 132, 199, 1)',
     },
     {
       id: 'trail',
@@ -100,7 +105,8 @@ function StudentDashboardPage() {
       value: engagementMetric ? `${engagementMetric.value}` : '62%',
       helper: '',
       icon: <TrackChangesRoundedIcon />,
-      iconTone: 'bg-indigo-100 text-indigo-600',
+      iconBackground: 'rgba(237, 233, 254, 1)',
+      iconColor: 'rgba(124, 58, 237, 1)',
     },
     {
       id: 'streak',
@@ -108,7 +114,8 @@ function StudentDashboardPage() {
       value: '5 dias',
       helper: '',
       icon: <TrendingUpRoundedIcon />,
-      iconTone: 'bg-emerald-100 text-emerald-600',
+      iconBackground: 'rgba(220, 252, 231, 1)',
+      iconColor: 'rgba(5, 150, 105, 1)',
     },
   ]
 
@@ -141,28 +148,31 @@ function StudentDashboardPage() {
 
       <Box className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-4">
         {cards.map(card => (
-          <AppCard contentClassName="gap-1.5 p-5" key={card.id}>
-            <Box className="flex items-start justify-between gap-3">
-              <Typography className="text-lg text-slate-500">
+          <AppCard contentClassName="p-5" key={card.id}>
+            <Box className="flex items-start justify-between">
+              <Typography className="text-lg" sx={{ color: 'text.secondary' }}>
                 {card.title}
               </Typography>
               <Box
-                className={[
-                  'grid size-11 place-items-center rounded-2xl',
-                  card.iconTone,
-                ].join(' ')}
+                className="grid size-12 place-items-center rounded-2xl"
+                sx={{
+                  backgroundColor: card.iconBackground,
+                  color: card.iconColor,
+                }}
               >
                 {card.icon}
               </Box>
             </Box>
-            <Typography className="text-3xl font-bold text-slate-900 md:text-5xl">
+            <Typography
+              className="text-3xl font-bold md:text-[2.5rem]"
+              sx={{
+                color: 'text.primary',
+                fontSize: { md: 25, xs: 10 },
+                fontWeight: 700,
+              }}
+            >
               {card.value}
             </Typography>
-            {card.helper && (
-              <Typography className="text-base text-emerald-600">
-                {card.helper}
-              </Typography>
-            )}
           </AppCard>
         ))}
       </Box>
@@ -171,29 +181,26 @@ function StudentDashboardPage() {
         <AppCard
           contentClassName="gap-4 p-5"
           title="Progresso por Disciplina"
-          titleTypographyProps={{
-            className: 'text-2xl font-bold text-slate-900 md:text-3xl',
-          }}
+          titleClassName="text-2xl font-bold md:text-3xl"
         >
           {DISCIPLINE_PROGRESS.map(item => (
             <Box
-              className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3"
               key={item.id}
+              sx={{
+                backgroundColor: 'var(--app-surface-muted)',
+                border: '1px solid var(--app-border)',
+                borderRadius: '16px',
+                p: 1.5,
+              }}
             >
               <Box className="mb-2 flex items-center justify-between gap-3">
-                <span className="rounded-full bg-white px-2.5 py-0.5 text-sm font-semibold text-slate-700 shadow-sm">
-                  {item.label}
-                </span>
-                <span className="text-sm font-semibold text-slate-500">
-                  {item.progress}%
-                </span>
+                <AppSubjectTag size="sm" subject={item.subject} />
               </Box>
-              <div className="h-2 rounded-full bg-slate-200">
-                <div
-                  className={['h-full rounded-full', item.tone].join(' ')}
-                  style={{ width: `${item.progress}%` }}
-                />
-              </div>
+              <ProgressBar
+                showValueLabel
+                subject={item.subject}
+                value={item.progress}
+              />
             </Box>
           ))}
         </AppCard>
@@ -201,43 +208,49 @@ function StudentDashboardPage() {
         <AppCard
           contentClassName="gap-4 p-5"
           title="Próximas Atividades"
-          titleTypographyProps={{
-            className: 'text-2xl font-bold text-slate-900 md:text-3xl',
-          }}
+          titleClassName="text-2xl font-bold md:text-3xl"
         >
           {tasks.map(task => {
-            const taskStyles =
-              TASK_SUBJECT_STYLES[task.subject] ??
-              TASK_SUBJECT_STYLES.Matemática
+            const subjectTheme = getSubjectTheme(task.subject, {
+              mode: theme.palette.mode,
+            })
 
             return (
               <Box
-                className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3"
                 key={task.id}
+                sx={{
+                  alignItems: 'center',
+                  backgroundColor: 'var(--app-surface-muted)',
+                  border: '1px solid var(--app-border)',
+                  borderRadius: '16px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  p: 1.5,
+                }}
               >
                 <Box className="flex items-center gap-3">
                   <Box
-                    className={[
-                      'grid size-11 place-items-center rounded-2xl',
-                      taskStyles.iconContainer,
-                    ].join(' ')}
+                    className="grid size-11 place-items-center rounded-2xl"
+                    sx={{
+                      backgroundColor: subjectTheme.icon.backgroundColor,
+                      color: subjectTheme.icon.color,
+                    }}
                   >
                     <AutoAwesomeRoundedIcon fontSize="small" />
                   </Box>
                   <Box>
-                    <Typography className="text-base font-semibold text-slate-900 md:text-lg">
+                    <Typography
+                      className="text-base font-semibold md:text-lg"
+                      sx={{ color: 'text.primary' }}
+                    >
                       {task.title}
                     </Typography>
                     <Box className="mt-1 flex items-center gap-2">
-                      <span
-                        className={[
-                          'rounded-full px-2.5 py-0.5 text-xs font-semibold',
-                          taskStyles.badge,
-                        ].join(' ')}
+                      <AppSubjectTag size="sm" subject={task.subject} />
+                      <Typography
+                        className="text-sm"
+                        sx={{ color: 'text.secondary' }}
                       >
-                        {task.subject}
-                      </span>
-                      <Typography className="text-sm text-slate-500">
                         {task.status === 'pending'
                           ? 'Vídeo'
                           : task.status === 'inProgress'
@@ -247,7 +260,7 @@ function StudentDashboardPage() {
                     </Box>
                   </Box>
                 </Box>
-                <ChevronRightRoundedIcon className="text-slate-400" />
+                <ChevronRightRoundedIcon sx={{ color: 'text.secondary' }} />
               </Box>
             )
           })}
