@@ -14,14 +14,14 @@ function CustomDay(props: PickersDayProps<Dayjs>) {
       {...props}
       sx={{
         margin: '2px',
-        borderRadius: '6px',
+        borderRadius: '8px',
         border: theme =>
-          `2px solid ${isFuture ? theme.palette.divider : theme.palette.primary.main}`,
-        backgroundColor: isFuture ? undefined : 'background.paper',
+          `2.5px solid ${isFuture ? theme.palette.primary.main : theme.palette.primary.main}`,
+        backgroundColor: isFuture ? 'background.paper' : 'info.main',
         color: theme =>
-          isFuture ? theme.palette.text.disabled : theme.palette.text.primary,
+          isFuture ? theme.palette.text.primary : theme.palette.text.primary,
         '&:hover': {
-          backgroundColor: isFuture ? undefined : 'background.hover',
+          backgroundColor: isFuture ? 'background.hover' : 'background.hover',
         },
         '&.Mui-selected': {
           backgroundColor: 'primary.main',
