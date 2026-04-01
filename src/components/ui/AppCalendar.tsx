@@ -88,6 +88,15 @@ export default function AppCalendar() {
               height: 56,
               fontSize: '0.85rem',
             },
+            '& .MuiYearCalendar-root': {
+              height: 'auto',
+              minHeight: '26rem',
+            },
+            '& .MuiPickersYear-yearButton': {
+              width: 84,
+              height: 60,
+              fontSize: '0.95rem',
+            },
           }}
         />
       </LocalizationProvider>
