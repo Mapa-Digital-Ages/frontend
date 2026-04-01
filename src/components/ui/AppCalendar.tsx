@@ -36,7 +36,7 @@ function CustomDay(props: PickersDayProps<Dayjs>) {
         },
         '&:focus': {
           outline: 'none',
-          backgroundColor: isFuture ? 'transparent' : 'background.paper',
+          backgroundColor: isFuture ? 'background.paper' : 'info.main',
         },
       }}
     />
