@@ -22,7 +22,7 @@ export default function DayDetailModal({ open, date, onClose }: DayDetailModalPr
         </IconButton>
       </DialogTitle>
       <DialogContent>
-        {/* TODO: implementar conteúdo */}
+        TODO: Modal de detalhes do dia 
       </DialogContent>
     </Dialog>
   )
