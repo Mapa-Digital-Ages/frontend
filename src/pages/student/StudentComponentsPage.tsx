@@ -1,5 +1,6 @@
 import { Box, Typography } from '@mui/material'
 import AppPageContainer from '@/components/ui/AppPageContainer'
+import AppCalendar from '@/components/ui/AppCalendar'
 
 function StudentComponentsPage() {
   return (
@@ -8,10 +9,15 @@ function StudentComponentsPage() {
         Componentes
       </Typography>
 
-      <Box className="flex min-h-[80vh] flex-col items-center justify-center rounded-2xl bg-white p-8">
-        <Typography className="text-lg text-slate-400">
-          Área para testar componentes
-        </Typography>
+      <Box className="min-h-[80vh] rounded-2xl bg-white p-6">
+        <Box className="flex flex-col gap-6 md:flex-row">
+          <Box className="flex-1">
+            <AppCalendar />
+          </Box>
+
+          <Box className="flex-1">
+          </Box>
+        </Box>
       </Box>
     </AppPageContainer>
   )
