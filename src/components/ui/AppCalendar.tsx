@@ -42,10 +42,15 @@ function CustomDay(props: PickersDayProps<Dayjs>) {
 export default function AppCalendar() {
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
+  const [view, setView] = useState<'year' | 'month' | 'day'>('day')
 
   function handleDaySelect(date: Dayjs) {
     setSelectedDate(date)
-    setModalOpen(true)
+    if (view === 'day') {
+      setModalOpen(true)
+    } else {
+      setSelectedDate(null)
+    }
   }
 
   function handleModalClose() {
@@ -60,6 +65,7 @@ export default function AppCalendar() {
           reduceAnimations={false}
           value={selectedDate}
           onChange={handleDaySelect}
+          onViewChange={setView}
           slots={{ day: CustomDay }}
           sx={{
             width: '100%',
