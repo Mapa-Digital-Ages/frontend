@@ -1,5 +1,6 @@
 import { Box, Typography } from '@mui/material'
 import AppPageContainer from '@/components/ui/AppPageContainer'
+import { SubjectChip, SUBJECTS } from "@/components/ui/AppSubjectsTags";
 
 function StudentComponentsPage() {
   return (
@@ -9,9 +10,14 @@ function StudentComponentsPage() {
       </Typography>
 
       <Box className="flex min-h-[80vh] flex-col items-center justify-center rounded-2xl bg-white p-8">
-        <Typography className="text-lg text-slate-400">
-          Área para testar componentes
-        </Typography>
+       <Box className="flex gap-3 flex-wrap">
+  <SubjectChip {...SUBJECTS.ciencias} />
+  <SubjectChip {...SUBJECTS.matematica} />
+  <SubjectChip {...SUBJECTS.historia} />
+  <SubjectChip {...SUBJECTS.portugues} />
+  <SubjectChip {...SUBJECTS.geografia} />
+  <SubjectChip {...SUBJECTS.ingles} />
+</Box>
       </Box>
     </AppPageContainer>
   )
