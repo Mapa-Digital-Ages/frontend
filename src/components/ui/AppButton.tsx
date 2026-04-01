@@ -7,7 +7,7 @@ type AppButtonProps<C extends ElementType = 'button'> = ButtonProps<
     component?: C
   }
 >
-
+/*teste adicionando algo pra modificar*/
 function AppButton<C extends ElementType = 'button'>({
   className,
   ...props
