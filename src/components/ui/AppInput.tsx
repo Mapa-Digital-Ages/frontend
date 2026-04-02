@@ -33,7 +33,6 @@ export default function AppInput({
   sx,
   ...props
 }: AppInputProps) {
-
   const [showPassword, setShowPassword] = React.useState(false)
 
   const isPasswordField = type === 'password'
@@ -100,7 +99,7 @@ export default function AppInput({
         endAdornment: isPasswordField ? (
           <InputAdornment position="end">
             <IconButton
-              onClick={() => setShowPassword((prev) => !prev)}
+              onClick={() => setShowPassword(prev => !prev)}
               edge="end"
             >
               {showPassword ? <VisibilityOff /> : <Visibility />}
