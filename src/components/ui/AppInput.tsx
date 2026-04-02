@@ -9,38 +9,45 @@ type InputSize = 'small' | 'medium' | 'large'
 
 type AppInputProps = TextFieldProps & {
   inputSize?: InputSize
+  customHeight?: number
   icon?: React.ReactNode
 }
 
 export default function AppInput({
   inputSize = 'medium',
+  customHeight,
   icon,
   className,
   InputProps,
+  type = 'text',
+  sx,
   ...props
 }: AppInputProps) {
 
   const [showPassword, setShowPassword] = React.useState(false)
 
-  const isPasswordField = props.type === 'password'
+  const isPasswordField = type === 'password'
 
   const inputType = isPasswordField
     ? showPassword
       ? 'text'
       : 'password'
-    : props.type
+    : type
 
   const muiSize = inputSize === 'small' ? 'small' : 'medium'
 
-  const sizeStyles = 
-    inputSize === 'large'
-      ? {
-          '& .MuiInputBase-root': {
-            height: 56,
-            fontSize: '1rem',
-          },
-        }
-      : {}
+  const sizeStyles = {
+    '& .MuiOutlinedInput-root': {
+      ...(inputSize === 'large' && {
+        height: 56,
+        fontSize: '1rem',
+      }),
+
+      ...(customHeight && {
+        height: customHeight,
+      }),
+    }, 
+}
 
   return (
     <TextField
