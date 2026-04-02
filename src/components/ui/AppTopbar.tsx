@@ -36,12 +36,12 @@ function AppTopbar({
         {
           backdropFilter: 'blur(8px)',
           backgroundColor: alpha(theme.palette.background.paper, 0.92),
-          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.9)}`,
+          borderBottom: 'none',
         },
         ...(Array.isArray(appBarProps.sx) ? appBarProps.sx : [appBarProps.sx]),
       ]}
     >
-      <Toolbar className="min-h-[72px] items-center justify-between gap-2 md:gap-4">
+      <Toolbar className="min-h-18 items-center justify-between gap-2 md:gap-4">
         <Box className="flex items-center gap-2">
           {showMenuButton && (
             <IconButton

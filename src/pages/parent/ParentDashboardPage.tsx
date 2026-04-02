@@ -199,9 +199,7 @@ function ParentDashboardPage() {
         <AppCard
           contentClassName="gap-4 p-5"
           title="Desempenho por Disciplina"
-          titleTypographyProps={{
-            className: 'text-2xl font-bold text-slate-900 md:text-3xl',
-          }}
+          titleClassName="text-2xl font-bold text-slate-900 md:text-3xl"
         >
           {DISCIPLINE_PERFORMANCE.map(item => (
             <Box
@@ -229,9 +227,7 @@ function ParentDashboardPage() {
         <AppCard
           contentClassName="gap-4 p-5"
           title="Resumo Socioemocional"
-          titleTypographyProps={{
-            className: 'text-2xl font-bold text-slate-900 md:text-3xl',
-          }}
+          titleClassName="text-2xl font-bold text-slate-900 md:text-3xl"
         >
           <Box className="grid grid-cols-5 gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3">
             {WEEKLY_MOOD.map(item => (

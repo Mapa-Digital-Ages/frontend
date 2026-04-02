@@ -11,9 +11,16 @@ if (!rootElement) {
 }
 
 const persistedMode = localStorage.getItem(STORAGE_KEYS.themeMode)
-if (persistedMode === 'dark' || persistedMode === 'light') {
-  document.documentElement.dataset.theme = persistedMode
-  document.documentElement.classList.toggle('dark', persistedMode === 'dark')
+const resolvedMode =
+  persistedMode === 'dark' || persistedMode === 'light'
+    ? persistedMode
+    : window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light'
+
+if (resolvedMode === 'dark' || resolvedMode === 'light') {
+  document.documentElement.dataset.theme = resolvedMode
+  document.documentElement.classList.toggle('dark', resolvedMode === 'dark')
 }
 
 createRoot(rootElement).render(

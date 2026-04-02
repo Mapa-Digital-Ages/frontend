@@ -22,10 +22,16 @@ export interface SummaryMetric {
   helperText?: string
 }
 
+export interface SubjectContext {
+  id?: string
+  label: string
+  color?: string
+}
+
 export interface StudentTask {
   id: string
   title: string
-  subject: string
+  subject: SubjectContext
   dueDate: string
   status: 'pending' | 'inProgress' | 'completed'
 }
