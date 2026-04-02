@@ -7,13 +7,12 @@ import LockIcon from '@mui/icons-material/Lock'
 import SearchIcon from '@mui/icons-material/Search'
 import Visibility from '@mui/icons-material/Visibility'
 import VisibilityOff from '@mui/icons-material/VisibilityOff'
-import { Padding } from '@mui/icons-material'
 
 type InputSize = 'small' | 'medium' | 'large'
 
 type InputType = 'text' | 'password' | 'email' | 'search'
 
-type AppInputProps = Omit<TextFieldProps, 'type'> & {
+type AppInputProps = Omit<TextFieldProps, 'type' | 'label'> & {
   inputSize?: InputSize
   customSize?: {
     height?: number
@@ -57,9 +56,14 @@ export default function AppInput({
       ...(customSize && {
         height: customSize.height,
         fontSize: customSize.fontSize,
-        padding: customSize.padding,
       }),
-    }, 
+    },
+
+    ...(customSize?.padding && {
+      '& .MuiInputBase-input': {
+        padding: customSize.padding,
+      },
+    }),
   }
 
   const getDefaultIcon = () => {
