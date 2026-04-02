@@ -9,7 +9,7 @@ import {
 } from '@mui/x-date-pickers/PickersDay'
 import DayDetailModal from './DayDetailModal'
 
-function CustomDay(props: PickersDayProps<Dayjs>) {
+function CustomDay(props: PickersDayProps) {
   const isFuture = props.day.isAfter(dayjs(), 'day')
 
   return (
@@ -18,9 +18,13 @@ function CustomDay(props: PickersDayProps<Dayjs>) {
       sx={{
         margin: '2px',
         borderRadius: '8px',
-        border: theme =>
-          `2.5px solid ${isFuture ? theme.palette.primary.main : theme.palette.primary.main}`,
-        backgroundColor: isFuture ? 'background.paper' : 'info.main',
+        border: theme => `2.5px solid ${theme.palette.primary.dark}`,
+        backgroundColor: theme =>
+          isFuture
+            ? 'background.paper'
+            : theme.palette.mode === 'dark'
+              ? 'primary.dark'
+              : 'primary.light',
         color: theme =>
           isFuture ? theme.palette.text.primary : theme.palette.text.primary,
         '&:hover': {
@@ -51,7 +55,8 @@ export default function AppCalendar() {
   const [modalOpen, setModalOpen] = useState(false)
   const [view, setView] = useState<'year' | 'month' | 'day'>('day')
 
-  function handleDaySelect(date: Dayjs) {
+  function handleDaySelect(date: Dayjs | null) {
+    if (!date) return
     setSelectedDate(date)
     if (view === 'day') {
       setModalOpen(true)
