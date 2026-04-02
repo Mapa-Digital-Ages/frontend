@@ -1,24 +1,32 @@
 import React from 'react'
 import TextField, { type TextFieldProps } from '@mui/material/TextField'
 import InputAdornment from '@mui/material/InputAdornment'
-import IconButton from 'node_modules/@mui/material/esm/IconButton/IconButton'
+import IconButton from '@mui/material/IconButton'
 import EmailIcon from '@mui/icons-material/Email'
 import LockIcon from '@mui/icons-material/Lock'
 import SearchIcon from '@mui/icons-material/Search'
 import Visibility from '@mui/icons-material/Visibility'
 import VisibilityOff from '@mui/icons-material/VisibilityOff'
+import { Padding } from '@mui/icons-material'
 
 type InputSize = 'small' | 'medium' | 'large'
 
-type AppInputProps = TextFieldProps & {
+type InputType = 'text' | 'password' | 'email' | 'search'
+
+type AppInputProps = Omit<TextFieldProps, 'type'> & {
   inputSize?: InputSize
-  customHeight?: number
+  customSize?: {
+    height?: number
+    fontSize?: string
+    padding?: string
+  }
   icon?: React.ReactNode
+  type?: InputType
 }
 
 export default function AppInput({
   inputSize = 'medium',
-  customHeight,
+  customSize,
   icon,
   className,
   InputProps,
@@ -46,8 +54,10 @@ export default function AppInput({
         fontSize: '1rem',
       }),
 
-      ...(customHeight && {
-        height: customHeight,
+      ...(customSize && {
+        height: customSize.height,
+        fontSize: customSize.fontSize,
+        padding: customSize.padding,
       }),
     }, 
   }
