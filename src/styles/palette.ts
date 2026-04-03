@@ -1,6 +1,12 @@
 import type { PaletteMode, ThemeOptions } from '@mui/material'
 import { AppColors } from './AppColors'
 
+declare module '@mui/material/styles' {
+  interface TypeBackground {
+    hover: string
+  }
+}
+
 const lightPalette: ThemeOptions['palette'] = {
   primary: {
     main: AppColors.light.primary,
@@ -29,6 +35,7 @@ const lightPalette: ThemeOptions['palette'] = {
   background: {
     default: AppColors.light.backgroundDefault,
     paper: AppColors.light.backgroundPaper,
+    hover: AppColors.light.backgroundHover,
   },
   text: {
     primary: AppColors.light.textPrimary,
@@ -64,6 +71,7 @@ const darkPalette: ThemeOptions['palette'] = {
   background: {
     default: AppColors.dark.backgroundDefault,
     paper: AppColors.dark.backgroundPaper,
+    hover: AppColors.dark.backgroundHover,
   },
   text: {
     primary: AppColors.dark.textPrimary,

@@ -1,6 +1,7 @@
 import { Box, Stack, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import AppPageContainer from '@/components/ui/AppPageContainer'
+import AppCalendar from '@/components/ui/AppCalendar'
 import AppSubjectsTags from '@/components/ui/AppSubjectsTags'
 import { SUBJECTS } from '@/utils/subjectThemes'
 import StudentComponentsShowcase from './components/StudentComponentsShowcase'
@@ -21,7 +22,7 @@ function StudentComponentsPage() {
         Componentes
       </Typography>
       <Box
-        className="flex min-h-[80vh] flex-col gap-6 rounded-2xl p-8"
+        className="flex min-h-[80vh] rounded-2xl bg-white p-6"
         sx={{
           backgroundColor: 'background.paper',
           border: `1px solid ${theme.palette.divider}`,

@@ -19,7 +19,7 @@ export class AppColors {
   static readonly light = {
     primary: 'rgba(31, 75, 153, 1)',
     primaryDark: 'rgba(20, 53, 109, 1)',
-    primaryLight: 'rgba(76, 116, 189, 1)',
+    primaryLight: 'rgb(214 235 248)',
     secondary: 'rgba(17, 124, 116, 1)',
     secondaryDark: 'rgba(12, 89, 83, 1)',
     secondaryLight: 'rgba(67, 167, 159, 1)',
@@ -29,6 +29,7 @@ export class AppColors {
     info: 'rgba(62, 124, 177, 1)',
     backgroundDefault: 'rgba(244, 247, 251, 1)',
     backgroundPaper: 'rgba(255, 255, 255, 1)',
+    backgroundHover: 'rgba(233, 238, 244, 1)',
     textPrimary: 'rgba(16, 42, 67, 1)',
     textSecondary: 'rgba(82, 96, 109, 1)',
   } as const
@@ -46,6 +47,7 @@ export class AppColors {
     info: 'rgba(128, 183, 240, 1)',
     backgroundDefault: 'rgba(13, 22, 38, 1)',
     backgroundPaper: 'rgba(19, 34, 56, 1)',
+    backgroundHover: 'rgba(25, 50, 72, 1)',
     textPrimary: 'rgba(244, 247, 251, 1)',
     textSecondary: 'rgba(182, 194, 207, 1)',
   } as const
