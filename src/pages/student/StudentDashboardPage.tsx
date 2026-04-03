@@ -19,6 +19,7 @@ import { studentService } from '@/services/student.service'
 import { AppColors } from '@/styles/AppColors'
 import { getSubjectTheme, SUBJECTS } from '@/utils/subjectThemes'
 import type { StudentTask, SummaryMetric } from '@/types/common'
+import MetricsCard from '@/components/ui/MetricsCard'
 
 const DISCIPLINE_PROGRESS = [
   {
@@ -148,32 +149,7 @@ function StudentDashboardPage() {
 
       <Box className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-4">
         {cards.map(card => (
-          <AppCard contentClassName="p-5" key={card.id}>
-            <Box className="flex items-start justify-between">
-              <Typography className="text-lg" sx={{ color: 'text.secondary' }}>
-                {card.title}
-              </Typography>
-              <Box
-                className="grid size-12 place-items-center rounded-2xl"
-                sx={{
-                  backgroundColor: card.iconBackground,
-                  color: card.iconColor,
-                }}
-              >
-                {card.icon}
-              </Box>
-            </Box>
-            <Typography
-              className="text-3xl font-bold md:text-[2.5rem]"
-              sx={{
-                color: 'text.primary',
-                fontSize: { md: 25, xs: 10 },
-                fontWeight: 700,
-              }}
-            >
-              {card.value}
-            </Typography>
-          </AppCard>
+          <MetricsCard contentClassName="p-5" key={card.id} {...card} />
         ))}
       </Box>
 
