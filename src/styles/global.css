@@ -43,6 +43,10 @@
   text-rendering: optimizeLegibility;
   -moz-osx-font-smoothing: grayscale;
   -webkit-font-smoothing: antialiased;
+  --dropdown-selected-background: #0d9dc9;
+  --dropdown-modal-background: #ffffff;
+  --dropdown-radius: 10px;
+  --dropdown-option-gap: 2px;
 }
 
 .dark {

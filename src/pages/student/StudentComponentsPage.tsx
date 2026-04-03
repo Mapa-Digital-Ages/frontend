@@ -1,13 +1,23 @@
 import { Box, Stack, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import AppPageContainer from '@/components/ui/AppPageContainer'
-import AppCalendar from '@/components/ui/AppCalendar'
-import AppSubjectsTags from '@/components/ui/AppSubjectsTags'
-import { SUBJECTS } from '@/utils/subjectThemes'
+import AppDropdown, { DropdownOption } from '@/components/ui/AppDropdown'
+import { useState } from 'react'
 import StudentComponentsShowcase from './components/StudentComponentsShowcase'
+import AppCalendar from '@/components/ui/AppCalendar'
 import AppInput from '@/components/ui/AppInput'
 
+const dropdownOptions: DropdownOption[] = [
+  { label: '5º Ano', value: '5' },
+  { label: '6º Ano', value: '6' },
+  { label: '7º Ano', value: '7' },
+  { label: '8º Ano', value: '8' },
+  { label: '9º Ano', value: '9' },
+]
+
 function StudentComponentsPage() {
+  const [singleValue, setSingleValue] = useState<string | number>('7')
+  const [multiValue, setMultiValue] = useState<Array<string | number>>(['7'])
   const theme = useTheme()
 
   return (
@@ -21,6 +31,7 @@ function StudentComponentsPage() {
       >
         Componentes
       </Typography>
+
       <Box
         className="flex min-h-[80vh] rounded-2xl bg-white p-8 space-x-8"
         sx={{
@@ -28,9 +39,45 @@ function StudentComponentsPage() {
           border: `1px solid ${theme.palette.divider}`,
         }}
       >
-        <Box className="flex-1">
-          <AppCalendar />
-        </Box>
+        <Stack spacing={3}>
+          <Box className="flex-1">
+            <AppCalendar />
+          </Box>
+
+          <AppDropdown
+            options={dropdownOptions}
+            value={singleValue}
+            onChange={e =>
+              setSingleValue(
+                Array.isArray(e.target.value)
+                  ? e.target.value[0]
+                  : e.target.value
+              )
+            }
+            placeholder="Selecione o ano"
+            width="auto"
+            dropdownPlacement="bottom"
+          />
+          <AppDropdown
+            options={dropdownOptions}
+            multiple
+            value={multiValue}
+            onChange={e => {
+              const v = e.target.value
+              setMultiValue(Array.isArray(v) ? v : [v])
+            }}
+            placeholder="Selecione os anos"
+            dropdownPlacement="bottom"
+          />
+          <AppDropdown
+            options={dropdownOptions}
+            value={singleValue}
+            onChange={() => {}}
+            placeholder="Desabilitado"
+            disabled
+            width={120}
+          />
+        </Stack>
 
         <Box className="flex-1">
           <Typography variant="h6">Testes de Input</Typography>
