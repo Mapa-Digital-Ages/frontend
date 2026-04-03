@@ -4,7 +4,7 @@ function AppPageContainer({ children, className, sx, ...boxProps }: BoxProps) {
   return (
     <Box
       {...boxProps}
-      className={['mx-auto grid w-full max-w-[1260px] gap-5', className]
+      className={['mx-auto grid w-full max-w-315 gap-5', className]
         .filter(Boolean)
         .join(' ')}
       sx={Array.isArray(sx) ? sx : [sx]}

@@ -17,7 +17,13 @@ function StudentComponentsPage() {
 
   return (
     <AppPageContainer className="gap-4 md:gap-5">
-      <Typography className="text-2xl font-bold text-slate-900 md:text-3xl">
+      <Typography
+        sx={{
+          color: 'text.primary',
+          fontSize: { md: 24, xs: 20 },
+          fontWeight: 700,
+        }}
+      >
         Componentes
       </Typography>
 
