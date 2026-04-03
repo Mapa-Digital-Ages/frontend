@@ -22,7 +22,7 @@ function StudentComponentsPage() {
         Componentes
       </Typography>
       <Box
-        className="flex min-h-[80vh] rounded-2xl bg-white p-6"
+        className="flex min-h-[80vh] flex-col gap-6 rounded-2xl bg-white p-8"
         sx={{
           backgroundColor: 'background.paper',
           border: `1px solid ${theme.palette.divider}`,
