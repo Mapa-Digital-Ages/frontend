@@ -30,42 +30,41 @@ function StudentComponentsPage() {
         <Typography variant="h6">Testes de Input</Typography>
 
         <Stack spacing={3}>
-          <Stack spacing={1}>
-            <Typography variant="body2">Texto normal</Typography>
-            <AppInput placeholder="Digite algo" />
-          </Stack>
+          <AppInput label="Texto normal" placeholder="Digite algo" />
 
-          <Stack spacing={1}>
-            <Typography variant="body2">Email</Typography>
-            <AppInput type="email" placeholder="voce@exemplo.com" />
-          </Stack>
+          <AppInput
+            label="Email"
+            type="email"
+            placeholder="voce@exemplo.com"
+          />
 
-          <Stack spacing={1}>
-            <Typography variant="body2">Senha</Typography>
-            <AppInput type="password" placeholder="Digite sua senha" />
-          </Stack>
+          <AppInput
+            label="Senha"
+            type="password"
+            placeholder="Digite sua senha"
+          />
 
-          <Stack spacing={1}>
-            <Typography variant="body2">Busca</Typography>
-            <AppInput type="search" placeholder="Pesquisar..." />
-          </Stack>
+          <AppInput
+            label="Busca"
+            type="search"
+            placeholder="Pesquisar..."
+          />
 
-          <Stack spacing={1}>
-            <Typography variant="body2">Grande</Typography>
-            <AppInput inputSize="large" placeholder="Input grande" />
-          </Stack>
+          <AppInput
+            label="Grande"
+            inputSize="large"
+            placeholder="Input grande"
+          />
 
-          <Stack spacing={1}>
-            <Typography variant="body2">Customizado</Typography>
-            <AppInput
-              placeholder="Input customizado"
-              customSize={{
-                height: 70,
-                fontSize: '18px',
-                padding: '0 20px',
-              }}
-            />
-          </Stack>
+          <AppInput
+            label="Customizado"
+            placeholder="Input customizado"
+            customSize={{
+              height: 70,
+              fontSize: '18px',
+              padding: '0 20px',
+            }}
+          />
         </Stack>
       </Box>
       <StudentComponentsShowcase />

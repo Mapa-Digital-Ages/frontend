@@ -7,12 +7,14 @@ import LockIcon from '@mui/icons-material/Lock'
 import SearchIcon from '@mui/icons-material/Search'
 import Visibility from '@mui/icons-material/Visibility'
 import VisibilityOff from '@mui/icons-material/VisibilityOff'
+import { Stack, Typography } from '@mui/material'
 
 type InputSize = 'small' | 'medium' | 'large'
 
 type InputType = 'text' | 'password' | 'email' | 'search'
 
-type AppInputProps = Omit<TextFieldProps, 'type' | 'label'> & {
+type AppInputProps = Omit<TextFieldProps, 'type'> & {
+  label?: string
   inputSize?: InputSize
   customSize?: {
     height?: number
@@ -24,6 +26,7 @@ type AppInputProps = Omit<TextFieldProps, 'type' | 'label'> & {
 }
 
 export default function AppInput({
+  label,
   inputSize = 'medium',
   customSize,
   icon,
@@ -47,6 +50,16 @@ export default function AppInput({
 
   const sizeStyles = {
     '& .MuiOutlinedInput-root': {
+      ...(inputSize === 'small' && {
+        height: 36,
+        fontSize: '0.85rem',
+      }),
+
+      ...(inputSize === 'medium' && {
+        height: 44,
+        fontSize: '0.95rem',
+      }),
+
       ...(inputSize === 'large' && {
         height: 56,
         fontSize: '1rem',
@@ -83,38 +96,40 @@ export default function AppInput({
   const startIcon = getDefaultIcon()
 
   return (
-    <TextField
-      {...props}
-      type={inputType}
-      size={muiSize}
-      fullWidth
-      variant="outlined"
-      className={['w-full', className].filter(Boolean).join(' ')}
-      InputProps={{
-        ...InputProps,
-        startAdornment: startIcon ? (
-          <InputAdornment position="start">{startIcon}</InputAdornment>
-        ) : null,
+    <Stack spacing={0.5} className={className}>
+      {label && <Typography variant="body2">{label}</Typography>}
 
-        endAdornment: isPasswordField ? (
-          <InputAdornment position="end">
-            <IconButton
-              onClick={() => setShowPassword(prev => !prev)}
-              edge="end"
-            >
-              {showPassword ? <VisibilityOff /> : <Visibility />}
-            </IconButton>
-          </InputAdornment>
-        ) : null,
-      }}
-      sx={{
-        '& .MuiOutlinedInput-root': {
-          borderRadius: 5,
-          backgroundColor: '#F9FAFB',
-        },
-        ...(sizeStyles as object),
-        ...sx,
-      }}
-    />
+      <TextField
+        {...props}
+        type={inputType}
+        size={muiSize}
+        fullWidth
+        variant="outlined"
+        InputProps={{
+          ...InputProps,
+          startAdornment: startIcon ? (
+            <InputAdornment position="start">{startIcon}</InputAdornment>
+          ) : null,
+          endAdornment: isPasswordField ? (
+            <InputAdornment position="end">
+              <IconButton
+                onClick={() => setShowPassword(prev => !prev)}
+                edge="end"
+              >
+                {showPassword ? <VisibilityOff /> : <Visibility />}
+              </IconButton>
+            </InputAdornment>
+          ) : null,
+        }}
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 5,
+            backgroundColor: '#F9FAFB',
+          },
+          ...(sizeStyles as object),
+          ...sx,
+        }}
+      />
+    </Stack>
   )
 }
