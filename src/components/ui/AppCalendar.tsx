@@ -18,15 +18,19 @@ function CustomDay(props: PickersDayProps) {
       sx={{
         margin: '2px',
         borderRadius: '8px',
-        border: theme => `2.5px solid ${theme.palette.primary.dark}`,
+        border: theme =>
+          `2.5px solid ${
+            theme.palette.mode === 'dark'
+              ? theme.palette.primary.dark
+              : theme.palette.primary.main
+          }`,
         backgroundColor: theme =>
           isFuture
             ? 'background.paper'
             : theme.palette.mode === 'dark'
-              ? 'primary.dark'
-              : 'primary.light',
-        color: theme =>
-          isFuture ? theme.palette.text.primary : theme.palette.text.primary,
+              ? theme.palette.primary.dark
+              : theme.palette.primary.light,
+        color: theme => theme.palette.text.primary,
         '&:hover': {
           backgroundColor: isFuture ? 'background.hover' : 'background.hover',
         },
@@ -39,12 +43,21 @@ function CustomDay(props: PickersDayProps) {
           backgroundColor: 'primary.main',
         },
         '&.MuiPickersDay-today': {
-          border: theme => `2px solid ${theme.palette.primary.main}`,
+          border: theme =>
+            `2.5px solid ${
+              theme.palette.mode === 'dark'
+                ? theme.palette.primary.dark
+                : theme.palette.primary.main
+            }`,
         },
-        '&:focus': {
+        '&:focus': theme => ({
           outline: 'none',
-          backgroundColor: isFuture ? 'background.paper' : 'info.main',
-        },
+          backgroundColor: isFuture
+            ? 'background.paper'
+            : theme.palette.mode === 'dark'
+              ? 'primary.dark'
+              : 'primary.light',
+        }),
       }}
     />
   )
