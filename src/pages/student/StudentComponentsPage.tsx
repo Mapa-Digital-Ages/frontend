@@ -33,11 +33,7 @@ function StudentComponentsPage() {
         <Stack spacing={3}>
           <AppInput label="Texto normal" placeholder="Digite algo" />
 
-          <AppInput
-            label="Email"
-            type="email"
-            placeholder="voce@exemplo.com"
-          />
+          <AppInput label="Email" type="email" placeholder="voce@exemplo.com" />
 
           <AppInput
             label="Senha"
@@ -45,11 +41,7 @@ function StudentComponentsPage() {
             placeholder="Digite sua senha"
           />
 
-          <AppInput
-            label="Busca"
-            type="search"
-            placeholder="Pesquisar..."
-          />
+          <AppInput label="Busca" type="search" placeholder="Pesquisar..." />
 
           <AppInput
             label="Grande"
