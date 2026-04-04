@@ -1,6 +1,6 @@
 import { Box, Typography } from '@mui/material'
 import AppPageContainer from '@/components/ui/AppPageContainer'
-import ComponentButton from '@/components/ui/ComponentButton'
+import AppButton from '@/components/ui/AppButton'
 
 function StudentComponentsPage() {
   return (
@@ -13,30 +13,41 @@ function StudentComponentsPage() {
         <Typography className="text-lg text-slate-400"></Typography>
 
         {}
-        <ComponentButton
-          tamanho="small"
-          cor="red"
-          texto="Sou pequeno e vermelho"
-          raioBorda={0}
+        <AppButton
+          size="small"
+          color="primary"
+          label="Sou pequeno e padrao"
+          borderRadius={0}
         />
 
         {}
-        <ComponentButton
-          tamanho="medium"
-          cor="#FF4500" //
-          texto="Sou medio e laranja"
-          raioBorda="8px"
-          posicaoIcone="esquerda"
+        <AppButton
+          size="medium"
+          color="secondary"
+          label="Sou qual cor?"
+          hasBorder={true}
+          borderRadius="8px"
+          iconPosition="left"
         />
 
         {}
-        <ComponentButton
-          tamanho="large"
-          cor="rgb(34, 139, 34)"
-          texto="Sou grande e verde"
-          raioBorda="50%"
-          posicaoIcone="direita"
+        <AppButton
+          size="large"
+          color="error"
+          label="Sou grande e laranja"
+          borderRadius="50%"
+          iconPosition="right"
         />
+        <AppButton
+          label="Voltar"
+          iconPosition="left"
+          hasBorder={true}
+          borderRadius="50px"
+          color="primary"
+        />
+        <AppButton label="Confirmar" color="warning" />
+        <AppButton label="Botao padrao conforme solicitado" />
+        <AppButton color="info" label="Botao com cor info"></AppButton>
       </Box>
     </AppPageContainer>
   )
