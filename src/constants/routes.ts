@@ -8,6 +8,7 @@ export const APP_ROUTES = {
   student: {
     dashboard: '/student/dashboard',
     components: '/student/components',
+    onboardingFlow: '/student/components/onboarding-flow',
   },
   parent: {
     dashboard: '/parent/dashboard',

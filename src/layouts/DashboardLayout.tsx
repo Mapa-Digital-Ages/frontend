@@ -2,10 +2,12 @@ import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded'
 import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded'
 import WidgetsRoundedIcon from '@mui/icons-material/WidgetsRounded'
 import { Box, IconButton, Typography } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import { useState } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
 import AppSidebar from '@/components/ui/AppSidebar'
 import AppTopbar from '@/components/ui/AppTopbar'
+import ThemeModeToggle from '@/components/ui/ThemeMode'
 import { APP_CONFIG } from '@/constants/app'
 import { APP_ROUTES } from '@/constants/routes'
 import { useAuth } from '@/hooks/useAuth'
@@ -51,6 +53,7 @@ const NAVIGATION_BY_ROLE: Record<UserRole, SidebarItem[]> = {
 }
 
 function DashboardLayout() {
+  const theme = useTheme()
   const { isMobile } = useBreakpoint()
   const { logout, user } = useAuth()
   const { role } = useUserRole()
@@ -61,7 +64,10 @@ function DashboardLayout() {
   const userInitial = user?.name?.charAt(0).toUpperCase() ?? 'M'
 
   return (
-    <Box className="flex min-h-screen bg-slate-100">
+    <Box
+      className="fixed inset-0 z-50 flex h-screen w-screen overflow-hidden"
+      sx={{ backgroundColor: 'background.default' }}
+    >
       <AppSidebar
         isMobile={isMobile}
         items={sidebarItems}
@@ -78,6 +84,7 @@ function DashboardLayout() {
         <AppTopbar
           actions={
             <Box className="flex items-center gap-2 sm:gap-3">
+              <ThemeModeToggle />
               <Box
                 className="grid size-9 place-items-center rounded-full text-sm font-semibold text-white"
                 style={{ backgroundColor: AVATAR_BG_BY_ROLE[currentRole] }}
@@ -85,8 +92,9 @@ function DashboardLayout() {
                 {userInitial}
               </Box>
               <Typography
-                className="hidden max-w-[12rem] text-sm font-semibold text-slate-900 sm:block md:max-w-[16rem] md:text-base"
+                className="hidden max-w-48 text-sm font-semibold sm:block md:max-w-[16rem] md:text-base"
                 noWrap
+                sx={{ color: theme.palette.text.primary }}
               >
                 {user?.name}
               </Typography>
@@ -95,9 +103,9 @@ function DashboardLayout() {
           leading={
             <IconButton
               aria-label="Voltar"
-              className="text-slate-500"
               onClick={() => navigate(-1)}
               size="small"
+              sx={{ color: theme.palette.text.secondary }}
             >
               <ChevronLeftRoundedIcon />
             </IconButton>
@@ -106,7 +114,10 @@ function DashboardLayout() {
           showMenuButton
         />
 
-        <Box className="flex-1 px-3 py-4 md:px-5 lg:px-6" component="main">
+        <Box
+          className="flex-1 px-3 py-4 md:px-5 lg:px-6 overflow-auto"
+          component="main"
+        >
           <Outlet />
         </Box>
       </Box>

@@ -1,35 +1,65 @@
-import { useEffect, useState, type PropsWithChildren } from 'react'
+import { useEffect, useMemo, useState, type PropsWithChildren } from 'react'
 import { CssBaseline, type PaletteMode } from '@mui/material'
 import { ThemeProvider } from '@mui/material/styles'
 import { STORAGE_KEYS } from '@/constants/storage'
 import { createAppTheme } from '@/styles/theme'
 import { getStorageItem, setStorageItem } from '@/utils/storage'
-import { ThemeContext } from './theme-context'
+import { ThemeContext, type ThemePreference } from './theme-context'
 
-function getInitialMode(): PaletteMode {
-  return getStorageItem<PaletteMode>(STORAGE_KEYS.themeMode) ?? 'light'
+function getSystemMode(): PaletteMode {
+  if (
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-color-scheme: dark)').matches
+  ) {
+    return 'dark'
+  }
+
+  return 'light'
+}
+
+function applyThemeToDocument(mode: PaletteMode) {
+  const rootElement = document.documentElement
+  rootElement.dataset.theme = mode
+  rootElement.classList.toggle('dark', mode === 'dark')
+}
+
+function getInitialPreference(): ThemePreference {
+  return getStorageItem<ThemePreference>(STORAGE_KEYS.themeMode) ?? 'system'
 }
 
 export function AppThemeProvider({ children }: PropsWithChildren) {
-  const [mode, setMode] = useState<PaletteMode>(getInitialMode)
-  const theme = createAppTheme(mode)
+  const [preference, setPreference] =
+    useState<ThemePreference>(getInitialPreference)
+  const [systemMode, setSystemMode] = useState<PaletteMode>(getSystemMode)
+  const mode = preference === 'system' ? systemMode : preference
+  const theme = useMemo(() => createAppTheme(mode), [mode])
 
   useEffect(() => {
-    const rootElement = document.documentElement
-    rootElement.dataset.theme = mode
-    rootElement.classList.toggle('dark', mode === 'dark')
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+
+    function handleSystemModeChange() {
+      setSystemMode(mediaQuery.matches ? 'dark' : 'light')
+    }
+
+    handleSystemModeChange()
+    mediaQuery.addEventListener('change', handleSystemModeChange)
+
+    return () => {
+      mediaQuery.removeEventListener('change', handleSystemModeChange)
+    }
+  }, [])
+
+  useEffect(() => {
+    applyThemeToDocument(mode)
   }, [mode])
 
-  function toggleMode() {
-    setMode(currentMode => {
-      const nextMode = currentMode === 'light' ? 'dark' : 'light'
-      setStorageItem(STORAGE_KEYS.themeMode, nextMode)
-      return nextMode
-    })
+  function setThemePreference(nextPreference: ThemePreference) {
+    setPreference(nextPreference)
+    setStorageItem(STORAGE_KEYS.themeMode, nextPreference)
   }
 
   return (
-    <ThemeContext.Provider value={{ mode, toggleMode }}>
+    <ThemeContext.Provider value={{ mode, preference, setThemePreference }}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         {children}

@@ -2,7 +2,6 @@ import {
   Card,
   CardContent,
   CardHeader,
-  type CardHeaderProps,
   type CardProps,
   type SxProps,
   type Theme,
@@ -10,32 +9,32 @@ import {
 import type { ReactNode } from 'react'
 
 interface AppCardProps extends CardProps {
-  title?: string
-  subtitle?: string
   action?: ReactNode
-  subheaderTypographyProps?: CardHeaderProps['subheaderTypographyProps']
-  titleTypographyProps?: CardHeaderProps['titleTypographyProps']
   contentClassName?: string
   contentSx?: SxProps<Theme>
+  subtitle?: string
+  subtitleClassName?: string
+  title?: string
+  titleClassName?: string
 }
 
 function AppCard({
-  title,
-  subtitle,
   action,
-  subheaderTypographyProps,
-  titleTypographyProps,
   children,
   className,
   contentClassName,
   contentSx,
+  subtitle,
+  subtitleClassName,
+  title,
+  titleClassName,
   ...cardProps
 }: AppCardProps) {
   return (
     <Card
       {...cardProps}
       className={[
-        'rounded-3xl border border-slate-200/90 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)] dark:border-white/10 dark:bg-slate-900/70',
+        'rounded-3xl solid 1px border border-md border-var(--app-border-strong) bg-var(--app-surface) shadow-var(--app-card-shadow) text-var(--app-foreground)',
         className,
       ]
         .filter(Boolean)
@@ -45,9 +44,27 @@ function AppCard({
         <CardHeader
           action={action}
           subheader={subtitle}
-          subheaderTypographyProps={subheaderTypographyProps}
+          slotProps={{
+            subheader: {
+              className: ['text-sm', subtitleClassName]
+                .filter(Boolean)
+                .join(' '),
+            },
+            title: {
+              className: ['text-xl font-bold', titleClassName]
+                .filter(Boolean)
+                .join(' '),
+            },
+          }}
+          sx={{
+            '& .MuiCardHeader-subheader': {
+              color: 'var(--app-muted-foreground)',
+            },
+            '& .MuiCardHeader-title': {
+              color: 'var(--app-foreground)',
+            },
+          }}
           title={title}
-          titleTypographyProps={titleTypographyProps}
         />
       )}
       <CardContent

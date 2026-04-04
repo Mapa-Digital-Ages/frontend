@@ -117,6 +117,7 @@ function LoginForm({ isSubmitting = false, onSubmit }: LoginFormProps) {
           }}
           placeholder="Ex.: Lucas Silva"
           value={fullName}
+          backgroundColor="background.default"
         />
       )}
 
@@ -127,6 +128,7 @@ function LoginForm({ isSubmitting = false, onSubmit }: LoginFormProps) {
         onChange={event => updateField('email', event.target.value)}
         placeholder="voce@exemplo.com"
         value={values.email}
+        backgroundColor="background.default"
       />
 
       {mode === 'register' ? (
@@ -139,6 +141,7 @@ function LoginForm({ isSubmitting = false, onSubmit }: LoginFormProps) {
             placeholder="Mín. 8 caracteres"
             type="password"
             value={values.password}
+            backgroundColor="background.default"
           />
           <AppInput
             error={Boolean(errors.confirmPassword)}
@@ -154,6 +157,7 @@ function LoginForm({ isSubmitting = false, onSubmit }: LoginFormProps) {
             placeholder="Repita a senha"
             type="password"
             value={confirmPassword}
+            backgroundColor="background.default"
           />
         </Box>
       ) : (
@@ -164,6 +168,7 @@ function LoginForm({ isSubmitting = false, onSubmit }: LoginFormProps) {
           onChange={event => updateField('password', event.target.value)}
           type="password"
           value={values.password}
+          backgroundColor="background.default"
         />
       )}
 
@@ -176,6 +181,7 @@ function LoginForm({ isSubmitting = false, onSubmit }: LoginFormProps) {
         }
         select
         value={values.role}
+        backgroundColor="background.default"
       >
         {USER_ROLES.map(role => (
           <MenuItem key={role} value={role}>

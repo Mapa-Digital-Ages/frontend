@@ -9,67 +9,136 @@ interface RoleColorPalette {
 
 export class AppColors {
   static readonly neutral = {
-    background: '#F3F5F9',
-    border: '#D9DEE7',
-    card: '#FFFFFF',
-    mutedText: '#667085',
-    text: '#111827',
+    background: 'rgba(243, 245, 249, 1)',
+    border: 'rgba(217, 222, 231, 1)',
+    card: 'rgba(255, 255, 255, 1)',
+    mutedText: 'rgba(102, 112, 133, 1)',
+    text: 'rgba(17, 24, 39, 1)',
   } as const
 
   static readonly light = {
-    primary: '#1F4B99',
-    primaryDark: '#14356D',
-    primaryLight: '#4C74BD',
-    secondary: '#117C74',
-    secondaryDark: '#0C5953',
-    secondaryLight: '#43A79F',
-    success: '#2E7D4F',
-    warning: '#C7831C',
-    error: '#C14953',
-    info: '#3E7CB1',
-    backgroundDefault: '#F4F7FB',
-    backgroundPaper: '#FFFFFF',
-    textPrimary: '#102A43',
-    textSecondary: '#52606D',
+    primary: 'rgba(31, 75, 153, 1)',
+    primaryDark: 'rgba(20, 53, 109, 1)',
+    primaryLight: 'rgb(214 235 248)',
+    secondary: 'rgba(17, 124, 116, 1)',
+    secondaryDark: 'rgba(12, 89, 83, 1)',
+    secondaryLight: 'rgba(67, 167, 159, 1)',
+    success: 'rgb(43, 171, 111)',
+    warning: 'rgba(199, 131, 28, 1)',
+    error: 'rgba(193, 73, 83, 1)',
+    info: 'rgba(62, 124, 177, 1)',
+    backgroundDefault: 'rgba(244, 247, 251, 1)',
+    backgroundPaper: 'rgba(255, 255, 255, 1)',
+    backgroundHover: 'rgba(233, 238, 244, 1)',
+    border: 'rgba(223, 227, 231, 1)',
+    hoverBorder: 'rgba(189, 197, 209, 1)',
+    textPrimary: 'rgba(16, 42, 67, 1)',
+    textSecondary: 'rgba(82, 96, 109, 1)',
   } as const
 
   static readonly dark = {
-    primary: '#8CB4FF',
-    primaryDark: '#5D90E8',
-    primaryLight: '#B1CCFF',
-    secondary: '#78D3C8',
-    secondaryDark: '#4DA89E',
-    secondaryLight: '#A2E5DD',
-    success: '#6BD38B',
-    warning: '#F0B35A',
-    error: '#F08B94',
-    info: '#80B7F0',
-    backgroundDefault: '#0D1626',
-    backgroundPaper: '#132238',
-    textPrimary: '#F4F7FB',
-    textSecondary: '#B6C2CF',
+    primary: 'rgba(140, 180, 255, 1)',
+    primaryDark: 'rgba(93, 144, 232, 1)',
+    primaryLight: 'rgba(177, 204, 255, 1)',
+    secondary: 'rgba(120, 211, 200, 1)',
+    secondaryDark: 'rgba(77, 168, 158, 1)',
+    secondaryLight: 'rgba(162, 229, 221, 1)',
+    success: 'rgba(107, 211, 139, 1)',
+    warning: 'rgba(240, 179, 90, 1)',
+    error: 'rgba(240, 139, 148, 1)',
+    info: 'rgba(128, 183, 240, 1)',
+    backgroundDefault: 'rgba(13, 22, 38, 1)',
+    backgroundPaper: 'rgba(19, 34, 56, 1)',
+    backgroundHover: 'rgba(25, 50, 72, 1)',
+    border: 'rgba(55, 77, 112, 1)',
+    hoverBorder: 'rgba(75, 97, 132, 1)',
+    textPrimary: 'rgba(244, 247, 251, 1)',
+    textSecondary: 'rgba(182, 194, 207, 1)',
   } as const
 
   static readonly role: Record<UserRole, RoleColorPalette> = {
     student: {
-      contrast: '#FFFFFF',
-      primary: '#1D4ED8',
-      secondary: '#0284C7',
-      soft: '#DBEAFE',
+      contrast: 'rgba(255, 255, 255, 1)',
+      primary: 'rgba(29, 78, 216, 1)',
+      secondary: 'rgba(2, 132, 199, 1)',
+      soft: 'rgba(219, 234, 254, 1)',
     },
     parent: {
-      contrast: '#FFFFFF',
-      primary: '#F97316',
-      secondary: '#EA580C',
-      soft: '#FFEDD5',
+      contrast: 'rgba(255, 255, 255, 1)',
+      primary: 'rgba(249, 115, 22, 1)',
+      secondary: 'rgba(234, 88, 12, 1)',
+      soft: 'rgba(255, 237, 213, 1)',
     },
     admin: {
-      contrast: '#FFFFFF',
-      primary: '#E11D48',
-      secondary: '#BE185D',
-      soft: '#FFE4E6',
+      contrast: 'rgba(255, 255, 255, 1)',
+      primary: 'rgba(225, 29, 72, 1)',
+      secondary: 'rgba(190, 24, 93, 1)',
+      soft: 'rgba(255, 228, 230, 1)',
     },
   }
+
+  static readonly iconVariants = {
+    light: {
+      blue: {
+        color: 'rgba(37, 99, 235, 1)',
+        background: 'rgba(219, 234, 254, 1)',
+      },
+      cyan: {
+        color: 'rgba(2, 132, 199, 1)',
+        background: 'rgba(224, 242, 254, 1)',
+      },
+      green: {
+        color: 'rgba(5, 150, 105, 1)',
+        background: 'rgba(209, 250, 229, 1)',
+      },
+      grey: {
+        color: 'rgba(75, 85, 99, 1)',
+        background: 'rgba(229, 231, 235, 1)',
+      },
+      orange: {
+        color: 'rgba(234, 88, 12, 1)',
+        background: 'rgba(255, 237, 213, 1)',
+      },
+      purple: {
+        color: 'rgba(124, 58, 237, 1)',
+        background: 'rgba(237, 233, 254, 1)',
+      },
+      red: {
+        color: 'rgba(220, 38, 38, 1)',
+        background: 'rgba(254, 226, 226, 1)',
+      },
+    },
+    dark: {
+      blue: {
+        color: 'rgba(147, 197, 253, 1)',
+        background: 'rgba(23, 37, 84, 1)',
+      },
+      cyan: {
+        color: 'rgba(125, 211, 252, 1)',
+        background: 'rgba(8, 47, 73, 1)',
+      },
+      green: {
+        color: 'rgba(110, 231, 183, 1)',
+        background: 'rgba(6, 78, 59, 1)',
+      },
+      grey: {
+        color: 'rgba(156, 163, 175, 1)',
+        background: 'rgba(31, 41, 55, 1)',
+      },
+      orange: {
+        color: 'rgba(253, 186, 116, 1)',
+        background: 'rgba(67, 20, 7, 1)',
+      },
+      purple: {
+        color: 'rgba(196, 181, 253, 1)',
+        background: 'rgba(46, 16, 101, 1)',
+      },
+      red: {
+        color: 'rgba(252, 165, 165, 1)',
+        background: 'rgba(69, 10, 10, 1)',
+      },
+    },
+  } as const
 
   static gradient(from: string, to: string, angle = '135deg') {
     return `linear-gradient(${angle}, ${from} 0%, ${to} 100%)`
