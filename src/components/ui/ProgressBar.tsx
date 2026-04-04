@@ -1,6 +1,5 @@
 import { Box, LinearProgress, Stack, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import React from 'react'
 import { getSubjectTheme } from '../../utils/subjectThemes'
 import type { SubjectContext } from '../../types/common'
 
