@@ -27,6 +27,20 @@ type AppButtonProps<C extends ElementType = 'button'> = MuiButtonProps<
   }
 >
 
+const hoverBackgroundMap: Record<
+  NonNullable<AppButtonProps['backgroundColor']>,
+  string
+> = {
+  'primary.main': 'primary.hover',
+  'secondary.main': 'secondary.hover',
+  'error.main': 'error.hover',
+  'warning.main': 'warning.hover',
+  'info.main': 'info.hover',
+  'success.main': 'success.hover',
+  'background.default': 'background.hover',
+  'background.paper': 'background.hover',
+}
+
 function AppButton<C extends ElementType = 'button'>({
   className,
   label,
@@ -38,11 +52,8 @@ function AppButton<C extends ElementType = 'button'>({
   textColor = 'primary.contrastText',
   ...props
 }: AppButtonProps<C>) {
-  const hoverBackground = backgroundColor.endsWith('.main')
-    ? backgroundColor.replace('.main', '.hover')
-    : backgroundColor.startsWith('background')
-      ? 'background.hover'
-      : undefined
+  const hoverBackground = hoverBackgroundMap[backgroundColor] || backgroundColor
+
   return (
     <Button
       {...props}
