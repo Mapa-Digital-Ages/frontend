@@ -7,7 +7,6 @@ import StudentComponentsPage from '@/pages/student/StudentComponentsPage'
 import StudentDashboardPage from '@/pages/student/StudentDashboardPage'
 import StudentOnboardingFlowPage from '@/pages/student/StudentOnboardingFlowPage'
 
-
 export const studentRoutes: RouteObject[] = [
   {
     element: <ProtectedRoute />,

@@ -228,21 +228,12 @@ function StudentComponentsPage() {
           >
             Catálogo completo de tags de disciplina
           </Typography>
-          <AppSubjectsTags
-            size="sm"
-            subjects={ALL_SUBJECT_TAG_CONTEXTS}
-          />
+          <AppSubjectsTags size="sm" subjects={ALL_SUBJECT_TAG_CONTEXTS} />
           <Box sx={{ mt: 2 }}>
-            <AppSubjectsTags
-              size="md"
-              subjects={ALL_SUBJECT_TAG_CONTEXTS}
-            />
+            <AppSubjectsTags size="md" subjects={ALL_SUBJECT_TAG_CONTEXTS} />
           </Box>
           <Box sx={{ mt: 2 }}>
-            <AppSubjectsTags
-              size="lg"
-              subjects={ALL_SUBJECT_TAG_CONTEXTS}
-            />
+            <AppSubjectsTags size="lg" subjects={ALL_SUBJECT_TAG_CONTEXTS} />
           </Box>
         </Box>
       </Box>
