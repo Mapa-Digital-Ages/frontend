@@ -10,7 +10,7 @@ interface ProgressBarProps {
   subject?: SubjectContext
   thickness?: number
   valueLabel?: string
-  valueLabelVariant?: 'plain' | 'soft'
+  valueLabelVariant?: 'plain' | 'soft' | 'header'
   value: number
 }
 
@@ -28,7 +28,7 @@ function ProgressBar({
   const normalizedValue = Math.max(0, Math.min(100, value))
   const resolvedValueLabel = valueLabel ?? `${Math.round(normalizedValue)}%`
   const isSoftValueLabel = valueLabelVariant === 'soft'
-
+  const isHeaderValueLabel = valueLabelVariant === 'header'
   return (
     <Stack
       direction={{ sm: 'row', xs: isSoftValueLabel ? 'column' : 'row' }}
@@ -73,7 +73,7 @@ function ProgressBar({
           sx={{
             alignSelf: {
               sm: 'auto',
-              xs: isSoftValueLabel ? 'flex-start' : 'auto',
+              xs: isSoftValueLabel || isHeaderValueLabel ? 'flex-start' : 'auto',
             },
             backgroundColor: isSoftValueLabel
               ? subjectTheme.softSurface.backgroundColor
@@ -82,7 +82,9 @@ function ProgressBar({
             color:
               valueLabelVariant === 'soft'
                 ? subjectTheme.color
-                : subjectTheme.text.color,
+                : isHeaderValueLabel
+                  ? theme.palette.common.white
+                  : subjectTheme.text.color,
             fontSize: valueLabelVariant === 'soft' ? 12 : 14,
             fontWeight: 700,
             maxWidth: '100%',

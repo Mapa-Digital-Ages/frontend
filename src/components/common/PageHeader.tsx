@@ -72,7 +72,7 @@ function PageHeader({
 
         {progress !== undefined && (
           <Box className="w-full">
-            <ProgressBar value={progress} valueLabelVariant="soft" />
+            <ProgressBar value={progress} valueLabelVariant="header" />
           </Box>
         )}
       </Box>
