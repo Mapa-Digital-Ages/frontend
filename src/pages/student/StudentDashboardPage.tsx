@@ -19,6 +19,7 @@ import { studentService } from '@/services/student.service'
 import { AppColors } from '@/styles/AppColors'
 import { getSubjectTheme, SUBJECTS } from '@/utils/subjectThemes'
 import type { StudentTask, SummaryMetric } from '@/types/common'
+import MetricsCard from '@/components/ui/MetricsCard'
 
 const DISCIPLINE_PROGRESS = [
   {
@@ -85,37 +86,30 @@ function StudentDashboardPage() {
       id: 'level',
       title: 'Nível Atual',
       value: '7º Ano',
-      helper: '',
       icon: <WorkspacePremiumRoundedIcon />,
-      iconBackground: 'rgba(219, 234, 254, 1)',
-      iconColor: 'rgba(37, 99, 235, 1)',
+      iconVariant: 'blue' as const,
     },
     {
       id: 'study',
       title: 'Estudo da Semana',
       value: keyMetric ? `${keyMetric.value}` : '340 min',
-      helper: keyMetric?.helperText ?? '+12% vs semana anterior',
+      warningText: '+12% vs semana anterior',
       icon: <BoltRoundedIcon />,
-      iconBackground: 'rgba(224, 242, 254, 1)',
-      iconColor: 'rgba(2, 132, 199, 1)',
+      iconVariant: 'cyan' as const,
     },
     {
       id: 'trail',
       title: 'Trilha Completa',
       value: engagementMetric ? `${engagementMetric.value}` : '62%',
-      helper: '',
       icon: <TrackChangesRoundedIcon />,
-      iconBackground: 'rgba(237, 233, 254, 1)',
-      iconColor: 'rgba(124, 58, 237, 1)',
+      iconVariant: 'purple' as const,
     },
     {
       id: 'streak',
       title: 'Sequência',
       value: '5 dias',
-      helper: '',
       icon: <TrendingUpRoundedIcon />,
-      iconBackground: 'rgba(220, 252, 231, 1)',
-      iconColor: 'rgba(5, 150, 105, 1)',
+      iconVariant: 'green' as const,
     },
   ]
 
@@ -148,32 +142,7 @@ function StudentDashboardPage() {
 
       <Box className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-4">
         {cards.map(card => (
-          <AppCard contentClassName="p-5" key={card.id}>
-            <Box className="flex items-start justify-between">
-              <Typography className="text-lg" sx={{ color: 'text.secondary' }}>
-                {card.title}
-              </Typography>
-              <Box
-                className="grid size-12 place-items-center rounded-2xl"
-                sx={{
-                  backgroundColor: card.iconBackground,
-                  color: card.iconColor,
-                }}
-              >
-                {card.icon}
-              </Box>
-            </Box>
-            <Typography
-              className="text-3xl font-bold md:text-[2.5rem]"
-              sx={{
-                color: 'text.primary',
-                fontSize: { md: 25, xs: 10 },
-                fontWeight: 700,
-              }}
-            >
-              {card.value}
-            </Typography>
-          </AppCard>
+          <MetricsCard contentClassName="p-5" key={card.id} {...card} />
         ))}
       </Box>
 

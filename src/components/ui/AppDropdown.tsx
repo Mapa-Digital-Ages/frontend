@@ -26,6 +26,7 @@ export interface AppDropdownProps extends Omit<
   dropdownPlacement?: 'bottom' | 'top'
   width?: string | number
   borderRadius?: string | number
+  backgroundColor?: string
 }
 
 function AppDropdown({
@@ -36,6 +37,7 @@ function AppDropdown({
   dropdownPlacement = 'bottom',
   width = 240,
   borderRadius = 'var(--dropdown-radius)',
+  backgroundColor = 'background.paper',
   ...props
 }: AppDropdownProps) {
   const { multiple = false, disabled, className } = props
@@ -78,9 +80,15 @@ function AppDropdown({
         IconComponent={ExpandMoreIcon}
         className="outline-none ring-0! border-slate-300 aria-expanded:border-blue-700 aria-expanded:ring-2 aria-expanded:ring-blue-700 focus:border-slate-300 focus-visible:border-slate-300 active:border-slate-300"
         sx={theme => ({
-          backgroundColor: 'background.paper',
+          backgroundColor: backgroundColor,
           color: theme.palette.text.primary,
           borderRadius: borderRadius,
+          '& .MuiOutlinedInput-notchedOutline': {
+            borderColor: theme.palette.background.border,
+          },
+          '&:hover .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'background.hoverBorder',
+          },
         })}
         MenuProps={{
           ...props.MenuProps,

@@ -13,6 +13,8 @@ type InputSize = 'small' | 'medium' | 'large'
 
 type InputType = 'text' | 'password' | 'email' | 'search'
 
+type BackgroundColor = 'background.paper' | 'background.default' | string
+
 type AppInputProps = Omit<TextFieldProps, 'type'> & {
   label?: string
   inputSize?: InputSize
@@ -23,6 +25,7 @@ type AppInputProps = Omit<TextFieldProps, 'type'> & {
   }
   icon?: React.ReactNode
   type?: InputType
+  backgroundColor?: BackgroundColor
 }
 
 export default function AppInput({
@@ -33,6 +36,7 @@ export default function AppInput({
   className,
   InputProps,
   type = 'text',
+  backgroundColor = 'background.paper',
   sx,
   ...props
 }: AppInputProps) {
@@ -50,6 +54,7 @@ export default function AppInput({
 
   const sizeStyles = {
     '& .MuiOutlinedInput-root': {
+      backgroundColor: backgroundColor,
       ...(inputSize === 'small' && {
         height: 36,
         fontSize: '0.85rem',
@@ -122,9 +127,11 @@ export default function AppInput({
           ) : null,
         }}
         sx={{
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 5,
-            backgroundColor: '#F9FAFB',
+          '& .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'background.border',
+          },
+          '&:hover .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'background.hoverBorder',
           },
           ...(sizeStyles as object),
           ...sx,

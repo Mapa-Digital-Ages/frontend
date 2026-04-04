@@ -5,7 +5,9 @@ import AppDropdown, { DropdownOption } from '@/components/ui/AppDropdown'
 import { useState } from 'react'
 import StudentComponentsShowcase from './components/StudentComponentsShowcase'
 import AppCalendar from '@/components/ui/AppCalendar'
+import WorkspacePremiumRoundedIcon from '@mui/icons-material/WorkspacePremiumRounded'
 import AppInput from '@/components/ui/AppInput'
+import MetricsCard from '@/components/ui/MetricsCard'
 import PageHeader from '@/components/common/PageHeader'
 
 const dropdownOptions: DropdownOption[] = [
@@ -48,7 +50,7 @@ function StudentComponentsPage() {
       <Box
         className="flex min-h-[80vh] rounded-2xl bg-white p-8 space-x-8"
         sx={{
-          backgroundColor: 'background.paper',
+          backgroundColor: 'background.default',
           border: `1px solid ${theme.palette.divider}`,
         }}
       >
@@ -126,6 +128,16 @@ function StudentComponentsPage() {
                 fontSize: '18px',
                 padding: '0 20px',
               }}
+            />
+
+            <MetricsCard
+              contentClassName="p-5"
+              title="Métricas"
+              value="123"
+              icon={<WorkspacePremiumRoundedIcon />}
+              iconVariant="blue"
+              warningText="+25 este mês"
+              warningColor="success.main"
             />
           </Stack>
         </Box>
