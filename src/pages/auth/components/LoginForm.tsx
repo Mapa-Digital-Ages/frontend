@@ -193,8 +193,9 @@ function LoginForm({ isSubmitting = false, onSubmit }: LoginFormProps) {
       <AppButton
         className="mt-1"
         disabled={isSubmitting}
-        size="large"
+        size="medium"
         type="submit"
+        borderRadius="50px"
       >
         {isSubmitting
           ? 'Processando...'

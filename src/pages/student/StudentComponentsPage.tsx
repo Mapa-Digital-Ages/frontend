@@ -9,6 +9,7 @@ import WorkspacePremiumRoundedIcon from '@mui/icons-material/WorkspacePremiumRou
 import AppInput from '@/components/ui/AppInput'
 import MetricsCard from '@/components/ui/MetricsCard'
 import PageHeader from '@/components/common/PageHeader'
+import AppButton from '@/components/ui/AppButton'
 
 const dropdownOptions: DropdownOption[] = [
   { label: '5º Ano', value: '5' },
@@ -50,7 +51,7 @@ function StudentComponentsPage() {
       <Box
         className="flex min-h-[80vh] rounded-2xl bg-white p-8 space-x-8"
         sx={{
-          backgroundColor: 'background.default',
+          backgroundColor: 'background.paper',
           border: `1px solid ${theme.palette.divider}`,
         }}
       >
@@ -140,6 +141,47 @@ function StudentComponentsPage() {
               warningColor="success.main"
             />
           </Stack>
+          {}
+          <AppButton
+            size="small"
+            backgroundColor="primary.main"
+            label="Sou pequeno e padrao"
+            borderRadius={0}
+          />
+
+          {}
+          <AppButton
+            size="medium"
+            backgroundColor="background.default"
+            label="Sou qual cor?"
+            hasBorder={true}
+            borderRadius="8px"
+            iconPosition="left"
+            textColor="text.primary"
+          />
+
+          {}
+          <AppButton
+            size="large"
+            backgroundColor="error.main"
+            label="Sou grande e laranja"
+            borderRadius="50%"
+            iconPosition="right"
+          />
+          <AppButton
+            label="Voltar"
+            iconPosition="left"
+            hasBorder={true}
+            borderRadius="50px"
+            backgroundColor="background.paper"
+            textColor="text.primary"
+          />
+          <AppButton label="Confirmar" backgroundColor="warning.main" />
+          <AppButton label="Botao padrao conforme solicitado" />
+          <AppButton
+            backgroundColor="info.main"
+            label="Botao com cor info"
+          ></AppButton>
         </Box>
       </Box>
       <StudentComponentsShowcase />

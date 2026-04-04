@@ -4,6 +4,7 @@ import { Link as RouterLink } from 'react-router-dom'
 import AppCard from '@/components/ui/AppCard'
 import { APP_ROUTES } from '@/constants/routes'
 import { SUBJECTS } from '@/utils/subjectThemes'
+import AppButton from '@/components/ui/AppButton'
 
 function StudentComponentsShowcase() {
   return (
@@ -27,7 +28,7 @@ function StudentComponentsShowcase() {
         </Stack>
 
         <Box>
-          <Button
+          <AppButton
             component={RouterLink}
             endIcon={<ArrowForwardRoundedIcon />}
             state={{
@@ -35,9 +36,10 @@ function StudentComponentsShowcase() {
             }}
             to={APP_ROUTES.student.onboardingFlow}
             variant="contained"
+            iconPosition="right"
           >
             Abrir fluxo de onboarding
-          </Button>
+          </AppButton>
         </Box>
       </AppCard>
     </Stack>
