@@ -56,16 +56,9 @@ function MetricsCard({
         className={['h-full p-8 md:p-8', contentClassName]
           .filter(Boolean)
           .join(' ')}
-        sx={[
-          {
-            '&:last-child': {
-              pb: 4,
-            },
-          },
-          ...(Array.isArray(contentSx) ? contentSx : [contentSx]),
-        ]}
+        sx={[{}, ...(Array.isArray(contentSx) ? contentSx : [contentSx])]}
       >
-        <Box className="flex h-full items-start justify-between gap-6">
+        <Box className="flex h-full items-start justify-between gap-6 min-h-[92px]">
           <Box className="flex min-h-full flex-1 flex-col justify-start">
             <Typography
               className="text-lg md:text-[22px]"
@@ -86,7 +79,7 @@ function MetricsCard({
                 fontWeight: 700,
                 letterSpacing: '-0.03em',
                 lineHeight: 1,
-                mb: warningText ? 1.5 : 0,
+                mb: 1.5,
               }}
             >
               {value}
@@ -97,7 +90,7 @@ function MetricsCard({
                 sx={{
                   color: warningColor ?? 'success.main',
                   fontWeight: 500,
-                  lineHeight: 1.35,
+                  lineHeight: 1.25,
                 }}
               >
                 {warningText}
