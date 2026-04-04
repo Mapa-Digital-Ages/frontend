@@ -1,84 +1,81 @@
 import { Box, Stack, Typography } from '@mui/material'
 import type { ReactNode } from 'react'
 import ProgressBar from '../ui/ProgressBar'
+import StarOutlineIcon from '@mui/icons-material/StarOutline'
 
-type HeaderVariant = 'student' | 'guardians' | 'school' | 'company' | 'admin' | 'enterpriseSchool'
+type HeaderVariant =
+  | 'student'
+  | 'parent'
+  | 'school'
+  | 'company'
+  | 'admin'
+  | 'enterpriseSchool'
 
 interface PageHeaderProps {
   title: string
   subtitle: string
   eyebrow?: string
-  greeting?: string
   tag?: string
   progress?: number
-  actions?: ReactNode
   variant?: HeaderVariant
 }
- 
+
 const variantStyles: Record<HeaderVariant, string> = {
   student: 'bg-[#359CDF] text-white',
-  guardians: 'bg-[#DE4512] text-white',
-  school: 'bg-[#249E75] text-white',
-  company: 'bg-[#6132BD] text-white',
-  admin: 'bg-[#BF2260] text-white',
-  enterpriseSchool: 'bg-[#5A642B] text-white'
+  parent: 'bg-gradient-to-r from-[#F06F19] to-[#DE4512] text-white',
+  school: 'bg-gradient-to-r from-[#249E75] to-[#1F8470] text-white',
+  company: 'bg-gradient-to-r from-[#8C43CB] to-[#6132BD] text-white',
+  admin: 'bg-gradient-to-r from-[#D32248] to-[#BF2260] text-white',
+  enterpriseSchool: 'bg-gradient-to-r from-[#506F34] to-[#5A642B] text-white',
 }
 
 function PageHeader({
   title,
   subtitle,
   eyebrow,
-  greeting,
   tag,
   progress,
-  actions,
-  variant = 'student'
+  variant = 'student',
 }: PageHeaderProps) {
   return (
     <Stack
       data-testid="header"
-      className={`w-full rounded-2xl p-6 flex-col gap-3 md:flex-row md:items-center md:justify-between ${variantStyles[variant]}`}
+      className={`w-full max-w-none rounded-2xl px-6 py-5 flex-col gap-3 md:flex-row items-start md:justify-between ${variantStyles[variant]}`}
     >
-      <Box className="min-w-0 w-full">
-        {greeting && (
-          <Typography variant="body2" className="opacity-90">
-            {greeting}
-          </Typography>
-        )}
-
+      <Box className="space-y-1 min-w-0 w-full">
         {eyebrow && (
-          <Typography variant="overline" className="block tracking-[0.12em] opacity-90">
+          <Typography variant="body2" className="opacity-80">
             {eyebrow}
           </Typography>
         )}
 
-        <Stack className="flex-row items-center justify-between">
-          <Box className="min-w-0">
-            <Typography variant="h3">
-              {title}
-            </Typography>
-
-            <Typography variant="body1" className="mt-1 opacity-90">
-              {subtitle}
-            </Typography>
-          </Box>
+        <Box className="mt-2 mb-2 flex items-start justify-between w-full">
+          <Typography
+            variant="h3"
+            sx={{ fontSize: '24px' }}
+            className="mt-2 text-left"
+          >
+            {title}
+          </Typography>
 
           {tag && (
-            <Box className="ml-4 rounded-full bg-white/20 px-3 py-1 text-xs whitespace-nowrap">
+            <Box className="mr-4 flex items-center gap-2 rounded-xl bg-white/20 px-8 py-2 font-semibold whitespace-nowrapt text-sm">
+              <StarOutlineIcon fontSize="medium" className="opacity-90" />
               {tag}
             </Box>
           )}
-        </Stack>
+        </Box>
+
+        <Typography variant="body2" className="opacity-90 text-left">
+          {subtitle}
+        </Typography>
 
         {progress !== undefined && (
-          <Box className="mt-3">
+          <Box className="w-full">
             <ProgressBar value={progress} />
           </Box>
         )}
       </Box>
-
-      {actions}
-
     </Stack>
   )
 }

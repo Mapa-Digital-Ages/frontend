@@ -6,6 +6,7 @@ import { useState } from 'react'
 import StudentComponentsShowcase from './components/StudentComponentsShowcase'
 import AppCalendar from '@/components/ui/AppCalendar'
 import AppInput from '@/components/ui/AppInput'
+import PageHeader from '@/components/common/PageHeader'
 
 const dropdownOptions: DropdownOption[] = [
   { label: '5º Ano', value: '5' },
@@ -22,15 +23,27 @@ function StudentComponentsPage() {
 
   return (
     <AppPageContainer className="gap-4 md:gap-5">
-      <Typography
-        sx={{
-          color: 'text.primary',
-          fontSize: { md: 24, xs: 20 },
-          fontWeight: 700,
-        }}
-      >
-        Componentes
-      </Typography>
+      <PageHeader
+        variant="student"
+        eyebrow="Olá, Lucas!"
+        title="Continue sua jornada no Mapa"
+        subtitle="Progresso até o próximo nível:"
+        tag="7º Ano"
+        progress={85}
+      />
+
+      <PageHeader
+        variant="parent"
+        eyebrow="Filho(a): Lucas Silva - 7º ano"
+        title="Relatório Geral"
+        subtitle="Resumo consolidado do progresso do aluno "
+      />
+
+      <PageHeader
+        variant="admin"
+        title="Painel Administrativo"
+        subtitle="Visão consolidada da operação MAPA DIGITAL"
+      />
 
       <Box
         className="flex min-h-[80vh] rounded-2xl bg-white p-8 space-x-8"
