@@ -23,13 +23,14 @@ export class AppColors {
     secondary: 'rgba(17, 124, 116, 1)',
     secondaryDark: 'rgba(12, 89, 83, 1)',
     secondaryLight: 'rgba(67, 167, 159, 1)',
-    success: 'rgba(46, 125, 79, 1)',
+    success: 'rgb(43, 171, 111)',
     warning: 'rgba(199, 131, 28, 1)',
     error: 'rgba(193, 73, 83, 1)',
     info: 'rgba(62, 124, 177, 1)',
     backgroundDefault: 'rgba(244, 247, 251, 1)',
     backgroundPaper: 'rgba(255, 255, 255, 1)',
     backgroundHover: 'rgba(233, 238, 244, 1)',
+    border: 'rgba(217, 222, 231, 1)',
     textPrimary: 'rgba(16, 42, 67, 1)',
     textSecondary: 'rgba(82, 96, 109, 1)',
   } as const
@@ -48,6 +49,7 @@ export class AppColors {
     backgroundDefault: 'rgba(13, 22, 38, 1)',
     backgroundPaper: 'rgba(19, 34, 56, 1)',
     backgroundHover: 'rgba(25, 50, 72, 1)',
+    border: 'rgba(55, 77, 112, 1)',
     textPrimary: 'rgba(244, 247, 251, 1)',
     textSecondary: 'rgba(182, 194, 207, 1)',
   } as const
@@ -72,6 +74,69 @@ export class AppColors {
       soft: 'rgba(255, 228, 230, 1)',
     },
   }
+
+  static readonly iconVariants = {
+    light: {
+      blue: {
+        color: 'rgba(37, 99, 235, 1)',
+        background: 'rgba(219, 234, 254, 1)',
+      },
+      cyan: {
+        color: 'rgba(2, 132, 199, 1)',
+        background: 'rgba(224, 242, 254, 1)',
+      },
+      green: {
+        color: 'rgba(5, 150, 105, 1)',
+        background: 'rgba(209, 250, 229, 1)',
+      },
+      grey: {
+        color: 'rgba(75, 85, 99, 1)',
+        background: 'rgba(229, 231, 235, 1)',
+      },
+      orange: {
+        color: 'rgba(234, 88, 12, 1)',
+        background: 'rgba(255, 237, 213, 1)',
+      },
+      purple: {
+        color: 'rgba(124, 58, 237, 1)',
+        background: 'rgba(237, 233, 254, 1)',
+      },
+      red: {
+        color: 'rgba(220, 38, 38, 1)',
+        background: 'rgba(254, 226, 226, 1)',
+      },
+    },
+    dark: {
+      blue: {
+        color: 'rgba(147, 197, 253, 1)',
+        background: 'rgba(23, 37, 84, 1)',
+      },
+      cyan: {
+        color: 'rgba(125, 211, 252, 1)',
+        background: 'rgba(8, 47, 73, 1)',
+      },
+      green: {
+        color: 'rgba(110, 231, 183, 1)',
+        background: 'rgba(6, 78, 59, 1)',
+      },
+      grey: {
+        color: 'rgba(156, 163, 175, 1)',
+        background: 'rgba(31, 41, 55, 1)',
+      },
+      orange: {
+        color: 'rgba(253, 186, 116, 1)',
+        background: 'rgba(67, 20, 7, 1)',
+      },
+      purple: {
+        color: 'rgba(196, 181, 253, 1)',
+        background: 'rgba(46, 16, 101, 1)',
+      },
+      red: {
+        color: 'rgba(252, 165, 165, 1)',
+        background: 'rgba(69, 10, 10, 1)',
+      },
+    },
+  } as const
 
   static gradient(from: string, to: string, angle = '135deg') {
     return `linear-gradient(${angle}, ${from} 0%, ${to} 100%)`
