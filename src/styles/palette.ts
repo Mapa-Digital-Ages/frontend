@@ -22,6 +22,14 @@ declare module '@mui/material/styles' {
     hoverBorder: string
   }
 
+  interface PaletteColor {
+    hover?: string
+  }
+
+  interface SimplePaletteColorOptions {
+    hover?: string
+  }
+
   interface Palette {
     iconVariants: Record<IconVariantName, IconVariantToken>
   }
@@ -36,6 +44,7 @@ const lightPalette: ThemeOptions['palette'] = {
     main: AppColors.light.primary,
     light: AppColors.light.primaryLight,
     dark: AppColors.light.primaryDark,
+    hover: AppColors.light.primaryHover,
     contrastText: '#FFFFFF',
   },
   secondary: {
@@ -46,15 +55,19 @@ const lightPalette: ThemeOptions['palette'] = {
   },
   success: {
     main: AppColors.light.success,
+    hover: AppColors.light.successHover,
   },
   warning: {
     main: AppColors.light.warning,
+    hover: AppColors.light.warningHover,
   },
   error: {
     main: AppColors.light.error,
+    hover: AppColors.light.errorHover,
   },
   info: {
     main: AppColors.light.info,
+    hover: AppColors.light.infoHover,
   },
   background: {
     default: AppColors.light.backgroundDefault,
@@ -75,6 +88,7 @@ const darkPalette: ThemeOptions['palette'] = {
     main: AppColors.dark.primary,
     light: AppColors.dark.primaryLight,
     dark: AppColors.dark.primaryDark,
+    hover: AppColors.dark.primaryHover,
     contrastText: '#08111F',
   },
   secondary: {
@@ -85,15 +99,19 @@ const darkPalette: ThemeOptions['palette'] = {
   },
   success: {
     main: AppColors.dark.success,
+    hover: AppColors.dark.successHover,
   },
   warning: {
     main: AppColors.dark.warning,
+    hover: AppColors.dark.warningHover,
   },
   error: {
     main: AppColors.dark.error,
+    hover: AppColors.dark.errorHover,
   },
   info: {
     main: AppColors.dark.info,
+    hover: AppColors.dark.infoHover,
   },
   background: {
     default: AppColors.dark.backgroundDefault,
