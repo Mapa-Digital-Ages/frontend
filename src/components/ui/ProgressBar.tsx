@@ -60,16 +60,11 @@ function ProgressBar({
       {showValueLabel ? (
         <Typography
           sx={{
-            backgroundColor:
-              valueLabelVariant === 'soft'
-                ? subjectTheme.softSurface.backgroundColor
-                : 'transparent',
+            backgroundColor: 'transparent',
             border: valueLabelVariant === 'soft' ? 'none' : 'none',
             borderRadius: valueLabelVariant === 'soft' ? 999 : 0,
             color:
-              valueLabelVariant === 'soft'
-                ? theme.palette.primary.contrastText
-                : subjectTheme.text.color,
+              valueLabelVariant === 'soft' ? '#FFF' : subjectTheme.text.color,
             fontSize: valueLabelVariant === 'soft' ? 12 : 14,
             fontWeight: 700,
             minWidth: valueLabelVariant === 'soft' ? 'fit-content' : 32,
