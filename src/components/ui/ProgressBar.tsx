@@ -1,6 +1,5 @@
 import { Box, LinearProgress, Stack, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import React from 'react'
 import { getSubjectTheme } from '../../utils/subjectThemes'
 import type { SubjectContext } from '../../types/common'
 
@@ -69,7 +68,7 @@ function ProgressBar({
             borderRadius: valueLabelVariant === 'soft' ? 999 : 0,
             color:
               valueLabelVariant === 'soft'
-                ? subjectTheme.color
+                ? theme.palette.primary.contrastText
                 : subjectTheme.text.color,
             fontSize: valueLabelVariant === 'soft' ? 12 : 14,
             fontWeight: 700,

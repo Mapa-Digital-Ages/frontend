@@ -20,6 +20,7 @@ import { AppColors } from '@/styles/AppColors'
 import { getSubjectTheme, SUBJECTS } from '@/utils/subjectThemes'
 import type { StudentTask, SummaryMetric } from '@/types/common'
 import MetricsCard from '@/components/ui/MetricsCard'
+import PageHeader from '@/components/common/PageHeader'
 
 const DISCIPLINE_PROGRESS = [
   {
@@ -115,11 +116,8 @@ function StudentDashboardPage() {
 
   return (
     <AppPageContainer className="gap-4 md:gap-5">
-      <Box
-        className="flex flex-col gap-4 rounded-3xl px-4 py-5 text-white shadow-[0_16px_34px_rgba(29,78,216,0.26)] md:flex-row md:items-center md:justify-between md:px-6 md:py-6"
-        style={{ background: AppColors.roleGradient('student') }}
-      >
-        <Box>
+      <Box className="flex flex-col gap-4 rounded-3xl text-white md:flex-row md:items-center md:justify-between">
+        {/* <Box>
           <Box className="flex items-center gap-2 text-white/90">
             <PersonRoundedIcon fontSize="small" />
             <Typography className="text-base md:text-lg">Olá, Lucas</Typography>
@@ -137,7 +135,15 @@ function StudentDashboardPage() {
           variant="contained"
         >
           Ir para Trilha
-        </AppButton>
+        </AppButton> */}
+        <PageHeader
+          variant="student"
+          eyebrow="Olá, Lucas!"
+          title="Continue sua jornada no Mapa"
+          subtitle="Progresso até o próximo nível:"
+          tag="7º Ano"
+          progress={85}
+        />
       </Box>
 
       <Box className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-4">

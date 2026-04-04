@@ -5,7 +5,7 @@ import type { SubjectContext } from '../types/common'
 
 const SUBJECT_CATALOG = {
   default: {
-    color: 'rgba(100, 116, 139, 1)',
+    color: 'rgba(32, 109, 197, 1)',
     contrast: 'rgba(255, 255, 255, 1)',
     id: 'default',
     label: 'Geral',
