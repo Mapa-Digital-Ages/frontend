@@ -10,7 +10,6 @@ import AppInput from '@/components/ui/AppInput'
 import MetricsCard from '@/components/ui/MetricsCard'
 import AppButton from '@/components/ui/AppButton'
 
-
 const dropdownOptions: DropdownOption[] = [
   { label: '5º Ano', value: '5' },
   { label: '6º Ano', value: '6' },
@@ -130,41 +129,41 @@ function StudentComponentsPage() {
             />
           </Stack>
           {}
-        <AppButton
-          size="small"
-          color="primary"
-          label="Sou pequeno e padrao"
-          borderRadius={0}
-        />
+          <AppButton
+            size="small"
+            color="primary"
+            label="Sou pequeno e padrao"
+            borderRadius={0}
+          />
 
-        {}
-        <AppButton
-          size="medium"
-          color="secondary"
-          label="Sou qual cor?"
-          hasBorder={true}
-          borderRadius="8px"
-          iconPosition="left"
-        />
+          {}
+          <AppButton
+            size="medium"
+            color="secondary"
+            label="Sou qual cor?"
+            hasBorder={true}
+            borderRadius="8px"
+            iconPosition="left"
+          />
 
-        {}
-        <AppButton
-          size="large"
-          color="error"
-          label="Sou grande e laranja"
-          borderRadius="50%"
-          iconPosition="right"
-        />
-        <AppButton
-          label="Voltar"
-          iconPosition="left"
-          hasBorder={true}
-          borderRadius="50px"
-          color="primary"
-        />
-        <AppButton label="Confirmar" color="warning" />
-        <AppButton label="Botao padrao conforme solicitado" />
-        <AppButton color="info" label="Botao com cor info"></AppButton>
+          {}
+          <AppButton
+            size="large"
+            color="error"
+            label="Sou grande e laranja"
+            borderRadius="50%"
+            iconPosition="right"
+          />
+          <AppButton
+            label="Voltar"
+            iconPosition="left"
+            hasBorder={true}
+            borderRadius="50px"
+            color="primary"
+          />
+          <AppButton label="Confirmar" color="warning" />
+          <AppButton label="Botao padrao conforme solicitado" />
+          <AppButton color="info" label="Botao com cor info"></AppButton>
         </Box>
       </Box>
       <StudentComponentsShowcase />
