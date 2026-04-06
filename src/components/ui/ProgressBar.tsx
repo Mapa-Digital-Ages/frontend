@@ -73,7 +73,8 @@ function ProgressBar({
           sx={{
             alignSelf: {
               sm: 'auto',
-              xs: isSoftValueLabel || isHeaderValueLabel ? 'flex-start' : 'auto',
+              xs:
+                isSoftValueLabel || isHeaderValueLabel ? 'flex-start' : 'auto',
             },
             backgroundColor: isSoftValueLabel
               ? subjectTheme.softSurface.backgroundColor

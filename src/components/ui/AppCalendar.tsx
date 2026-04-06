@@ -8,6 +8,7 @@ import {
   type PickersDayProps,
 } from '@mui/x-date-pickers/PickersDay'
 import DayDetailModal from './DayDetailModal'
+import 'dayjs/locale/pt-br'
 
 function CustomDay(props: PickersDayProps) {
   const isFuture = props.day.isAfter(dayjs(), 'day')
@@ -85,8 +86,9 @@ export default function AppCalendar() {
 
   return (
     <>
-      <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
         <DateCalendar
+          dayOfWeekFormatter={day => day.format('dddd').charAt(0).toUpperCase()}
           reduceAnimations={false}
           value={selectedDate}
           onChange={handleDaySelect}
@@ -130,6 +132,9 @@ export default function AppCalendar() {
               width: 84,
               height: 60,
               fontSize: '0.95rem',
+            },
+            '& .MuiPickersCalendarHeader-label': {
+              textTransform: 'capitalize',
             },
           }}
         />

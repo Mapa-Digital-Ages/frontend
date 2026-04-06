@@ -21,6 +21,7 @@ import {
   SUBJECTS,
 } from '@/utils/subjectThemes'
 import StudentComponentsShowcase from './components/StudentComponentsShowcase'
+import AppLink from '@/components/ui/AppLink'
 import PlannerModal, { Task } from '@/components/ui/PlannerModal'
 import dayjs from 'dayjs'
 
@@ -267,6 +268,8 @@ function StudentComponentsPage() {
       </Box>
       <PlannerModal tasks={mockTasks} />
       <StudentComponentsShowcase />
+      <AppLink to="/student/dashboard">Ir para dashboard</AppLink>
+      <AppLink href="https://google.com">Ir para o Google</AppLink>
     </AppPageContainer>
   )
 }
