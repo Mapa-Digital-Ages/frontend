@@ -16,7 +16,13 @@ export function SubjectChip({ label, color }: SubjectsTags) {
         color: color,
         backgroundColor: `${color}20`,
         fontWeight: 500,
-        paddingX: 1,
+        height: "24px",
+
+    "& .MuiChip-label": {
+    fontSize: "12px",
+    paddingLeft: "8px",
+    paddingRight: "8px",
+  },
       }}
     />
   );
