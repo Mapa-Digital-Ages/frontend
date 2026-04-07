@@ -92,19 +92,20 @@ function AppSidebar({
               selected={selected}
               sx={{
                 borderRadius: '18px',
+                backgroundColor: AppColors.role[currentRole].soft,
                 '& .MuiListItemText-primary': {
                   backgroundColor: 'transparent',
-                  color: 'var(--app-muted-foreground)',
+                  color: AppColors.role[currentRole].primary,
                   transition: 'transform 180ms ease',
                 },
                 '& .MuiListItemIcon-root': {
-                  color: AppColors.neutral.mutedText,
+                  color: AppColors.role[currentRole].primary,
                 },
                 '&.Mui-selected': {
                   backgroundColor: AppColors.role[currentRole].soft,
                 },
                 '&.MuiButtonBase-root': {
-                  color: AppColors.neutral.mutedText,
+                  color: AppColors.role[currentRole].primary,
                 },
                 '&:hover': {
                     backgroundColor: AppColors.role[currentRole].soft,
@@ -118,7 +119,7 @@ function AppSidebar({
                     color: AppColors.role[currentRole].primary,
                   },
                 '&:hover .MuiListItemText-primary': {
-                    color: AppColors.neutral.mutedText,
+                    color: AppColors.role[currentRole].primary,
                     fontWeight: 600,
                 },
               }}

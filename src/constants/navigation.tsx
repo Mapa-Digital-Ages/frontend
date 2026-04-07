@@ -17,28 +17,27 @@ export const NAVIGATION_BY_ROLE: Record<UserRole, SidebarItem[]> = {
     },
     {
       label: 'Trilha Adaptativa',
-      path: APP_ROUTES.student.dashboard,
+      path: APP_ROUTES.student.adaptiveTrail,
       icon: <RouteRoundedIcon fontSize="medium" />,
     },
     {
       label: 'Conteúdos',
-      path: APP_ROUTES.student.dashboard,
+      path: APP_ROUTES.student.components,
       icon: <PlayCircleFilledWhiteOutlinedIcon fontSize="medium" />,
     },
     {
       label: 'Upload de Avaliações',
-      path: APP_ROUTES.student.dashboard,
+      path: APP_ROUTES.student.uploads,
       icon: <DescriptionRoundedIcon fontSize="medium" />,
-      color: 'var(--app-primary)',
     },
     {
       label: 'Rotina & Bem-estar',
-      path: APP_ROUTES.student.dashboard,
+      path: APP_ROUTES.student.routine,
       icon: <FavoriteBorderRoundedIcon fontSize='medium'/>,
     },
     {
       label: 'Chat IA',
-      path: APP_ROUTES.student.dashboard,
+      path: APP_ROUTES.student.chat,
       icon: <ChatBubbleOutlineRoundedIcon fontSize="medium" />,
     }
   ],
