@@ -137,8 +137,10 @@ function PlannerModal({ tasks, sx }: PlannerProps) {
         <Box
           key={day}
           onClick={() => {
-            if(dayTasks.length > 1) { setSelectedDay(day)}}
-          } 
+            if (dayTasks.length > 1) {
+              setSelectedDay(day)
+            }
+          }}
           sx={{
             mb: 2,
             border: '1px solid',

@@ -289,10 +289,10 @@ function StudentComponentsPage() {
             <AppSubjectsTags size="lg" subjects={ALL_SUBJECT_TAG_CONTEXTS} />
           </Box>
 
-          <PlannerModal tasks={mockTasks} sx={{ mt: 3 }}/>
+          <PlannerModal tasks={mockTasks} sx={{ mt: 3 }} />
         </Box>
       </Box>
-      
+
       <StudentComponentsShowcase />
       <AppLink to="/student/dashboard">Ir para dashboard</AppLink>
       <AppLink href="https://google.com">Ir para o Google</AppLink>
