@@ -103,16 +103,18 @@ function AppSidebar({
                 '&.Mui-selected': {
                   color: 'rgba(31, 75, 153, 0.08)',
                 },
-                '&.Mui-selected .MuiListItemIcon-root, &.Mui-selected .MuiListItemText-primary': {
-                  color: AppColors.role[currentRole].primary,
-                  fontWeight: 600,
-                },
+                '&.Mui-selected .MuiListItemIcon-root, &.Mui-selected .MuiListItemText-primary':
+                  {
+                    color: AppColors.role[currentRole].primary,
+                    fontWeight: 600,
+                  },
                 '&:hover': {
                   backgroundColor: 'rgba(31, 75, 153, 0.08)',
                 },
-                '&:hover .MuiListItemIcon-root, &:hover .MuiListItemText-primary': {
-                  color: AppColors.role[currentRole].primary,
-                },
+                '&:hover .MuiListItemIcon-root, &:hover .MuiListItemText-primary':
+                  {
+                    color: AppColors.role[currentRole].primary,
+                  },
                 '&:hover .MuiListItemText-primary': {
                   fontWeight: 600,
                 },
@@ -140,7 +142,7 @@ function AppSidebar({
                 fontWeight: 600,
               },
               '& .MuiListItemIcon-root': {
-                color:AppColors.neutral.mutedText,
+                color: AppColors.neutral.mutedText,
               },
               '&:hover': {
                 backgroundColor: 'rgba(31, 75, 153, 0.08)',
