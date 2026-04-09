@@ -1,17 +1,45 @@
-import type { ApiResponse, HttpRequestOptions } from '../types/api'
+import type { ApiResponse, HttpRequestOptions } from '../../types/api'
 import type {
-  ApprovalBadgeTone,
+  ApprovalCorrectionInput,
   ApprovalQueueQuery,
   ApprovalQueueResult,
+  ContentApprovalDraftInput,
   ContentApprovalItem,
   ContentApprovalStatus,
+  GuardianApprovalDraftInput,
   GuardianApprovalItem,
   GuardianApprovalStatus,
-} from '../types/admin'
+} from '../../types/admin'
+import { filterApprovalItems, paginateApprovalItems } from '../../utils/admin'
+import { getSubjectTagContextByLabel } from '../../utils/themes'
 import {
-  filterApprovalItems,
-  paginateApprovalItems,
-} from '../utils/admin'
+  buildApprovalQueueQuery,
+  mapContentApprovalItem,
+  mapContentApprovalQueueResponse,
+  mapGuardianApprovalItem,
+  mapGuardianApprovalQueueResponse,
+  type ApprovalQueueResponseDto,
+  type ContentApprovalDto,
+  type GuardianApprovalDto,
+} from './admin-approval.mapper'
+
+function formatRequestDateBadge(requestedAt: string) {
+  return {
+    id: `${requestedAt}-requested-at`,
+    label: `Solicitação em ${requestedAt}`,
+    tone: 'neutral' as const,
+  }
+}
+
+function buildContentSubtitle(item: {
+  requestedAt: string
+  resourceType: 'exam' | 'task'
+  subjectLabel: string
+}) {
+  return `${item.resourceType === 'exam' ? 'Prova' : 'Tarefa'} · ${
+    item.subjectLabel
+  } · ${item.requestedAt}`
+}
 
 export class HttpRequestError extends Error {
   constructor(
@@ -23,7 +51,7 @@ export class HttpRequestError extends Error {
   }
 }
 
-type ApprovalApiClient = {
+export type ApprovalApiClient = {
   get<T>(
     path: string,
     options?: { query?: HttpRequestOptions['query'] }
@@ -31,82 +59,18 @@ type ApprovalApiClient = {
   patch<T>(path: string, body?: unknown): Promise<ApiResponse<T>>
 }
 
-type ContentApprovalStatusDto = 'approved' | 'in_review' | 'rejected' | 'sent'
-type GuardianApprovalStatusDto = 'approved' | 'pending_validation' | 'rejected'
-
-interface ApprovalTagDto {
-  id: string
-  label: string
-  tone: ApprovalBadgeTone
-}
-
-interface ContentApprovalDto {
-  id: string
-  requested_at: string
-  resource_type: 'exam' | 'task'
-  stage_label: string
-  status: ContentApprovalStatusDto
-  subject_label: string
-  tags: ApprovalTagDto[]
-  title: string
-}
-
-interface GuardianApprovalDto {
-  child_name: string
-  id: string
-  name: string
-  requested_at: string
-  role_label: string
-  status: GuardianApprovalStatusDto
-  tags: ApprovalTagDto[]
-  validation: {
-    has_document: boolean
-    relationship_confirmed: boolean
-    student_linked: boolean
-  }
-}
-
-interface ApprovalQueueResponseDto<TItem> {
-  items: TItem[]
-  page: number
-  page_size: number
-  total_items: number
-  total_pages: number
-}
-
-interface CreateAdminApprovalRepositoryOptions {
+export interface CreateAdminApprovalRepositoryOptions {
   allowFallback?: boolean
   client: ApprovalApiClient
-}
-
-const contentResourceLabelMap = {
-  exam: 'Prova',
-  task: 'Tarefa',
-} as const
-
-const contentStatusMap: Record<
-  ContentApprovalStatusDto,
-  ContentApprovalStatus
-> = {
-  approved: 'approved',
-  in_review: 'inReview',
-  rejected: 'rejected',
-  sent: 'sent',
-}
-
-const guardianStatusMap: Record<
-  GuardianApprovalStatusDto,
-  GuardianApprovalStatus
-> = {
-  approved: 'approved',
-  pending_validation: 'pendingValidation',
-  rejected: 'rejected',
 }
 
 let mockContentApprovalItems: ContentApprovalItem[] = [
   {
     id: 'content-1',
     kind: 'content',
+    requestedAt: '22/03/2026',
+    resourceType: 'task',
+    subject: getSubjectTagContextByLabel('Matemática'),
     title: 'Lista de Equações do 7º ano',
     subtitle: 'Tarefa · Matemática · 22/03/2026',
     status: 'inReview',
@@ -121,6 +85,9 @@ let mockContentApprovalItems: ContentApprovalItem[] = [
   {
     id: 'content-2',
     kind: 'content',
+    requestedAt: '28/03/2026',
+    resourceType: 'exam',
+    subject: getSubjectTagContextByLabel('Português'),
     title: 'Prova mensal de interpretação',
     subtitle: 'Prova · Português · 28/03/2026',
     status: 'sent',
@@ -145,6 +112,9 @@ let mockContentApprovalItems: ContentApprovalItem[] = [
   {
     id: 'content-3',
     kind: 'content',
+    requestedAt: '01/04/2026',
+    resourceType: 'task',
+    subject: getSubjectTagContextByLabel('Português'),
     title: 'Produção textual argumentativa',
     subtitle: 'Tarefa · Português · 01/04/2026',
     status: 'approved',
@@ -159,6 +129,9 @@ let mockContentApprovalItems: ContentApprovalItem[] = [
   {
     id: 'content-4',
     kind: 'content',
+    requestedAt: '04/04/2026',
+    resourceType: 'exam',
+    subject: getSubjectTagContextByLabel('Ciências'),
     title: 'Simulado de Ciências naturais',
     subtitle: 'Prova · Ciências · 04/04/2026',
     status: 'rejected',
@@ -176,16 +149,12 @@ let mockGuardianApprovalItems: GuardianApprovalItem[] = [
   {
     id: 'guardian-1',
     kind: 'guardian',
+    requestedAt: '01/04/2026',
+    roleLabel: 'Mãe',
     title: 'Mariana Souza',
     subtitle: 'Solicitação em 01/04/2026',
     status: 'pendingValidation',
-    badges: [
-      {
-        id: 'guardian-2-stage',
-        label: 'Pronto para liberar',
-        tone: 'success',
-      },
-    ],
+    badges: [formatRequestDateBadge('01/04/2026')],
     childName: 'Luiza Souza',
     validation: {
       hasDocument: false,
@@ -196,16 +165,12 @@ let mockGuardianApprovalItems: GuardianApprovalItem[] = [
   {
     id: 'guardian-2',
     kind: 'guardian',
+    requestedAt: '02/04/2026',
+    roleLabel: 'Pai',
     title: 'Carlos Santos',
     subtitle: 'Solicitação em 02/04/2026',
     status: 'pendingValidation',
-    badges: [
-      {
-        id: 'guardian-2-stage',
-        label: 'Pronto para liberar',
-        tone: 'success',
-      },
-    ],
+    badges: [formatRequestDateBadge('02/04/2026')],
     childName: 'Rafael Santos',
     validation: {
       hasDocument: true,
@@ -216,16 +181,12 @@ let mockGuardianApprovalItems: GuardianApprovalItem[] = [
   {
     id: 'guardian-3',
     kind: 'guardian',
+    requestedAt: '03/04/2026',
+    roleLabel: 'Mãe',
     title: 'Renata Lima',
     subtitle: 'Solicitação em 03/04/2026',
     status: 'approved',
-    badges: [
-      {
-        id: 'guardian-3-stage',
-        label: 'Acesso liberado',
-        tone: 'success',
-      },
-    ],
+    badges: [formatRequestDateBadge('03/04/2026')],
     childName: 'Gabriel Lima',
     validation: {
       hasDocument: true,
@@ -236,16 +197,12 @@ let mockGuardianApprovalItems: GuardianApprovalItem[] = [
   {
     id: 'guardian-4',
     kind: 'guardian',
+    requestedAt: '05/04/2026',
+    roleLabel: 'Pai',
     title: 'Paulo Mendes',
     subtitle: 'Solicitação em 05/04/2026',
     status: 'rejected',
-    badges: [
-      {
-        id: 'guardian-4-stage',
-        label: 'Cadastro recusado',
-        tone: 'danger',
-      },
-    ],
+    badges: [formatRequestDateBadge('05/04/2026')],
     childName: 'Ana Mendes',
     validation: {
       hasDocument: true,
@@ -254,99 +211,6 @@ let mockGuardianApprovalItems: GuardianApprovalItem[] = [
     },
   },
 ]
-
-function formatBrazilianDate(value: string) {
-  const [year, month, day] = value.split('-')
-
-  if (!year || !month || !day) {
-    return value
-  }
-
-  return `${day}/${month}/${year}`
-}
-
-function buildQueueQuery(query: ApprovalQueueQuery) {
-  return {
-    page: query.page,
-    page_size: query.pageSize,
-    query: query.query || undefined,
-    status:
-      query.status === 'all'
-        ? undefined
-        : query.status === 'inReview'
-          ? 'in_review'
-          : query.status === 'pendingValidation'
-            ? 'pending_validation'
-            : query.status,
-  } satisfies HttpRequestOptions['query']
-}
-
-function mapApprovalQueue<TSource, TTarget>(
-  response: ApiResponse<ApprovalQueueResponseDto<TSource>>,
-  mapItem: (item: TSource) => TTarget
-): ApprovalQueueResult<TTarget> {
-  return {
-    currentPage: response.data.page,
-    items: response.data.items.map(mapItem),
-    pageSize: response.data.page_size,
-    totalItems: response.data.total_items,
-    totalPages: response.data.total_pages,
-  }
-}
-
-function mapContentApprovalItem(item: ContentApprovalDto): ContentApprovalItem {
-  return {
-    id: item.id,
-    kind: 'content',
-    title: item.title,
-    subtitle: `${contentResourceLabelMap[item.resource_type]} · ${
-      item.stage_label
-    } · ${formatBrazilianDate(item.requested_at)}`,
-    status: contentStatusMap[item.status],
-    badges: item.tags.map(tag => ({
-      id: tag.id,
-      label: tag.label,
-      tone: tag.tone,
-    })),
-  }
-}
-
-function mapGuardianApprovalItem(
-  item: GuardianApprovalDto
-): GuardianApprovalItem {
-  return {
-    id: item.id,
-    kind: 'guardian',
-    title: item.name,
-    subtitle: `${item.role_label} · Solicitação em ${formatBrazilianDate(
-      item.requested_at
-    )}`,
-    status: guardianStatusMap[item.status],
-    badges: item.tags.map(tag => ({
-      id: tag.id,
-      label: tag.label,
-      tone: tag.tone,
-    })),
-    childName: item.child_name,
-    validation: {
-      hasDocument: item.validation.has_document,
-      relationshipConfirmed: item.validation.relationship_confirmed,
-      studentLinked: item.validation.student_linked,
-    },
-  }
-}
-
-export function mapContentApprovalQueueResponse(
-  response: ApiResponse<ApprovalQueueResponseDto<ContentApprovalDto>>
-) {
-  return mapApprovalQueue(response, mapContentApprovalItem)
-}
-
-function mapGuardianApprovalQueueResponse(
-  response: ApiResponse<ApprovalQueueResponseDto<GuardianApprovalDto>>
-) {
-  return mapApprovalQueue(response, mapGuardianApprovalItem)
-}
 
 function shouldUseFallback(error: unknown, allowFallback: boolean) {
   if (!allowFallback) {
@@ -421,22 +285,6 @@ function updateMockGuardianStatus(
 
     nextItem = {
       ...item,
-      badges:
-        status === 'approved'
-          ? [
-              {
-                id: `${item.id}-ready`,
-                label: 'Acesso liberado',
-                tone: 'success',
-              },
-            ]
-          : [
-              {
-                id: `${item.id}-rejected`,
-                label: 'Solicitação recusada',
-                tone: 'danger',
-              },
-            ],
       status,
     }
 
@@ -450,13 +298,23 @@ function updateMockGuardianStatus(
   return nextItem
 }
 
-function createMockContentDraft() {
+function createMockContentDraft(input?: ContentApprovalDraftInput) {
   const itemId = `content-${Date.now()}`
+  const requestedAt = input?.requestedAt ?? '10/04/2026'
+  const resourceType = input?.resourceType ?? 'exam'
+  const subject = input?.subject ?? getSubjectTagContextByLabel('Ciências')
   const nextItem: ContentApprovalItem = {
     id: itemId,
     kind: 'content',
-    title: 'Nova avaliação em preparação',
-    subtitle: 'Prova · Ciências · 10/04/2026',
+    requestedAt,
+    resourceType,
+    subject,
+    title: input?.title ?? 'Nova avaliação em preparação',
+    subtitle: buildContentSubtitle({
+      requestedAt,
+      resourceType,
+      subjectLabel: subject?.label ?? 'Geral',
+    }),
     status: 'sent',
     badges: [
       {
@@ -477,22 +335,20 @@ function createMockContentDraft() {
   return nextItem
 }
 
-function createMockGuardianDraft() {
+function createMockGuardianDraft(input?: GuardianApprovalDraftInput) {
   const itemId = `guardian-${Date.now()}`
+  const requestedAt = input?.requestedAt ?? '07/04/2026'
+  const roleLabel = input?.roleLabel ?? 'Responsável'
   const nextItem: GuardianApprovalItem = {
     id: itemId,
     kind: 'guardian',
-    title: 'Novo responsável em triagem',
-    subtitle: 'Solicitação em 07/04/2026',
+    requestedAt,
+    roleLabel,
+    title: input?.title ?? 'Novo responsável em triagem',
+    subtitle: `${roleLabel} · Solicitação em ${requestedAt}`,
     status: 'pendingValidation',
-    badges: [
-      {
-        id: `${itemId}-badge-review`,
-        label: 'Revisão inicial',
-        tone: 'warning',
-      },
-    ],
-    childName: 'Aluno a confirmar',
+    badges: [formatRequestDateBadge(requestedAt)],
+    childName: input?.childName ?? 'Aluno a confirmar',
     validation: {
       hasDocument: false,
       relationshipConfirmed: false,
@@ -517,6 +373,112 @@ function removeMockGuardianItem(id: string) {
   )
 }
 
+function updateMockContentItem(
+  id: string,
+  input: ContentApprovalDraftInput
+): ContentApprovalItem {
+  let nextItem: ContentApprovalItem | undefined
+
+  mockContentApprovalItems = mockContentApprovalItems.map(item => {
+    if (item.id !== id) {
+      return item
+    }
+
+    const requestedAt = input.requestedAt ?? item.requestedAt ?? '10/04/2026'
+    const resourceType = input.resourceType ?? item.resourceType ?? 'exam'
+    const subject = input.subject ?? item.subject
+
+    nextItem = {
+      ...item,
+      requestedAt,
+      resourceType,
+      subject,
+      title: input.title,
+      subtitle: buildContentSubtitle({
+        requestedAt,
+        resourceType,
+        subjectLabel: subject?.label ?? 'Geral',
+      }),
+    }
+
+    return nextItem
+  })
+
+  if (!nextItem) {
+    throw new Error(`Content approval ${id} not found`)
+  }
+
+  return nextItem
+}
+
+function updateMockGuardianItem(
+  id: string,
+  input: GuardianApprovalDraftInput
+): GuardianApprovalItem {
+  let nextItem: GuardianApprovalItem | undefined
+
+  mockGuardianApprovalItems = mockGuardianApprovalItems.map(item => {
+    if (item.id !== id) {
+      return item
+    }
+
+    const requestedAt = input.requestedAt ?? item.requestedAt ?? '07/04/2026'
+
+    nextItem = {
+      ...item,
+      badges: [formatRequestDateBadge(requestedAt)],
+      childName: input.childName,
+      requestedAt,
+      roleLabel: input.roleLabel,
+      subtitle: `${input.roleLabel} · Solicitação em ${requestedAt}`,
+      title: input.title,
+    }
+
+    return nextItem
+  })
+
+  if (!nextItem) {
+    throw new Error(`Guardian approval ${id} not found`)
+  }
+
+  return nextItem
+}
+
+function requestMockContentCorrection(
+  id: string,
+  correction: ApprovalCorrectionInput
+): ContentApprovalItem {
+  let nextItem: ContentApprovalItem | undefined
+
+  mockContentApprovalItems = mockContentApprovalItems.map(item => {
+    if (item.id !== id) {
+      return item
+    }
+
+    const correctionBadge = {
+      id: `${item.id}-correction`,
+      label: correction.note,
+      tone: 'warning' as const,
+    }
+
+    nextItem = {
+      ...item,
+      badges: [
+        correctionBadge,
+        ...item.badges.filter(badge => badge.id !== correctionBadge.id),
+      ],
+    }
+
+    return nextItem
+  })
+
+  if (!nextItem) {
+    throw new Error(`Content approval ${id} not found`)
+  }
+
+  return nextItem
+}
+
 export function createAdminApprovalRepository({
   allowFallback = false,
   client,
@@ -527,7 +489,7 @@ export function createAdminApprovalRepository({
         const response = await client.get<
           ApprovalQueueResponseDto<ContentApprovalDto>
         >('admin/approvals/content', {
-          query: buildQueueQuery(query),
+          query: buildApprovalQueueQuery(query),
         })
 
         return mapContentApprovalQueueResponse(response)
@@ -544,7 +506,7 @@ export function createAdminApprovalRepository({
         const response = await client.get<
           ApprovalQueueResponseDto<GuardianApprovalDto>
         >('admin/approvals/guardians', {
-          query: buildQueueQuery(query),
+          query: buildApprovalQueueQuery(query),
         })
 
         return mapGuardianApprovalQueueResponse(response)
@@ -593,11 +555,26 @@ export function createAdminApprovalRepository({
         return updateMockGuardianStatus(id, status)
       }
     },
-    async createLocalContentDraft() {
-      return createMockContentDraft()
+    async createLocalContentDraft(input?: ContentApprovalDraftInput) {
+      return createMockContentDraft(input)
     },
-    async createLocalGuardianDraft() {
-      return createMockGuardianDraft()
+    async createLocalGuardianDraft(input?: GuardianApprovalDraftInput) {
+      return createMockGuardianDraft(input)
+    },
+    async updateLocalContentItem(id: string, input: ContentApprovalDraftInput) {
+      return updateMockContentItem(id, input)
+    },
+    async updateLocalGuardianItem(
+      id: string,
+      input: GuardianApprovalDraftInput
+    ) {
+      return updateMockGuardianItem(id, input)
+    },
+    async requestContentCorrection(
+      id: string,
+      correction: ApprovalCorrectionInput
+    ) {
+      return requestMockContentCorrection(id, correction)
     },
     async removeLocalContentItem(id: string) {
       removeMockContentItem(id)

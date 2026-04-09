@@ -1,14 +1,13 @@
-import { Box } from '@mui/material'
-import type { SxProps, Theme } from '@mui/material/styles'
-import AppInput from '../ui/AppInput'
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded'
+import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined'
 import InputAdornment from '@mui/material/InputAdornment'
 import Typography from '@mui/material/Typography'
-import AppDropdown from '../ui/AppDropdown'
-import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined'
-import type { SelectChangeEvent } from '@mui/material'
+import { Box } from '@mui/material'
+import type { SxProps, Theme } from '@mui/material/styles'
 import type { DropdownOption } from '@/components/ui/AppDropdown'
-import type { ChangeEvent } from 'react'
+import type { ApprovalResultsSummary } from '@/types/admin'
+import AppDropdown from '../ui/AppDropdown'
+import AppInput from '../ui/AppInput'
 
 const outlineFieldBorderSx: SxProps<Theme> = {
   '& .MuiOutlinedInput-notchedOutline': {
@@ -30,21 +29,50 @@ const outlineFieldBorderSx: SxProps<Theme> = {
   },
 }
 
+function getResultsLabel(resultsSummary: ApprovalResultsSummary) {
+  if (resultsSummary.customLabel) {
+    return resultsSummary.customLabel
+  }
+
+  return `${resultsSummary.count} ${
+    resultsSummary.count === 1
+      ? resultsSummary.singularLabel
+      : resultsSummary.pluralLabel
+  }`
+}
+
 interface SearchBarAndFilterProps {
-  onQueryChange: (query: string) => void
-  searchPlaceholder: string
-  query: string
-  resultLabel: string
   filterOptions: DropdownOption[]
-  onStatusChange: (event: SelectChangeEvent<string>) => void
+  onQueryChange: (query: string) => void
+  onStatusChange: (status: string) => void
+  query: string
+  resultsSummary: ApprovalResultsSummary
+  searchPlaceholder: string
   selectedStatus: string
 }
 
-export function SearchBarAndFilter({ onQueryChange, searchPlaceholder, query, resultLabel, filterOptions, onStatusChange, selectedStatus }: SearchBarAndFilterProps) {
+export function SearchBarAndFilter({
+  filterOptions,
+  onQueryChange,
+  onStatusChange,
+  query,
+  resultsSummary,
+  searchPlaceholder,
+  selectedStatus,
+}: SearchBarAndFilterProps) {
+  const resultLabel = getResultsLabel(resultsSummary)
+
   return (
-    <Box className="flex flex-col gap-3 lg:flex-row lg:items-stretch lg:gap-3">
+    <Box
+      sx={{
+        alignItems: { md: 'stretch', xs: 'stretch' },
+        display: 'grid',
+        gap: 1.5,
+        gridTemplateColumns: { md: 'minmax(0, 1fr) auto', xs: '1fr' },
+      }}
+    >
       <AppInput
-        className="min-w-0 flex-1"
+        className="min-w-0"
         icon={
           <SearchRoundedIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
         }
@@ -58,7 +86,7 @@ export function SearchBarAndFilter({ onQueryChange, searchPlaceholder, query, re
               <Typography
                 sx={{
                   color: 'text.secondary',
-                  fontSize: { md: 15, xs: 14 },
+                  fontSize: { md: 15, xs: 13 },
                   fontWeight: 600,
                   whiteSpace: 'nowrap',
                 }}
@@ -75,63 +103,55 @@ export function SearchBarAndFilter({ onQueryChange, searchPlaceholder, query, re
             height: 44,
             minHeight: 44,
           },
-          ...outlineFieldBorderSx,
           '& .MuiInputAdornment-positionStart': {
             marginRight: 1,
           },
+          ...outlineFieldBorderSx,
         }}
       />
 
-      <Box
-        sx={{
-          flexShrink: 0,
-          width: { lg: 'auto', xs: '100%' },
+      <AppDropdown
+        borderRadius="12px"
+        displayLabel="Filtros"
+        fullWidth
+        leadingIcon={
+          <FilterAltOutlinedIcon
+            sx={{ color: 'text.secondary', fontSize: 20 }}
+          />
+        }
+        MenuProps={{
+          PaperProps: {
+            sx: {
+              marginTop: '10px',
+            },
+          },
         }}
-      >
-        <AppDropdown
-          displayLabel="Filtros"
-          leadingIcon={
-            <FilterAltOutlinedIcon
-              sx={{ color: 'text.secondary', fontSize: 20 }}
-            />
-          }
-          neutralOutline
-          onChange={event =>
-            onStatusChange(event as ChangeEvent<HTMLInputElement>)
-          }
-          options={filterOptions}
-          triggerVariant="ghost"
-          value={selectedStatus}
-          width="auto"
-          borderRadius="12px"
-          sx={{
-            backgroundColor: 'background.paper',
+        neutralOutline
+        onChange={event => onStatusChange(String(event.target.value))}
+        options={filterOptions}
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            height: 44,
             minHeight: 44,
-            '& .MuiOutlinedInput-root': {
-              height: 44,
-              minHeight: 44,
-            },
-            ...outlineFieldBorderSx,
-            '& .MuiSelect-select': {
-              alignItems: 'center',
-              gap: 1,
-              paddingBlock: '10px',
-              paddingInline: '14px',
-            },
-            '& .MuiSelect-icon': {
-              color: 'text.secondary',
-              fontSize: 20,
-            },
-          }}
-          MenuProps={{
-            PaperProps: {
-              sx: {
-                marginTop: '10px',
-              },
-            },
-          }}
-        />
-      </Box>
+          },
+          '& .MuiSelect-icon': {
+            color: 'text.secondary',
+            fontSize: 20,
+          },
+          '& .MuiSelect-select': {
+            alignItems: 'center',
+            gap: 1,
+            paddingBlock: '10px',
+            paddingInline: '14px',
+          },
+          backgroundColor: 'background.paper',
+          minHeight: 44,
+          ...outlineFieldBorderSx,
+        }}
+        triggerVariant="ghost"
+        value={selectedStatus}
+        width="auto"
+      />
     </Box>
   )
 }

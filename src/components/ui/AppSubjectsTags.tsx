@@ -1,3 +1,4 @@
+import React from 'react'
 import type { TagContext } from '../../types/common'
 import AppTags, { AppTag } from './AppTags'
 import { SUBJECTS, type SubjectChipSize } from '../../utils/themes'

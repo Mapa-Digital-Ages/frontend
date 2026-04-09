@@ -11,12 +11,7 @@ import {
   type SelectProps,
   Typography,
 } from '@mui/material'
-import {
-  alpha,
-  useTheme,
-  type SxProps,
-  type Theme,
-} from '@mui/material/styles'
+import { alpha, useTheme, type SxProps, type Theme } from '@mui/material/styles'
 import type { ReactNode } from 'react'
 
 export interface DropdownOption {
@@ -66,8 +61,14 @@ function AppDropdown({
   ...props
 }: AppDropdownProps) {
   const theme = useTheme()
-  const { multiple = false, disabled, className, MenuProps, sx, ...selectProps } =
-    props
+  const {
+    multiple = false,
+    disabled,
+    className,
+    MenuProps,
+    sx,
+    ...selectProps
+  } = props
   const isGhostTrigger = triggerVariant === 'ghost'
   const resolvedMenuWidth = menuWidth ?? (width === 'auto' ? 220 : width)
   const neutralBorder = theme.palette.background.border

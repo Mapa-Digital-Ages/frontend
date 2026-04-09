@@ -1,4 +1,4 @@
-import { httpClient } from './http/client'
+import { httpClient } from '../http/client'
 import { createAdminApprovalRepository } from './admin-approval.service'
 
 const env = (

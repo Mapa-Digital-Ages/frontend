@@ -7,7 +7,6 @@ import type {
   ApprovalBadgeTone,
   ApprovalCardStatus,
   ContentApprovalStatus,
-  GuardianApprovalItem,
   GuardianApprovalStatus,
 } from '../types/admin'
 import type { TagContext } from '../types/common'
@@ -19,6 +18,80 @@ export type TagChipTone = {
   backgroundColor: string
   borderColor: string
   color: string
+}
+
+function normalizeHex(color: string) {
+  const value = color.trim()
+
+  if (!value.startsWith('#')) {
+    return null
+  }
+
+  const hex = value.slice(1)
+
+  if (hex.length === 3) {
+    return hex
+      .split('')
+      .map(char => `${char}${char}`)
+      .join('')
+  }
+
+  if (hex.length === 6) {
+    return hex
+  }
+
+  return null
+}
+
+function parseRgbColor(color: string) {
+  const normalizedHex = normalizeHex(color)
+
+  if (normalizedHex) {
+    return {
+      b: Number.parseInt(normalizedHex.slice(4, 6), 16),
+      g: Number.parseInt(normalizedHex.slice(2, 4), 16),
+      r: Number.parseInt(normalizedHex.slice(0, 2), 16),
+    }
+  }
+
+  const rgbaMatch = color
+    .trim()
+    .match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)$/i)
+
+  if (!rgbaMatch) {
+    return null
+  }
+
+  return {
+    b: Number.parseInt(rgbaMatch[3] ?? '0', 10),
+    g: Number.parseInt(rgbaMatch[2] ?? '0', 10),
+    r: Number.parseInt(rgbaMatch[1] ?? '0', 10),
+  }
+}
+
+export function getReadableTextColor(color: string | undefined) {
+  if (!color) {
+    return 'rgba(255, 255, 255, 1)'
+  }
+
+  const rgb = parseRgbColor(color)
+
+  if (!rgb) {
+    return 'rgba(255, 255, 255, 1)'
+  }
+
+  const channel = (value: number) => {
+    const normalized = value / 255
+
+    return normalized <= 0.03928
+      ? normalized / 12.92
+      : ((normalized + 0.055) / 1.055) ** 2.4
+  }
+
+  const luminance =
+    0.2126 * channel(rgb.r) + 0.7152 * channel(rgb.g) + 0.0722 * channel(rgb.b)
+
+  return luminance > 0.6 ? 'rgba(16, 42, 67, 1)' : 'rgba(255, 255, 255, 1)'
 }
 
 export function getTagChipTone(
@@ -86,29 +159,6 @@ const SUBJECT_CATALOG = {
   },
 } as const
 
-const GUARDIAN_STATUS_SHOWCASE_CATALOG = {
-  default: {
-    color: 'rgba(32, 109, 197, 1)',
-    id: 'default',
-    label: 'Geral',
-  },
-  success: {
-    color: 'rgba(20, 184, 166, 1)',
-    id: 'success',
-    label: 'Cadastro liberado',
-  },
-  warning: {
-    color: 'rgba(254, 51, 163, 1)',
-    id: 'warning',
-    label: 'Aguardando validação',
-  },
-  error: {
-    color: 'rgba(0, 212, 106, 1)',
-    id: 'error',
-    label: 'Cadastro recusado',
-  },
-} as const
-
 export type SubjectId = keyof typeof SUBJECT_CATALOG
 export const ALL_SUBJECT_TAG_CONTEXTS: TagContext[] = (
   Object.keys(SUBJECT_CATALOG) as SubjectId[]
@@ -125,12 +175,14 @@ type SubjectStyleSlot = {
   color?: string
 }
 
+export type ResolvedSubjectId = SubjectId | 'custom'
+
 export type SubjectTheme = {
   badge: SubjectStyleSlot
   border: SubjectStyleSlot
   color: string
   icon: SubjectStyleSlot
-  id: SubjectId
+  id: ResolvedSubjectId
   label: string
   mutedText: SubjectStyleSlot
   option: SubjectStyleSlot
@@ -158,6 +210,21 @@ export const SUBJECTS: Record<string, TagContext> = {
   portugues: SUBJECT_CATALOG.portuguese,
 }
 
+function normalizeSubjectLookupValue(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+}
+
+const SUBJECTS_BY_LABEL = Object.values(SUBJECTS).reduce<
+  Record<string, TagContext>
+>((lookup, subject) => {
+  lookup[normalizeSubjectLookupValue(subject.label)] = subject
+  return lookup
+}, {})
+
 type GetSubjectThemeOptions = {
   mode?: PaletteMode
 }
@@ -168,16 +235,33 @@ export function getSubjectContext(
 ): TagContext {
   return {
     color: subject?.color ?? fallback.color,
+    contrastColor: subject?.contrastColor ?? fallback.contrastColor,
     id: subject?.id ?? fallback.id,
     label: subject?.label ?? fallback.label,
   }
 }
 
-function getResolvedSubjectId(subject?: Partial<TagContext>): SubjectId {
+export function getSubjectTagContextByLabel(
+  label: string | undefined
+): TagContext | undefined {
+  if (!label) {
+    return undefined
+  }
+
+  return SUBJECTS_BY_LABEL[normalizeSubjectLookupValue(label)]
+}
+
+function getResolvedSubjectId(
+  subject?: Partial<TagContext>
+): ResolvedSubjectId {
   const subjectId = subject?.id
 
   if (subjectId && subjectId in SUBJECT_CATALOG) {
     return subjectId as SubjectId
+  }
+
+  if (subject?.color || subject?.id || subject?.label) {
+    return 'custom'
   }
 
   return 'default'
@@ -188,9 +272,14 @@ export function getSubjectTheme(
   { mode = 'light' }: GetSubjectThemeOptions = {}
 ): SubjectTheme {
   const id = getResolvedSubjectId(subject)
-  const fallbackColor = SUBJECT_CATALOG[id].color
+  const fallbackColor =
+    id === 'custom' ? SUBJECT_CATALOG.default.color : SUBJECT_CATALOG[id].color
   const baseColor = subject?.color ?? fallbackColor
-  const label = subject?.label ?? SUBJECT_CATALOG[id].label
+  const label =
+    subject?.label ??
+    (id === 'custom'
+      ? SUBJECT_CATALOG.default.label
+      : SUBJECT_CATALOG[id].label)
   const isDark = mode === 'dark'
   const foregroundText = isDark
     ? AppColors.dark.textPrimary
@@ -201,6 +290,11 @@ export function getSubjectTheme(
   const neutralBorder = isDark
     ? alpha(AppColors.dark.textSecondary, 0.2)
     : alpha(AppColors.neutral.border, 0.95)
+  const contrastColor =
+    subject?.contrastColor ??
+    (subject?.color || id === 'custom'
+      ? getReadableTextColor(baseColor)
+      : SUBJECT_CATALOG[id].contrast)
 
   return {
     badge: {
@@ -244,7 +338,7 @@ export function getSubjectTheme(
     },
     solidSurface: {
       backgroundColor: isDark ? baseColor : lighten(baseColor, 0.28),
-      color: SUBJECT_CATALOG[id].contrast,
+      color: contrastColor,
     },
     text: {
       color: foregroundText,
@@ -358,7 +452,7 @@ export const GUARDIAN_APPROVAL_CARD_STATUS: Record<
   ApprovalCardStatus
 > = {
   approved: {
-    label: 'Cadastro liberado',
+    label: 'Liberado',
     tone: 'success',
   },
   pendingValidation: {
@@ -366,10 +460,33 @@ export const GUARDIAN_APPROVAL_CARD_STATUS: Record<
     tone: 'warning',
   },
   rejected: {
-    label: 'Cadastro recusado',
+    label: 'Recusado',
     tone: 'danger',
   },
 }
+
+const GUARDIAN_STATUS_SHOWCASE_CATALOG = {
+  default: {
+    color: 'rgba(32, 109, 197, 1)',
+    id: 'default',
+    label: 'Geral',
+  },
+  success: {
+    color: 'rgba(20, 184, 166, 1)',
+    id: 'success',
+    label: 'Liberado',
+  },
+  warning: {
+    color: 'rgba(254, 51, 163, 1)',
+    id: 'warning',
+    label: 'Aguardando validação',
+  },
+  error: {
+    color: 'rgba(0, 212, 106, 1)',
+    id: 'error',
+    label: 'Recusado',
+  },
+} as const
 
 export type GuardianStatusShowcaseId = keyof typeof GUARDIAN_STATUS_SHOWCASE_CATALOG
 
@@ -380,35 +497,3 @@ export const ALL_GUARDIAN_STATUS_TAG_CONTEXTS: TagContext[] = (
   label: GUARDIAN_STATUS_SHOWCASE_CATALOG[key].label,
   color: GUARDIAN_STATUS_SHOWCASE_CATALOG[key].color,
 }))
-
-export function buildGuardianValidationBadges(
-  item: GuardianApprovalItem
-): ApprovalBadge[] {
-  return [
-    item.validation.hasDocument
-      ? { id: `${item.id}-hasDocument`, label: 'Documento ok', tone: 'success' }
-      : {
-          id: `${item.id}-hasDocument`,
-          label: 'Sem documento',
-          tone: 'warning',
-        },
-    item.validation.relationshipConfirmed
-      ? {
-          id: `${item.id}-relationshipConfirmed`,
-          label: 'Parentesco confirmado',
-          tone: 'success',
-        }
-      : {
-          id: `${item.id}-relationshipConfirmed`,
-          label: 'Parentesco pendente',
-          tone: 'warning',
-        },
-    item.validation.studentLinked
-      ? {
-          id: `${item.id}-studentLinked`,
-          label: 'Aluno vinculado',
-          tone: 'success',
-        }
-      : { id: `${item.id}-studentLinked`, label: 'Sem vínculo', tone: 'warning' },
-  ]
-}

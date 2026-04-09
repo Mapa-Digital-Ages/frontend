@@ -10,7 +10,7 @@ import {
   HttpRequestError,
   createAdminApprovalRepository,
   mapContentApprovalQueueResponse,
-} from '../src/services/admin-approval.service'
+} from '../src/services/admin/admin-approval.service'
 import {
   filterApprovalItems,
   getGuardianApprovalEligibility,
@@ -53,7 +53,7 @@ const guardianItems: GuardianApprovalItem[] = [
     id: 'guardian-1',
     kind: 'guardian',
     title: 'Mariana Souza',
-    subtitle: 'Mãe · Solicitação em 01/04/2026',
+    subtitle: 'Solicitação em 01/04/2026',
     status: 'pendingValidation',
     badges: [
       {
@@ -73,7 +73,7 @@ const guardianItems: GuardianApprovalItem[] = [
     id: 'guardian-2',
     kind: 'guardian',
     title: 'Carlos Santos',
-    subtitle: 'Pai · Solicitação em 02/04/2026',
+    subtitle: 'Solicitação em 02/04/2026',
     status: 'pendingValidation',
     badges: [
       {
@@ -211,6 +211,7 @@ test('mapContentApprovalQueueResponse normalizes python-style DTOs into UI items
   assert.equal(response.items[0]?.status, 'inReview')
   assert.equal(response.items[0]?.subtitle, 'Prova · Português · 07/04/2026')
   assert.equal(response.items[0]?.badges[0]?.label, '2 questões vinculadas')
+  assert.equal(response.items[0]?.subject?.label, 'Português')
 })
 
 test('admin approval repository falls back to mock data when the remote API is unavailable', async () => {
@@ -274,10 +275,7 @@ test('theme selector and approvals filter reuse AppDropdown with the ghost trigg
     'utf8'
   )
   const searchBarAndFilterSource = readFileSync(
-    new URL(
-      '../src/components/common/SearchBarAndFilter.tsx',
-      import.meta.url
-    ),
+    new URL('../src/components/common/SearchBarAndFilter.tsx', import.meta.url),
     'utf8'
   )
 
@@ -286,6 +284,13 @@ test('theme selector and approvals filter reuse AppDropdown with the ghost trigg
   assert.match(appDropdownSource, /triggerVariant/)
   assert.match(appDropdownSource, /ghost/)
   assert.match(searchBarAndFilterSource, /triggerVariant="ghost"/)
+  assert.match(
+    searchBarAndFilterSource,
+    /resultsSummary: ApprovalResultsSummary/
+  )
+  assert.match(searchBarAndFilterSource, /resultsSummary\.count/)
+  assert.match(searchBarAndFilterSource, /pluralLabel/)
+  assert.doesNotMatch(searchBarAndFilterSource, /resultLabel: string/)
 })
 
 test('approval queue panel reuses shared toolbar and pagination components', () => {
@@ -312,6 +317,11 @@ test('approval queue panel reuses shared toolbar and pagination components', () 
   assert.match(approvalComponentSource, /minHeight: 0/)
   assert.match(searchBarAndFilterSource, /InputAdornment position="end"/)
   assert.match(searchBarAndFilterSource, /displayLabel="Filtros"/)
+  assert.match(
+    searchBarAndFilterSource,
+    /onStatusChange: \(status: string\) => void/
+  )
+  assert.doesNotMatch(searchBarAndFilterSource, /ChangeEvent/)
   assert.match(searchBarAndFilterSource, /height: 44/)
   assert.match(searchBarAndFilterSource, /minHeight: 44/)
   assert.match(paginationSource, /currentPage/)
@@ -323,7 +333,7 @@ test('admin approvals page uses a responsive grid and a bounded page size for qu
     'utf8'
   )
 
-  assert.match(adminApprovalsPageSource, /pageSize: 2/)
+  assert.match(adminApprovalsPageSource, /pageSize: 10/)
   assert.match(
     adminApprovalsPageSource,
     /repeat\(auto-fit, minmax\(min\(100%, 32rem\), 1fr\)\)/
@@ -332,23 +342,19 @@ test('admin approvals page uses a responsive grid and a bounded page size for qu
 
 test('approval list cards preserve the compact visual proportions from the reference', () => {
   const approvalCardSource = readFileSync(
-    new URL(
-      '../src/pages/admin/components/ApprovalCard.tsx',
-      import.meta.url
-    ),
+    new URL('../src/pages/admin/components/ApprovalCard.tsx', import.meta.url),
     'utf8'
   )
   const searchBarAndFilterSource = readFileSync(
-    new URL(
-      '../src/components/common/SearchBarAndFilter.tsx',
-      import.meta.url
-    ),
+    new URL('../src/components/common/SearchBarAndFilter.tsx', import.meta.url),
     'utf8'
   )
 
   assert.match(approvalCardSource, /fontSize: \{ md: 22, xs: 18 \}/)
   assert.match(approvalCardSource, /AppTags/)
   assert.match(approvalCardSource, /size="sm"/)
+  assert.doesNotMatch(approvalCardSource, /buildActions/)
+  assert.doesNotMatch(approvalCardSource, /approvalQueue\.utils/)
   assert.match(searchBarAndFilterSource, /height: 44/)
 })
 
@@ -358,10 +364,7 @@ test('admin surfaces rely on theme-aware styling instead of fixed slate utility 
     'utf8'
   )
   const approvalCardSource = readFileSync(
-    new URL(
-      '../src/pages/admin/components/ApprovalCard.tsx',
-      import.meta.url
-    ),
+    new URL('../src/pages/admin/components/ApprovalCard.tsx', import.meta.url),
     'utf8'
   )
   const approvalComponentSource = readFileSync(
@@ -398,9 +401,82 @@ test('admin approvals page renders cards directly and provides visible actions',
   assert.match(adminTypesSource, /export interface ApprovalCardHelperText/)
   assert.match(adminApprovalsPageSource, /<ApprovalCard/)
   assert.doesNotMatch(adminApprovalsPageSource, /actions=\{\[\]\}/)
-  assert.match(adminApprovalsPageSource, /item=\{item\}/)
-  assert.match(adminApprovalsPageSource, /onEdit=\{\(\) =>/)
-  assert.match(approvalCardSource, /item\.kind === 'content'/)
-  assert.match(approvalCardSource, /getGuardianApprovalEligibility/)
+  assert.match(
+    adminApprovalsPageSource,
+    /actions=\{buildContentActions\(item\)\}/
+  )
+  assert.match(
+    adminApprovalsPageSource,
+    /actions=\{buildGuardianActions\(item\)\}/
+  )
+  assert.match(adminApprovalsPageSource, /type="content"/)
+  assert.match(adminApprovalsPageSource, /type="guardian"/)
+  assert.match(approvalCardSource, /type: ApprovalType/)
+  assert.match(approvalCardSource, /sectionLabel = type === 'content'/)
   assert.doesNotMatch(approvalCardSource, /ApprovalPill/)
+  assert.match(approvalCardSource, /subjectTag/)
+  assert.match(approvalCardSource, /requestDateTag/)
+  assert.match(approvalCardSource, /AppTag/)
+  assert.doesNotMatch(approvalCardSource, /buildActions/)
+})
+
+test('admin approval service separates repository and mapper concerns for future API integration', () => {
+  const serviceSource = readFileSync(
+    new URL('../src/services/admin/admin-approval.service.ts', import.meta.url),
+    'utf8'
+  )
+  const runtimeSource = readFileSync(
+    new URL('../src/services/admin/admin-approval.runtime.ts', import.meta.url),
+    'utf8'
+  )
+
+  assert.match(serviceSource, /from '\.\/admin-approval\.repository'/)
+  assert.match(serviceSource, /from '\.\/admin-approval\.mapper'/)
+  assert.match(serviceSource, /export \{ createAdminApprovalRepository \}/)
+  assert.match(serviceSource, /export \{ mapContentApprovalQueueResponse \}/)
+  assert.match(runtimeSource, /createAdminApprovalRepository/)
+
+  assert.doesNotThrow(() =>
+    readFileSync(
+      new URL(
+        '../src/services/admin/admin-approval.repository.ts',
+        import.meta.url
+      ),
+      'utf8'
+    )
+  )
+  assert.doesNotThrow(() =>
+    readFileSync(
+      new URL(
+        '../src/services/admin/admin-approval.mapper.ts',
+        import.meta.url
+      ),
+      'utf8'
+    )
+  )
+})
+
+test('admin approvals page routes create edit delete and correction through a reusable modal flow', () => {
+  const adminApprovalsPageSource = readFileSync(
+    new URL('../src/pages/admin/AdminApprovalsPage.tsx', import.meta.url),
+    'utf8'
+  )
+  const modalSource = readFileSync(
+    new URL(
+      '../src/pages/admin/components/ApprovalActionModal.tsx',
+      import.meta.url
+    ),
+    'utf8'
+  )
+
+  assert.match(adminApprovalsPageSource, /ApprovalActionModal/)
+  assert.match(adminApprovalsPageSource, /modalState/)
+  assert.match(adminApprovalsPageSource, /action: 'create'/)
+  assert.match(adminApprovalsPageSource, /action: 'edit'/)
+  assert.match(adminApprovalsPageSource, /action: 'delete'/)
+  assert.match(adminApprovalsPageSource, /action: 'correct'/)
+  assert.match(modalSource, /AppActionModal/)
+  assert.match(modalSource, /mode\.action === 'correct'/)
+  assert.match(modalSource, /mode\.type === 'guardian'/)
+  assert.match(modalSource, /mode\.type === 'content'/)
 })

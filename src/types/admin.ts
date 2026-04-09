@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
+import type { SubjectContext } from './common'
 
 export type ApprovalType = 'content' | 'guardian'
+export type ApprovalModalAction = 'correct' | 'create' | 'delete' | 'edit'
 
 export type ApprovalBadgeTone =
   | 'neutral'
@@ -37,13 +39,22 @@ export interface ApprovalCardAction {
   tooltip?: string
 }
 
+export interface ApprovalResultsSummary {
+  count: number
+  customLabel?: string
+  pluralLabel: string
+  singularLabel: string
+}
+
 interface BaseApprovalItem {
   id: string
+  requestedAt?: string
   title: string
-  subtitle: string
+  subtitle?: string
   badges: ApprovalBadge[]
 }
 
+export type ContentApprovalResourceType = 'exam' | 'task'
 export type ContentApprovalStatus =
   | 'inReview'
   | 'sent'
@@ -53,7 +64,9 @@ export type ContentApprovalStatus =
 export interface ContentApprovalItem extends BaseApprovalItem {
   id: string
   kind: 'content'
+  resourceType?: ContentApprovalResourceType
   status: ContentApprovalStatus
+  subject?: SubjectContext
 }
 
 export type GuardianApprovalStatus =
@@ -70,6 +83,7 @@ export interface GuardianApprovalValidation {
 export interface GuardianApprovalItem extends BaseApprovalItem {
   id: string
   kind: 'guardian'
+  roleLabel?: string
   status: GuardianApprovalStatus
   childName: string
   validation: GuardianApprovalValidation
@@ -98,4 +112,22 @@ export interface ApprovalQueueResult<TItem> {
   pageSize: number
   totalItems: number
   totalPages: number
+}
+
+export interface ContentApprovalDraftInput {
+  requestedAt?: string
+  resourceType: ContentApprovalResourceType
+  subject?: SubjectContext
+  title: string
+}
+
+export interface GuardianApprovalDraftInput {
+  childName: string
+  requestedAt?: string
+  roleLabel: string
+  title: string
+}
+
+export interface ApprovalCorrectionInput {
+  note: string
 }

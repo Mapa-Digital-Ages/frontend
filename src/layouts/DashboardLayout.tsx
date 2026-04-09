@@ -19,6 +19,8 @@ const AVATAR_BG_BY_ROLE: Record<UserRole, string> = {
   parent: AppColors.role.parent.primary,
   admin: AppColors.role.admin.primary,
 }
+
+// Keeps the admin "Aprovações" entry centralized in NAVIGATION_BY_ROLE.
 function DashboardLayout() {
   const theme = useTheme()
   const { isMobile } = useBreakpoint()

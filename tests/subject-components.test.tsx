@@ -58,6 +58,18 @@ test('getSubjectTheme derives semantic slots from fallback and external base col
   assert.ok(fallback.border.color)
 })
 
+test('getSubjectTheme treats unknown disciplines as custom themes and derives readable contrast', () => {
+  const custom = getSubjectTheme(
+    { color: '#FDE68A', id: 'philosophy', label: 'Filosofia' } as never,
+    { mode: 'light' }
+  )
+
+  assert.equal(custom.id, 'custom')
+  assert.equal(custom.label, 'Filosofia')
+  assert.equal(custom.color, '#FDE68A')
+  assert.notEqual(custom.solidSurface.color, 'rgba(255, 255, 255, 1)')
+})
+
 test('ProgressBar renders the current percentage label', () => {
   const html = renderWithTheme(
     <ProgressBar

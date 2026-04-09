@@ -77,19 +77,11 @@ export function paginateApprovalItems<TItem>(
 export function getGuardianApprovalEligibility(
   item: GuardianApprovalItem
 ): GuardianApprovalEligibility {
-  const missingRequirements: string[] = []
-
-  if (!item.validation.hasDocument) {
-    missingRequirements.push('documento')
-  }
-
-  if (!item.validation.studentLinked) {
-    missingRequirements.push('vínculo com aluno')
-  }
-
-  if (!item.validation.relationshipConfirmed) {
-    missingRequirements.push('confirmação de parentesco')
-  }
+  const missingRequirements = [
+    item.validation.hasDocument ? null : 'documento',
+    item.validation.relationshipConfirmed ? null : 'vínculo',
+    item.validation.studentLinked ? null : 'aluno',
+  ].filter((value): value is string => value !== null)
 
   return {
     canApprove: missingRequirements.length === 0,

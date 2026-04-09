@@ -23,6 +23,7 @@ export interface SummaryMetric {
 }
 
 export interface TagContext {
+  contrastColor?: string
   id?: string
   label: string
   color?: string

@@ -1,23 +1,25 @@
+import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import { Box, IconButton, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import type { ReactNode } from 'react'
 import EmptyState from '@/components/common/EmptyState'
 import Pagination from '@/components/common/Pagination'
+import { SearchBarAndFilter } from '@/components/common/SearchBarAndFilter'
 import type { DropdownOption } from '@/components/ui/AppDropdown'
 import AppCard from '@/components/ui/AppCard'
 import { useUserRole } from '@/hooks/useUserRole'
 import { AppColors } from '@/styles/AppColors'
-import type { ApprovalStatus } from '@/types/admin'
+import type {
+  ApprovalResultsSummary,
+  ApprovalStatus,
+} from '@/types/admin'
 import type { UserRole } from '@/types/user'
-import { SearchBarAndFilter } from '@/components/common/SearchBarAndFilter'
-import AddRoundedIcon from '@mui/icons-material/AddRounded'
 
 export interface ApprovalStatusOption extends DropdownOption {
   value: ApprovalStatus
 }
 
 interface ApprovalComponentProps<TItem extends { id: string }> {
-  createActionLabel: string
   currentPage: number
   description: string
   emptyStateDescription: string
@@ -30,7 +32,7 @@ interface ApprovalComponentProps<TItem extends { id: string }> {
   onStatusChange: (status: ApprovalStatus) => void
   query: string
   renderItem: (item: TItem) => ReactNode
-  resultCount: number
+  resultsSummary: ApprovalResultsSummary
   searchPlaceholder: string
   selectedStatus: ApprovalStatus
   title: string
@@ -38,7 +40,6 @@ interface ApprovalComponentProps<TItem extends { id: string }> {
 }
 
 function ApprovalComponent<TItem extends { id: string }>({
-  createActionLabel,
   currentPage,
   description,
   emptyStateDescription,
@@ -51,7 +52,7 @@ function ApprovalComponent<TItem extends { id: string }>({
   onStatusChange,
   query,
   renderItem,
-  resultCount,
+  resultsSummary,
   searchPlaceholder,
   selectedStatus,
   title,
@@ -63,28 +64,25 @@ function ApprovalComponent<TItem extends { id: string }>({
 
   return (
     <AppCard
-      className="h-full"
-      contentClassName="gap-6 p-5 md:p-6"
+      className="flex h-full min-h-0 flex-col"
       contentSx={{
         display: 'flex',
         flex: 1,
         flexDirection: 'column',
-        height: {
-          lg: 'calc(100vh - 16rem)',
-          xs: 'auto',
-        },
-        maxHeight: {
-          lg: '960px',
-          xs: 'none',
-        },
-        minHeight: {
-          lg: 'min(720px, calc(100vh - 16rem))',
-          xs: 'auto',
-        },
+        gap: 2,
+        minHeight: 0,
         minWidth: 0,
       }}
     >
-      <Box className="flex items-start justify-between gap-3">
+      <Box
+        sx={{
+          alignItems: { sm: 'flex-start', xs: 'stretch' },
+          display: 'flex',
+          flexDirection: { sm: 'row', xs: 'column' },
+          gap: 1.5,
+          justifyContent: 'space-between',
+        }}
+      >
         <Box className="space-y-1">
           <Typography
             sx={{
@@ -107,7 +105,6 @@ function ApprovalComponent<TItem extends { id: string }>({
         </Box>
 
         <IconButton
-          aria-label={createActionLabel}
           onClick={onCreate}
           sx={{
             backgroundColor: 'background.paper',
@@ -134,17 +131,17 @@ function ApprovalComponent<TItem extends { id: string }>({
         </IconButton>
       </Box>
 
-      <SearchBarAndFilter
-        filterOptions={filterOptions}
-        onQueryChange={onQueryChange}
-        onStatusChange={event =>
-          onStatusChange(event.target.value as ApprovalStatus)
-        }
-        query={query}
-        resultLabel={`${resultCount} ${resultCount === 1 ? 'resultado' : 'resultados'}`}
-        searchPlaceholder={searchPlaceholder}
-        selectedStatus={selectedStatus}
-      />
+      <Box sx={{ flexShrink: 0 }}>
+        <SearchBarAndFilter
+          filterOptions={filterOptions}
+          onQueryChange={onQueryChange}
+          onStatusChange={status => onStatusChange(status as ApprovalStatus)}
+          query={query}
+          resultsSummary={resultsSummary}
+          searchPlaceholder={searchPlaceholder}
+          selectedStatus={selectedStatus}
+        />
+      </Box>
 
       <Box
         sx={{
@@ -161,10 +158,11 @@ function ApprovalComponent<TItem extends { id: string }>({
             className="grid gap-4"
             sx={{
               flex: 1,
+              maxHeight: { md: 360, xs: 'none' },
               minHeight: 0,
               overflowX: 'hidden',
               overflowY: 'auto',
-              pr: 0.5,
+              pr: { md: 0.5, xs: 0 },
             }}
           >
             {items.map(item => (
@@ -180,7 +178,7 @@ function ApprovalComponent<TItem extends { id: string }>({
               display: 'flex',
               flex: 1,
               justifyContent: 'center',
-              minHeight: { lg: 200, xs: 160 },
+              minHeight: 'fit-content',
             }}
           >
             <EmptyState
@@ -190,7 +188,14 @@ function ApprovalComponent<TItem extends { id: string }>({
           </Box>
         )}
       </Box>
-      <Box sx={{ flexShrink: 0, mt: 'auto' }}>
+
+      <Box
+        sx={{
+          flexShrink: 0,
+          marginTop: 'auto',
+          width: '100%',
+        }}
+      >
         <Pagination
           currentPage={currentPage}
           onPageChange={onPageChange}

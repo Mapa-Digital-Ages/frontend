@@ -1,3 +1,10 @@
+import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded'
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
+import RuleFolderOutlinedIcon from '@mui/icons-material/RuleFolderOutlined'
+import { Box } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import {
   startTransition,
   useCallback,
@@ -6,28 +13,38 @@ import {
   useMemo,
   useState,
 } from 'react'
-import { Box } from '@mui/material'
 import LoadingScreen from '@/components/common/LoadingScreen'
 import PageHeader from '@/components/common/PageHeader'
 import AppPageContainer from '@/components/ui/AppPageContainer'
-import { adminApprovalService } from '@/services/admin-approval.runtime'
+import { adminApprovalService } from '@/services/admin/admin-approval.runtime'
 import type {
+  ApprovalCardAction,
   ApprovalQueueQuery,
   ApprovalQueueResult,
+  ApprovalResultsSummary,
+  ContentApprovalDraftInput,
   ContentApprovalItem,
   ContentApprovalStatus,
+  GuardianApprovalDraftInput,
   GuardianApprovalItem,
   GuardianApprovalStatus,
 } from '@/types/admin'
+import { ALL_SUBJECT_TAG_CONTEXTS } from '@/utils/themes'
+import ApprovalActionModal, {
+  type ApprovalActionFormValues,
+  type ApprovalActionModalMode,
+} from './components/ApprovalActionModal'
+import ApprovalCard from './components/ApprovalCard'
 import ApprovalComponent, {
   type ApprovalStatusOption,
 } from './components/ApprovalComponent'
-import ApprovalCard from './components/ApprovalCard'
 import {
   CONTENT_APPROVAL_CARD_STATUS,
   GUARDIAN_APPROVAL_CARD_STATUS,
 } from '@/utils/themes'
+
 const DEFAULT_PAGE_INDEX = 1
+const DEFAULT_REQUESTED_AT = '09/04/2026'
 
 const DEFAULT_QUERY: ApprovalQueueQuery = {
   page: DEFAULT_PAGE_INDEX,
@@ -51,6 +68,27 @@ const guardianFilterOptions: ApprovalStatusOption[] = [
   { label: 'Cadastro recusado', value: 'rejected' },
 ]
 
+const resourceTypeOptions = [
+  { label: 'Tarefa', value: 'task' },
+  { label: 'Prova', value: 'exam' },
+] as const
+
+const roleOptions = [
+  { label: 'Responsável', value: 'parent' },
+]
+
+const subjectOptions = ALL_SUBJECT_TAG_CONTEXTS.filter(
+  subject => subject.id !== 'default'
+).map(subject => ({
+  label: subject.label,
+  value: subject.id ?? subject.label,
+}))
+
+const DEFAULT_SUBJECT_ID =
+  subjectOptions.find(subject => subject.value === 'mathematics')?.value ??
+  subjectOptions[0]?.value ??
+  'default'
+
 function emptyQueueResult<TItem>(pageSize: number): ApprovalQueueResult<TItem> {
   return {
     currentPage: DEFAULT_PAGE_INDEX,
@@ -68,7 +106,28 @@ function buildResolvedQuery(query: ApprovalQueueQuery, deferredQuery: string) {
   }
 }
 
+function buildResultsSummary(count: number): ApprovalResultsSummary {
+  return {
+    count,
+    pluralLabel: 'resultados',
+    singularLabel: 'resultado',
+  }
+}
+
+function getDefaultFormValues(): ApprovalActionFormValues {
+  return {
+    childName: '',
+    correctionNote: '',
+    requestedAt: DEFAULT_REQUESTED_AT,
+    resourceType: 'task',
+    roleLabel: 'Responsável',
+    subjectId: String(DEFAULT_SUBJECT_ID),
+    title: '',
+  }
+}
+
 function AdminApprovalsPage() {
+  const theme = useTheme()
   const [contentQuery, setContentQuery] =
     useState<ApprovalQueueQuery>(DEFAULT_QUERY)
   const [guardianQuery, setGuardianQuery] =
@@ -85,6 +144,12 @@ function AdminApprovalsPage() {
   const [hasLoadedGuardians, setHasLoadedGuardians] = useState(false)
   const [contentRefreshKey, setContentRefreshKey] = useState(0)
   const [guardianRefreshKey, setGuardianRefreshKey] = useState(0)
+  const [modalState, setModalState] = useState<ApprovalActionModalMode | null>(
+    null
+  )
+  const [modalValues, setModalValues] = useState<ApprovalActionFormValues>(
+    getDefaultFormValues()
+  )
 
   const deferredContentSearch = useDeferredValue(contentQuery.query)
   const deferredGuardianSearch = useDeferredValue(guardianQuery.query)
@@ -96,6 +161,51 @@ function AdminApprovalsPage() {
     () => buildResolvedQuery(guardianQuery, deferredGuardianSearch),
     [guardianQuery, deferredGuardianSearch]
   )
+
+  const contentResultsSummary = useMemo(
+    () => buildResultsSummary(contentQueue.totalItems),
+    [contentQueue.totalItems]
+  )
+  const guardianResultsSummary = useMemo(
+    () => buildResultsSummary(guardianQueue.totalItems),
+    [guardianQueue.totalItems]
+  )
+
+  const getSubjectById = useCallback((subjectId: string) => {
+    return (
+      ALL_SUBJECT_TAG_CONTEXTS.find(
+        subject => (subject.id ?? subject.label) === subjectId
+      ) ?? ALL_SUBJECT_TAG_CONTEXTS[0]
+    )
+  }, [])
+
+  const resetModal = useCallback(() => {
+    setModalState(null)
+    setModalValues(getDefaultFormValues())
+  }, [])
+
+  const openModal = useCallback((nextMode: ApprovalActionModalMode) => {
+    setModalState(nextMode)
+    setModalValues({
+      childName:
+        nextMode.item?.kind === 'guardian' ? nextMode.item.childName : '',
+      correctionNote: '',
+      requestedAt: nextMode.item?.requestedAt ?? DEFAULT_REQUESTED_AT,
+      resourceType:
+        nextMode.item?.kind === 'content'
+          ? (nextMode.item.resourceType ?? 'task')
+          : 'task',
+      roleLabel:
+        nextMode.item?.kind === 'guardian'
+          ? (nextMode.item.roleLabel ?? 'Responsável')
+          : 'Responsável',
+      subjectId:
+        nextMode.item?.kind === 'content'
+          ? String(nextMode.item.subject?.id ?? DEFAULT_SUBJECT_ID)
+          : String(DEFAULT_SUBJECT_ID),
+      title: nextMode.item?.title ?? '',
+    })
+  }, [])
 
   const handleContentStatusUpdate = useCallback(
     async (id: string, status: ContentApprovalStatus) => {
@@ -113,23 +223,209 @@ function AdminApprovalsPage() {
     []
   )
 
-  const handleContentEdit = useCallback((_id: string) => {
-    // TODO: navegar para o editor de conteúdo quando existir rota/tela dedicada.
-  }, [])
+  const buildContentActions = useCallback(
+    (item: ContentApprovalItem): ApprovalCardAction[] => {
+      const success = theme.palette.success.main
+      const error = theme.palette.error.main
+      const warning = theme.palette.warning.main
+      const neutral = theme.palette.text.primary
 
-  const handleContentDelete = useCallback(async (id: string) => {
-    await adminApprovalService.removeLocalContentItem(id)
-    setContentRefreshKey(current => current + 1)
-  }, [])
+      const modalActions: ApprovalCardAction[] =
+        item.status === 'approved'
+          ? [
+              {
+                accentColor: neutral,
+                icon: <EditOutlinedIcon />,
+                id: `${item.id}-edit`,
+                label: 'Editar conteúdo',
+                onClick: () => {
+                  openModal({ action: 'edit', item, type: 'content' })
+                },
+              },
+              {
+                accentColor: error,
+                icon: <DeleteOutlineIcon />,
+                id: `${item.id}-delete`,
+                label: 'Excluir conteúdo',
+                onClick: () => {
+                  openModal({ action: 'delete', item, type: 'content' })
+                },
+              },
+            ]
+          : [
+              {
+                accentColor: success,
+                icon: <CheckRoundedIcon />,
+                id: `${item.id}-approve`,
+                label: 'Aprovar conteúdo',
+                onClick: () => {
+                  void handleContentStatusUpdate(item.id, 'approved')
+                },
+              },
+              {
+                accentColor: error,
+                disabled: item.status === 'rejected',
+                icon: <CancelOutlinedIcon />,
+                id: `${item.id}-reject`,
+                label: 'Recusar conteúdo',
+                onClick: () => {
+                  void handleContentStatusUpdate(item.id, 'rejected')
+                },
+              },
+            ]
 
-  const handleGuardianEdit = useCallback((_id: string) => {
-    // TODO: navegar para edição do responsável quando existir rota/tela dedicada.
-  }, [])
+      return [
+        ...modalActions,
+        {
+          accentColor: warning,
+          icon: <RuleFolderOutlinedIcon />,
+          id: `${item.id}-correct`,
+          label: 'Solicitar correção',
+          onClick: () => {
+            openModal({ action: 'correct', item, type: 'content' })
+          },
+        },
+      ]
+    },
+    [handleContentStatusUpdate, openModal, theme.palette]
+  )
 
-  const handleGuardianDelete = useCallback(async (id: string) => {
-    await adminApprovalService.removeLocalGuardianItem(id)
+  const buildGuardianActions = useCallback(
+    (item: GuardianApprovalItem): ApprovalCardAction[] => {
+      const success = theme.palette.success.main
+      const error = theme.palette.error.main
+      const neutral = theme.palette.text.primary
+
+      if (item.status === 'approved') {
+        return [
+          {
+            accentColor: neutral,
+            icon: <EditOutlinedIcon />,
+            id: `${item.id}-edit`,
+            label: 'Editar responsável',
+            onClick: () => {
+              openModal({ action: 'edit', item, type: 'guardian' })
+            },
+          },
+          {
+            accentColor: error,
+            icon: <DeleteOutlineIcon />,
+            id: `${item.id}-delete`,
+            label: 'Excluir responsável',
+            onClick: () => {
+              openModal({ action: 'delete', item, type: 'guardian' })
+            },
+          },
+        ]
+      }
+
+      return [
+        {
+          accentColor: success,
+          icon: <CheckRoundedIcon />,
+          id: `${item.id}-approve`,
+          label: 'Liberar cadastro',
+          onClick: () => {
+            void handleGuardianStatusUpdate(item.id, 'approved')
+          },
+        },
+        {
+          accentColor: error,
+          disabled: item.status === 'rejected',
+          icon: <CancelOutlinedIcon />,
+          id: `${item.id}-reject`,
+          label: 'Recusar cadastro',
+          onClick: () => {
+            void handleGuardianStatusUpdate(item.id, 'rejected')
+          },
+        },
+      ]
+    },
+    [handleGuardianStatusUpdate, openModal, theme.palette]
+  )
+
+  const handleModalChange = useCallback(
+    (
+      field: keyof ApprovalActionFormValues,
+      value: string | ContentApprovalDraftInput['resourceType']
+    ) => {
+      setModalValues(current => ({
+        ...current,
+        [field]: value,
+      }))
+    },
+    []
+  )
+
+  const handleModalConfirm = useCallback(async () => {
+    if (!modalState) {
+      return
+    }
+
+    if (modalState.type === 'content') {
+      if (modalState.action === 'delete' && modalState.item) {
+        await adminApprovalService.removeLocalContentItem(modalState.item.id)
+        setContentRefreshKey(current => current + 1)
+        resetModal()
+        return
+      }
+
+      if (modalState.action === 'correct' && modalState.item) {
+        await adminApprovalService.requestContentCorrection(modalState.item.id, {
+          note: modalValues.correctionNote || 'Correção solicitada',
+        })
+        setContentRefreshKey(current => current + 1)
+        resetModal()
+        return
+      }
+
+      const payload: ContentApprovalDraftInput = {
+        requestedAt: modalValues.requestedAt,
+        resourceType: modalValues.resourceType,
+        subject: getSubjectById(modalValues.subjectId),
+        title: modalValues.title || 'Novo conteúdo',
+      }
+
+      if (modalState.action === 'create') {
+        await adminApprovalService.createLocalContentDraft(payload)
+      } else if (modalState.item) {
+        await adminApprovalService.updateLocalContentItem(
+          modalState.item.id,
+          payload
+        )
+      }
+
+      setContentRefreshKey(current => current + 1)
+      resetModal()
+      return
+    }
+
+    if (modalState.action === 'delete' && modalState.item) {
+      await adminApprovalService.removeLocalGuardianItem(modalState.item.id)
+      setGuardianRefreshKey(current => current + 1)
+      resetModal()
+      return
+    }
+
+    const payload: GuardianApprovalDraftInput = {
+      childName: modalValues.childName || 'Aluno a confirmar',
+      requestedAt: modalValues.requestedAt,
+      roleLabel: modalValues.roleLabel || 'Responsável',
+      title: modalValues.title || 'Novo responsável',
+    }
+
+    if (modalState.action === 'create') {
+      await adminApprovalService.createLocalGuardianDraft(payload)
+    } else if (modalState.item) {
+      await adminApprovalService.updateLocalGuardianItem(
+        modalState.item.id,
+        payload
+      )
+    }
+
     setGuardianRefreshKey(current => current + 1)
-  }, [])
+    resetModal()
+  }, [getSubjectById, modalState, modalValues, resetModal])
 
   useEffect(() => {
     let isActive = true
@@ -213,6 +509,7 @@ function AdminApprovalsPage() {
         title="Centro de Aprovações"
         subtitle="Revise conteúdos enviados e valide responsáveis antes de liberar o acesso na plataforma."
       />
+
       <Box
         sx={{
           alignItems: 'stretch',
@@ -223,9 +520,8 @@ function AdminApprovalsPage() {
         }}
       >
         <ApprovalComponent
-          createActionLabel="Cadastrar tarefa ou prova"
-          description="Cadastre uma nova tarefa ou prova para revisão."
           currentPage={contentQueue.currentPage}
+          description="Cadastre uma nova tarefa ou prova para revisão."
           emptyStateDescription={
             contentError ??
             'Tente outro filtro ou cadastre um novo conteúdo para iniciar a revisão.'
@@ -233,11 +529,8 @@ function AdminApprovalsPage() {
           emptyStateTitle="Nenhum conteúdo encontrado"
           filterOptions={contentFilterOptions}
           items={contentQueue.items}
-          onCreate={async () => {
-            await adminApprovalService.createLocalContentDraft()
-            startTransition(() => {
-              setContentQuery({ ...DEFAULT_QUERY })
-            })
+          onCreate={() => {
+            openModal({ action: 'create', type: 'content' })
           }}
           onPageChange={page => {
             startTransition(() => {
@@ -268,26 +561,13 @@ function AdminApprovalsPage() {
           query={contentQuery.query}
           renderItem={item => (
             <ApprovalCard
-              badges={item.badges}
+              actions={buildContentActions(item)}
               item={item}
-              onApprove={() => {
-                void handleContentStatusUpdate(item.id, 'approved')
-              }}
-              onDelete={() => {
-                void handleContentDelete(item.id)
-              }}
-              onEdit={() => {
-                handleContentEdit(item.id)
-              }}
-              onReject={() => {
-                void handleContentStatusUpdate(item.id, 'rejected')
-              }}
               status={CONTENT_APPROVAL_CARD_STATUS[item.status]}
-              subtitle={item.subtitle ?? ''}
-              title={item.title}
+              type="content"
             />
           )}
-          resultCount={contentQueue.totalItems}
+          resultsSummary={contentResultsSummary}
           searchPlaceholder="Pesquisar tarefas e provas..."
           selectedStatus={contentQuery.status}
           title="Cadastro e Aprovação de tarefas e provas"
@@ -295,7 +575,6 @@ function AdminApprovalsPage() {
         />
 
         <ApprovalComponent
-          createActionLabel="Cadastrar responsável"
           currentPage={guardianQueue.currentPage}
           description="Valide e libere os cadastros de responsáveis."
           emptyStateDescription={
@@ -305,11 +584,8 @@ function AdminApprovalsPage() {
           emptyStateTitle="Nenhum responsável encontrado"
           filterOptions={guardianFilterOptions}
           items={guardianQueue.items}
-          onCreate={async () => {
-            await adminApprovalService.createLocalGuardianDraft()
-            startTransition(() => {
-              setGuardianQuery({ ...DEFAULT_QUERY })
-            })
+          onCreate={() => {
+            openModal({ action: 'create', type: 'guardian' })
           }}
           onPageChange={page => {
             startTransition(() => {
@@ -340,32 +616,33 @@ function AdminApprovalsPage() {
           query={guardianQuery.query}
           renderItem={item => (
             <ApprovalCard
-              badges={item.badges}
+              actions={buildGuardianActions(item)}
               item={item}
-              onApprove={() => {
-                void handleGuardianStatusUpdate(item.id, 'approved')
-              }}
-              onDelete={() => {
-                void handleGuardianDelete(item.id)
-              }}
-              onEdit={() => {
-                handleGuardianEdit(item.id)
-              }}
-              onReject={() => {
-                void handleGuardianStatusUpdate(item.id, 'rejected')
-              }}
               status={GUARDIAN_APPROVAL_CARD_STATUS[item.status]}
-              subtitle={item.subtitle ?? ''}
-              title={item.title}
+              type="guardian"
             />
           )}
-          resultCount={guardianQueue.totalItems}
+          resultsSummary={guardianResultsSummary}
           searchPlaceholder="Pesquisar responsáveis..."
           selectedStatus={guardianQuery.status}
           title="Validação e liberação de responsáveis"
           totalPages={guardianQueue.totalPages}
         />
       </Box>
+
+      <ApprovalActionModal
+        mode={modalState}
+        onChange={handleModalChange}
+        onClose={resetModal}
+        onConfirm={() => {
+          void handleModalConfirm()
+        }}
+        open={modalState !== null}
+        resourceTypeOptions={[...resourceTypeOptions]}
+        roleOptions={roleOptions}
+        subjectOptions={subjectOptions}
+        values={modalValues}
+      />
     </AppPageContainer>
   )
 }

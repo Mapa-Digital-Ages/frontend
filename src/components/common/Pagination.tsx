@@ -20,15 +20,16 @@ function Pagination({
 }: PaginationProps) {
   const theme = useTheme()
   const accentColor = AppColors.role[role].primary
-  /** Sempre renderiza a barra; com uma única página os botões ficam desabilitados. */
   const pageCount = Math.max(1, totalPages)
   const pages = Array.from({ length: pageCount }, (_, index) => index + 1)
 
   return (
     <Box
-      className="flex flex-wrap items-center justify-center gap-2 pt-5"
+      className="flex flex-wrap items-center justify-center gap-2 p-2"
       sx={{
         borderTop: `1px solid ${alpha(theme.palette.primary.main, 0.24)}`,
+        minHeight: 'fit-content',
+        paddingBottom: 0,
       }}
     >
       <ButtonBase
@@ -69,7 +70,10 @@ function Pagination({
                 : 'transparent',
               border: '1px solid',
               borderColor: selected
-                ? alpha(accentColor, theme.palette.mode === 'dark' ? 0.36 : 0.24)
+                ? alpha(
+                    accentColor,
+                    theme.palette.mode === 'dark' ? 0.36 : 0.24
+                  )
                 : 'transparent',
               borderRadius: 'var(--app-radius-control)',
               color: selected ? accentColor : 'text.secondary',
