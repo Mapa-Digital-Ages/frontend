@@ -4,7 +4,7 @@ export const APP_CONFIG = {
   name: 'Mapa Digital',
   description:
     'Base frontend escalável com navegação por perfis, dashboards e autenticação mock.',
-  drawerWidth: 240,
+  drawerWidth: 280,
   defaultRole: 'student' as UserRole,
 }
 

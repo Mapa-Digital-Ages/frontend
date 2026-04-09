@@ -1,7 +1,4 @@
 import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded'
-import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded'
-import FactCheckRoundedIcon from '@mui/icons-material/FactCheckRounded'
-import WidgetsRoundedIcon from '@mui/icons-material/WidgetsRounded'
 import { Box, IconButton, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { useState } from 'react'
@@ -10,12 +7,11 @@ import AppSidebar from '@/components/ui/AppSidebar'
 import AppTopbar from '@/components/ui/AppTopbar'
 import ThemeModeToggle from '@/components/ui/ThemeMode'
 import { APP_CONFIG } from '@/constants/app'
-import { APP_ROUTES } from '@/constants/routes'
+import { NAVIGATION_BY_ROLE } from '@/constants/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 import { useUserRole } from '@/hooks/useUserRole'
 import { AppColors } from '@/styles/AppColors'
-import type { SidebarItem } from '@/types/common'
 import type { UserRole } from '@/types/user'
 
 const AVATAR_BG_BY_ROLE: Record<UserRole, string> = {
@@ -23,41 +19,6 @@ const AVATAR_BG_BY_ROLE: Record<UserRole, string> = {
   parent: AppColors.role.parent.primary,
   admin: AppColors.role.admin.primary,
 }
-
-const NAVIGATION_BY_ROLE: Record<UserRole, SidebarItem[]> = {
-  student: [
-    {
-      label: 'Dashboard',
-      path: APP_ROUTES.student.dashboard,
-      icon: <DashboardRoundedIcon />,
-    },
-    {
-      label: 'Componentes',
-      path: APP_ROUTES.student.components,
-      icon: <WidgetsRoundedIcon />,
-    },
-  ],
-  parent: [
-    {
-      label: 'Dashboard',
-      path: APP_ROUTES.parent.dashboard,
-      icon: <DashboardRoundedIcon />,
-    },
-  ],
-  admin: [
-    {
-      label: 'Dashboard',
-      path: APP_ROUTES.admin.dashboard,
-      icon: <DashboardRoundedIcon />,
-    },
-    {
-      label: 'Aprovações',
-      path: APP_ROUTES.admin.approvals,
-      icon: <FactCheckRoundedIcon />,
-    },
-  ],
-}
-
 function DashboardLayout() {
   const theme = useTheme()
   const { isMobile } = useBreakpoint()
