@@ -48,7 +48,10 @@ function renderIconBox(icon: React.ReactNode, color: string, bg: string) {
       sx={{
         width: 40,
         height: 40,
-        borderRadius: '9999px',
+        minWidth: 40,
+        minHeight: 40,
+        flexShrink: 0,
+        borderRadius: '50%',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
