@@ -8,6 +8,7 @@ import SearchIcon from '@mui/icons-material/Search'
 import Visibility from '@mui/icons-material/Visibility'
 import VisibilityOff from '@mui/icons-material/VisibilityOff'
 import { Stack, Typography } from '@mui/material'
+import type { SxProps, Theme } from '@mui/material/styles'
 
 type InputSize = 'small' | 'medium' | 'large'
 
@@ -17,6 +18,7 @@ type BackgroundColor = 'background.paper' | 'background.default' | string
 
 type AppInputProps = Omit<TextFieldProps, 'type'> & {
   label?: string
+  labelSx?: SxProps<Theme>
   inputSize?: InputSize
   customSize?: {
     height?: number
@@ -30,6 +32,7 @@ type AppInputProps = Omit<TextFieldProps, 'type'> & {
 
 export default function AppInput({
   label,
+  labelSx,
   inputSize = 'medium',
   customSize,
   icon,
@@ -102,7 +105,11 @@ export default function AppInput({
 
   return (
     <Stack spacing={0.5} className={className}>
-      {label && <Typography variant="body2">{label}</Typography>}
+      {label ? (
+        <Typography variant="body2" sx={labelSx}>
+          {label}
+        </Typography>
+      ) : null}
 
       <TextField
         {...props}

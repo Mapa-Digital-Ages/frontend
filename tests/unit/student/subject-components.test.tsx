@@ -4,17 +4,17 @@ import test from 'node:test'
 import { ThemeProvider } from '@mui/material/styles'
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { AppSubjectTag } from '../src/components/ui/AppSubjectsTags'
-import OnboardingQuestionCard from '../src/components/ui/OnboardingQuestionCard'
-import ProgressBar from '../src/components/ui/ProgressBar'
+import { AppSubjectTag } from '../../../src/components/ui/AppSubjectsTags'
+import OnboardingQuestionCard from '../../../src/components/ui/OnboardingQuestionCard'
+import ProgressBar from '../../../src/components/ui/ProgressBar'
 import {
   getNextOnboardingFlowState,
   getOnboardingFlowProgress,
   getPreviousOnboardingFlowState,
   STUDENT_ONBOARDING_FLOW_QUESTIONS,
-} from '../src/pages/student/components/onboardingQuestionFlow'
-import { getSubjectContext, getSubjectTheme } from '../src/utils/subjectThemes'
-import { createAppTheme } from '../src/styles/theme'
+} from '../../../src/pages/student/components/onboardingQuestionFlow'
+import { getSubjectContext, getSubjectTheme } from '../../../src/utils/subjectThemes'
+import { createAppTheme } from '../../../src/styles/theme'
 
 function renderWithTheme(element: React.ReactElement) {
   return renderToStaticMarkup(
@@ -118,7 +118,7 @@ test('OnboardingQuestionCard renders the onboarding copy and answer options', ()
 
 test('OnboardingQuestionCard source exposes navigation icons and composition slots', () => {
   const onboardingQuestionCardSource = readFileSync(
-    new URL('../src/components/ui/OnboardingQuestionCard.tsx', import.meta.url),
+    new URL('../../../src/components/ui/OnboardingQuestionCard.tsx', import.meta.url),
     'utf8'
   )
 
@@ -132,18 +132,18 @@ test('OnboardingQuestionCard source exposes navigation icons and composition slo
 
 test('student components area references the showcase and not the dashboard preview', () => {
   const studentComponentsPageSource = readFileSync(
-    new URL('../src/pages/student/StudentComponentsPage.tsx', import.meta.url),
+    new URL('../../../src/pages/student/StudentComponentsPage.tsx', import.meta.url),
     'utf8'
   )
   const studentShowcaseSource = readFileSync(
     new URL(
-      '../src/pages/student/components/StudentComponentsShowcase.tsx',
+      '../../../src/pages/student/components/StudentComponentsShowcase.tsx',
       import.meta.url
     ),
     'utf8'
   )
   const studentDashboardPageSource = readFileSync(
-    new URL('../src/pages/student/StudentDashboardPage.tsx', import.meta.url),
+    new URL('../../../src/pages/student/StudentDashboardPage.tsx', import.meta.url),
     'utf8'
   )
 
@@ -157,7 +157,7 @@ test('student components area references the showcase and not the dashboard prev
 test('student onboarding flow page keeps local selection state for option clicks', () => {
   const onboardingFlowPageSource = readFileSync(
     new URL(
-      '../src/pages/student/StudentOnboardingFlowPage.tsx',
+      '../../../src/pages/student/StudentOnboardingFlowPage.tsx',
       import.meta.url
     ),
     'utf8'
@@ -230,13 +230,13 @@ test('onboarding flow can go back to the previous question', () => {
 test('student onboarding flow page keeps route hooks ready for backend hydration', () => {
   const onboardingFlowPageSource = readFileSync(
     new URL(
-      '../src/pages/student/StudentOnboardingFlowPage.tsx',
+      '../../../src/pages/student/StudentOnboardingFlowPage.tsx',
       import.meta.url
     ),
     'utf8'
   )
   const studentRouteSource = readFileSync(
-    new URL('../src/pages/student/route.tsx', import.meta.url),
+    new URL('../../../src/pages/student/route.tsx', import.meta.url),
     'utf8'
   )
 

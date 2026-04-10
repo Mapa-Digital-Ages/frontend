@@ -3,6 +3,10 @@ import type { SubjectContext } from './common'
 
 export type ApprovalType = 'content' | 'guardian'
 export type ApprovalModalAction = 'correct' | 'create' | 'delete' | 'edit'
+export type ApprovalCorrectionOutcome =
+  | 'completed'
+  | 'completedWithNotes'
+  | 'redo'
 
 export type ApprovalBadgeTone =
   | 'neutral'
@@ -129,5 +133,6 @@ export interface GuardianApprovalDraftInput {
 }
 
 export interface ApprovalCorrectionInput {
-  note: string
+  feedback: string
+  outcome: ApprovalCorrectionOutcome
 }

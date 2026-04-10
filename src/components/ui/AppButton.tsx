@@ -24,6 +24,7 @@ type AppButtonProps<C extends ElementType = 'button'> = MuiButtonProps<
       | 'success.main'
       | 'background.default'
       | 'background.paper'
+      | string
   }
 >
 
@@ -50,9 +51,15 @@ function AppButton<C extends ElementType = 'button'>({
   iconPosition,
   hasBorder = false,
   textColor = 'primary.contrastText',
+  hoverBackgroundColor,
   ...props
 }: AppButtonProps<C>) {
-  const hoverBackground = hoverBackgroundMap[backgroundColor] || backgroundColor
+  const hoverBackground =
+    hoverBackgroundColor ??
+    hoverBackgroundMap[
+      backgroundColor as keyof typeof hoverBackgroundMap
+    ] ??
+    backgroundColor
 
   return (
     <Button

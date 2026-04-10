@@ -9,16 +9,22 @@ import {
   IconButton,
   Typography,
 } from '@mui/material'
-import type { Breakpoint } from '@mui/material/styles'
+import { alpha, useTheme, type Breakpoint } from '@mui/material/styles'
 import { useId, type ReactNode } from 'react'
 import AppButton from '@/components/ui/AppButton'
+import { AppColors } from '@/styles/AppColors'
+import type { UserRole } from '@/types/user'
 
 export type AppActionModalVariant = 'form' | 'confirm'
+export type AppActionModalMode = 'confirm' | 'form' | 'review'
 
 interface AppActionModalProps {
+  accentSoftColor?: string
   cancelLabel?: string
   children?: ReactNode
   confirmLabel?: string
+  confirmColor?: string
+  confirmTextColor?: string
   confirmTone?:
     | 'primary.main'
     | 'secondary.main'
@@ -31,9 +37,11 @@ interface AppActionModalProps {
   fullWidth?: boolean
   loading?: boolean
   maxWidth?: Breakpoint
+  mode?: AppActionModalMode
   onClose: () => void
   onConfirm?: () => void
   open: boolean
+  role: UserRole
   title: string
   variant?: 'form' | 'confirm'
 }
@@ -42,20 +50,30 @@ function AppActionModal({
   cancelLabel = 'Cancelar',
   children,
   confirmLabel = 'Confirmar',
+  confirmColor,
+  confirmTextColor = 'primary.contrastText',
   confirmTone = 'primary.main',
   description,
   disableConfirm = false,
   fullWidth = true,
   loading = false,
   maxWidth = 'sm',
+  mode,
   onClose,
   onConfirm,
   open,
+  role,
   title,
   variant = 'form',
 }: AppActionModalProps) {
+  const theme = useTheme()
   const titleId = useId()
   const descriptionId = useId()
+  const resolvedMode = mode ?? variant
+  const roleAccent = AppColors.role[role]
+  const accentColor =
+    confirmColor ??
+    (confirmTone === 'error.main' ? theme.palette.error.main : roleAccent.primary)
   const confirmContent = loading ? (
     <Box className="flex items-center justify-center">
       <CircularProgress color="inherit" size={18} />
@@ -72,8 +90,35 @@ function AppActionModal({
       maxWidth={maxWidth}
       onClose={onClose}
       open={open}
+      PaperProps={{
+        sx: {
+          gap: 2,
+          backgroundColor: 'background.paper',
+          backgroundImage: 'none',
+          border: '1px solid',
+          borderColor: 'background.border',
+          borderRadius: '24px',
+          boxShadow:
+            theme.palette.mode === 'dark'
+              ? '0px 28px 80px rgba(0, 0, 0, 0.45)'
+              : '0px 28px 80px rgba(16, 42, 67, 0.16)',
+          overflow: 'hidden',
+        },
+      }}
     >
-      <DialogTitle sx={{ pb: 1.5}}>
+      <DialogTitle
+        sx={{
+          backgroundColor:
+          alpha(
+            theme.palette.primary.main,
+            theme.palette.mode === 'dark' ? 0.12 : 0.06
+          ),
+          borderBottom: '1px solid',
+          borderColor: 'background.border',
+          pb: 1.5,
+          pt: 2,
+        }}
+      >
         <Box className="flex justify-between gap-3">
           <Box className="min-w-0 space-y-0">
             <Typography
@@ -117,13 +162,35 @@ function AppActionModal({
       </DialogTitle>
 
       <DialogContent
-        dividers={variant === 'confirm'}
-        sx={{ py: variant === 'confirm' ? 3 : 2 }}
+        dividers={resolvedMode === 'confirm'}
+        sx={{
+          px: { md: 3, xs: 2 },
+          py:
+            resolvedMode === 'confirm'
+              ? 3
+              : resolvedMode === 'review'
+                ? { md: 3, xs: 2.25 }
+                : { md: 2.5, xs: 2 },
+        }}
       >
         {children}
       </DialogContent>
 
-      <DialogActions sx={{ gap: 1.5, px: 3, pb: 3, pt: 0 }}>
+      <DialogActions
+        sx={{
+          backgroundColor:
+          alpha(
+            theme.palette.primary.main,
+            theme.palette.mode === 'dark' ? 0.12 : 0.06
+          ),
+          borderTop: '1px solid',
+          borderColor: 'background.border',
+          gap: 1.5,
+          px: { md: 3, xs: 2 },
+          pb: { md: 3, xs: 2 },
+          pt: { md: 2, xs: 1.5 },
+        }}
+      >
         <AppButton
           backgroundColor="background.paper"
           hasBorder
@@ -134,9 +201,11 @@ function AppActionModal({
         />
         {onConfirm ? (
           <AppButton
-            backgroundColor={confirmTone}
+            backgroundColor={accentColor}
             disabled={disableConfirm || loading}
+            hoverBackgroundColor={accentColor}
             onClick={onConfirm}
+            textColor={confirmTextColor}
           >
             {confirmContent}
           </AppButton>

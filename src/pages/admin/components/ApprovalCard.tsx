@@ -99,6 +99,7 @@ function ApprovalCard({ actions, item, status, type }: ApprovalCardProps) {
           sx={{
             display: 'flex',
             flexShrink: 0,
+            flexWrap: 'wrap',
             gap: 1,
             justifyContent: { sm: 'flex-end', xs: 'flex-start' },
             width: { sm: 'auto', xs: '100%' },

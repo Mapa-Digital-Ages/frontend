@@ -444,7 +444,22 @@ function updateMockGuardianItem(
   return nextItem
 }
 
-function requestMockContentCorrection(
+function formatCorrectionOutcomeLabel(
+  outcome: ApprovalCorrectionInput['outcome']
+) {
+  switch (outcome) {
+    case 'completed':
+      return 'Atividade corrigida'
+    case 'completedWithNotes':
+      return 'Corrigida com observações'
+    case 'redo':
+      return 'Refazer atividade'
+    default:
+      return 'Correção registrada'
+  }
+}
+
+function applyMockContentCorrection(
   id: string,
   correction: ApprovalCorrectionInput
 ): ContentApprovalItem {
@@ -455,17 +470,28 @@ function requestMockContentCorrection(
       return item
     }
 
-    const correctionBadge = {
-      id: `${item.id}-correction`,
-      label: correction.note,
-      tone: 'warning' as const,
-    }
+    const correctionBadges = [
+      {
+        id: `${item.id}-correction-outcome`,
+        label: formatCorrectionOutcomeLabel(correction.outcome),
+        tone: correction.outcome === 'redo' ? ('warning' as const) : ('success' as const),
+      },
+      {
+        id: `${item.id}-correction-feedback`,
+        label: correction.feedback,
+        tone: 'neutral' as const,
+      },
+    ]
 
     nextItem = {
       ...item,
       badges: [
-        correctionBadge,
-        ...item.badges.filter(badge => badge.id !== correctionBadge.id),
+        ...correctionBadges,
+        ...item.badges.filter(
+          badge =>
+            badge.id !== `${item.id}-correction-outcome` &&
+            badge.id !== `${item.id}-correction-feedback`
+        ),
       ],
     }
 
@@ -570,11 +596,11 @@ export function createAdminApprovalRepository({
     ) {
       return updateMockGuardianItem(id, input)
     },
-    async requestContentCorrection(
+    async applyContentCorrection(
       id: string,
       correction: ApprovalCorrectionInput
     ) {
-      return requestMockContentCorrection(id, correction)
+      return applyMockContentCorrection(id, correction)
     },
     async removeLocalContentItem(id: string) {
       removeMockContentItem(id)

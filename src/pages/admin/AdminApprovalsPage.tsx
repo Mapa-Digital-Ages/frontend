@@ -1,6 +1,5 @@
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded'
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import RuleFolderOutlinedIcon from '@mui/icons-material/RuleFolderOutlined'
 import { Box } from '@mui/material'
@@ -38,6 +37,7 @@ import ApprovalCard from './components/ApprovalCard'
 import ApprovalComponent, {
   type ApprovalStatusOption,
 } from './components/ApprovalComponent'
+import { getGuardianApprovalEligibility } from './components/approvalQueue.utils'
 import {
   CONTENT_APPROVAL_CARD_STATUS,
   GUARDIAN_APPROVAL_CARD_STATUS,
@@ -73,9 +73,11 @@ const resourceTypeOptions = [
   { label: 'Prova', value: 'exam' },
 ] as const
 
-const roleOptions = [
-  { label: 'Responsável', value: 'parent' },
-]
+const correctionOutcomeOptions = [
+  { label: 'Corrigida', value: 'completed' },
+  { label: 'Corrigida com observações', value: 'completedWithNotes' },
+  { label: 'Refazer atividade', value: 'redo' },
+] as const
 
 const subjectOptions = ALL_SUBJECT_TAG_CONTEXTS.filter(
   subject => subject.id !== 'default'
@@ -117,10 +119,10 @@ function buildResultsSummary(count: number): ApprovalResultsSummary {
 function getDefaultFormValues(): ApprovalActionFormValues {
   return {
     childName: '',
-    correctionNote: '',
+    correctionFeedback: '',
+    correctionOutcome: 'completed',
     requestedAt: DEFAULT_REQUESTED_AT,
     resourceType: 'task',
-    roleLabel: 'Responsável',
     subjectId: String(DEFAULT_SUBJECT_ID),
     title: '',
   }
@@ -150,7 +152,6 @@ function AdminApprovalsPage() {
   const [modalValues, setModalValues] = useState<ApprovalActionFormValues>(
     getDefaultFormValues()
   )
-
   const deferredContentSearch = useDeferredValue(contentQuery.query)
   const deferredGuardianSearch = useDeferredValue(guardianQuery.query)
   const resolvedContentQuery = useMemo(
@@ -189,16 +190,13 @@ function AdminApprovalsPage() {
     setModalValues({
       childName:
         nextMode.item?.kind === 'guardian' ? nextMode.item.childName : '',
-      correctionNote: '',
+      correctionFeedback: '',
+      correctionOutcome: 'completed',
       requestedAt: nextMode.item?.requestedAt ?? DEFAULT_REQUESTED_AT,
       resourceType:
         nextMode.item?.kind === 'content'
           ? (nextMode.item.resourceType ?? 'task')
           : 'task',
-      roleLabel:
-        nextMode.item?.kind === 'guardian'
-          ? (nextMode.item.roleLabel ?? 'Responsável')
-          : 'Responsável',
       subjectId:
         nextMode.item?.kind === 'content'
           ? String(nextMode.item.subject?.id ?? DEFAULT_SUBJECT_ID)
@@ -228,61 +226,48 @@ function AdminApprovalsPage() {
       const success = theme.palette.success.main
       const error = theme.palette.error.main
       const warning = theme.palette.warning.main
-      const neutral = theme.palette.text.primary
-
-      const modalActions: ApprovalCardAction[] =
-        item.status === 'approved'
-          ? [
-              {
-                accentColor: neutral,
-                icon: <EditOutlinedIcon />,
-                id: `${item.id}-edit`,
-                label: 'Editar conteúdo',
-                onClick: () => {
-                  openModal({ action: 'edit', item, type: 'content' })
-                },
-              },
-              {
-                accentColor: error,
-                icon: <DeleteOutlineIcon />,
-                id: `${item.id}-delete`,
-                label: 'Excluir conteúdo',
-                onClick: () => {
-                  openModal({ action: 'delete', item, type: 'content' })
-                },
-              },
-            ]
-          : [
-              {
-                accentColor: success,
-                icon: <CheckRoundedIcon />,
-                id: `${item.id}-approve`,
-                label: 'Aprovar conteúdo',
-                onClick: () => {
-                  void handleContentStatusUpdate(item.id, 'approved')
-                },
-              },
-              {
-                accentColor: error,
-                disabled: item.status === 'rejected',
-                icon: <CancelOutlinedIcon />,
-                id: `${item.id}-reject`,
-                label: 'Recusar conteúdo',
-                onClick: () => {
-                  void handleContentStatusUpdate(item.id, 'rejected')
-                },
-              },
-            ]
 
       return [
-        ...modalActions,
         {
           accentColor: warning,
-          icon: <RuleFolderOutlinedIcon />,
-          id: `${item.id}-correct`,
-          label: 'Solicitar correção',
+          icon:
+            item.status === 'approved' ? (
+              <EditOutlinedIcon />
+            ) : (
+              <RuleFolderOutlinedIcon />
+            ),
+          id: `${item.id}-review`,
+          label: 'Revisar conteúdo',
           onClick: () => {
-            openModal({ action: 'correct', item, type: 'content' })
+            openModal({
+              action: item.status === 'approved' ? 'edit' : 'correct',
+              item,
+              type: 'content',
+            })
+          },
+          tooltip:
+            item.status === 'approved'
+              ? 'Editar conteúdo'
+              : 'Corrigir atividade',
+        },
+        {
+          accentColor: success,
+          disabled: item.status === 'approved',
+          icon: <CheckRoundedIcon />,
+          id: `${item.id}-approve`,
+          label: 'Validar conteúdo',
+          onClick: () => {
+            void handleContentStatusUpdate(item.id, 'approved')
+          },
+        },
+        {
+          accentColor: error,
+          disabled: item.status === 'rejected',
+          icon: <CancelOutlinedIcon />,
+          id: `${item.id}-reject`,
+          label: 'Rejeitar conteúdo',
+          onClick: () => {
+            void handleContentStatusUpdate(item.id, 'rejected')
           },
         },
       ]
@@ -295,46 +280,37 @@ function AdminApprovalsPage() {
       const success = theme.palette.success.main
       const error = theme.palette.error.main
       const neutral = theme.palette.text.primary
-
-      if (item.status === 'approved') {
-        return [
-          {
-            accentColor: neutral,
-            icon: <EditOutlinedIcon />,
-            id: `${item.id}-edit`,
-            label: 'Editar responsável',
-            onClick: () => {
-              openModal({ action: 'edit', item, type: 'guardian' })
-            },
-          },
-          {
-            accentColor: error,
-            icon: <DeleteOutlineIcon />,
-            id: `${item.id}-delete`,
-            label: 'Excluir responsável',
-            onClick: () => {
-              openModal({ action: 'delete', item, type: 'guardian' })
-            },
-          },
-        ]
-      }
+      const eligibility = getGuardianApprovalEligibility(item)
 
       return [
         {
+          accentColor: neutral,
+          icon: <EditOutlinedIcon />,
+          id: `${item.id}-review`,
+          label: 'Revisão de cadastro',
+          onClick: () => {
+            openModal({ action: 'edit', item, type: 'guardian' })
+          },
+        },
+        {
           accentColor: success,
+          disabled: item.status === 'approved' || !eligibility.canApprove,
           icon: <CheckRoundedIcon />,
           id: `${item.id}-approve`,
-          label: 'Liberar cadastro',
+          label: 'Validar cadastro',
           onClick: () => {
             void handleGuardianStatusUpdate(item.id, 'approved')
           },
+          tooltip: eligibility.canApprove
+            ? 'Validar cadastro'
+            : `Pendências: ${eligibility.missingRequirements.join(', ')}`,
         },
         {
           accentColor: error,
           disabled: item.status === 'rejected',
           icon: <CancelOutlinedIcon />,
           id: `${item.id}-reject`,
-          label: 'Recusar cadastro',
+          label: 'Rejeitar cadastro',
           onClick: () => {
             void handleGuardianStatusUpdate(item.id, 'rejected')
           },
@@ -371,8 +347,10 @@ function AdminApprovalsPage() {
       }
 
       if (modalState.action === 'correct' && modalState.item) {
-        await adminApprovalService.requestContentCorrection(modalState.item.id, {
-          note: modalValues.correctionNote || 'Correção solicitada',
+        await adminApprovalService.applyContentCorrection(modalState.item.id, {
+          feedback:
+            modalValues.correctionFeedback || 'Correção registrada pelo admin.',
+          outcome: modalValues.correctionOutcome,
         })
         setContentRefreshKey(current => current + 1)
         resetModal()
@@ -410,7 +388,7 @@ function AdminApprovalsPage() {
     const payload: GuardianApprovalDraftInput = {
       childName: modalValues.childName || 'Aluno a confirmar',
       requestedAt: modalValues.requestedAt,
-      roleLabel: modalValues.roleLabel || 'Responsável',
+      roleLabel: 'Responsável',
       title: modalValues.title || 'Novo responsável',
     }
 
@@ -631,6 +609,7 @@ function AdminApprovalsPage() {
       </Box>
 
       <ApprovalActionModal
+        correctionOutcomeOptions={[...correctionOutcomeOptions]}
         mode={modalState}
         onChange={handleModalChange}
         onClose={resetModal}
@@ -639,7 +618,7 @@ function AdminApprovalsPage() {
         }}
         open={modalState !== null}
         resourceTypeOptions={[...resourceTypeOptions]}
-        roleOptions={roleOptions}
+        role="admin"
         subjectOptions={subjectOptions}
         values={modalValues}
       />

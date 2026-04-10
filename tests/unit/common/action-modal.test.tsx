@@ -4,7 +4,7 @@ import test from 'node:test'
 
 test('app action modal exists as a reusable common component', () => {
   const modalPath = new URL(
-    '../src/components/common/AppActionModal.tsx',
+    '../../../src/components/common/AppActionModal.tsx',
     import.meta.url
   )
 
