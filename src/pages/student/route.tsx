@@ -22,8 +22,24 @@ export const studentRoutes: RouteObject[] = [
                 element: <StudentDashboardPage />,
               },
               {
+                path: APP_ROUTES.student.adaptiveTrail,
+                element: <StudentDashboardPage />,
+              },
+              {
                 path: APP_ROUTES.student.components,
                 element: <StudentComponentsPage />,
+              },
+              {
+                path: APP_ROUTES.student.uploads,
+                element: <StudentDashboardPage />,
+              },
+              {
+                path: APP_ROUTES.student.routine,
+                element: <StudentDashboardPage />,
+              },
+              {
+                path: APP_ROUTES.student.chat,
+                element: <StudentDashboardPage />,
               },
               {
                 path: APP_ROUTES.student.onboardingFlow,

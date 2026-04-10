@@ -7,6 +7,11 @@ export const APP_ROUTES = {
   },
   student: {
     dashboard: '/student/dashboard',
+    adaptiveTrail: '/student/adaptive-trail',
+    contents: '/student/components',
+    uploads: '/student/uploads',
+    routine: '/student/routine',
+    chat: '/student/chat',
     components: '/student/components',
     onboardingFlow: '/student/components/onboarding-flow',
   },

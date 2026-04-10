@@ -128,7 +128,17 @@ function PlannerModal({ tasks, sx }: PlannerProps) {
         ...sx,
       }}
     >
-      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'flex-start', sm: 'center' }, gap: 1, mb: 2, flexWrap: 'wrap', minWidth: 0 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          gap: 1,
+          mb: 2,
+          flexWrap: 'wrap',
+          minWidth: 0,
+        }}
+      >
         <CalendarMonthIcon sx={{ color: '#319BDD', fontSize: 25 }} />
         <Typography variant="h5">Planner da Semana</Typography>
       </Box>
@@ -168,18 +178,41 @@ function PlannerModal({ tasks, sx }: PlannerProps) {
                 gap: 1,
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0, flex: '1 1 200px' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  minWidth: 0,
+                  flex: '1 1 200px',
+                }}
+              >
                 {getTaskIcon(dayTasks[0].status)}
-                <Box sx={{ minWidth: 0, flex: '1 1 auto'}}>
+                <Box sx={{ minWidth: 0, flex: '1 1 auto' }}>
                   <Typography sx={{ fontWeight: 700, fontSize: '1rem' }}>
                     {day}
                   </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      minWidth: 0,
+                    }}
+                  >
                     <AppSubjectsTags
                       subjects={[dayTasks[0].subject]}
                       size="sm"
                     />
-                    <Typography sx= {{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0, flex: 1}}>
+                    <Typography
+                      sx={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        minWidth: 0,
+                        flex: 1,
+                      }}
+                    >
                       {dayTasks[0].title}
                     </Typography>
                   </Box>
@@ -221,7 +254,15 @@ function PlannerModal({ tasks, sx }: PlannerProps) {
                 flexWrap: 'wrap',
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0, flex: '1 1 200px' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2,
+                  minWidth: 0,
+                  flex: '1 1 200px',
+                }}
+              >
                 {getMoreThanOneTaskDayIcon()}
 
                 <Box sx={{ minWidth: 0 }}>
