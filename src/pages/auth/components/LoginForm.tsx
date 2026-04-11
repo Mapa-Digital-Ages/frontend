@@ -81,7 +81,7 @@ function LoginForm({ isSubmitting = false, onSubmit }: LoginFormProps) {
 
   return (
     <Stack className="gap-6" component="form" onSubmit={handleSubmit}>
-      <Box className="grid grid-cols-2 gap-1 rounded-lg border border border-slate-200 bg-slate-200 p-1">
+      <Box className="grid grid-cols-2 gap-1 rounded-[10px] border border-slate-200 bg-slate-200 p-1 h-10">
         <Button
           className={[
             'rounded-md text-base font-semibold transition !min-h-0 !h-8',
