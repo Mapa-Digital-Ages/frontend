@@ -90,9 +90,8 @@ function StudentComponentsPage() {
   const theme = useTheme()
 
   return (
-    
     <AppPageContainer className="gap-4 md:gap-5">
-      <EmotionalContainer/>
+      <EmotionalContainer />
       <PageHeader
         variant="student"
         eyebrow="Olá, Lucas!"
@@ -294,16 +293,12 @@ function StudentComponentsPage() {
 
           <PlannerModal tasks={mockTasks} sx={{ mt: 3 }} />
         </Box>
-        
       </Box>
 
       <StudentComponentsShowcase />
       <AppLink to="/student/dashboard">Ir para dashboard</AppLink>
       <AppLink href="https://google.com">Ir para o Google</AppLink>
-      
-      
     </AppPageContainer>
-    
   )
 }
 
