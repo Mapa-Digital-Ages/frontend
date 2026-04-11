@@ -16,40 +16,12 @@ import { useUserRole } from '@/hooks/useUserRole'
 import { AppColors } from '@/styles/AppColors'
 import type { SidebarItem } from '@/types/common'
 import type { UserRole } from '@/types/user'
+import { NAVIGATION_BY_ROLE } from '@/constants/navigation'
 
 const AVATAR_BG_BY_ROLE: Record<UserRole, string> = {
   student: AppColors.role.student.primary,
   parent: AppColors.role.parent.primary,
   admin: AppColors.role.admin.primary,
-}
-
-const NAVIGATION_BY_ROLE: Record<UserRole, SidebarItem[]> = {
-  student: [
-    {
-      label: 'Dashboard',
-      path: APP_ROUTES.student.dashboard,
-      icon: <DashboardRoundedIcon />,
-    },
-    {
-      label: 'Componentes',
-      path: APP_ROUTES.student.components,
-      icon: <WidgetsRoundedIcon />,
-    },
-  ],
-  parent: [
-    {
-      label: 'Dashboard',
-      path: APP_ROUTES.parent.dashboard,
-      icon: <DashboardRoundedIcon />,
-    },
-  ],
-  admin: [
-    {
-      label: 'Dashboard',
-      path: APP_ROUTES.admin.dashboard,
-      icon: <DashboardRoundedIcon />,
-    },
-  ],
 }
 
 function DashboardLayout() {

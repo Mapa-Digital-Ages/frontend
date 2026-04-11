@@ -1,73 +1,97 @@
-import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded'
 import SecurityRoundedIcon from '@mui/icons-material/SecurityRounded'
-import { Box, Container, Typography } from '@mui/material'
-import { Link as RouterLink, Outlet } from 'react-router-dom'
-import AppButton from '@/components/ui/AppButton'
+import { Box, Typography, Stack } from '@mui/material'
+import { Outlet } from 'react-router-dom'
+import siteLogo from '@/assets/logos/white_logo.svg'
 import { APP_CONFIG } from '@/constants/app'
-import { APP_ROUTES } from '@/constants/routes'
-import { AppColors } from '@/styles/AppColors'
+import type { AuthMode } from '@/pages/auth/components/AuthModeSelect'
+import { useState } from 'react'
 
-const HIGHLIGHTS = [
-  'Autenticação com controle por perfil',
-  'Fluxo de primeiro acesso simplificado',
-  'Entrada rápida para web e mobile',
-]
-
-function AuthLayout() {
+function SiteLogo() {
   return (
     <Box
-      className="py-10 md:py-14"
-      style={{
-        backgroundImage:
-          'radial-gradient(circle at 20% 10%, #d9e7f5 0%, transparent 30%), linear-gradient(90deg, #e8edf4 0%, #dce5f1 50%, #d2deee 100%)',
+      className="flex w-full flex-1 items-center justify-center"
+      sx={{ minHeight: { xs: 140, md: 220 }, py: { xs: 4, md: 5 } }}
+    >
+      <Box
+        component="img"
+        src={siteLogo}
+        alt={`${APP_CONFIG.name} logo`}
+        sx={{
+          width: 'clamp(150px, 45%, 220px)',
+          height: 'auto',
+          maxWidth: '100%',
+        }}
+      />
+    </Box>
+  )
+}
+
+function AuthLayout() {
+  const [mode, setMode] = useState<'login' | 'register'>('login')
+  return (
+    <Box
+      className="flex items-center justify-center px-4 py-6"
+      sx={{
+        minHeight: '100dvh',
+        backgroundColor: '#edf4f7',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundSize: 'cover',
       }}
     >
-      <Container className="space-y-4 px-3 md:space-y-5" maxWidth="lg">
-        <AppButton
-          className="rounded-2xl border border-slate-300 bg-white/80 px-4 text-slate-600"
-          component={RouterLink}
-          startIcon={<ChevronLeftRoundedIcon />}
-          to={APP_ROUTES.root}
-          variant="outlined"
+      <Box
+        className="grid items-stretch gap-5"
+        sx={{
+          width: 'min(100%, 1300px)',
+          height: { xs: 'auto', md: 600 },
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
+          justifyContent: 'center',
+        }}
+      >
+        <Box
+          className="flex min-h-[420px] flex-col p-7 text-white md:min-h-0 md:p-9"
+          sx={{
+            background: '#359CDF',
+            border: '1px solid rgba(16, 42, 67, 0.1)',
+            borderRadius: '16px',
+          }}
         >
-          Voltar para início
-        </AppButton>
-
-        <Box className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-[1.1fr_0.9fr] lg:gap-5">
           <Box
-            className="rounded-3xl p-5 text-white shadow-[0_12px_32px_rgba(29,78,216,0.28)] md:p-8"
-            style={{
-              background: AppColors.roleGradient('student'),
+            className="mb-7 inline-flex w-fit items-center gap-2 px-3 py-1.5 text-sm font-semibold"
+            sx={{
+              border: '1px solid rgba(255, 255, 255, 0.36)',
+              borderRadius: '999px',
+              backgroundColor: 'rgba(255, 255, 255, 0.14)',
             }}
           >
-            <Box className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-semibold">
-              <SecurityRoundedIcon fontSize="small" />
-              Acesso seguro à plataforma
-            </Box>
-
-            <Typography className="max-w-xl text-3xl font-bold leading-tight md:text-5xl">
-              Login e cadastro para todos os perfis
-            </Typography>
-            <Typography className="mt-4 max-w-xl text-lg text-white/90">
-              Entre como aluno, responsáveis ou administrador e continue sua
-              jornada no {APP_CONFIG.name.toUpperCase()}.
-            </Typography>
-
-            <Box className="mt-8 grid gap-3">
-              {HIGHLIGHTS.map(item => (
-                <Box
-                  className="rounded-2xl border border-white/25 bg-white/10 px-4 py-3 text-lg font-medium"
-                  key={item}
-                >
-                  {item}
-                </Box>
-              ))}
-            </Box>
+            <SecurityRoundedIcon sx={{ fontSize: 18 }} />
+            Acesso seguro à plataforma
           </Box>
 
-          <Outlet />
+          <Stack spacing={2}>
+            <Typography
+              className="max-w-[450px] leading-tight"
+              sx={{ fontSize: '30px', fontWeight: 700 }}
+            >
+              {mode === 'register'
+                ? 'Cadastre-se no Mapa Digital'
+                : 'Entre no Mapa Digital'}
+            </Typography>
+
+            <Typography
+              className="mt-12 max-w-[450px] text-white/90"
+              sx={{ fontSize: '16px', lineHeight: '21px' }}
+            >
+              {mode === 'register'
+                ? 'Seja bem-vindo! Descubra um novo jeito de aprender, acompanhar e transformar a educação.'
+                : 'Bem-vindo de volta! Continue sua jornada de conquistas.'}
+            </Typography>
+          </Stack>
+          <SiteLogo />
         </Box>
-      </Container>
+
+        <Outlet context={{ mode, setMode }} />
+      </Box>
     </Box>
   )
 }

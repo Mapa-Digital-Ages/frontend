@@ -42,6 +42,12 @@ export function SubjectChip({ color, label, size = 'md' }: SubjectsTags) {
         backgroundColor: chipTone.backgroundColor,
         borderColor: chipTone.borderColor,
         color: chipTone.color,
+        height: '24px',
+        '& .MuiChip-label': {
+          fontSize: '12px',
+          paddingLeft: '8px',
+          paddingRight: '8px',
+        },
       }}
     />
   )
