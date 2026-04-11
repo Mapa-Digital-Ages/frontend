@@ -40,6 +40,7 @@ export interface ApprovalCardAction {
   id: string
   label: string
   onClick: () => void
+  priority?: 'primary' | 'secondary'
   tooltip?: string
 }
 

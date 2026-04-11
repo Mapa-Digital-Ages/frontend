@@ -1,6 +1,8 @@
-import { Box, IconButton, Tooltip, Typography } from '@mui/material'
+import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded'
+import { Box, IconButton, Menu, MenuItem, Tooltip, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import type { Palette } from '@mui/material/styles'
+import { useState, type MouseEvent } from 'react'
 import AppCard from '@/components/ui/AppCard'
 import AppTags, { AppTag } from '@/components/ui/AppTags'
 import type {
@@ -49,6 +51,7 @@ export interface ApprovalCardProps {
 function ApprovalCard({ actions, item, status, type }: ApprovalCardProps) {
   const theme = useTheme()
   const statusChip = approvalCardStatusToTagContext(status, theme.palette)
+  const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null)
   const badgeTags =
     type === 'content' ? approvalBadgesToTagContexts(item.badges, theme.palette) : []
   const requestDateTag =
@@ -61,6 +64,17 @@ function ApprovalCard({ actions, item, status, type }: ApprovalCardProps) {
       : null
   const subjectTag =
     type === 'content' && item.kind === 'content' ? item.subject : null
+  const primaryActions = actions.filter(action => action.priority !== 'secondary')
+  const secondaryActions = actions.filter(action => action.priority === 'secondary')
+  const isMenuOpen = Boolean(menuAnchorEl)
+
+  function handleMenuOpen(event: MouseEvent<HTMLElement>) {
+    setMenuAnchorEl(event.currentTarget)
+  }
+
+  function handleMenuClose() {
+    setMenuAnchorEl(null)
+  }
 
   return (
     <AppCard>
@@ -91,7 +105,6 @@ function ApprovalCard({ actions, item, status, type }: ApprovalCardProps) {
             >
               {item.title}
             </Typography>
-            <AppTags size="sm" tags={[statusChip]} />
           </Box>
         </Box>
 
@@ -105,7 +118,8 @@ function ApprovalCard({ actions, item, status, type }: ApprovalCardProps) {
             width: { sm: 'auto', xs: '100%' },
           }}
         >
-          {actions.map(action => (
+          <AppTags size="sm" tags={[statusChip]} />
+          {primaryActions.map(action => (
             <Tooltip key={action.id} title={action.tooltip ?? action.label}>
               <span>
                 <IconButton
@@ -140,6 +154,84 @@ function ApprovalCard({ actions, item, status, type }: ApprovalCardProps) {
               </span>
             </Tooltip>
           ))}
+          {secondaryActions.length > 0 ? (
+            <>
+              <Tooltip title="Mais ações">
+                <span>
+                  <IconButton
+                    aria-label={`Mais ações para ${item.title}`}
+                    onClick={handleMenuOpen}
+                    size="small"
+                    sx={{
+                      border: '1px solid',
+                      borderColor: 'background.border',
+                      borderRadius: 'var(--app-radius-control)',
+                      color: 'text.primary',
+                      height: 32,
+                      width: 32,
+                      '& .MuiSvgIcon-root': {
+                        fontSize: 16,
+                      },
+                      '&:hover': {
+                        backgroundColor: alpha(theme.palette.text.primary, 0.08),
+                        borderColor: alpha(theme.palette.text.primary, 0.12),
+                      },
+                    }}
+                  >
+                    <MoreHorizRoundedIcon />
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Menu
+                anchorEl={menuAnchorEl}
+                onClose={handleMenuClose}
+                open={isMenuOpen}
+                slotProps={{
+                  paper: {
+                    sx: {
+                      border: '1px solid',
+                      borderColor: 'background.border',
+                      borderRadius: '16px',
+                      minWidth: 220,
+                      mt: 1,
+                    },
+                  },
+                }}
+              >
+                {secondaryActions.map(action => (
+                  <MenuItem
+                    disabled={action.disabled}
+                    key={action.id}
+                    onClick={() => {
+                      handleMenuClose()
+                      action.onClick()
+                    }}
+                    sx={{
+                      color: action.accentColor ?? 'text.primary',
+                      display: 'flex',
+                      gap: 1.25,
+                      py: 1.1,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        alignItems: 'center',
+                        display: 'inline-flex',
+                        '& .MuiSvgIcon-root': {
+                          fontSize: 18,
+                        },
+                      }}
+                    >
+                      {action.icon}
+                    </Box>
+                    <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+                      {action.label}
+                    </Typography>
+                  </MenuItem>
+                ))}
+              </Menu>
+            </>
+          ) : null}
         </Box>
       </Box>
 

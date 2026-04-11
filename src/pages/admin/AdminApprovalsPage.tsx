@@ -1,5 +1,6 @@
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded'
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import RuleFolderOutlinedIcon from '@mui/icons-material/RuleFolderOutlined'
 import { Box } from '@mui/material'
@@ -245,10 +246,22 @@ function AdminApprovalsPage() {
               type: 'content',
             })
           },
+          priority: 'secondary',
           tooltip:
             item.status === 'approved'
               ? 'Editar conteúdo'
               : 'Corrigir atividade',
+        },
+        {
+          accentColor: error,
+          icon: <DeleteOutlineRoundedIcon />,
+          id: `${item.id}-delete`,
+          label: 'Excluir conteúdo',
+          onClick: () => {
+            openModal({ action: 'delete', item, type: 'content' })
+          },
+          priority: 'secondary',
+          tooltip: 'Excluir conteúdo',
         },
         {
           accentColor: success,
@@ -291,6 +304,7 @@ function AdminApprovalsPage() {
           onClick: () => {
             openModal({ action: 'edit', item, type: 'guardian' })
           },
+          priority: 'secondary',
         },
         {
           accentColor: success,
