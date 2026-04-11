@@ -7,11 +7,12 @@ import LockIcon from '@mui/icons-material/Lock'
 import SearchIcon from '@mui/icons-material/Search'
 import Visibility from '@mui/icons-material/Visibility'
 import VisibilityOff from '@mui/icons-material/VisibilityOff'
+import PersonIcon from '@mui/icons-material/Person'
 import { Stack, Typography } from '@mui/material'
 
 type InputSize = 'small' | 'medium' | 'large'
 
-type InputType = 'text' | 'password' | 'email' | 'search'
+type InputType = 'text' | 'password' | 'email' | 'search' | 'name'
 
 type BackgroundColor = 'background.paper' | 'background.default' | string
 
@@ -94,6 +95,8 @@ export default function AppInput({
         return <LockIcon />
       case 'search':
         return <SearchIcon />
+      case 'name':
+        return <PersonIcon />
       default:
         return null
     }

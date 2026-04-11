@@ -37,8 +37,8 @@ function AuthModeSelect({ value, onChange }: AuthModeSelectProps) {
             sx={{
               minHeight: 34,
               borderRadius: '8px',
-              color: isSelected ? '#111827' : '#64748b',
-              backgroundColor: isSelected ? '#ffffff' : 'transparent',
+              color: isSelected ? '#FFFFFF' : '#64748b',
+              backgroundColor: isSelected ? '#359CDF' : 'transparent',
               boxShadow: isSelected
                 ? '0 1px 2px rgba(16, 42, 67, 0.06)'
                 : 'none',
@@ -46,8 +46,13 @@ function AuthModeSelect({ value, onChange }: AuthModeSelectProps) {
               textTransform: 'none',
               '&:hover': {
                 backgroundColor: isSelected
-                  ? '#ffffff'
+                  ? '#218cc9'
                   : 'rgba(255,255,255,0.4)',
+                color: isSelected ? '#ffffff' : '#475569',
+              },
+              '&.Mui-focusVisible': {
+                outline: '2px solid #359CDF',
+                outlineOffset: '2px',
               },
             }}
             type="button"

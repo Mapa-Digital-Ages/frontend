@@ -6,11 +6,15 @@ import { useAuth } from '@/hooks/useAuth'
 import type { AuthCredentials } from '@/types/auth'
 import AuthModeSelect, { type AuthMode } from './components/AuthModeSelect'
 import LoginForm from './components/LoginForm'
+import { useOutletContext } from 'react-router-dom'
 
 function LoginPage() {
   const navigate = useNavigate()
   const { isAuthenticated, login, user } = useAuth()
-  const [mode, setMode] = useState<AuthMode>('login')
+  const { mode, setMode } = useOutletContext<{
+    mode: AuthMode
+    setMode: (mode: AuthMode) => void
+  }>()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 

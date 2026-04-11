@@ -1,8 +1,10 @@
 import SecurityRoundedIcon from '@mui/icons-material/SecurityRounded'
-import { Box, Typography } from '@mui/material'
+import { Box, Typography, Stack } from '@mui/material'
 import { Outlet } from 'react-router-dom'
 import siteLogo from '@/assets/logos/white_logo.svg'
 import { APP_CONFIG } from '@/constants/app'
+import type { AuthMode } from '@/pages/auth/components/AuthModeSelect'
+import { useState } from 'react'
 
 function SiteLogo() {
   return (
@@ -25,6 +27,7 @@ function SiteLogo() {
 }
 
 function AuthLayout() {
+  const [mode, setMode] = useState<'login' | 'register'>('login')
   return (
     <Box
       className="flex items-center justify-center px-4 py-6"
@@ -65,18 +68,29 @@ function AuthLayout() {
             Acesso seguro à plataforma
           </Box>
 
-          <Typography className="max-w-[310px] text-4xl font-bold leading-tight">
-            {APP_CONFIG.name}
-          </Typography>
-          <Typography className="mt-4 max-w-[330px] text-base leading-7 text-white/90">
-            Acompanhe a aprendizagem com clareza, rotina e cuidado em um único
-            lugar.
-          </Typography>
+          <Stack spacing={2}>
+            <Typography
+              className="max-w-[450px] leading-tight"
+              sx={{ fontSize: '30px', fontWeight: 700 }}
+            >
+              {mode === 'register'
+                ? 'Cadastre-se no Mapa Digital'
+                : 'Entre no Mapa Digital'}
+            </Typography>
 
+            <Typography
+              className="mt-12 max-w-[450px] text-white/90"
+              sx={{ fontSize: '16px', lineHeight: '21px' }}
+            >
+              {mode === 'register'
+                ? 'Seja bem-vindo! Descubra um novo jeito de aprender, acompanhar e transformar a educação.'
+                : 'Bem-vindo de volta! Continue sua jornada de conquistas.'}
+            </Typography>
+          </Stack>
           <SiteLogo />
         </Box>
 
-        <Outlet />
+        <Outlet context={{ mode, setMode }} />
       </Box>
     </Box>
   )

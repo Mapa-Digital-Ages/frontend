@@ -8,7 +8,7 @@ export interface AppLinkProps extends Omit<LinkProps, 'href'> {
   children: React.ReactNode
 }
 
-function AppLink({ to, href, children, ...props }: AppLinkProps) {
+function AppLink({ to, href, children, sx, ...props }: AppLinkProps) {
   const Component = to ? RouterLink : 'a'
 
   return (
@@ -18,29 +18,32 @@ function AppLink({ to, href, children, ...props }: AppLinkProps) {
       to={to}
       href={href}
       underline="always"
-      sx={theme => ({
-        display: 'inline-block',
-        width: 'fit-content',
-        color: 'primary.main',
-        fontWeight: 500,
-        textDecorationColor: theme.palette.primary.main,
-        '&:hover': {
-          color: theme.palette.primary.hover ?? theme.palette.primary.dark,
-          textDecorationColor:
-            theme.palette.primary.hover ?? theme.palette.primary.dark,
-        },
-        '&:active': {
-          color: 'primary.dark',
-        },
-        '&:visited': {
-          color: theme.palette.primary.main,
-        },
-        '&:focus-visible': {
-          outline: `2px solid ${theme.palette.background.hoverBorder}`,
-          outlineOffset: '2px',
-          borderRadius: '4px',
-        },
-      })}
+      sx={[
+        theme => ({
+          display: 'inline-block',
+          width: 'fit-content',
+          color: 'primary.main',
+          fontWeight: 500,
+          textDecorationColor: theme.palette.primary.main,
+          '&:hover': {
+            color: theme.palette.primary.hover ?? theme.palette.primary.dark,
+            textDecorationColor:
+              theme.palette.primary.hover ?? theme.palette.primary.dark,
+          },
+          '&:active': {
+            color: 'primary.dark',
+          },
+          '&:visited': {
+            color: theme.palette.primary.main,
+          },
+          '&:focus-visible': {
+            outline: `2px solid ${theme.palette.background.hoverBorder}`,
+            outlineOffset: '2px',
+            borderRadius: '4px',
+          },
+        }),
+        ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
+      ]}
     >
       {children}
     </MuiLink>
