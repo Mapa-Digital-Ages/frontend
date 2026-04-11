@@ -9,7 +9,6 @@ import {
   ListItemText,
   Typography,
 } from '@mui/material'
-import { alpha } from '@mui/material/styles'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { APP_CONFIG, ROLE_DASHBOARD_TITLE } from '@/constants/app'
 import { AppColors } from '@/styles/AppColors'
@@ -38,16 +37,20 @@ function AppSidebar({
   const currentRole = role ?? APP_CONFIG.defaultRole
 
   const paperSx = {
-    backgroundColor: AppColors.neutral.card,
-    borderRight: `1px solid ${AppColors.neutral.border}`,
-    color: AppColors.neutral.text,
+    backgroundColor: 'var(--app-surface)',
+    borderRight: '2px solid var(--app-border)',
+    color: 'var(--app-foreground)',
     width: APP_CONFIG.drawerWidth,
   }
 
   const drawerContent = (
-    <Box className="flex h-full flex-col bg-slate-50/80 p-3">
+    <Box
+      data-testid="side-menu"
+      className="flex h-full flex-col p-3"
+      sx={{ backgroundColor: 'transparent' }}
+    >
       <Box
-        className="-mx-3 -mt-3 mb-4 border-b border-white/20 px-4 py-5 text-white"
+        className="-mx-3 -mt-3 mb-4 px-6 py-5 text-white"
         style={{ background: AppColors.roleGradient(currentRole, '150deg') }}
       >
         <Box className="flex items-center gap-3">
@@ -58,16 +61,16 @@ function AppSidebar({
             <Typography className="truncate text-2xl font-bold uppercase leading-none">
               {APP_CONFIG.name}
             </Typography>
-            <Typography className="mt-1 truncate text-sm text-white/85">
+            <Typography className="truncate text-sm text-white/85">
               {ROLE_DASHBOARD_TITLE[currentRole]}
             </Typography>
           </Box>
         </Box>
       </Box>
 
-      <Divider sx={{ borderColor: AppColors.neutral.border, mb: 1.5 }} />
+      <Divider sx={{ borderColor: 'var(--app-border)', mb: 1.5 }} />
 
-      <List className="grid gap-1 p-0">
+      <List className="grid gap-0.5">
         {items.map(item => {
           const canNavigate = !item.path.startsWith('#')
           const selected =
@@ -78,7 +81,8 @@ function AppSidebar({
           return (
             <ListItemButton
               key={`${item.label}-${item.path}`}
-              className="rounded-[18px] px-2 py-1.5 transition-all duration-200 ease-out"
+              data-testid={`menu-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+              className="rounded-xl px-3 py-2 transition-all duration-200 ease-out  "
               onClick={() => {
                 if (canNavigate) {
                   navigate(item.path)
@@ -88,49 +92,31 @@ function AppSidebar({
               selected={selected}
               sx={{
                 borderRadius: '18px',
-                border: '1px solid transparent',
                 '& .MuiListItemText-primary': {
+                  backgroundColor: 'transparent',
                   color: AppColors.neutral.mutedText,
-                  fontWeight: 600,
                   transition: 'transform 180ms ease',
                 },
                 '& .MuiListItemIcon-root': {
                   color: AppColors.neutral.mutedText,
                 },
                 '&.Mui-selected': {
-                  backdropFilter: 'blur(6px)',
-                  background: `linear-gradient(120deg, ${alpha(
-                    AppColors.role[currentRole].primary,
-                    0.22
-                  )} 0%, ${alpha('#FFFFFF', 0.72)} 100%)`,
-                  borderColor: alpha(AppColors.role[currentRole].primary, 0.24),
-                  boxShadow: `0 10px 22px ${alpha(AppColors.role[currentRole].primary, 0.12)}, inset 0 1px 0 ${alpha('#FFFFFF', 0.7)}`,
-                },
-                '&.Mui-selected:hover': {
-                  background: `linear-gradient(120deg, ${alpha(
-                    AppColors.role[currentRole].primary,
-                    0.26
-                  )} 0%, ${alpha('#FFFFFF', 0.8)} 100%)`,
-                  borderColor: alpha(AppColors.role[currentRole].primary, 0.3),
-                },
-                '&:hover': {
-                  backgroundColor: alpha(
-                    AppColors.role[currentRole].primary,
-                    0.12
-                  ),
-                  borderColor: alpha(AppColors.role[currentRole].primary, 0.2),
+                  color: 'rgba(31, 75, 153, 0.08)',
                 },
                 '&.Mui-selected .MuiListItemIcon-root, &.Mui-selected .MuiListItemText-primary':
                   {
                     color: AppColors.role[currentRole].primary,
-                    fontWeight: 700,
+                    fontWeight: 600,
                   },
+                '&:hover': {
+                  backgroundColor: 'rgba(31, 75, 153, 0.08)',
+                },
                 '&:hover .MuiListItemIcon-root, &:hover .MuiListItemText-primary':
                   {
                     color: AppColors.role[currentRole].primary,
                   },
                 '&:hover .MuiListItemText-primary': {
-                  transform: 'translateX(1px)',
+                  fontWeight: 600,
                 },
               }}
             >
@@ -143,11 +129,14 @@ function AppSidebar({
 
       {onLogout && (
         <Box className="mt-auto pt-3">
-          <Divider sx={{ borderColor: AppColors.neutral.border, mb: 1.5 }} />
+          <Divider sx={{ borderColor: 'var(--app-border)', mb: 1.5 }} />
           <ListItemButton
-            className="rounded-2xl px-2 py-1.5 transition-all duration-200 ease-out"
+            className="rounded-full px-2 py-1.5 transition-all duration-200 ease-out"
+            data-testid="logout-button"
             onClick={onLogout}
             sx={{
+              borderRadius: '18px',
+              transition: 'all 0.2s ease',
               '& .MuiListItemText-primary': {
                 color: AppColors.neutral.mutedText,
                 fontWeight: 600,
@@ -156,7 +145,8 @@ function AppSidebar({
                 color: AppColors.neutral.mutedText,
               },
               '&:hover': {
-                bgcolor: alpha(AppColors.role[currentRole].primary, 0.12),
+                backgroundColor: 'rgba(31, 75, 153, 0.08)',
+                borderRadius: '18px',
               },
             }}
           >
@@ -173,9 +163,9 @@ function AppSidebar({
   return (
     <Drawer
       ModalProps={{ keepMounted: true }}
-      PaperProps={{ sx: paperSx }}
       onClose={onClose}
       open={isMobile ? mobileOpen : true}
+      slotProps={{ paper: { sx: paperSx } }}
       variant={isMobile ? 'temporary' : 'permanent'}
     >
       {drawerContent}

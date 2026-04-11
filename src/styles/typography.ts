@@ -1,7 +1,7 @@
 import type { ThemeOptions } from '@mui/material'
 
 export const appTypography: ThemeOptions['typography'] = {
-  fontFamily: '"Segoe UI Variable", "Segoe UI", "Helvetica Neue", sans-serif',
+  fontFamily: '"Space Grotesk", sans-serif',
   h1: {
     fontSize: '3rem',
     fontWeight: 700,

@@ -1,23 +1,23 @@
-import { Box, Button, MenuItem, Stack, Typography } from '@mui/material'
+import { Box, Stack, Typography } from '@mui/material'
 import { useState, type FormEvent } from 'react'
 import AppButton from '@/components/ui/AppButton'
 import AppInput from '@/components/ui/AppInput'
-import { ROLE_LABELS, USER_ROLES } from '@/constants/roles'
+import AppLink from '@/components/ui/AppLink'
 import type { AuthCredentials } from '@/types/auth'
 import { hasMinLength, isRequired, isValidEmail } from '@/utils/validators'
+import type { AuthMode } from './AuthModeSelect'
 
 interface LoginFormProps {
   isSubmitting?: boolean
+  mode: AuthMode
   onSubmit: (values: AuthCredentials) => Promise<void>
 }
 
-type LoginMode = 'login' | 'register'
 type LoginFormErrors = Partial<
   Record<keyof AuthCredentials | 'confirmPassword' | 'fullName', string>
 >
 
-function LoginForm({ isSubmitting = false, onSubmit }: LoginFormProps) {
-  const [mode, setMode] = useState<LoginMode>('login')
+function LoginForm({ isSubmitting = false, mode, onSubmit }: LoginFormProps) {
   const [values, setValues] = useState<AuthCredentials>({
     email: 'aluno@mapadigital.com',
     password: '12345678',
@@ -60,10 +60,6 @@ function LoginForm({ isSubmitting = false, onSubmit }: LoginFormProps) {
       nextErrors.confirmPassword = 'As senhas devem ser iguais.'
     }
 
-    if (!isRequired(values.role)) {
-      nextErrors.role = 'Selecione um perfil.'
-    }
-
     setErrors(nextErrors)
     return Object.keys(nextErrors).length === 0
   }
@@ -79,71 +75,87 @@ function LoginForm({ isSubmitting = false, onSubmit }: LoginFormProps) {
   }
 
   return (
-    <Stack className="gap-4" component="form" onSubmit={handleSubmit}>
-      <Box className="grid grid-cols-2 gap-1 rounded-2xl border border-slate-200 bg-slate-200 p-1">
-        <Button
-          className={[
-            'rounded-xl py-2 text-base font-semibold transition',
-            mode === 'login' ? 'bg-white text-slate-900' : 'text-slate-500',
-          ].join(' ')}
-          onClick={() => setMode('login')}
-          type="button"
-        >
-          Login
-        </Button>
-        <Button
-          className={[
-            'rounded-xl py-2 text-base font-semibold transition',
-            mode === 'register' ? 'bg-white text-slate-900' : 'text-slate-500',
-          ].join(' ')}
-          onClick={() => setMode('register')}
-          type="button"
-        >
-          Cadastro
-        </Button>
-      </Box>
-
-      {mode === 'register' && (
-        <AppInput
-          error={Boolean(errors.fullName)}
-          helperText={errors.fullName}
-          label="Nome completo"
-          onChange={event => {
-            setFullName(event.target.value)
-            setErrors(currentErrors => ({
-              ...currentErrors,
-              fullName: undefined,
-            }))
-          }}
-          placeholder="Ex.: Lucas Silva"
-          value={fullName}
-        />
-      )}
-
-      <AppInput
-        error={Boolean(errors.email)}
-        helperText={errors.email}
-        label="E-mail"
-        onChange={event => updateField('email', event.target.value)}
-        placeholder="voce@exemplo.com"
-        value={values.email}
-      />
-
-      {mode === 'register' ? (
-        <Box className="grid grid-cols-1 gap-3 md:grid-cols-2">
+    <Box
+      className="relative h-full"
+      component="form"
+      onSubmit={handleSubmit}
+      sx={{ pb: 8.5 }}
+    >
+      <Stack
+        spacing={mode === 'register' ? 1 : 2}
+        sx={{
+          height: '100%',
+          overflowY: 'visible',
+          pr: 0.5,
+        }}
+      >
+        {mode === 'register' && (
           <AppInput
-            error={Boolean(errors.password)}
-            helperText={errors.password}
-            label="Senha"
-            onChange={event => updateField('password', event.target.value)}
-            placeholder="Mín. 8 caracteres"
-            type="password"
-            value={values.password}
+            backgroundColor="background.default"
+            error={Boolean(errors.fullName)}
+            helperText={errors.fullName ?? ' '}
+            inputSize="medium"
+            label="Nome completo"
+            onChange={event => {
+              setFullName(event.target.value)
+              setErrors(currentErrors => ({
+                ...currentErrors,
+                fullName: undefined,
+              }))
+            }}
+            placeholder="Ex.: Lucas Silva"
+            value={fullName}
+          />
+        )}
+
+        <Stack
+          spacing={mode === 'register' ? 0 : 3}
+          sx={{ pt: mode === 'login' ? { xs: 3, md: 5 } : 0 }}
+        >
+          <AppInput
+            backgroundColor="background.default"
+            error={Boolean(errors.email)}
+            helperText={errors.email ?? ' '}
+            inputSize="medium"
+            label="E-mail"
+            onChange={event => updateField('email', event.target.value)}
+            placeholder="voce@exemplo.com"
+            type="email"
+            value={values.email}
           />
           <AppInput
+            backgroundColor="background.default"
+            error={Boolean(errors.password)}
+            helperText={errors.password ?? ' '}
+            inputSize="medium"
+            label="Senha"
+            onChange={event => updateField('password', event.target.value)}
+            type="password"
+            placeholder="digite sua senha"
+            value={values.password}
+          />
+
+          {mode === 'login' && (
+            <Box className="flex justify-end">
+              <AppLink
+                href="#"
+                onClick={event => event.preventDefault()}
+                sx={{ fontSize: '0.875rem' }}
+              >
+                Esqueci minha senha
+              </AppLink>
+            </Box>
+          )}
+        </Stack>
+
+        {mode === 'register' && (
+          <AppInput
+            backgroundColor="background.default"
             error={Boolean(errors.confirmPassword)}
-            helperText={errors.confirmPassword}
+            helperText={errors.confirmPassword ?? ' '}
+            inputSize="medium"
             label="Confirmar senha"
+            placeholder="confirme sua senha"
             onChange={event => {
               setConfirmPassword(event.target.value)
               setErrors(currentErrors => ({
@@ -151,58 +163,28 @@ function LoginForm({ isSubmitting = false, onSubmit }: LoginFormProps) {
                 confirmPassword: undefined,
               }))
             }}
-            placeholder="Repita a senha"
             type="password"
             value={confirmPassword}
           />
-        </Box>
-      ) : (
-        <AppInput
-          error={Boolean(errors.password)}
-          helperText={errors.password}
-          label="Senha"
-          onChange={event => updateField('password', event.target.value)}
-          type="password"
-          value={values.password}
-        />
-      )}
-
-      <AppInput
-        error={Boolean(errors.role)}
-        helperText={errors.role}
-        label={mode === 'register' ? 'Perfil de acesso' : 'Perfil'}
-        onChange={event =>
-          updateField('role', event.target.value as AuthCredentials['role'])
-        }
-        select
-        value={values.role}
-      >
-        {USER_ROLES.map(role => (
-          <MenuItem key={role} value={role}>
-            {ROLE_LABELS[role]}
-          </MenuItem>
-        ))}
-      </AppInput>
+        )}
+      </Stack>
 
       <AppButton
-        className="mt-1"
+        className="absolute bottom-0 left-0"
+        borderRadius="8px"
         disabled={isSubmitting}
-        size="large"
+        fullWidth
+        size="medium"
+        sx={{ minHeight: 50, fontSize: '1rem' }}
         type="submit"
       >
         {isSubmitting
           ? 'Processando...'
           : mode === 'login'
             ? 'Entrar'
-            : 'Criar conta'}
+            : 'Confirmar cadastro'}
       </AppButton>
-
-      <Typography className="text-center text-sm text-slate-500">
-        {mode === 'login'
-          ? 'Use as credenciais mockadas para acessar.'
-          : 'Cadastro em modo demonstrativo para validação visual.'}
-      </Typography>
-    </Stack>
+    </Box>
   )
 }
 

@@ -40,7 +40,7 @@ export function createAppTheme(mode: PaletteMode = 'light') {
         styleOverrides: {
           root: {
             minHeight: 44,
-            borderRadius: 12,
+            borderRadius: 'var(--app-radius-control)',
             paddingInline: 18,
             textTransform: 'none',
             fontWeight: 600,
@@ -50,7 +50,7 @@ export function createAppTheme(mode: PaletteMode = 'light') {
       MuiCard: {
         styleOverrides: {
           root: {
-            borderRadius: 20,
+            borderRadius: 'var(--app-radius-card)',
             border: `1px solid ${alpha(primaryMain, 0.08)}`,
             boxShadow:
               mode === 'dark'
@@ -81,7 +81,7 @@ export function createAppTheme(mode: PaletteMode = 'light') {
       MuiOutlinedInput: {
         styleOverrides: {
           root: {
-            borderRadius: 12,
+            borderRadius: 'var(--app-radius-control)',
             backgroundColor:
               mode === 'dark'
                 ? alpha(AppColors.neutral.card, 0.03)
