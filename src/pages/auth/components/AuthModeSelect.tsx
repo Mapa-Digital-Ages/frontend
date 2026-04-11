@@ -46,8 +46,13 @@ function AuthModeSelect({ value, onChange }: AuthModeSelectProps) {
               textTransform: 'none',
               '&:hover': {
                 backgroundColor: isSelected
-                  ? '#ffffff'
+                  ? '#218cc9'
                   : 'rgba(255,255,255,0.4)',
+                color: isSelected ? '#ffffff' : '#475569',
+              },
+              '&.Mui-focusVisible': {
+                outline: '2px solid #359CDF',
+                outlineOffset: '2px',
               },
             }}
             type="button"
