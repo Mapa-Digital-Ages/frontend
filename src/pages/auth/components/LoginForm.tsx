@@ -84,7 +84,7 @@ function LoginForm({ isSubmitting = false, onSubmit }: LoginFormProps) {
         <Button
           className={[
             'rounded-xl py-2 text-base font-semibold transition',
-            mode === 'login' ? 'bg-white text-slate-900' : 'text-slate-500',
+            mode === 'login' ? '!bg-[#359CDF] !text-white' : '!text-slate-500',
           ].join(' ')}
           onClick={() => setMode('login')}
           type="button"
@@ -94,7 +94,7 @@ function LoginForm({ isSubmitting = false, onSubmit }: LoginFormProps) {
         <Button
           className={[
             'rounded-xl py-2 text-base font-semibold transition',
-            mode === 'register' ? 'bg-white text-slate-900' : 'text-slate-500',
+            mode === 'register' ? '!bg-[#359CDF] !text-white' : '!text-slate-500',
           ].join(' ')}
           onClick={() => setMode('register')}
           type="button"
@@ -172,23 +172,6 @@ function LoginForm({ isSubmitting = false, onSubmit }: LoginFormProps) {
         />
       )}
 
-      <AppInput
-        error={Boolean(errors.role)}
-        helperText={errors.role}
-        label={mode === 'register' ? 'Perfil de acesso' : 'Perfil'}
-        onChange={event =>
-          updateField('role', event.target.value as AuthCredentials['role'])
-        }
-        select
-        value={values.role}
-        backgroundColor="background.default"
-      >
-        {USER_ROLES.map(role => (
-          <MenuItem key={role} value={role}>
-            {ROLE_LABELS[role]}
-          </MenuItem>
-        ))}
-      </AppInput>
 
       <AppButton
         className="mt-1"

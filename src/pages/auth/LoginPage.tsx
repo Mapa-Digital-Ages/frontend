@@ -33,11 +33,16 @@ function LoginPage() {
   }
 
   return (
-    <Box className="grid gap-3 rounded-3xl border border-slate-300 bg-[#f3f4f6]/95 p-4 md:p-6">
-      {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
-      <LoginForm isSubmitting={isSubmitting} onSubmit={handleSubmit} />
+
+    <Box className="flex items-center justify-center">
+      <Box className="w-full max-w-md bg-white rounded-3xl p-6">
+        {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
+        <LoginForm isSubmitting={isSubmitting} onSubmit={handleSubmit} />
+      </Box>
     </Box>
-  )
+
+
+)
 }
 
 export default LoginPage
