@@ -16,90 +16,136 @@ import AppDropdown, { type DropdownOption } from './AppDropdown'
 import AppInput from './AppInput'
 import AppButton from './AppButton'
 import { SUBJECTS } from '../../utils/subjectThemes'
+import type { Task } from './Planner'
+import type { SubjectContext } from '@/types/common'
 
-interface Task {
-  id: number
-  subject: string
-  description: string
-  status: string
+type LocalTask = {
+  id: string
+  subject: SubjectContext | null
+  title: string
+  status: Task['status']
 }
 
 const subjectOptions: DropdownOption[] = Object.values(SUBJECTS)
   .filter(s => s.id != null)
-  .map(s => ({
-    label: s.label,
-    value: s.id as string,
-  }))
+  .map(s => ({ label: s.label, value: s.id as string }))
 
 const statusOptions: DropdownOption[] = [
-  { label: 'A fazer', value: 'todo' },
-  { label: 'Pendente', value: 'in_progress' },
+  { label: 'Pendente', value: 'pending' },
+  { label: 'Ajustar', value: 'adjust' },
   { label: 'Concluído', value: 'done' },
 ]
 
-function createTask(id: number): Task {
-  return { id, subject: '', description: '', status: 'todo' }
+const modalContentWidth = 510
+
+function createLocalTask(id: string): LocalTask {
+  return { id, subject: null, title: '', status: 'pending' }
+}
+
+function createLocalTasks(tasks: Task[]): LocalTask[] {
+  if (tasks.length === 0) {
+    return [createLocalTask('new-1')]
+  }
+
+  return tasks.map(t => ({
+    id: t.id,
+    subject: t.subject,
+    title: t.title,
+    status: t.status,
+  }))
 }
 
 interface DayDetailModalProps {
   open: boolean
   date: Dayjs | null
+  tasks: Task[]
   onClose: () => void
+  onConfirm: (tasks: Task[]) => void
 }
 
-export default function DayDetailModal({
-  open,
-  date,
-  onClose,
-}: DayDetailModalProps) {
-  const [tasks, setTasks] = useState<Task[]>([createTask(1)])
-  const [nextId, setNextId] = useState(2)
+interface DayDetailModalContentProps {
+  date: Dayjs
+  tasks: Task[]
+  onClose: () => void
+  onConfirm: (tasks: Task[]) => void
+}
 
-  function handleClose() {
+function DayDetailModalContent({
+  date,
+  tasks,
+  onClose,
+  onConfirm,
+}: DayDetailModalContentProps) {
+  const [localTasks, setLocalTasks] = useState<LocalTask[]>(() =>
+    createLocalTasks(tasks)
+  )
+  const [counter, setCounter] = useState(() => Math.max(2, tasks.length + 1))
+  const [showValidationErrors, setShowValidationErrors] = useState(false)
+
+  function handleConfirm() {
+    const hasMissingSubject = localTasks.some(task => task.subject == null)
+    const hasMissingTitle = localTasks.some(task => task.title.trim() === '')
+
+    if (hasMissingSubject || hasMissingTitle) {
+      setShowValidationErrors(true)
+      return
+    }
+
+    const result: Task[] = localTasks
+      .filter(t => t.subject != null && t.title.trim() !== '')
+      .map(t => ({
+        id: t.id.startsWith('new-')
+          ? `${Date.now()}-${Math.random().toString(36).slice(2)}`
+          : t.id,
+        date: date.toDate(),
+        title: t.title,
+        status: t.status,
+        subject: t.subject!,
+      }))
+    onConfirm(result)
     onClose()
-    setTasks([createTask(1)])
-    setNextId(2)
   }
 
   function addTask() {
-    setTasks(prev => [...prev, createTask(nextId)])
-    setNextId(prev => prev + 1)
+    setLocalTasks(prev => [...prev, createLocalTask(`new-${counter}`)])
+    setCounter(prev => prev + 1)
   }
 
-  function removeTask(id: number) {
-    setTasks(prev => prev.filter(t => t.id !== id))
+  function removeTask(id: string) {
+    setLocalTasks(prev => prev.filter(t => t.id !== id))
   }
 
-  function updateTask(
-    id: number,
-    field: keyof Omit<Task, 'id'>,
-    value: string
-  ) {
-    setTasks(prev =>
-      prev.map(t => (t.id === id ? { ...t, [field]: value } : t))
+  function updateTask(id: string, changes: Partial<Omit<LocalTask, 'id'>>) {
+    setLocalTasks(prev =>
+      prev.map(t => (t.id === id ? { ...t, ...changes } : t))
     )
   }
 
   return (
-    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-      <DialogTitle sx={{ pr: 6 }}>
-        {date?.toDate().toLocaleDateString('pt-BR', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
-        })}
-        <IconButton
-          onClick={handleClose}
-          size="small"
-          sx={{ position: 'absolute', right: 12, top: 12 }}
-        >
-          <CloseIcon fontSize="small" />
-        </IconButton>
-      </DialogTitle>
+    <DialogContent
+      dividers
+      sx={{
+        pt: 2,
+        pb: 3,
+        display: 'flex',
+        justifyContent: 'center',
+        scrollbarGutter: 'stable',
+      }}
+    >
+      <Stack
+        spacing={2}
+        sx={{
+          pt: 1,
+          width: modalContentWidth,
+          maxWidth: '100%',
+          flexShrink: 0,
+        }}
+      >
+        {localTasks.map((task, index) => {
+          const subjectError = showValidationErrors && task.subject == null
+          const titleError = showValidationErrors && task.title.trim() === ''
 
-      <DialogContent dividers sx={{ pt: 2, pb: 3 }}>
-        <Stack spacing={2} sx={{ pt: 1 }}>
-          {tasks.map((task, index) => (
+          return (
             <Stack key={task.id} spacing={1.5}>
               {index > 0 && <Divider />}
               <Stack
@@ -129,53 +175,101 @@ export default function DayDetailModal({
                 <AppDropdown
                   label="Matéria"
                   options={subjectOptions}
-                  value={task.subject}
-                  onChange={e =>
-                    updateTask(task.id, 'subject', e.target.value as string)
-                  }
+                  value={task.subject?.id ?? ''}
+                  onChange={e => {
+                    const id = e.target.value as string
+                    const subject =
+                      Object.values(SUBJECTS).find(s => s.id === id) ?? null
+                    updateTask(task.id, { subject })
+                  }}
                   placeholder="Matéria"
-                  width={180}
+                  width={249}
+                  error={subjectError}
+                  helperText={
+                    subjectError ? 'Selecione uma matéria.' : undefined
+                  }
                 />
                 <AppDropdown
                   label="Status"
                   options={statusOptions}
                   value={task.status}
                   onChange={e =>
-                    updateTask(task.id, 'status', e.target.value as string)
+                    updateTask(task.id, {
+                      status: e.target.value as Task['status'],
+                    })
                   }
                   placeholder="Status"
-                  width={180}
+                  width={249}
                 />
               </Stack>
               <AppInput
                 placeholder="Descreva a tarefa..."
-                value={task.description}
-                onChange={e =>
-                  updateTask(task.id, 'description', e.target.value)
-                }
+                value={task.title}
+                onChange={e => updateTask(task.id, { title: e.target.value })}
                 inputSize="large"
                 label="Descrição"
-                sx={{ maxWidth: 372 }}
+                error={titleError}
+                helperText={
+                  titleError ? 'Descreva a tarefa antes de salvar.' : undefined
+                }
+                sx={{ maxWidth: modalContentWidth }}
               />
             </Stack>
-          ))}
-          <Stack direction="row" justifyContent="space-between">
-            <AppButton
-              backgroundColor="primary.main"
-              size="small"
-              onClick={addTask}
-              startIcon={<AddIcon />}
-              label="Adicionar tarefa"
-            />
-            <AppButton
-              backgroundColor="primary.main"
-              size="small"
-              onClick={handleClose}
-              label="Confirmar"
-            />
-          </Stack>
+          )
+        })}
+
+        <Stack direction="row" justifyContent="space-between">
+          <AppButton
+            backgroundColor="primary.main"
+            size="small"
+            onClick={addTask}
+            startIcon={<AddIcon />}
+            label="Adicionar tarefa"
+          />
+          <AppButton
+            backgroundColor="primary.main"
+            size="small"
+            onClick={handleConfirm}
+            label="Confirmar"
+          />
         </Stack>
-      </DialogContent>
+      </Stack>
+    </DialogContent>
+  )
+}
+
+export default function DayDetailModal({
+  open,
+  date,
+  tasks,
+  onClose,
+  onConfirm,
+}: DayDetailModalProps) {
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle sx={{ pr: 6 }}>
+        {date?.toDate().toLocaleDateString('pt-BR', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })}
+        <IconButton
+          onClick={onClose}
+          size="small"
+          sx={{ position: 'absolute', right: 12, top: 12 }}
+        >
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </DialogTitle>
+
+      {open && date && (
+        <DayDetailModalContent
+          date={date}
+          tasks={tasks}
+          onClose={onClose}
+          onConfirm={onConfirm}
+        />
+      )}
     </Dialog>
   )
 }

@@ -18,53 +18,48 @@ import SubjectBaseCard from '@/components/ui/SubjectBaseCard'
 import { ALL_SUBJECT_TAG_CONTEXTS, SUBJECTS } from '@/utils/subjectThemes'
 import StudentComponentsShowcase from './components/StudentComponentsShowcase'
 import AppLink from '@/components/ui/AppLink'
-import PlannerModal, { Task } from '@/components/ui/PlannerModal'
+import Planner, { Task } from '@/components/ui/Planner'
 import dayjs from 'dayjs'
 
-const mockTasks: Task[] = [
+const initialTasks: Task[] = [
   {
     id: '1',
-    date: dayjs().day(1).format('YYYY-MM-DD'),
+    date: dayjs().day(1).toDate(),
     title: 'Revisão de equações',
     status: 'done',
     subject: SUBJECTS.matematica,
   },
-
   {
     id: '2',
-    date: dayjs().day(1).format('YYYY-MM-DD'),
+    date: dayjs().day(1).toDate(),
     title: 'Teste de Proficiência em Inglês - TOEFL',
     status: 'pending',
     subject: SUBJECTS.ingles,
   },
-
   {
     id: '3',
-    date: dayjs().day(2).format('YYYY-MM-DD'),
+    date: dayjs().day(2).toDate(),
     title: 'Leitura e interpretação',
     status: 'done',
     subject: SUBJECTS.portugues,
   },
-
   {
     id: '4',
-    date: dayjs().day(3).format('YYYY-MM-DD'),
+    date: dayjs().day(3).toDate(),
     title: 'Resumo de ecossistemas',
     status: 'adjust',
     subject: SUBJECTS.ciencias,
   },
-
   {
     id: '5',
-    date: dayjs().day(4).format('YYYY-MM-DD'),
+    date: dayjs().day(4).toDate(),
     title: 'Exercícios de Brasil Colônia',
     status: 'pending',
     subject: SUBJECTS.historia,
   },
-
   {
     id: '6',
-    date: dayjs().day(1).format('YYYY-MM-DD'),
+    date: dayjs().day(1).toDate(),
     title: 'Exercícios de Brasil Colônia',
     status: 'adjust',
     subject: SUBJECTS.historia,
@@ -80,6 +75,7 @@ const dropdownOptions: DropdownOption[] = [
 ]
 
 function StudentComponentsPage() {
+  const [tasks, setTasks] = useState<Task[]>(initialTasks)
   const [singleValue, setSingleValue] = useState<string | number>('7')
   const [multiValue, setMultiValue] = useState<Array<string | number>>(['7'])
   const theme = useTheme()
@@ -116,7 +112,7 @@ function StudentComponentsPage() {
             border: `1px solid ${theme.palette.divider}`,
           }}
         >
-          <AppCalendar />
+          <AppCalendar tasks={tasks} onTasksChange={setTasks} />
 
           <Stack spacing={3}>
             <AppDropdown
@@ -186,7 +182,7 @@ function StudentComponentsPage() {
             border: `1px solid ${theme.palette.divider}`,
           }}
         >
-          <PlannerModal tasks={mockTasks} />
+          <Planner tasks={tasks} />
           <Typography variant="h6">Testes de Input</Typography>
 
           <Stack spacing={3}>
