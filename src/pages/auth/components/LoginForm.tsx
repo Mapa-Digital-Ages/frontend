@@ -108,7 +108,10 @@ function LoginForm({ isSubmitting = false, mode, onSubmit }: LoginFormProps) {
           />
         )}
 
-        <Stack spacing={mode === 'register' ? 0 : 1.5}>
+        <Stack
+          spacing={mode === 'register' ? 0 : 3}
+          sx={{ pt: mode === 'login' ? { xs: 3, md: 5 } : 0 }}
+        >
           <AppInput
             backgroundColor="background.default"
             error={Boolean(errors.email)}
