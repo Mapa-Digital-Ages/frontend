@@ -4,6 +4,7 @@ import {
   ListItemIcon,
   ListItemText,
   FormControl,
+  FormHelperText,
   Checkbox,
   SelectProps,
   Typography,
@@ -29,6 +30,7 @@ export interface AppDropdownProps extends Omit<
   width?: string | number
   borderRadius?: string | number
   backgroundColor?: string
+  helperText?: string
 }
 
 function AppDropdown({
@@ -41,6 +43,8 @@ function AppDropdown({
   width = 240,
   borderRadius = 'var(--dropdown-radius)',
   backgroundColor = 'background.paper',
+  error,
+  helperText,
   ...props
 }: AppDropdownProps) {
   const { multiple = false, disabled, className } = props
@@ -72,11 +76,17 @@ function AppDropdown({
     <FormControl
       className={className}
       disabled={disabled}
+      error={error}
       style={{ minWidth: width, maxWidth: width, width, borderRadius }}
     >
-      {label && <Typography variant="body2">{label}</Typography>}
+      {label && (
+        <Typography variant="body2" color={error ? 'error.main' : undefined}>
+          {label}
+        </Typography>
+      )}
       <Select
         {...props}
+        error={error}
         value={value}
         onChange={onChange}
         displayEmpty
@@ -88,10 +98,17 @@ function AppDropdown({
           color: theme.palette.text.primary,
           borderRadius: borderRadius,
           '& .MuiOutlinedInput-notchedOutline': {
-            borderColor: theme.palette.background.border,
+            borderColor: error
+              ? theme.palette.error.main
+              : theme.palette.background.border,
           },
           '&:hover .MuiOutlinedInput-notchedOutline': {
-            borderColor: 'background.hoverBorder',
+            borderColor: error
+              ? theme.palette.error.main
+              : 'background.hoverBorder',
+          },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+            borderColor: error ? theme.palette.error.main : 'primary.main',
           },
         })}
         MenuProps={{
@@ -203,6 +220,7 @@ function AppDropdown({
           )
         })}
       </Select>
+      {helperText && <FormHelperText>{helperText}</FormHelperText>}
     </FormControl>
   )
 }

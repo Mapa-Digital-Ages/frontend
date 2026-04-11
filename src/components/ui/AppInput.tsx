@@ -37,6 +37,7 @@ export default function AppInput({
   InputProps,
   type = 'text',
   backgroundColor = 'background.paper',
+  error,
   sx,
   ...props
 }: AppInputProps) {
@@ -102,10 +103,15 @@ export default function AppInput({
 
   return (
     <Stack spacing={0.5} className={className}>
-      {label && <Typography variant="body2">{label}</Typography>}
+      {label && (
+        <Typography variant="body2" color={error ? 'error.main' : undefined}>
+          {label}
+        </Typography>
+      )}
 
       <TextField
         {...props}
+        error={error}
         type={inputType}
         size={muiSize}
         fullWidth
@@ -128,10 +134,13 @@ export default function AppInput({
         }}
         sx={{
           '& .MuiOutlinedInput-notchedOutline': {
-            borderColor: 'background.border',
+            borderColor: error ? 'error.main' : 'background.border',
           },
           '&:hover .MuiOutlinedInput-notchedOutline': {
-            borderColor: 'background.hoverBorder',
+            borderColor: error ? 'error.main' : 'background.hoverBorder',
+          },
+          '& .Mui-focused .MuiOutlinedInput-notchedOutline': {
+            borderColor: error ? 'error.main' : 'primary.main',
           },
           ...(sizeStyles as object),
           ...sx,
