@@ -119,9 +119,7 @@ export function SearchBarAndFilter({
         fullWidth={false}
         hideLabel={isMobileLayout}
         inputProps={
-          isMobileLayout
-            ? { 'aria-label': 'Filtrar resultados' }
-            : undefined
+          isMobileLayout ? { 'aria-label': 'Filtrar resultados' } : undefined
         }
         leadingIcon={
           <FilterAltOutlinedIcon

@@ -477,7 +477,12 @@ function AdminApprovalsPage() {
     }
   }, [resolvedGuardianQuery, guardianRefreshKey])
 
-  if (!isAdmin || role !== 'admin' || !hasLoadedContent || !hasLoadedGuardians) {
+  if (
+    !isAdmin ||
+    role !== 'admin' ||
+    !hasLoadedContent ||
+    !hasLoadedGuardians
+  ) {
     return <LoadingScreen />
   }
 

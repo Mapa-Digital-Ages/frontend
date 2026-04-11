@@ -19,11 +19,7 @@ type AppSubjectsTagsProps = {
   subjects: TagContext[]
 }
 
-export function SubjectChip({
-  color,
-  label,
-  size = 'sm',
-}: SubjectChipProps) {
+export function SubjectChip({ color, label, size = 'sm' }: SubjectChipProps) {
   return <AppTag size={size} tag={{ color, id: label, label }} />
 }
 

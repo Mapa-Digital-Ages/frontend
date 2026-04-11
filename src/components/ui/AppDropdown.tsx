@@ -308,9 +308,7 @@ function AppDropdown({
         onChange={onChange}
         displayEmpty
         renderValue={renderValue}
-        IconComponent={
-          hideIndicator || hideLabel ? () => null : ExpandMoreIcon
-        }
+        IconComponent={hideIndicator || hideLabel ? () => null : ExpandMoreIcon}
         sx={selectSx}
         MenuProps={{
           ...MenuProps,

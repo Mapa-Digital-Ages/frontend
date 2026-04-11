@@ -9,5 +9,8 @@ test('app card merges consumer sx with its default card styles', () => {
   )
 
   assert.match(cardSource, /sx,/)
-  assert.match(cardSource, /\.\.\.\(Array\.isArray\(sx\) \? sx : sx \? \[sx\] : \[\]\)/)
+  assert.match(
+    cardSource,
+    /\.\.\.\(Array\.isArray\(sx\) \? sx : sx \? \[sx\] : \[\]\)/
+  )
 })

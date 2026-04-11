@@ -296,7 +296,9 @@ function updateMockContentStatus(
 }
 
 function getMockContentCorrectionSession(id: string): ContentCorrectionSession {
-  const item = mockContentApprovalItems.find(contentItem => contentItem.id === id)
+  const item = mockContentApprovalItems.find(
+    contentItem => contentItem.id === id
+  )
 
   if (!item) {
     throw new Error(`Content approval ${id} not found`)
@@ -578,7 +580,10 @@ function applyMockContentCorrection(
       {
         id: `${item.id}-correction-outcome`,
         label: formatCorrectionOutcomeLabel(correction.outcome),
-        tone: correction.outcome === 'redo' ? ('warning' as const) : ('success' as const),
+        tone:
+          correction.outcome === 'redo'
+            ? ('warning' as const)
+            : ('success' as const),
       },
       {
         id: `${item.id}-correction-feedback`,

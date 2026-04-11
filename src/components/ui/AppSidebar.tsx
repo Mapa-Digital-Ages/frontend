@@ -54,7 +54,7 @@ function AppSidebar({
       <Box
         className="-mx-3 -mt-3 mb-4 px-6 py-5 text-white"
         style={{
-          background: AppColors.roleGradient(role, '150deg')
+          background: AppColors.roleGradient(role, '150deg'),
         }}
       >
         <Box className="flex items-center gap-3">
@@ -162,9 +162,10 @@ function AppSidebar({
                 ),
                 color: accentColor,
               },
-              '&:hover .MuiListItemIcon-root, &:hover .MuiListItemText-primary': {
-                color: accentColor,
-              },
+              '&:hover .MuiListItemIcon-root, &:hover .MuiListItemText-primary':
+                {
+                  color: accentColor,
+                },
             }}
           >
             <ListItemIcon className="min-w-9">

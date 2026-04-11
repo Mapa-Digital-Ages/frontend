@@ -1,7 +1,4 @@
-import type {
-  ActionFunctionArgs,
-  RouteObject,
-} from 'react-router-dom'
+import type { ActionFunctionArgs, RouteObject } from 'react-router-dom'
 import ProtectedRoute from '@/components/common/ProtectedRoute'
 import RoleRoute from '@/components/common/RoleRoute'
 import { APP_ROUTES } from '@/constants/routes'

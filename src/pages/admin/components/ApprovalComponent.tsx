@@ -8,10 +8,7 @@ import { SearchBarAndFilter } from '@/components/common/SearchBarAndFilter'
 import type { DropdownOption } from '@/components/ui/AppDropdown'
 import AppCard from '@/components/ui/AppCard'
 import { AppColors } from '@/styles/AppColors'
-import type {
-  ApprovalResultsSummary,
-  ApprovalStatus,
-} from '@/types/admin'
+import type { ApprovalResultsSummary, ApprovalStatus } from '@/types/admin'
 import type { UserRole } from '@/types/user'
 
 export interface ApprovalStatusOption extends DropdownOption {

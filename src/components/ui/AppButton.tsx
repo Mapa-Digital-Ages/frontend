@@ -56,9 +56,7 @@ function AppButton<C extends ElementType = 'button'>({
 }: AppButtonProps<C>) {
   const hoverBackground =
     hoverBackgroundColor ??
-    hoverBackgroundMap[
-      backgroundColor as keyof typeof hoverBackgroundMap
-    ] ??
+    hoverBackgroundMap[backgroundColor as keyof typeof hoverBackgroundMap] ??
     backgroundColor
 
   return (

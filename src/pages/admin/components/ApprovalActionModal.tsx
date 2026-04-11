@@ -74,7 +74,9 @@ const selectSx = {
   },
 }
 
-function resolveUsageMode(mode: ApprovalActionModalMode): ApprovalActionModalUsage {
+function resolveUsageMode(
+  mode: ApprovalActionModalMode
+): ApprovalActionModalUsage {
   const isContentMode = mode.type === 'content'
 
   if (mode.action === 'delete') {
@@ -88,7 +90,9 @@ function resolveUsageMode(mode: ApprovalActionModalMode): ApprovalActionModalUsa
       : 'guardian-form'
 }
 
-function resolveDialogMode(usage: ApprovalActionModalUsage): AppActionModalMode {
+function resolveDialogMode(
+  usage: ApprovalActionModalUsage
+): AppActionModalMode {
   if (usage === 'confirm') {
     return 'confirm'
   }
@@ -124,8 +128,7 @@ function resolveModalCopy(mode: ApprovalActionModalMode) {
       mode.action === 'create' ? 'Salvar cadastro' : 'Salvar alterações',
     description:
       'Preencha os dados da tarefa ou prova usada no fluxo de aprovação.',
-    title:
-      mode.action === 'create' ? 'Cadastrar conteúdo' : 'Editar conteúdo',
+    title: mode.action === 'create' ? 'Cadastrar conteúdo' : 'Editar conteúdo',
   }
 }
 
@@ -204,7 +207,9 @@ function ApprovalActionModal({
             }}
           >
             <Typography sx={fieldLabelSx}>Papel do responsável</Typography>
-            <Typography sx={{ color: 'text.primary', fontSize: { md: 14, xs: 13 } }}>
+            <Typography
+              sx={{ color: 'text.primary', fontSize: { md: 14, xs: 13 } }}
+            >
               Responsável
             </Typography>
           </Box>
@@ -259,7 +264,9 @@ function ApprovalActionModal({
               <Typography sx={fieldLabelSx}>Disciplina</Typography>
               <AppDropdown
                 fullWidth
-                onChange={event => onChange('subjectId', String(event.target.value))}
+                onChange={event =>
+                  onChange('subjectId', String(event.target.value))
+                }
                 options={subjectOptions}
                 placeholder="Selecione a disciplina"
                 sx={selectSx}

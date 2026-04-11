@@ -13,7 +13,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "preview": "vite preview",
-    "validate": "npm run lint && npm run format:check && npm run typecheck"
+    "validate": "npm run lint && npm run format:check && npm run typecheck",
+    "format:staged": "lint-staged",
+    "prepare": "husky"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -38,11 +40,16 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "prettier": "^3.8.1",
     "tailwindcss": "^4.2.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.56.1",
     "vite": "^7.3.1"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,css,md,mdx,html,yml,yaml}": "prettier --write"
   }
 }

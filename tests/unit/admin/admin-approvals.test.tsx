@@ -97,7 +97,12 @@ const contentQueueResponse: ApiResponse<{
     requested_at: string
     resource_type: 'task' | 'exam'
     stage_label: string
-    status: 'in_review' | 'sent' | 'approved' | 'rejected' | 'correction_in_progress'
+    status:
+      | 'in_review'
+      | 'sent'
+      | 'approved'
+      | 'rejected'
+      | 'correction_in_progress'
     subject_label: string
     tags: Array<{
       id: string
@@ -199,7 +204,10 @@ test('admin approvals area is wired into routes and sidebar navigation', () => {
   )
 
   assert.match(routesSource, /approvals: '\/admin\/approvals'/)
-  assert.match(routesSource, /correction: '\/admin\/approvals\/corrections\/:contentId'/)
+  assert.match(
+    routesSource,
+    /correction: '\/admin\/approvals\/corrections\/:contentId'/
+  )
   assert.match(routesSource, /buildAdminCorrectionRoute/)
   assert.match(adminRouteSource, /AdminApprovalsPage/)
   assert.match(adminRouteSource, /AdminContentCorrectionPage/)
@@ -224,11 +232,17 @@ test('content correction sessions use a route-level workflow with mock fallback'
     'utf8'
   )
   const correctionPageSource = readFileSync(
-    new URL('../../../src/pages/admin/AdminContentCorrectionPage.tsx', import.meta.url),
+    new URL(
+      '../../../src/pages/admin/AdminContentCorrectionPage.tsx',
+      import.meta.url
+    ),
     'utf8'
   )
   const repositorySource = readFileSync(
-    new URL('../../../src/services/admin/admin-approval.repository.ts', import.meta.url),
+    new URL(
+      '../../../src/services/admin/admin-approval.repository.ts',
+      import.meta.url
+    ),
     'utf8'
   )
   const modalSource = readFileSync(
@@ -239,7 +253,10 @@ test('content correction sessions use a route-level workflow with mock fallback'
     'utf8'
   )
 
-  assert.match(adminApprovalsPageSource, /buildAdminCorrectionRoute\(item\.id\)/)
+  assert.match(
+    adminApprovalsPageSource,
+    /buildAdminCorrectionRoute\(item\.id\)/
+  )
   assert.match(adminApprovalsPageSource, /navigate\(/)
   assert.match(correctionPageSource, /useParams/)
   assert.match(correctionPageSource, /useUserRole/)
@@ -252,7 +269,10 @@ test('content correction sessions use a route-level workflow with mock fallback'
   assert.match(correctionPageSource, /height: correctionCardHeight/)
   assert.match(correctionPageSource, /'&:last-child': \{ pb: 0 \}/)
   assert.match(correctionPageSource, /flex: '1 1 auto'/)
-  assert.match(correctionPageSource, /gridTemplateColumns: 'repeat\(3, minmax\(0, 1fr\)\)'/)
+  assert.match(
+    correctionPageSource,
+    /gridTemplateColumns: 'repeat\(3, minmax\(0, 1fr\)\)'/
+  )
   assert.match(correctionPageSource, /alignSelf: 'end'/)
   assert.doesNotMatch(correctionPageSource, /overflowX: 'auto'/)
   assert.doesNotMatch(correctionPageSource, /marginTop: 'auto'/)
@@ -341,7 +361,10 @@ test('theme selector and approvals filter reuse AppDropdown with the ghost trigg
     'utf8'
   )
   const searchBarAndFilterSource = readFileSync(
-    new URL('../../../src/components/common/SearchBarAndFilter.tsx', import.meta.url),
+    new URL(
+      '../../../src/components/common/SearchBarAndFilter.tsx',
+      import.meta.url
+    ),
     'utf8'
   )
 
@@ -368,7 +391,10 @@ test('approval queue panel reuses shared toolbar and pagination components', () 
     'utf8'
   )
   const searchBarAndFilterSource = readFileSync(
-    new URL('../../../src/components/common/SearchBarAndFilter.tsx', import.meta.url),
+    new URL(
+      '../../../src/components/common/SearchBarAndFilter.tsx',
+      import.meta.url
+    ),
     'utf8'
   )
   const paginationSource = readFileSync(
@@ -408,11 +434,17 @@ test('admin approvals page uses a responsive grid and a bounded page size for qu
 
 test('approval list cards preserve the compact visual proportions from the reference', () => {
   const approvalCardSource = readFileSync(
-    new URL('../../../src/pages/admin/components/ApprovalCard.tsx', import.meta.url),
+    new URL(
+      '../../../src/pages/admin/components/ApprovalCard.tsx',
+      import.meta.url
+    ),
     'utf8'
   )
   const searchBarAndFilterSource = readFileSync(
-    new URL('../../../src/components/common/SearchBarAndFilter.tsx', import.meta.url),
+    new URL(
+      '../../../src/components/common/SearchBarAndFilter.tsx',
+      import.meta.url
+    ),
     'utf8'
   )
 
@@ -430,7 +462,10 @@ test('admin surfaces rely on theme-aware styling instead of fixed slate utility 
     'utf8'
   )
   const approvalCardSource = readFileSync(
-    new URL('../../../src/pages/admin/components/ApprovalCard.tsx', import.meta.url),
+    new URL(
+      '../../../src/pages/admin/components/ApprovalCard.tsx',
+      import.meta.url
+    ),
     'utf8'
   )
   const approvalComponentSource = readFileSync(
@@ -454,7 +489,10 @@ test('admin approvals page renders cards directly and provides visible actions',
     'utf8'
   )
   const approvalCardSource = readFileSync(
-    new URL('../../../src/pages/admin/components/ApprovalCard.tsx', import.meta.url),
+    new URL(
+      '../../../src/pages/admin/components/ApprovalCard.tsx',
+      import.meta.url
+    ),
     'utf8'
   )
   const adminTypesSource = readFileSync(
@@ -490,11 +528,17 @@ test('admin approvals page renders cards directly and provides visible actions',
 
 test('admin approval service separates repository and mapper concerns for future API integration', () => {
   const serviceSource = readFileSync(
-    new URL('../../../src/services/admin/admin-approval.service.ts', import.meta.url),
+    new URL(
+      '../../../src/services/admin/admin-approval.service.ts',
+      import.meta.url
+    ),
     'utf8'
   )
   const runtimeSource = readFileSync(
-    new URL('../../../src/services/admin/admin-approval.runtime.ts', import.meta.url),
+    new URL(
+      '../../../src/services/admin/admin-approval.runtime.ts',
+      import.meta.url
+    ),
     'utf8'
   )
 
@@ -541,7 +585,10 @@ test('admin approvals page routes create edit and correction through a reusable 
   assert.match(adminApprovalsPageSource, /modalState/)
   assert.match(adminApprovalsPageSource, /action: 'create'/)
   assert.match(adminApprovalsPageSource, /action: 'edit'/)
-  assert.match(adminApprovalsPageSource, /buildAdminCorrectionRoute\(item\.id\)/)
+  assert.match(
+    adminApprovalsPageSource,
+    /buildAdminCorrectionRoute\(item\.id\)/
+  )
   assert.match(adminApprovalsPageSource, /label: 'Revisar conteúdo'/)
   assert.match(adminApprovalsPageSource, /label: 'Excluir conteúdo'/)
   assert.match(adminApprovalsPageSource, /action: 'delete'/)

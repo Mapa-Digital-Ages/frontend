@@ -73,7 +73,9 @@ function AppActionModal({
   const roleAccent = AppColors.role[role]
   const accentColor =
     confirmColor ??
-    (confirmTone === 'error.main' ? theme.palette.error.main : roleAccent.primary)
+    (confirmTone === 'error.main'
+      ? theme.palette.error.main
+      : roleAccent.primary)
   const confirmContent = loading ? (
     <Box className="flex items-center justify-center">
       <CircularProgress color="inherit" size={18} />
@@ -108,8 +110,7 @@ function AppActionModal({
     >
       <DialogTitle
         sx={{
-          backgroundColor:
-          alpha(
+          backgroundColor: alpha(
             theme.palette.primary.main,
             theme.palette.mode === 'dark' ? 0.12 : 0.06
           ),
@@ -177,8 +178,7 @@ function AppActionModal({
 
       <DialogActions
         sx={{
-          backgroundColor:
-          alpha(
+          backgroundColor: alpha(
             theme.palette.primary.main,
             theme.palette.mode === 'dark' ? 0.12 : 0.06
           ),

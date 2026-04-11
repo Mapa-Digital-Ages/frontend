@@ -492,7 +492,8 @@ const GUARDIAN_STATUS_SHOWCASE_CATALOG = {
   },
 } as const
 
-export type GuardianStatusShowcaseId = keyof typeof GUARDIAN_STATUS_SHOWCASE_CATALOG
+export type GuardianStatusShowcaseId =
+  keyof typeof GUARDIAN_STATUS_SHOWCASE_CATALOG
 
 export const ALL_GUARDIAN_STATUS_TAG_CONTEXTS: TagContext[] = (
   Object.keys(GUARDIAN_STATUS_SHOWCASE_CATALOG) as GuardianStatusShowcaseId[]

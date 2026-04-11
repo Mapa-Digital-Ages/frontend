@@ -13,7 +13,10 @@ import {
   getPreviousOnboardingFlowState,
   STUDENT_ONBOARDING_FLOW_QUESTIONS,
 } from '../../../src/pages/student/components/onboardingQuestionFlow'
-import { getSubjectContext, getSubjectTheme } from '../../../src/utils/subjectThemes'
+import {
+  getSubjectContext,
+  getSubjectTheme,
+} from '../../../src/utils/subjectThemes'
 import { createAppTheme } from '../../../src/styles/theme'
 
 function renderWithTheme(element: React.ReactElement) {
@@ -118,7 +121,10 @@ test('OnboardingQuestionCard renders the onboarding copy and answer options', ()
 
 test('OnboardingQuestionCard source exposes navigation icons and composition slots', () => {
   const onboardingQuestionCardSource = readFileSync(
-    new URL('../../../src/components/ui/OnboardingQuestionCard.tsx', import.meta.url),
+    new URL(
+      '../../../src/components/ui/OnboardingQuestionCard.tsx',
+      import.meta.url
+    ),
     'utf8'
   )
 
@@ -132,7 +138,10 @@ test('OnboardingQuestionCard source exposes navigation icons and composition slo
 
 test('student components area references the showcase and not the dashboard preview', () => {
   const studentComponentsPageSource = readFileSync(
-    new URL('../../../src/pages/student/StudentComponentsPage.tsx', import.meta.url),
+    new URL(
+      '../../../src/pages/student/StudentComponentsPage.tsx',
+      import.meta.url
+    ),
     'utf8'
   )
   const studentShowcaseSource = readFileSync(
@@ -143,7 +152,10 @@ test('student components area references the showcase and not the dashboard prev
     'utf8'
   )
   const studentDashboardPageSource = readFileSync(
-    new URL('../../../src/pages/student/StudentDashboardPage.tsx', import.meta.url),
+    new URL(
+      '../../../src/pages/student/StudentDashboardPage.tsx',
+      import.meta.url
+    ),
     'utf8'
   )
 

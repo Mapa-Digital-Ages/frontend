@@ -139,10 +139,7 @@ export interface ApprovalCorrectionInput {
   outcome: ApprovalCorrectionOutcome
 }
 
-export type ContentCorrectionStatus =
-  | 'pending'
-  | 'inProgress'
-  | 'completed'
+export type ContentCorrectionStatus = 'pending' | 'inProgress' | 'completed'
 
 export type ContentCorrectionMessageAuthor = 'admin' | 'student'
 

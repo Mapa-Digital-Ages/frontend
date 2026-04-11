@@ -1,5 +1,12 @@
 import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded'
-import { Box, IconButton, Menu, MenuItem, Tooltip, Typography } from '@mui/material'
+import {
+  Box,
+  IconButton,
+  Menu,
+  MenuItem,
+  Tooltip,
+  Typography,
+} from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import type { Palette } from '@mui/material/styles'
 import { useState, type MouseEvent } from 'react'
@@ -53,11 +60,17 @@ function ApprovalCard({ actions, item, status, type }: ApprovalCardProps) {
   const statusChip = approvalCardStatusToTagContext(status, theme.palette)
   const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null)
   const badgeTags =
-    type === 'content' ? approvalBadgesToTagContexts(item.badges, theme.palette) : []
+    type === 'content'
+      ? approvalBadgesToTagContexts(item.badges, theme.palette)
+      : []
   const subjectTag =
     type === 'content' && item.kind === 'content' ? item.subject : null
-  const primaryActions = actions.filter(action => action.priority !== 'secondary')
-  const secondaryActions = actions.filter(action => action.priority === 'secondary')
+  const primaryActions = actions.filter(
+    action => action.priority !== 'secondary'
+  )
+  const secondaryActions = actions.filter(
+    action => action.priority === 'secondary'
+  )
   const isMenuOpen = Boolean(menuAnchorEl)
 
   function handleMenuOpen(event: MouseEvent<HTMLElement>) {

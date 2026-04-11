@@ -51,8 +51,8 @@ function AdminContentCorrectionPage() {
           currentSession.status === 'inProgress'
             ? currentSession
             : await adminApprovalService.markContentCorrectionInProgress(
-              contentId
-            )
+                contentId
+              )
 
         if (!isActive) {
           return
@@ -162,7 +162,10 @@ function AdminContentCorrectionPage() {
           <Box
             sx={{
               alignItems: 'center',
-              backgroundColor: alpha(accent.primary, theme.palette.mode === 'dark' ? 0.16 : 0.06),
+              backgroundColor: alpha(
+                accent.primary,
+                theme.palette.mode === 'dark' ? 0.16 : 0.06
+              ),
               border: '1px solid',
               borderColor: alpha(accent.primary, 0.22),
               borderRadius: '24px',
@@ -235,9 +238,10 @@ function AdminContentCorrectionPage() {
           <Box
             sx={{
               alignItems: 'center',
-              backgroundColor: theme.palette.mode === 'dark'
-                ? alpha(theme.palette.common.white, 0.05)
-                : 'rgba(246, 248, 251, 1)',
+              backgroundColor:
+                theme.palette.mode === 'dark'
+                  ? alpha(theme.palette.common.white, 0.05)
+                  : 'rgba(246, 248, 251, 1)',
               borderBottom: '1px solid',
               borderColor: 'background.border',
               display: 'grid',
@@ -270,10 +274,10 @@ function AdminContentCorrectionPage() {
 
           <Box
             sx={{
-              display: 'flex',
-              flexWrap: 'wrap',
+              display: 'grid',
               flexShrink: 0,
               gap: 1,
+              gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
               px: { md: 2, xs: 1.5 },
               py: 1,
             }}
@@ -300,6 +304,7 @@ function AdminContentCorrectionPage() {
                   px: 1.5,
                   py: 0.75,
                   transition: '160ms ease',
+                  width: '100%',
                   '&:hover': {
                     backgroundColor: alpha(accent.primary, 0.08),
                     borderColor: alpha(accent.primary, 0.38),
@@ -366,7 +371,9 @@ function AdminContentCorrectionPage() {
                           ? alpha(accent.primary, 0.14)
                           : alpha(theme.palette.info.main, 0.1),
                         borderRadius: '999px',
-                        color: fromAdmin ? accent.primary : theme.palette.info.main,
+                        color: fromAdmin
+                          ? accent.primary
+                          : theme.palette.info.main,
                         display: 'flex',
                         flexShrink: 0,
                         height: 32,
@@ -427,9 +434,10 @@ function AdminContentCorrectionPage() {
           <Box
             className="flex flex-row gap-2"
             sx={{
-              backgroundColor: theme.palette.mode === 'dark'
-                ? alpha(theme.palette.common.white, 0.04)
-                : 'rgba(249, 250, 252, 1)',
+              backgroundColor:
+                theme.palette.mode === 'dark'
+                  ? alpha(theme.palette.common.white, 0.04)
+                  : 'rgba(249, 250, 252, 1)',
               borderTop: '1px solid',
               borderColor: 'background.border',
               flexShrink: 0,
