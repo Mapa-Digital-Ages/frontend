@@ -14,6 +14,7 @@ import { parentService } from '@/services/parent.service'
 import { AppColors } from '@/styles/AppColors'
 import type { ParentChild, SummaryMetric } from '@/types/common'
 import ParentStatusModal from './components/ParentStatusModal'
+import { shouldOpenParentStatusModal } from './components/parentStatusModal.utils'
 
 const DISCIPLINE_PERFORMANCE = [
   {
@@ -100,7 +101,7 @@ function ParentDashboardPage() {
       setStatus(nextStatus)
       setIsLoading(false)
 
-      if (nextStatus !== 'APROVADO') {
+      if (shouldOpenParentStatusModal(nextStatus)) {
         setIsModalOpen(true)
       }
     }

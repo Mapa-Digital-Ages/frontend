@@ -9,12 +9,11 @@ import {
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import HourglassTopIcon from '@mui/icons-material/HourglassTop'
-
-type ParentStatus = 'AGUARDANDO' | 'NEGADO' | 'APROVADO' | string
+import { getParentStatusModalCopy } from './parentStatusModal.utils'
 
 interface ParentStatusModalProps {
   open: boolean
-  status: ParentStatus
+  status: string
   onClose: () => void
 }
 
@@ -24,11 +23,11 @@ export default function ParentStatusModal({
   onClose,
 }: ParentStatusModalProps) {
   const isAguardando = status === 'AGUARDANDO'
+  const copy = getParentStatusModalCopy(status)
 
-  const title = isAguardando ? 'Cadastro em Análise' : 'Acesso Negado'
-  const description = isAguardando
-    ? 'Recebemos seus dados com sucesso. Seu perfil foi enviado para um administrador e está aguardando aprovação. Sua entrada na plataforma será habilitada logo após essa etapa.'
-    : 'O cadastro associado a este e-mail não foi aprovado pela administração. Para mais informações ou para solicitar uma nova análise, entre em contato com a nossa equipe.'
+  if (!copy) {
+    return null
+  }
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
@@ -38,7 +37,7 @@ export default function ParentStatusModal({
           fontWeight: 'bold',
         }}
       >
-        {title}
+        {copy.title}
       </DialogTitle>
       <DialogContent>
         <Box
@@ -65,7 +64,7 @@ export default function ParentStatusModal({
             />
           )}
 
-          <Typography variant="body2">{description}</Typography>
+          <Typography variant="body2">{copy.description}</Typography>
         </Box>
       </DialogContent>
       <DialogActions sx={{ justifyContent: 'center', pb: 2 }}>
