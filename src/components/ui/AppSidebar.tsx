@@ -14,6 +14,7 @@ import { APP_CONFIG, ROLE_DASHBOARD_TITLE } from '@/constants/app'
 import { AppColors } from '@/styles/AppColors'
 import type { SidebarItem } from '@/types/common'
 import type { UserRole } from '@/types/user'
+import { alpha, useTheme } from '@mui/material/styles'
 
 interface AppSidebarProps {
   isMobile: boolean
@@ -21,7 +22,7 @@ interface AppSidebarProps {
   mobileOpen: boolean
   onClose: () => void
   onLogout?: () => void
-  role?: UserRole
+  role: UserRole
 }
 
 function AppSidebar({
@@ -32,9 +33,10 @@ function AppSidebar({
   onLogout,
   role,
 }: AppSidebarProps) {
+  const theme = useTheme()
+  const accentColor = AppColors.role[role].primary
   const location = useLocation()
   const navigate = useNavigate()
-  const currentRole = role ?? APP_CONFIG.defaultRole
 
   const paperSx = {
     backgroundColor: 'var(--app-surface)',
@@ -51,7 +53,9 @@ function AppSidebar({
     >
       <Box
         className="-mx-3 -mt-3 mb-4 px-6 py-5 text-white"
-        style={{ background: AppColors.roleGradient(currentRole, '150deg') }}
+        style={{
+          background: AppColors.roleGradient(role, '150deg'),
+        }}
       >
         <Box className="flex items-center gap-3">
           <Box className="grid size-9 shrink-0 place-items-center rounded-xl bg-white/20 text-sm font-bold">
@@ -62,7 +66,7 @@ function AppSidebar({
               {APP_CONFIG.name}
             </Typography>
             <Typography className="truncate text-sm text-white/85">
-              {ROLE_DASHBOARD_TITLE[currentRole]}
+              {ROLE_DASHBOARD_TITLE[role]}
             </Typography>
           </Box>
         </Box>
@@ -70,7 +74,7 @@ function AppSidebar({
 
       <Divider sx={{ borderColor: 'var(--app-border)', mb: 1.5 }} />
 
-      <List className="grid gap-0.5">
+      <List className="grid gap-1">
         {items.map(item => {
           const canNavigate = !item.path.startsWith('#')
           const selected =
@@ -82,7 +86,7 @@ function AppSidebar({
             <ListItemButton
               key={`${item.label}-${item.path}`}
               data-testid={`menu-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
-              className="rounded-xl px-3 py-2 transition-all duration-200 ease-out  "
+              className="rounded-xl px-3 py-2 transition-all duration-200 ease-out"
               onClick={() => {
                 if (canNavigate) {
                   navigate(item.path)
@@ -101,19 +105,25 @@ function AppSidebar({
                   color: AppColors.neutral.mutedText,
                 },
                 '&.Mui-selected': {
-                  color: 'rgba(31, 75, 153, 0.08)',
+                  backgroundColor: alpha(
+                    accentColor,
+                    theme.palette.mode === 'dark' ? 0.2 : 0.12
+                  ),
                 },
                 '&.Mui-selected .MuiListItemIcon-root, &.Mui-selected .MuiListItemText-primary':
                   {
-                    color: AppColors.role[currentRole].primary,
+                    color: accentColor,
                     fontWeight: 600,
                   },
                 '&:hover': {
-                  backgroundColor: 'rgba(31, 75, 153, 0.08)',
+                  backgroundColor: alpha(
+                    accentColor,
+                    theme.palette.mode === 'dark' ? 0.2 : 0.12
+                  ),
                 },
                 '&:hover .MuiListItemIcon-root, &:hover .MuiListItemText-primary':
                   {
-                    color: AppColors.role[currentRole].primary,
+                    color: accentColor,
                   },
                 '&:hover .MuiListItemText-primary': {
                   fontWeight: 600,
@@ -145,9 +155,17 @@ function AppSidebar({
                 color: AppColors.neutral.mutedText,
               },
               '&:hover': {
-                backgroundColor: 'rgba(31, 75, 153, 0.08)',
-                borderRadius: '18px',
+                borderRadius: 'var(--app-radius-control)',
+                bgcolor: alpha(
+                  accentColor,
+                  theme.palette.mode === 'dark' ? 0.2 : 0.12
+                ),
+                color: accentColor,
               },
+              '&:hover .MuiListItemIcon-root, &:hover .MuiListItemText-primary':
+                {
+                  color: accentColor,
+                },
             }}
           >
             <ListItemIcon className="min-w-9">

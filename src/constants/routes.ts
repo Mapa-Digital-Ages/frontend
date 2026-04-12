@@ -19,12 +19,18 @@ export const APP_ROUTES = {
     dashboard: '/parent/dashboard',
   },
   admin: {
+    approvals: '/admin/approvals',
+    correction: '/admin/approvals/corrections/:contentId',
     dashboard: '/admin/dashboard',
   },
   common: {
     unauthorized: '/unauthorized',
   },
 } as const
+
+export function buildAdminCorrectionRoute(contentId: string) {
+  return `/admin/approvals/corrections/${contentId}`
+}
 
 export const DEFAULT_ROUTE_BY_ROLE: Record<UserRole, string> = {
   student: APP_ROUTES.student.dashboard,

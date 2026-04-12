@@ -1,13 +1,9 @@
 import React from 'react'
-import { Box, Chip } from '@mui/material'
-import { useTheme } from '@mui/material/styles'
-import type { SubjectContext } from '../../types/common'
-import {
-  getSubjectChipTone,
-  type SubjectChipSize,
-} from '../../utils/subjectThemes'
+import type { TagContext } from '../../types/common'
+import AppTags, { AppTag } from './AppTags'
+import { SUBJECTS, type SubjectChipSize } from '../../utils/themes'
 
-type SubjectsTags = {
+type SubjectChipProps = {
   color: string
   label: string
   size?: SubjectChipSize
@@ -15,67 +11,27 @@ type SubjectsTags = {
 
 type AppSubjectTagProps = {
   size?: SubjectChipSize
-  subject: SubjectContext
+  subject: TagContext
 }
 
 type AppSubjectsTagsProps = {
   size?: SubjectChipSize
-  subjects: SubjectContext[]
+  subjects: TagContext[]
 }
 
-export function SubjectChip({ color, label, size = 'md' }: SubjectsTags) {
-  const theme = useTheme()
-  const chipClassName = `app-subject-chip app-subject-chip--${size}`
-  const chipTone = getSubjectChipTone(color, { mode: theme.palette.mode })
-
-  return (
-    <Chip
-      className={chipClassName}
-      label={label}
-      slotProps={{
-        label: {
-          className: 'app-subject-chip__label',
-        },
-      }}
-      variant="outlined"
-      sx={{
-        backgroundColor: chipTone.backgroundColor,
-        borderColor: chipTone.borderColor,
-        color: chipTone.color,
-        height: '24px',
-        '& .MuiChip-label': {
-          fontSize: '12px',
-          paddingLeft: '8px',
-          paddingRight: '8px',
-        },
-      }}
-    />
-  )
+export function SubjectChip({ color, label, size = 'sm' }: SubjectChipProps) {
+  return <AppTag size={size} tag={{ color, id: label, label }} />
 }
+
+export { SUBJECTS }
 
 export function AppSubjectTag({ size = 'md', subject }: AppSubjectTagProps) {
-  return (
-    <SubjectChip
-      color={subject.color ?? 'rgba(100, 116, 139, 1)'}
-      label={subject.label}
-      size={size}
-    />
-  )
+  return <AppTag size={size} tag={subject} />
 }
 
 export default function AppSubjectsTags({
   size = 'md',
   subjects,
 }: AppSubjectsTagsProps) {
-  return (
-    <Box className="flex flex-wrap gap-2">
-      {subjects.map(subject => (
-        <AppSubjectTag
-          key={subject.id ?? subject.label}
-          size={size}
-          subject={subject}
-        />
-      ))}
-    </Box>
-  )
+  return <AppTags size={size} tags={subjects} />
 }

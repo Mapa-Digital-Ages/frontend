@@ -1,24 +1,36 @@
+import CheckIcon from '@mui/icons-material/Check'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import {
-  Select,
-  MenuItem,
+  Box,
+  Checkbox,
+  FormControl,
   ListItemIcon,
   ListItemText,
-  FormControl,
-  Checkbox,
-  SelectProps,
+  MenuItem,
+  Select,
+  type SelectProps,
+  Typography,
 } from '@mui/material'
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import CheckIcon from '@mui/icons-material/Check'
+import { alpha, useTheme, type SxProps, type Theme } from '@mui/material/styles'
+import type { ReactNode } from 'react'
 
 export interface DropdownOption {
   label: string
   value: string | number
 }
 
+type TriggerVariant = 'filled' | 'ghost'
+
 export interface AppDropdownProps extends Omit<
   SelectProps,
   'value' | 'onChange'
 > {
+  displayLabel?: string
+  hideLabel?: boolean
+  hideIndicator?: boolean
+  fullWidth?: boolean
+  leadingIcon?: ReactNode
+  menuWidth?: string | number
   options: DropdownOption[]
   value: string | number | Array<string | number>
   onChange: SelectProps['onChange']
@@ -27,9 +39,17 @@ export interface AppDropdownProps extends Omit<
   width?: string | number
   borderRadius?: string | number
   backgroundColor?: string
+  triggerVariant?: TriggerVariant
+  neutralOutline?: boolean
 }
 
 function AppDropdown({
+  displayLabel,
+  hideLabel = false,
+  hideIndicator = false,
+  fullWidth = false,
+  leadingIcon,
+  menuWidth,
   options = [],
   value,
   onChange,
@@ -38,60 +58,260 @@ function AppDropdown({
   width = 240,
   borderRadius = 'var(--dropdown-radius)',
   backgroundColor = 'background.paper',
+  triggerVariant = 'filled',
+  neutralOutline = false,
   ...props
 }: AppDropdownProps) {
-  const { multiple = false, disabled, className } = props
+  const theme = useTheme()
+  const {
+    multiple = false,
+    disabled,
+    className,
+    MenuProps,
+    sx,
+    ...selectProps
+  } = props
+  const isGhostTrigger = triggerVariant === 'ghost'
+  const resolvedMenuWidth = menuWidth ?? (width === 'auto' ? 220 : width)
+  const neutralBorder = theme.palette.background.border
+
+  const baseTriggerSx = {
+    backgroundColor: neutralOutline
+      ? theme.palette.background.paper
+      : isGhostTrigger
+        ? 'transparent'
+        : backgroundColor,
+    borderRadius,
+    color: theme.palette.text.primary,
+    minHeight: isGhostTrigger ? 36 : 36,
+    transition: theme.transitions.create(
+      ['background-color', 'border-color', 'box-shadow'],
+      {
+        duration: theme.transitions.duration.shorter,
+      }
+    ),
+    '& .MuiOutlinedInput-notchedOutline': {
+      borderColor: neutralOutline
+        ? neutralBorder
+        : isGhostTrigger
+          ? 'transparent'
+          : alpha(theme.palette.background.border, 0.8),
+      ...(neutralOutline && {
+        borderWidth: 1,
+        borderStyle: 'solid',
+      }),
+    },
+    '& .MuiSelect-select': {
+      alignItems: 'center',
+      display: 'flex',
+      gap: hideLabel ? 0 : 1,
+      ...(hideLabel
+        ? {
+            height: 44,
+            justifyContent: 'center',
+            lineHeight: 0,
+            minHeight: '44px !important',
+            padding: '0 !important',
+            paddingBottom: '0 !important',
+            paddingLeft: '0 !important',
+            paddingRight: '0 !important',
+            paddingTop: '0 !important',
+            textAlign: 'center',
+          }
+        : {
+            minHeight: '0 !important',
+            paddingBlock: isGhostTrigger ? '10px' : '12px',
+            paddingInline: isGhostTrigger ? '14px' : '16px',
+            ...(hideIndicator && {
+              paddingRight: `${isGhostTrigger ? 14 : 16}px !important`,
+            }),
+          }),
+    },
+    '& .MuiSelect-icon': {
+      color: theme.palette.text.secondary,
+    },
+    '&:hover .MuiOutlinedInput-notchedOutline': {
+      borderColor: neutralOutline
+        ? neutralBorder
+        : isGhostTrigger
+          ? alpha(theme.palette.primary.main, 0.24)
+          : theme.palette.background.hoverBorder,
+    },
+    '&.Mui-focused': {
+      backgroundColor: neutralOutline
+        ? theme.palette.background.paper
+        : isGhostTrigger
+          ? alpha(
+              theme.palette.primary.main,
+              theme.palette.mode === 'dark' ? 0.1 : 0.06
+            )
+          : backgroundColor,
+    },
+    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+      borderColor: neutralOutline ? neutralBorder : theme.palette.primary.main,
+    },
+    ...(neutralOutline && {
+      '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+        borderColor: neutralBorder,
+      },
+    }),
+    ...(isGhostTrigger &&
+      !neutralOutline && {
+        '&:hover': {
+          backgroundColor: alpha(
+            theme.palette.background.paper,
+            theme.palette.mode === 'dark' ? 0.08 : 0.72
+          ),
+        },
+      }),
+    ...(hideLabel && {
+      '& .MuiInputBase-input': {
+        padding: '0 !important',
+      },
+      '& .MuiOutlinedInput-input': {
+        padding: '0 !important',
+      },
+      '& .MuiOutlinedInput-root': {
+        alignItems: 'center',
+        display: 'flex',
+        justifyContent: 'center',
+        padding: 0,
+      },
+    }),
+  }
+
+  const neutralOutlineSx: SxProps<Theme> = {
+    '& .MuiOutlinedInput-notchedOutline': {
+      borderColor: neutralBorder,
+      borderStyle: 'solid',
+      borderWidth: 1,
+    },
+    '&:hover .MuiOutlinedInput-notchedOutline': {
+      borderColor: neutralBorder,
+    },
+    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+      borderColor: neutralBorder,
+    },
+    '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+      borderColor: neutralBorder,
+    },
+    '&.Mui-focused': {
+      backgroundColor: theme.palette.background.paper,
+    },
+    '&:hover': {
+      backgroundColor: theme.palette.background.paper,
+    },
+  }
+
+  const selectSx: SxProps<Theme> = neutralOutline
+    ? typeof sx === 'function'
+      ? [baseTriggerSx, sx, neutralOutlineSx]
+      : Array.isArray(sx)
+        ? [baseTriggerSx, ...sx, neutralOutlineSx]
+        : [{ ...baseTriggerSx, ...(sx ?? {}) }, neutralOutlineSx]
+    : typeof sx === 'function'
+      ? [baseTriggerSx, sx]
+      : Array.isArray(sx)
+        ? [baseTriggerSx, ...sx]
+        : { ...baseTriggerSx, ...(sx ?? {}) }
 
   const renderValue = (selected: unknown) => {
+    let content = placeholder
+    let isPlaceholder = false
+
     if (!selected || (Array.isArray(selected) && selected.length === 0)) {
-      return <span style={{ color: 'gray' }}>{placeholder}</span>
-    }
-
-    if (multiple && Array.isArray(selected)) {
-      const selectedLabels = options
-        .filter(opt => selected.includes(opt.value))
-        .map(opt => opt.label)
-      return selectedLabels.join(', ')
-    }
-
-    if (
+      isPlaceholder = true
+    } else if (multiple && Array.isArray(selected)) {
+      content = options
+        .filter(option => selected.includes(option.value))
+        .map(option => option.label)
+        .join(', ')
+    } else if (
       !multiple &&
-      (typeof selected === 'string' || typeof selected === 'number')
+      (typeof selected === 'number' || typeof selected === 'string')
     ) {
-      const found = options.find(opt => opt.value === selected)
-      return found ? found.label : String(selected)
+      const matchingOption = options.find(option => option.value === selected)
+      content = matchingOption ? matchingOption.label : String(selected)
     }
 
-    return ''
+    const resolvedContent = displayLabel ?? content
+    const resolvedPlaceholder = displayLabel ? false : isPlaceholder
+
+    if (hideLabel && leadingIcon) {
+      return (
+        <Box
+          className="flex min-w-0 items-center justify-center"
+          sx={{
+            alignItems: 'center',
+            color: resolvedPlaceholder
+              ? theme.palette.text.secondary
+              : theme.palette.text.primary,
+            display: 'flex',
+            height: '100%',
+            justifyContent: 'center',
+            lineHeight: 0,
+            width: '100%',
+            '& .MuiSvgIcon-root': {
+              display: 'block',
+            },
+          }}
+        >
+          {leadingIcon}
+        </Box>
+      )
+    }
+
+    return (
+      <Box className="flex min-w-0 items-center gap-2">
+        {leadingIcon && (
+          <Box
+            className="flex shrink-0 items-center"
+            sx={{
+              color: resolvedPlaceholder
+                ? theme.palette.text.secondary
+                : theme.palette.text.primary,
+            }}
+          >
+            {leadingIcon}
+          </Box>
+        )}
+        <Typography
+          className="truncate"
+          sx={{
+            color: resolvedPlaceholder
+              ? theme.palette.text.secondary
+              : theme.palette.text.primary,
+            fontSize: 14,
+            fontWeight: isGhostTrigger ? 600 : 500,
+          }}
+        >
+          {resolvedContent}
+        </Typography>
+      </Box>
+    )
   }
 
   return (
     <FormControl
       className={className}
       disabled={disabled}
-      style={{ minWidth: width, maxWidth: width, width, borderRadius }}
+      fullWidth={fullWidth}
+      sx={{
+        maxWidth: fullWidth ? '100%' : width,
+        minWidth: fullWidth ? '100%' : width === 'auto' ? undefined : width,
+        width: fullWidth ? '100%' : width,
+      }}
     >
       <Select
-        {...props}
+        {...selectProps}
         value={value}
         onChange={onChange}
         displayEmpty
         renderValue={renderValue}
-        IconComponent={ExpandMoreIcon}
-        className="outline-none ring-0! border-slate-300 aria-expanded:border-blue-700 aria-expanded:ring-2 aria-expanded:ring-blue-700 focus:border-slate-300 focus-visible:border-slate-300 active:border-slate-300"
-        sx={theme => ({
-          backgroundColor: backgroundColor,
-          color: theme.palette.text.primary,
-          borderRadius: borderRadius,
-          '& .MuiOutlinedInput-notchedOutline': {
-            borderColor: theme.palette.background.border,
-          },
-          '&:hover .MuiOutlinedInput-notchedOutline': {
-            borderColor: 'background.hoverBorder',
-          },
-        })}
+        IconComponent={hideIndicator || hideLabel ? () => null : ExpandMoreIcon}
+        sx={selectSx}
         MenuProps={{
-          ...props.MenuProps,
+          ...MenuProps,
           anchorOrigin:
             dropdownPlacement === 'top'
               ? { vertical: 'top', horizontal: 'left' }
@@ -101,18 +321,22 @@ function AppDropdown({
               ? { vertical: 'bottom', horizontal: 'left' }
               : { vertical: 'top', horizontal: 'left' },
           PaperProps: {
-            ...props.MenuProps?.PaperProps,
-            className: 'shadow-lg mt-1 border border-slate-100',
-            sx: theme => ({
-              backgroundColor: 'background.paper',
+            ...MenuProps?.PaperProps,
+            sx: {
+              backgroundColor: theme.palette.background.paper,
+              border: `1px solid ${alpha(theme.palette.background.border, 0.8)}`,
+              borderRadius,
+              boxShadow:
+                theme.palette.mode === 'dark'
+                  ? '0 18px 45px rgba(8, 17, 31, 0.42)'
+                  : '0 16px 40px rgba(16, 42, 67, 0.12)',
               color: theme.palette.text.primary,
-              borderRadius: borderRadius,
-              minWidth: width,
+              minWidth: resolvedMenuWidth,
               '& .MuiList-root': {
                 padding: '8px',
-                borderRadius: borderRadius,
               },
-            }),
+              ...(MenuProps?.PaperProps?.sx as object),
+            },
           },
         }}
       >
@@ -124,77 +348,58 @@ function AppDropdown({
           return (
             <MenuItem
               key={option.value}
+              selected={isSelected}
               value={option.value}
-              className={`transition-colors duration-200 ${
-                multiple
-                  ? 'text-slate-700 hover:bg-slate-100'
-                  : isSelected
-                    ? 'text-white hover:bg-cyan-600!'
-                    : 'text-slate-700 hover:bg-slate-100'
-              }`}
-              sx={theme => ({
-                margin: 'var(--dropdown-option-gap)',
-                borderRadius: 'var(--dropdown-radius)',
-                paddingY: '8px',
-                paddingX: '12px',
-
-                backgroundColor:
-                  !multiple && isSelected ? 'primary.main' : 'transparent',
-
-                color:
-                  !multiple && isSelected
-                    ? 'primary.contrastText'
-                    : theme.palette.text.primary,
-
+              sx={{
+                backgroundColor: isSelected
+                  ? alpha(theme.palette.primary.main, 0.12)
+                  : 'transparent',
+                borderRadius,
+                color: theme.palette.text.primary,
+                marginBlock: '2px',
+                minWidth: resolvedMenuWidth,
+                paddingInline: 1.5,
+                paddingY: 1,
                 '&:hover': {
-                  backgroundColor: multiple
-                    ? 'background.hover'
-                    : isSelected
-                      ? 'primary.dark'
-                      : 'background.hover',
+                  backgroundColor: alpha(theme.palette.primary.main, 0.08),
                 },
-
                 '&.Mui-selected': {
-                  backgroundColor: multiple ? 'transparent' : 'primary.main',
-                  color: multiple
-                    ? theme.palette.text.primary
-                    : 'primary.contrastText',
+                  backgroundColor: alpha(theme.palette.primary.main, 0.14),
                 },
-
                 '&.Mui-selected:hover': {
-                  backgroundColor: multiple
-                    ? 'background.hover'
-                    : 'primary.dark',
+                  backgroundColor: alpha(theme.palette.primary.main, 0.18),
                 },
-
-                minWidth: width,
-                maxWidth: width,
-              })}
+              }}
             >
-              <ListItemIcon className="min-w-8 flex items-center justify-center">
+              <ListItemIcon
+                sx={{
+                  alignItems: 'center',
+                  color: isSelected
+                    ? theme.palette.primary.main
+                    : theme.palette.text.secondary,
+                  display: 'flex',
+                  justifyContent: 'center',
+                  minWidth: 32,
+                }}
+              >
                 {multiple ? (
                   <Checkbox
                     checked={isSelected}
                     tabIndex={-1}
                     disableRipple
-                    sx={theme => ({
-                      color: theme.palette.text.primary,
+                    sx={{
+                      color: theme.palette.text.secondary,
                       '&.Mui-checked': {
-                        color: 'primary.main',
+                        color: theme.palette.primary.main,
                       },
-                    })}
+                    }}
                   />
-                ) : (
-                  isSelected && (
-                    <CheckIcon fontSize="small" className="text-white" />
-                  )
-                )}
+                ) : isSelected ? (
+                  <CheckIcon fontSize="small" />
+                ) : null}
               </ListItemIcon>
 
-              <ListItemText
-                primary={option.label}
-                className={multiple ? 'ml-2' : ''}
-              />
+              <ListItemText primary={option.label} />
             </MenuItem>
           )
         })}

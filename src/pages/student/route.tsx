@@ -1,4 +1,4 @@
-import type { RouteObject } from 'react-router-dom'
+import type { ActionFunctionArgs, RouteObject } from 'react-router-dom'
 import ProtectedRoute from '@/components/common/ProtectedRoute'
 import RoleRoute from '@/components/common/RoleRoute'
 import { APP_ROUTES } from '@/constants/routes'
@@ -6,6 +6,31 @@ import DashboardLayout from '@/layouts/DashboardLayout'
 import StudentComponentsPage from '@/pages/student/StudentComponentsPage'
 import StudentDashboardPage from '@/pages/student/StudentDashboardPage'
 import StudentOnboardingFlowPage from '@/pages/student/StudentOnboardingFlowPage'
+import type {
+  StudentOnboardingFlowActionInput,
+  StudentOnboardingFlowLoaderData,
+} from '@/types/student'
+import { STUDENT_ONBOARDING_FLOW_QUESTIONS } from './components/onboardingQuestionFlow'
+
+const DEFAULT_ASSESSMENT_ID = 'local-assessment'
+
+export async function studentOnboardingFlowLoader(): Promise<StudentOnboardingFlowLoaderData> {
+  return {
+    assessmentId: DEFAULT_ASSESSMENT_ID,
+    initialAnswersByQuestionId: {},
+    questions: STUDENT_ONBOARDING_FLOW_QUESTIONS,
+  }
+}
+
+export async function studentOnboardingFlowAction({
+  request,
+}: ActionFunctionArgs): Promise<StudentOnboardingFlowActionInput | null> {
+  try {
+    return (await request.json()) as StudentOnboardingFlowActionInput
+  } catch {
+    return null
+  }
+}
 
 export const studentRoutes: RouteObject[] = [
   {
@@ -43,6 +68,8 @@ export const studentRoutes: RouteObject[] = [
               },
               {
                 path: APP_ROUTES.student.onboardingFlow,
+                loader: studentOnboardingFlowLoader,
+                action: studentOnboardingFlowAction,
                 element: <StudentOnboardingFlowPage />,
               },
             ],

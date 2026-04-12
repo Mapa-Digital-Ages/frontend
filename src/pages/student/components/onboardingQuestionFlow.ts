@@ -1,5 +1,5 @@
 import type { SubjectContext } from '../../../types/common'
-import { SUBJECTS } from '../../../utils/subjectThemes'
+import { SUBJECTS } from '../../../utils/themes'
 
 type OnboardingFlowOption = {
   id: string

@@ -1,7 +1,7 @@
 import React from 'react'
 import { Box, LinearProgress, Stack, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { getSubjectTheme } from '../../utils/subjectThemes'
+import { getSubjectTheme } from '../../utils/themes'
 import type { SubjectContext } from '../../types/common'
 
 interface ProgressBarProps {

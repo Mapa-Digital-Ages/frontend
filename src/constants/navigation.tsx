@@ -1,4 +1,5 @@
 import AutoStoriesIcon from '@mui/icons-material/AutoStories'
+import FactCheckRoundedIcon from '@mui/icons-material/FactCheckRounded'
 import PlayCircleFilledWhiteOutlinedIcon from '@mui/icons-material/PlayCircleFilledWhiteOutlined'
 import RouteRoundedIcon from '@mui/icons-material/RouteRounded'
 import UploadFileOutlinedIcon from '@mui/icons-material/UploadFileOutlined'
@@ -53,6 +54,11 @@ export const NAVIGATION_BY_ROLE: Record<UserRole, SidebarItem[]> = {
       label: 'Dashboard',
       path: APP_ROUTES.admin.dashboard,
       icon: <AutoStoriesIcon fontSize="medium" />,
+    },
+    {
+      label: 'Aprovações',
+      path: APP_ROUTES.admin.approvals,
+      icon: <FactCheckRoundedIcon fontSize="medium" />,
     },
   ],
 }

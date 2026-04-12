@@ -2,6 +2,17 @@ import type { ApiResponse, HttpMethod, HttpRequestOptions } from '@/types/api'
 import { authService } from '@/services/auth.service'
 import { runRequestInterceptors, runResponseInterceptors } from './interceptors'
 
+export class HttpRequestError extends Error {
+  constructor(
+    public readonly status: number,
+    statusText: string,
+    public readonly response?: Response
+  ) {
+    super(`HTTP ${status}: ${statusText}`)
+    this.name = 'HttpRequestError'
+  }
+}
+
 function buildUrl(
   baseUrl: string,
   path: string,
@@ -53,7 +64,7 @@ class HttpClient {
     response = await runResponseInterceptors(response)
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      throw new HttpRequestError(response.status, response.statusText, response)
     }
 
     if (response.status === 204) {
@@ -110,6 +121,18 @@ class HttpClient {
       ...options,
       body,
       method: 'PUT' satisfies HttpMethod,
+    })
+  }
+
+  patch<T>(
+    path: string,
+    body?: unknown,
+    options?: Omit<HttpRequestOptions, 'body' | 'method'>
+  ) {
+    return this.request<T>(path, {
+      ...options,
+      body,
+      method: 'PATCH' satisfies HttpMethod,
     })
   }
 }

@@ -22,12 +22,14 @@ export interface SummaryMetric {
   helperText?: string
 }
 
-export interface SubjectContext {
+export interface TagContext {
+  contrastColor?: string
   id?: string
   label: string
   color?: string
 }
 
+export type SubjectContext = TagContext
 export interface StudentTask {
   id: string
   title: string

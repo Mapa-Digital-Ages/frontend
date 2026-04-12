@@ -3,7 +3,7 @@ import { Box, Button, Stack, Typography } from '@mui/material'
 import { Link as RouterLink } from 'react-router-dom'
 import AppCard from '@/components/ui/AppCard'
 import { APP_ROUTES } from '@/constants/routes'
-import { SUBJECTS } from '@/utils/subjectThemes'
+import { SUBJECTS } from '@/utils/themes'
 import AppButton from '@/components/ui/AppButton'
 
 function StudentComponentsShowcase() {

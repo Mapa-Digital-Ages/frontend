@@ -8,7 +8,7 @@ import {
 import { useTheme } from '@mui/material/styles'
 import type { ReactNode } from 'react'
 import type { SubjectContext } from '@/types/common'
-import { getSubjectTheme } from '@/utils/subjectThemes'
+import { getSubjectTheme } from '@/utils/themes'
 import ProgressBar from '@/components/ui/ProgressBar'
 
 type SubjectBaseCardProps = CardProps & {

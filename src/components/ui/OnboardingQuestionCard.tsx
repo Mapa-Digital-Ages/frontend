@@ -14,7 +14,7 @@ import { alpha, useTheme } from '@mui/material/styles'
 import React from 'react'
 import type { ReactNode } from 'react'
 import { AppSubjectTag } from './AppSubjectsTags'
-import { getSubjectTheme, type SubjectTheme } from '../../utils/subjectThemes'
+import { getSubjectTheme, type SubjectTheme } from '../../utils/themes'
 import type { SubjectContext } from '../../types/common'
 import ProgressBar from './ProgressBar'
 

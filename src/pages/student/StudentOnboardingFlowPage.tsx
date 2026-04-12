@@ -8,7 +8,7 @@ import type {
   StudentOnboardingFlowActionInput,
   StudentOnboardingFlowLoaderData,
 } from '@/types/student'
-import { getSubjectContext } from '@/utils/subjectThemes'
+import { getSubjectContext } from '@/utils/themes'
 import {
   type OnboardingFlowAnswerMap,
   type OnboardingFlowQuestion,

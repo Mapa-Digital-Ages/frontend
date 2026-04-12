@@ -1,5 +1,5 @@
 import type { StudentTask, SummaryMetric } from '@/types/common'
-import { SUBJECTS } from '@/utils/subjectThemes'
+import { SUBJECTS } from '@/utils/themes'
 
 const studentSummary: SummaryMetric[] = [
   {

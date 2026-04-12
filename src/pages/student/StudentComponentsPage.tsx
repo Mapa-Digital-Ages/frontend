@@ -20,7 +20,7 @@ import {
   ALL_SUBJECT_TAG_CONTEXTS,
   SUBJECT_TAG_SIZES,
   SUBJECTS,
-} from '@/utils/subjectThemes'
+} from '@/utils/themes'
 import StudentComponentsShowcase from './components/StudentComponentsShowcase'
 import AppLink from '@/components/ui/AppLink'
 import PlannerModal, { Task } from '@/components/ui/PlannerModal'
