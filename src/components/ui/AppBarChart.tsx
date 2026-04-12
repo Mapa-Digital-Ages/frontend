@@ -1,4 +1,5 @@
 import { Typography } from '@mui/material'
+import React from 'react'
 
 export interface AppBarChartData {
   label: string
@@ -18,7 +19,8 @@ export default function AppBarChart({
   maxValue,
   className = '',
 }: AppBarChartProps) {
-  const computedMax = maxValue ?? Math.max(...data.map(d => d.value), 1)
+  const resolvedMaxValue = maxValue ?? Math.max(...data.map(d => d.value), 1)
+  const computedMax = Math.max(resolvedMaxValue, 1)
 
   return (
     <div
@@ -36,11 +38,11 @@ export default function AppBarChart({
         const percentage = Math.max(
           0,
           Math.min(100, (item.value / computedMax) * 100)
-        ) // Calcula a porcentagem da altura da barra atual em relação ao valor máximo
+        )
 
         return (
           <div
-            key={index}
+            key={`${item.label}-${index}`}
             className="flex flex-col items-center flex-1 h-full gap-2"
           >
             <div
