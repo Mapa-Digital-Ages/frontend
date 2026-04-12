@@ -5,12 +5,12 @@ export const APP_CONFIG = {
   description:
     'Base frontend escalável com navegação por perfis, dashboards e autenticação mock.',
   drawerWidth: 280,
-  defaultRole: 'student' as UserRole,
+  defaultRole: 'aluno' as UserRole,
 }
 
 export const ROLE_DASHBOARD_TITLE: Record<UserRole, string> = {
-  student: 'Painel do Aluno',
-  parent: 'Painel dos Responsáveis',
+  aluno: 'Painel do Aluno',
+  responsavel: 'Painel dos Responsáveis',
   admin: 'Administrador',
   empresa: 'Painel da Empresa',
   escola: 'Painel da Escola',

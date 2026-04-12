@@ -15,9 +15,11 @@ import { AppColors } from '@/styles/AppColors'
 import type { UserRole } from '@/types/user'
 
 const AVATAR_BG_BY_ROLE: Record<UserRole, string> = {
-  student: AppColors.role.student.primary,
-  parent: AppColors.role.parent.primary,
+  aluno: AppColors.role.aluno.primary,
+  responsavel: AppColors.role.responsavel.primary,
   admin: AppColors.role.admin.primary,
+  empresa: AppColors.role.empresa.primary,
+  escola: AppColors.role.escola.primary,
 }
 
 // Keeps the admin "Aprovações" entry centralized in NAVIGATION_BY_ROLE.

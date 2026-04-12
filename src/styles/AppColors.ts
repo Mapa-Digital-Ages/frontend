@@ -67,13 +67,13 @@ export class AppColors {
   } as const
 
   static readonly role: Record<UserRole, RoleColorPalette> = {
-    student: {
+    aluno: {
       contrast: 'rgba(255, 255, 255, 1)',
       primary: 'rgba(29, 78, 216, 1)',
       secondary: 'rgba(2, 132, 199, 1)',
       soft: 'rgba(219, 234, 254, 1)',
     },
-    parent: {
+    responsavel: {
       contrast: 'rgba(255, 255, 255, 1)',
       primary: 'rgba(249, 115, 22, 1)',
       secondary: 'rgba(234, 88, 12, 1)',
@@ -84,6 +84,18 @@ export class AppColors {
       primary: 'rgba(225, 29, 72, 1)',
       secondary: 'rgba(190, 24, 93, 1)',
       soft: 'rgba(255, 228, 230, 1)',
+    },
+    empresa: {
+      contrast: 'rgba(255, 255, 255, 1)',
+      primary: 'rgba(140, 67, 203, 1)',
+      secondary: 'rgba(97, 50, 189, 1)',
+      soft: 'rgba(243, 232, 255, 1)',
+    },
+    escola: {
+      contrast: 'rgba(255, 255, 255, 1)',
+      primary: 'rgba(36, 158, 117, 1)',
+      secondary: 'rgba(31, 132, 112, 1)',
+      soft: 'rgba(209, 250, 229, 1)',
     },
   }
 

@@ -12,14 +12,28 @@ export const authService = {
         email: credentials.email,
         password: credentials.password,
       })
-      const result = response.data
+
+      console.log('Login response:', response)
+
+      const result = {
+        token: response.data.token,
+        role: response.data.role as UserRole,
+        name: response.data.name,
+        email: response.data.email,
+        status:
+          response.data.status?.toUpperCase() as LoginApiResponse['status'],
+      }
+
+      console.log('Parsed login result:', result)
+
+      console.log('Login successful:', result)
 
       // const result = {
       //   token: 'fake-jwt-token',
       //   role: 'parent' as UserRole,
       //   name: 'Fulano de Tal',
       //   email: credentials.email,
-      //   status: 'ARPOVADO' as const,
+      //   status: 'APROVADO' as const,
       // }
 
       if (result.status === 'AGUARDANDO' || result.status === 'NEGADO') {

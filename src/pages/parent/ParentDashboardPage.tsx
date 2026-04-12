@@ -154,7 +154,7 @@ function ParentDashboardPage() {
     <AppPageContainer className="gap-4 md:gap-5">
       <Box
         className="rounded-3xl px-4 py-5 text-white shadow-[0_16px_34px_rgba(249,115,22,0.26)] md:px-6 md:py-6"
-        style={{ background: AppColors.roleGradient('parent') }}
+        style={{ background: AppColors.roleGradient('responsavel') }}
       >
         <Typography className="text-sm text-white/90 md:text-xl">
           Filho(a): {highlightedChild?.name ?? 'Lucas Silva'} - 7º Ano

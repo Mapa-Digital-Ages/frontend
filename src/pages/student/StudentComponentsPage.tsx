@@ -96,7 +96,7 @@ function StudentComponentsPage() {
     <AppPageContainer className="gap-4 md:gap-5">
       <EmotionalContainer />
       <PageHeader
-        variant="student"
+        variant="aluno"
         eyebrow="Olá, Lucas!"
         title="Continue sua jornada no Mapa"
         subtitle="Progresso até o próximo nível:"
@@ -105,7 +105,7 @@ function StudentComponentsPage() {
       />
 
       <PageHeader
-        variant="parent"
+        variant="responsavel"
         eyebrow="Filho(a): Lucas Silva - 7º ano"
         title="Relatório Geral"
         subtitle="Resumo consolidado do progresso do aluno "

@@ -10,7 +10,7 @@ import type { UserRole } from '@/types/user'
 import { APP_ROUTES } from './routes'
 
 export const NAVIGATION_BY_ROLE: Record<UserRole, SidebarItem[]> = {
-  student: [
+  aluno: [
     {
       label: 'Dashboard',
       path: APP_ROUTES.student.dashboard,
@@ -42,7 +42,7 @@ export const NAVIGATION_BY_ROLE: Record<UserRole, SidebarItem[]> = {
       icon: <ChatBubbleOutlineRoundedIcon fontSize="medium" />,
     },
   ],
-  parent: [
+  responsavel: [
     {
       label: 'Dashboard',
       path: APP_ROUTES.parent.dashboard,

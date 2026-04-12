@@ -4,8 +4,8 @@ import ProgressBar from '../ui/ProgressBar'
 import StarOutlineIcon from '@mui/icons-material/StarOutline'
 
 type HeaderVariant =
-  | 'student'
-  | 'parent'
+  | 'aluno'
+  | 'responsavel'
   | 'school'
   | 'company'
   | 'admin'
@@ -21,8 +21,8 @@ interface PageHeaderProps {
 }
 
 const variantStyles: Record<HeaderVariant, string> = {
-  student: 'bg-[#359CDF] text-white',
-  parent: 'bg-gradient-to-r from-[#F06F19] to-[#DE4512] text-white',
+  aluno: 'bg-[#359CDF] text-white',
+  responsavel: 'bg-gradient-to-r from-[#F06F19] to-[#DE4512] text-white',
   school: 'bg-gradient-to-r from-[#249E75] to-[#1F8470] text-white',
   company: 'bg-gradient-to-r from-[#8C43CB] to-[#6132BD] text-white',
   admin: 'bg-gradient-to-r from-[#D32248] to-[#BF2260] text-white',
@@ -35,7 +35,7 @@ function PageHeader({
   eyebrow,
   tag,
   progress,
-  variant = 'student',
+  variant = 'aluno',
 }: PageHeaderProps) {
   return (
     <Stack

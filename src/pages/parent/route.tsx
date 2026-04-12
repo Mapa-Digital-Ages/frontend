@@ -10,7 +10,7 @@ export const parentRoutes: RouteObject[] = [
     element: <ProtectedRoute />,
     children: [
       {
-        element: <RoleRoute allowedRoles={['parent']} />,
+        element: <RoleRoute allowedRoles={['responsavel']} />,
         children: [
           {
             element: <DashboardLayout />,

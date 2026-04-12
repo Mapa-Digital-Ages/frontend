@@ -37,7 +37,7 @@ export const studentRoutes: RouteObject[] = [
     element: <ProtectedRoute />,
     children: [
       {
-        element: <RoleRoute allowedRoles={['student']} />,
+        element: <RoleRoute allowedRoles={['aluno']} />,
         children: [
           {
             element: <DashboardLayout />,

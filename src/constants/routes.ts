@@ -33,8 +33,8 @@ export function buildAdminCorrectionRoute(contentId: string) {
 }
 
 export const DEFAULT_ROUTE_BY_ROLE: Record<UserRole, string> = {
-  student: APP_ROUTES.student.dashboard,
-  parent: APP_ROUTES.parent.dashboard,
+  aluno: APP_ROUTES.student.dashboard,
+  responsavel: APP_ROUTES.parent.dashboard,
   admin: APP_ROUTES.admin.dashboard,
   empresa: APP_ROUTES.root,
   escola: APP_ROUTES.root,

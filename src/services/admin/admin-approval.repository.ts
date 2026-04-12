@@ -221,7 +221,7 @@ const mockContentCorrectionMessages: Record<
 > = {
   'content-1': [
     {
-      author: 'student',
+      author: 'aluno',
       body: 'Enviei a resolução da lista. Fiquei em dúvida na questão 4.',
       createdAt: '22/03/2026 14:22',
       id: 'message-content-1-1',
@@ -308,7 +308,7 @@ function getMockContentCorrectionSession(id: string): ContentCorrectionSession {
     contentId: item.id,
     messages: mockContentCorrectionMessages[item.id] ?? [
       {
-        author: 'student',
+        author: 'aluno',
         body: 'Atividade enviada para correção.',
         createdAt: item.requestedAt ?? 'Agora',
         id: `${item.id}-message-student`,

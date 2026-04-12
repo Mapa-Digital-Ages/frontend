@@ -113,7 +113,7 @@ function StudentDashboardPage() {
   return (
     <AppPageContainer className="gap-4 md:gap-5">
       <PageHeader
-        variant="student"
+        variant="aluno"
         eyebrow="Olá, Lucas!"
         title="Continue sua jornada no Mapa"
         subtitle="Progresso até o próximo nível:"

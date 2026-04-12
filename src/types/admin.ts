@@ -141,7 +141,7 @@ export interface ApprovalCorrectionInput {
 
 export type ContentCorrectionStatus = 'pending' | 'inProgress' | 'completed'
 
-export type ContentCorrectionMessageAuthor = 'admin' | 'student'
+export type ContentCorrectionMessageAuthor = 'admin' | 'aluno'
 
 export interface ContentCorrectionMessage {
   author: ContentCorrectionMessageAuthor
