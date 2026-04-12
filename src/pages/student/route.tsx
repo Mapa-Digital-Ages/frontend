@@ -68,9 +68,9 @@ export const studentRoutes: RouteObject[] = [
               },
               {
                 path: APP_ROUTES.student.onboardingFlow,
+                element: <StudentOnboardingFlowPage />,
                 loader: studentOnboardingFlowLoader,
                 action: studentOnboardingFlowAction,
-                element: <StudentOnboardingFlowPage />,
               },
             ],
           },

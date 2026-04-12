@@ -9,6 +9,12 @@ import {
 } from '@mui/x-date-pickers/PickersDay'
 import DayDetailModal from './DayDetailModal'
 import 'dayjs/locale/pt-br'
+import type { Task } from './Planner'
+
+interface AppCalendarProps {
+  tasks: Task[]
+  onTasksChange: (tasks: Task[]) => void
+}
 
 function CustomDay(props: PickersDayProps) {
   const isFuture = props.day.isAfter(dayjs(), 'day')
@@ -64,7 +70,10 @@ function CustomDay(props: PickersDayProps) {
   )
 }
 
-export default function AppCalendar() {
+export default function AppCalendar({
+  tasks,
+  onTasksChange,
+}: AppCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [view, setView] = useState<'year' | 'month' | 'day'>('day')
@@ -84,6 +93,18 @@ export default function AppCalendar() {
     setModalOpen(false)
   }
 
+  function handleConfirm(updatedDayTasks: Task[]) {
+    if (!selectedDate) return
+    const otherTasks = tasks.filter(
+      t => !dayjs(t.date).isSame(selectedDate, 'day')
+    )
+    onTasksChange([...otherTasks, ...updatedDayTasks])
+  }
+
+  const dayTasks = selectedDate
+    ? tasks.filter(t => dayjs(t.date).isSame(selectedDate, 'day'))
+    : []
+
   return (
     <>
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
@@ -98,10 +119,7 @@ export default function AppCalendar() {
             width: '100%',
             maxWidth: '100%',
             height: 'auto',
-            overflow: 'visible',
-            '& .MuiDayCalendar-root': {
-              overflow: 'visible',
-            },
+            minHeight: '30rem',
             '& .MuiDayCalendar-slideTransition': {
               minHeight: '26rem',
             },
@@ -112,8 +130,8 @@ export default function AppCalendar() {
               justifyContent: 'space-around',
             },
             '& .MuiPickersDay-root': {
-              width: 84,
-              height: 60,
+              width: 92,
+              height: 62,
               fontSize: '1.2rem',
               display: 'flex',
               alignItems: 'center',
@@ -142,7 +160,9 @@ export default function AppCalendar() {
       <DayDetailModal
         open={modalOpen}
         date={selectedDate}
+        tasks={dayTasks}
         onClose={handleModalClose}
+        onConfirm={handleConfirm}
       />
     </>
   )

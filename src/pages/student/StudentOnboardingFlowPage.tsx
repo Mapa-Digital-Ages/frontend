@@ -1,6 +1,6 @@
 import { Box, Typography } from '@mui/material'
 import { useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLoaderData, useLocation } from 'react-router-dom'
 import AppPageContainer from '@/components/ui/AppPageContainer'
 import OnboardingQuestionCard from '@/components/ui/OnboardingQuestionCard'
 import type { SubjectContext } from '@/types/common'
@@ -29,7 +29,11 @@ type StudentOnboardingFlowRouteState = {
 
 function StudentOnboardingFlowPage() {
   const location = useLocation()
-  const routeState = (location.state ?? {}) as StudentOnboardingFlowRouteState
+  const loaderData = useLoaderData() as StudentOnboardingFlowLoaderData
+  const routeState = {
+    ...loaderData,
+    ...((location.state ?? {}) as StudentOnboardingFlowRouteState),
+  }
   const questions =
     routeState.questions && routeState.questions.length
       ? routeState.questions

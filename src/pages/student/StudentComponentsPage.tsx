@@ -13,17 +13,13 @@ import AppDropdown, { DropdownOption } from '@/components/ui/AppDropdown'
 import AppInput from '@/components/ui/AppInput'
 import AppPageContainer from '@/components/ui/AppPageContainer'
 import AppSubjectsTags from '@/components/ui/AppSubjectsTags'
+import EmotionalContainer from '@/components/ui/EmotionalContainer'
 import MetricsCard from '@/components/ui/MetricsCard'
 import SubjectBaseCard from '@/components/ui/SubjectBaseCard'
-import EmotionalContainer from '@/components/ui/EmotionalContainer'
-import {
-  ALL_SUBJECT_TAG_CONTEXTS,
-  SUBJECT_TAG_SIZES,
-  SUBJECTS,
-} from '@/utils/themes'
+import { ALL_SUBJECT_TAG_CONTEXTS, SUBJECTS } from '@/utils/themes'
 import StudentComponentsShowcase from './components/StudentComponentsShowcase'
 import AppLink from '@/components/ui/AppLink'
-import PlannerModal, { Task } from '@/components/ui/PlannerModal'
+import Planner, { Task } from '@/components/ui/Planner'
 import AppBarChart from '@/components/ui/AppBarChart'
 import dayjs from 'dayjs'
 
@@ -37,50 +33,45 @@ const mockChartData = [
   { label: 'Dom', value: 0 },
 ]
 
-const mockTasks: Task[] = [
+const initialTasks: Task[] = [
   {
     id: '1',
-    date: dayjs().day(1).format('YYYY-MM-DD'),
+    date: dayjs().day(1).toDate(),
     title: 'Revisão de equações',
     status: 'done',
     subject: SUBJECTS.matematica,
   },
-
   {
     id: '2',
-    date: dayjs().day(1).format('YYYY-MM-DD'),
+    date: dayjs().day(1).toDate(),
     title: 'Teste de Proficiência em Inglês - TOEFL',
     status: 'pending',
     subject: SUBJECTS.ingles,
   },
-
   {
     id: '3',
-    date: dayjs().day(2).format('YYYY-MM-DD'),
+    date: dayjs().day(2).toDate(),
     title: 'Leitura e interpretação',
     status: 'done',
     subject: SUBJECTS.portugues,
   },
-
   {
     id: '4',
-    date: dayjs().day(3).format('YYYY-MM-DD'),
+    date: dayjs().day(3).toDate(),
     title: 'Resumo de ecossistemas',
     status: 'adjust',
     subject: SUBJECTS.ciencias,
   },
-
   {
     id: '5',
-    date: dayjs().day(4).format('YYYY-MM-DD'),
+    date: dayjs().day(4).toDate(),
     title: 'Exercícios de Brasil Colônia',
     status: 'pending',
     subject: SUBJECTS.historia,
   },
-
   {
     id: '6',
-    date: dayjs().day(1).format('YYYY-MM-DD'),
+    date: dayjs().day(1).toDate(),
     title: 'Exercícios de Brasil Colônia',
     status: 'adjust',
     subject: SUBJECTS.historia,
@@ -96,6 +87,7 @@ const dropdownOptions: DropdownOption[] = [
 ]
 
 function StudentComponentsPage() {
+  const [tasks, setTasks] = useState<Task[]>(initialTasks)
   const [singleValue, setSingleValue] = useState<string | number>('7')
   const [multiValue, setMultiValue] = useState<Array<string | number>>(['7'])
   const theme = useTheme()
@@ -125,54 +117,85 @@ function StudentComponentsPage() {
         subtitle="Visão consolidada da operação MAPA DIGITAL"
       />
 
-      <Box
-        className="grid grid-cols-1 md:grid-cols-2 gap-8 min-h-[80vh] rounded-2xl bg-white p-8 space-x-8"
-        sx={{
-          backgroundColor: 'background.paper',
-          border: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <Stack spacing={3}>
-          <Box className="flex-1">
-            <AppCalendar />
+      <Box className="grid grid-cols-2 md:grid-cols-2 gap-5">
+        <Box
+          className="rounded-2xl p-8 space-y-6"
+          sx={{
+            backgroundColor: 'background.paper',
+            border: `1px solid ${theme.palette.divider}`,
+          }}
+        >
+          <AppCalendar tasks={tasks} onTasksChange={setTasks} />
+
+          <Stack spacing={3}>
+            <AppDropdown
+              options={dropdownOptions}
+              value={singleValue}
+              onChange={e =>
+                setSingleValue(
+                  Array.isArray(e.target.value)
+                    ? e.target.value[0]
+                    : e.target.value
+                )
+              }
+              placeholder="Selecione o ano"
+              width="auto"
+              dropdownPlacement="bottom"
+            />
+            <AppDropdown
+              options={dropdownOptions}
+              multiple
+              value={multiValue}
+              onChange={e => {
+                const v = e.target.value
+                setMultiValue(Array.isArray(v) ? v : [v])
+              }}
+              placeholder="Selecione os anos"
+              dropdownPlacement="bottom"
+            />
+            <AppDropdown
+              options={dropdownOptions}
+              value={singleValue}
+              onChange={() => {}}
+              placeholder="Desabilitado"
+              disabled
+              width={120}
+            />
+          </Stack>
+
+          <Box className="space-y-4">
+            <Typography variant="h6">Disciplinas</Typography>
+            <Box className="grid grid-cols-1 gap-3">
+              <SubjectBaseCard
+                icon={<MenuBookRoundedIcon fontSize="medium" />}
+                progress={78}
+                subject={SUBJECTS.portugues}
+                title="Português"
+              />
+              <SubjectBaseCard
+                icon={<CalculateRoundedIcon fontSize="medium" />}
+                progress={55}
+                subject={SUBJECTS.matematica}
+                title="Matemática"
+              />
+              <SubjectBaseCard
+                icon={<PublicRoundedIcon fontSize="medium" />}
+                progress={20}
+                subject={SUBJECTS.geografia}
+                title="Geografia"
+              />
+            </Box>
           </Box>
+        </Box>
 
-          <AppDropdown
-            options={dropdownOptions}
-            value={singleValue}
-            onChange={e =>
-              setSingleValue(
-                Array.isArray(e.target.value)
-                  ? e.target.value[0]
-                  : e.target.value
-              )
-            }
-            placeholder="Selecione o ano"
-            width="auto"
-            dropdownPlacement="bottom"
-          />
-          <AppDropdown
-            options={dropdownOptions}
-            multiple
-            value={multiValue}
-            onChange={e => {
-              const v = e.target.value
-              setMultiValue(Array.isArray(v) ? v : [v])
-            }}
-            placeholder="Selecione os anos"
-            dropdownPlacement="bottom"
-          />
-          <AppDropdown
-            options={dropdownOptions}
-            value={singleValue}
-            onChange={() => {}}
-            placeholder="Desabilitado"
-            disabled
-            width={120}
-          />
-        </Stack>
-
-        <Box className="flex-1">
+        <Box
+          className="rounded-2xl p-8 space-y-4"
+          sx={{
+            backgroundColor: 'background.paper',
+            border: `1px solid ${theme.palette.divider}`,
+          }}
+        >
+          <Planner tasks={tasks} />
           <Typography variant="h6">Testes de Input</Typography>
 
           <Stack spacing={3}>
@@ -218,15 +241,13 @@ function StudentComponentsPage() {
               warningColor="success.main"
             />
           </Stack>
-          {}
+
           <AppButton
             size="small"
             backgroundColor="primary.main"
             label="Sou pequeno e padrao"
             borderRadius={0}
           />
-
-          {}
           <AppButton
             size="medium"
             backgroundColor="background.default"
@@ -236,8 +257,6 @@ function StudentComponentsPage() {
             iconPosition="left"
             textColor="text.primary"
           />
-
-          {}
           <AppButton
             size="large"
             backgroundColor="error.main"
@@ -255,54 +274,27 @@ function StudentComponentsPage() {
           />
           <AppButton label="Confirmar" backgroundColor="warning.main" />
           <AppButton label="Botao padrao conforme solicitado" />
-          <AppButton
-            backgroundColor="info.main"
-            label="Botao com cor info"
-          ></AppButton>
-        </Box>
-        <Box className="flex-1 space-y-4">
-          <Typography variant="h6">Disciplinas</Typography>
-          <Box className="grid grid-cols-1 gap-3">
-            <SubjectBaseCard
-              icon={<MenuBookRoundedIcon fontSize="medium" />}
-              progress={78}
-              subject={SUBJECTS.portugues}
-              title="Português"
-            />
-            <SubjectBaseCard
-              icon={<CalculateRoundedIcon fontSize="medium" />}
-              progress={55}
-              subject={SUBJECTS.matematica}
-              title="Matemática"
-            />
-            <SubjectBaseCard
-              icon={<PublicRoundedIcon fontSize="medium" />}
-              progress={20}
-              subject={SUBJECTS.geografia}
-              title="Geografia"
-            />
-          </Box>
-        </Box>
-        <Box>
-          <Typography
-            sx={{
-              color: 'text.secondary',
-              fontSize: 14,
-              fontWeight: 600,
-              mb: 2,
-            }}
-          >
-            Catálogo completo de tags de disciplina
-          </Typography>
-          <AppSubjectsTags size="sm" subjects={ALL_SUBJECT_TAG_CONTEXTS} />
-          <Box sx={{ mt: 2 }}>
-            <AppSubjectsTags size="md" subjects={ALL_SUBJECT_TAG_CONTEXTS} />
-          </Box>
-          <Box sx={{ mt: 2 }}>
-            <AppSubjectsTags size="lg" subjects={ALL_SUBJECT_TAG_CONTEXTS} />
-          </Box>
+          <AppButton backgroundColor="info.main" label="Botao com cor info" />
 
-          <PlannerModal tasks={mockTasks} sx={{ mt: 3 }} />
+          <Box>
+            <Typography
+              sx={{
+                color: 'text.secondary',
+                fontSize: 14,
+                fontWeight: 600,
+                mb: 2,
+              }}
+            >
+              Catálogo completo de tags de disciplina
+            </Typography>
+            <AppSubjectsTags size="sm" subjects={ALL_SUBJECT_TAG_CONTEXTS} />
+            <Box sx={{ mt: 2 }}>
+              <AppSubjectsTags size="md" subjects={ALL_SUBJECT_TAG_CONTEXTS} />
+            </Box>
+            <Box sx={{ mt: 2 }}>
+              <AppSubjectsTags size="lg" subjects={ALL_SUBJECT_TAG_CONTEXTS} />
+            </Box>
+          </Box>
 
           <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
             Teste de Gráfico (AppBarChart)

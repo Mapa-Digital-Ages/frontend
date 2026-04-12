@@ -4,6 +4,7 @@ import {
   Box,
   Checkbox,
   FormControl,
+  FormHelperText,
   ListItemIcon,
   ListItemText,
   MenuItem,
@@ -25,6 +26,7 @@ export interface AppDropdownProps extends Omit<
   SelectProps,
   'value' | 'onChange'
 > {
+  label?: string
   displayLabel?: string
   hideLabel?: boolean
   hideIndicator?: boolean
@@ -39,11 +41,13 @@ export interface AppDropdownProps extends Omit<
   width?: string | number
   borderRadius?: string | number
   backgroundColor?: string
+  helperText?: string
   triggerVariant?: TriggerVariant
   neutralOutline?: boolean
 }
 
 function AppDropdown({
+  label,
   displayLabel,
   hideLabel = false,
   hideIndicator = false,
@@ -58,6 +62,7 @@ function AppDropdown({
   width = 240,
   borderRadius = 'var(--dropdown-radius)',
   backgroundColor = 'background.paper',
+  helperText,
   triggerVariant = 'filled',
   neutralOutline = false,
   ...props
@@ -67,6 +72,7 @@ function AppDropdown({
     multiple = false,
     disabled,
     className,
+    error,
     MenuProps,
     sx,
     ...selectProps
@@ -295,6 +301,7 @@ function AppDropdown({
     <FormControl
       className={className}
       disabled={disabled}
+      error={error}
       fullWidth={fullWidth}
       sx={{
         maxWidth: fullWidth ? '100%' : width,
@@ -302,8 +309,14 @@ function AppDropdown({
         width: fullWidth ? '100%' : width,
       }}
     >
+      {label && (
+        <Typography variant="body2" color={error ? 'error.main' : undefined}>
+          {label}
+        </Typography>
+      )}
       <Select
         {...selectProps}
+        error={error}
         value={value}
         onChange={onChange}
         displayEmpty
@@ -404,6 +417,7 @@ function AppDropdown({
           )
         })}
       </Select>
+      {helperText && <FormHelperText>{helperText}</FormHelperText>}
     </FormControl>
   )
 }
