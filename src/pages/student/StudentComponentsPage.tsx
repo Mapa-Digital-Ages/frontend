@@ -15,6 +15,7 @@ import AppPageContainer from '@/components/ui/AppPageContainer'
 import AppSubjectsTags from '@/components/ui/AppSubjectsTags'
 import MetricsCard from '@/components/ui/MetricsCard'
 import SubjectBaseCard from '@/components/ui/SubjectBaseCard'
+import EmotionalContainer from '@/components/ui/EmotionalContainer'
 import {
   ALL_SUBJECT_TAG_CONTEXTS,
   SUBJECT_TAG_SIZES,
@@ -101,6 +102,7 @@ function StudentComponentsPage() {
 
   return (
     <AppPageContainer className="gap-4 md:gap-5">
+      <EmotionalContainer />
       <PageHeader
         variant="student"
         eyebrow="Olá, Lucas!"
