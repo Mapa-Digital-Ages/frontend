@@ -33,7 +33,7 @@ function buildUrl(
 
 class HttpClient {
   private readonly baseUrl =
-    import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000/api/'
+    import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/'
 
   async request<T>(path: string, options: HttpRequestOptions = {}) {
     const { body, method = 'GET', query, skipAuth = false, ...rest } = options

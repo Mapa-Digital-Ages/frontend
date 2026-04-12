@@ -12,4 +12,6 @@ export const ROLE_DASHBOARD_TITLE: Record<UserRole, string> = {
   student: 'Painel do Aluno',
   parent: 'Painel dos Responsáveis',
   admin: 'Administrador',
+  empresa: 'Painel da Empresa',
+  escola: 'Painel da Escola',
 }

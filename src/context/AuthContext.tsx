@@ -4,12 +4,13 @@ import type { AuthContextValue, AuthState, AuthCredentials } from '@/types/auth'
 import { AuthContext } from './auth-context'
 
 function getInitialState(): AuthState {
-  const session = authService.getSession()
+  const token = authService.getToken()
+  const role = authService.getRole()
 
-  if (session) {
+  if (token && role) {
     return {
-      user: session.user,
-      token: session.token,
+      user: { id: '', name: '', email: '', role },
+      token,
       status: 'authenticated',
     }
   }
@@ -25,11 +26,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [authState, setAuthState] = useState<AuthState>(getInitialState)
 
   async function login(credentials: AuthCredentials) {
-    const session = await authService.login(credentials)
+    const result = await authService.login(credentials)
 
     setAuthState({
-      user: session.user,
-      token: session.token,
+      user: { id: '', name: '', email: '', role: result.role },
+      token: result.token,
       status: 'authenticated',
     })
   }
