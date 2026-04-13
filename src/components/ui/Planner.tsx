@@ -15,6 +15,11 @@ import { alpha } from '@mui/material/styles'
 import { useState } from 'react'
 import ListIcon from '@mui/icons-material/List'
 import { SxProps, Theme } from '@mui/material'
+import isoWeek from 'dayjs/plugin/isoWeek'
+import isBetween from 'dayjs/plugin/isBetween'
+
+dayjs.extend(isoWeek)
+dayjs.extend(isBetween)
 
 type Status = 'done' | 'pending' | 'adjust'
 
@@ -112,13 +117,12 @@ function getTaskIcon(status: Task['status']) {
 
 function Planner({ tasks, sx }: PlannerProps) {
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
-  const startOfWeek = dayjs().startOf('week').add(1, 'day')
-  const endOfWeek = dayjs().endOf('week').add(1, 'day')
+  const startOfWeek = dayjs().startOf('isoWeek')
+  const endOfWeek = dayjs().endOf('isoWeek')
 
   const tasksThisWeek = tasks.filter(
     task =>
-      dayjs(task.date).isAfter(startOfWeek.subtract(1, 'day')) &&
-      dayjs(task.date).isBefore(endOfWeek.add(1, 'day'))
+      dayjs(task.date).isBetween(startOfWeek, endOfWeek, 'day', '[]')
   )
 
   const groupedTasks: Record<string, Task[]> = {}
