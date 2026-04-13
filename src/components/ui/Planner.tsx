@@ -120,9 +120,8 @@ function Planner({ tasks, sx }: PlannerProps) {
   const startOfWeek = dayjs().startOf('isoWeek')
   const endOfWeek = dayjs().endOf('isoWeek')
 
-  const tasksThisWeek = tasks.filter(
-    task =>
-      dayjs(task.date).isBetween(startOfWeek, endOfWeek, 'day', '[]')
+  const tasksThisWeek = tasks.filter(task =>
+    dayjs(task.date).isBetween(startOfWeek, endOfWeek, 'day', '[]')
   )
 
   const groupedTasks: Record<string, Task[]> = {}
