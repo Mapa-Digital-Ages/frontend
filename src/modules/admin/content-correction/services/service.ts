@@ -1,1 +1,1 @@
-export { contentApprovalService } from '@/modules/admin/approvals/services/runtime'
+export { contentApprovalService } from '@/modules/admin/content/services/runtime'

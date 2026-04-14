@@ -131,7 +131,7 @@ export default function Page() {
     <AppPageContainer className="gap-4 md:gap-5">
       <PageHeader
         title="Painel Administrativo"
-        subtitle="Visão consolidada da operação"
+        subtitle="Visão consolidada da operação MAPA DIGITAL"
         variant="admin"
       />
 

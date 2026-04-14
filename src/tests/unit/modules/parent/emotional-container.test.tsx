@@ -4,13 +4,11 @@ import test from 'node:test'
 
 test('EmotionalContainer uses theme tokens and no empty JSX expressions', () => {
   const source = readFileSync(
-    new URL(
-      '../../../../modules/parent/emotional/components/EmotionalContainer.tsx',
-      import.meta.url
-    ),
+    new URL('../../../../shared/ui/EmotionalContainer.tsx', import.meta.url),
     'utf8'
   )
 
+  assert.match(source, /alpha/)
   assert.doesNotMatch(source, /\{\}/)
   assert.doesNotMatch(source, /backgroundColor: 'white'/)
   assert.doesNotMatch(source, /color: 'black'/)

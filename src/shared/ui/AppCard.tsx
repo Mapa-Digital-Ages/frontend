@@ -6,6 +6,7 @@ import {
   type SxProps,
   type Theme,
 } from '@mui/material'
+import React from 'react'
 import type { ReactNode } from 'react'
 
 interface AppCardProps extends CardProps {

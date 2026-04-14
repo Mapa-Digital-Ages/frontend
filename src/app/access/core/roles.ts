@@ -6,6 +6,7 @@ export const USER_ROLES: UserRole[] = [
   'admin',
   'empresa',
   'escola',
+  'escola_empresa',
 ]
 
 export const ROLE_LABELS: Record<UserRole, string> = {
@@ -14,4 +15,5 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   admin: 'Administrador',
   empresa: 'Empresa',
   escola: 'Escola',
+  escola_empresa: 'Escola & Empresa',
 }

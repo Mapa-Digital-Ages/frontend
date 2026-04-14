@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "npm run typecheck && vite build",
     "test": "node --import tsx --test \"src/tests/**/*.test.tsx\"",
+    "coverage": "node --experimental-test-coverage --import tsx --test \"src/tests/**/*.test.tsx\"",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",

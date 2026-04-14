@@ -49,7 +49,7 @@ function AuthLayout() {
         }}
       >
         <Box
-          className="flex min-h-[420px] flex-col p-7 text-white md:min-h-0 md:p-9"
+          className="flex min-h-105 flex-col p-7 text-white md:min-h-0 md:p-9"
           sx={{
             background: '#359CDF',
             border: '1px solid rgba(16, 42, 67, 0.1)',
@@ -70,7 +70,7 @@ function AuthLayout() {
 
           <Stack spacing={2}>
             <Typography
-              className="max-w-[450px] leading-tight"
+              className="max-w-112.5 leading-tight"
               sx={{ fontSize: '30px', fontWeight: 700 }}
             >
               {mode === 'register'
@@ -79,7 +79,7 @@ function AuthLayout() {
             </Typography>
 
             <Typography
-              className="mt-12 max-w-[450px] text-white/90"
+              className="mt-12 max-w-112.5 text-white/90"
               sx={{ fontSize: '16px', lineHeight: '21px' }}
             >
               {mode === 'register'

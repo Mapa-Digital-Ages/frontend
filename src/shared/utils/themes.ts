@@ -167,9 +167,9 @@ export const ALL_SUBJECT_TAG_CONTEXTS: TagContext[] = (
   label: SUBJECT_CATALOG[id].label,
   color: SUBJECT_CATALOG[id].color,
 }))
-export const SUBJECT_TAG_SIZES: SubjectChipSize[] = ['sm', 'md', 'lg']
+export const TAG_SIZES: TagSize[] = ['sm', 'md', 'lg']
 
-type SubjectStyleSlot = {
+type TagStyleSlot = {
   backgroundColor?: string
   borderColor?: string
   color?: string
@@ -177,29 +177,27 @@ type SubjectStyleSlot = {
 
 export type ResolvedSubjectId = SubjectId | 'custom'
 
-export type SubjectTheme = {
-  badge: SubjectStyleSlot
-  border: SubjectStyleSlot
+export type TagTheme = {
+  badge: TagStyleSlot
+  border: TagStyleSlot
   color: string
-  icon: SubjectStyleSlot
+  icon: TagStyleSlot
   id: ResolvedSubjectId
   label: string
-  mutedText: SubjectStyleSlot
-  option: SubjectStyleSlot
-  optionSelected: SubjectStyleSlot
+  mutedText: TagStyleSlot
+  option: TagStyleSlot
+  optionSelected: TagStyleSlot
   progressFill: string
   progressTrack: string
-  softSurface: SubjectStyleSlot
-  solidSurface: SubjectStyleSlot
-  text: SubjectStyleSlot
+  softSurface: TagStyleSlot
+  solidSurface: TagStyleSlot
+  text: TagStyleSlot
 }
 
-export type SubjectBadgeProps = {
+export type TagBadgeProps = {
   color: string
   label: string
 }
-
-export type SubjectChipTone = TagChipTone
 
 export const SUBJECTS: Record<string, TagContext> = {
   ciencias: SUBJECT_CATALOG.science,
@@ -270,7 +268,7 @@ function getResolvedSubjectId(
 export function getSubjectTheme(
   subject?: Partial<TagContext>,
   { mode = 'light' }: GetSubjectThemeOptions = {}
-): SubjectTheme {
+): TagTheme {
   const id = getResolvedSubjectId(subject)
   const fallbackColor =
     id === 'custom' ? SUBJECT_CATALOG.default.color : SUBJECT_CATALOG[id].color
@@ -349,7 +347,7 @@ export function getSubjectTheme(
 export function getSubjectBadgeProps(
   subject?: Partial<TagContext>,
   options?: GetSubjectThemeOptions
-): SubjectBadgeProps {
+): TagBadgeProps {
   const theme = getSubjectTheme(subject, options)
 
   return {
@@ -361,7 +359,7 @@ export function getSubjectBadgeProps(
 export function getSubjectChipTone(
   subjectOrColor: Partial<TagContext> | string | undefined,
   { mode = 'light' }: GetSubjectThemeOptions = {}
-): SubjectChipTone {
+): TagChipTone {
   const fallbackTheme = getSubjectTheme(
     typeof subjectOrColor === 'string'
       ? { color: subjectOrColor }
@@ -468,36 +466,3 @@ export const PARENT_APPROVAL_CARD_STATUS: Record<
     tone: 'danger',
   },
 }
-
-const PARENT_STATUS_SHOWCASE_CATALOG = {
-  default: {
-    color: 'rgba(32, 109, 197, 1)',
-    id: 'default',
-    label: 'Geral',
-  },
-  success: {
-    color: 'rgba(20, 184, 166, 1)',
-    id: 'success',
-    label: 'Liberado',
-  },
-  warning: {
-    color: 'rgba(254, 51, 163, 1)',
-    id: 'warning',
-    label: 'Aguardando validação',
-  },
-  error: {
-    color: 'rgba(0, 212, 106, 1)',
-    id: 'error',
-    label: 'Recusado',
-  },
-} as const
-
-export type ParentStatusShowcaseId = keyof typeof PARENT_STATUS_SHOWCASE_CATALOG
-
-export const ALL_PARENT_STATUS_TAG_CONTEXTS: TagContext[] = (
-  Object.keys(PARENT_STATUS_SHOWCASE_CATALOG) as ParentStatusShowcaseId[]
-).map(key => ({
-  id: PARENT_STATUS_SHOWCASE_CATALOG[key].id,
-  label: PARENT_STATUS_SHOWCASE_CATALOG[key].label,
-  color: PARENT_STATUS_SHOWCASE_CATALOG[key].color,
-}))

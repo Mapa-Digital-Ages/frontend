@@ -7,7 +7,7 @@ import AppCard from '@/shared/ui/AppCard'
 import AppInput from '@/shared/ui/AppInput'
 import AppPageContainer from '@/shared/ui/AppPageContainer'
 import PageHeader from '@/shared/ui/PageHeader'
-import EmotionalContainer from '../../emotional/components/EmotionalContainer'
+import EmotionalContainer from '@/shared/ui/EmotionalContainer'
 
 interface ChildRegistrationForm {
   grade: string

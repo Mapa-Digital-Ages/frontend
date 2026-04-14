@@ -80,6 +80,11 @@ function AppDropdown({
   const isGhostTrigger = triggerVariant === 'ghost'
   const resolvedMenuWidth = menuWidth ?? (width === 'auto' ? 220 : width)
   const neutralBorder = theme.palette.background.border
+  const roleAccentColor = 'var(--app-role-current-primary, var(--app-primary))'
+  const roleHoverBackground = 'var(--app-role-action-hover-bg)'
+  const roleHoverBorder = 'var(--app-role-action-hover-border)'
+  const roleSelectedBackground = 'var(--app-role-action-selected-bg)'
+  const roleSelectedBorder = 'var(--app-role-action-selected-border)'
 
   const baseTriggerSx = {
     backgroundColor: neutralOutline
@@ -140,21 +145,18 @@ function AppDropdown({
       borderColor: neutralOutline
         ? neutralBorder
         : isGhostTrigger
-          ? alpha(theme.palette.primary.main, 0.24)
+          ? roleHoverBorder
           : theme.palette.background.hoverBorder,
     },
     '&.Mui-focused': {
       backgroundColor: neutralOutline
         ? theme.palette.background.paper
         : isGhostTrigger
-          ? alpha(
-              theme.palette.primary.main,
-              theme.palette.mode === 'dark' ? 0.1 : 0.06
-            )
+          ? roleHoverBackground
           : backgroundColor,
     },
     '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-      borderColor: neutralOutline ? neutralBorder : theme.palette.primary.main,
+      borderColor: neutralOutline ? neutralBorder : roleAccentColor,
     },
     ...(neutralOutline && {
       '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
@@ -164,10 +166,7 @@ function AppDropdown({
     ...(isGhostTrigger &&
       !neutralOutline && {
         '&:hover': {
-          backgroundColor: alpha(
-            theme.palette.background.paper,
-            theme.palette.mode === 'dark' ? 0.08 : 0.72
-          ),
+          backgroundColor: roleHoverBackground,
         },
       }),
     ...(hideLabel && {
@@ -365,8 +364,9 @@ function AppDropdown({
               value={option.value}
               sx={{
                 backgroundColor: isSelected
-                  ? alpha(theme.palette.primary.main, 0.12)
+                  ? roleSelectedBackground
                   : 'transparent',
+                border: '1px solid transparent',
                 borderRadius,
                 color: theme.palette.text.primary,
                 marginBlock: '2px',
@@ -374,13 +374,16 @@ function AppDropdown({
                 paddingInline: 1.5,
                 paddingY: 1,
                 '&:hover': {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                  backgroundColor: roleHoverBackground,
+                  borderColor: roleHoverBorder,
                 },
                 '&.Mui-selected': {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.14),
+                  backgroundColor: roleSelectedBackground,
+                  borderColor: roleSelectedBorder,
                 },
                 '&.Mui-selected:hover': {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.18),
+                  backgroundColor: roleSelectedBackground,
+                  borderColor: roleSelectedBorder,
                 },
               }}
             >
@@ -388,7 +391,7 @@ function AppDropdown({
                 sx={{
                   alignItems: 'center',
                   color: isSelected
-                    ? theme.palette.primary.main
+                    ? roleAccentColor
                     : theme.palette.text.secondary,
                   display: 'flex',
                   justifyContent: 'center',
@@ -403,7 +406,7 @@ function AppDropdown({
                     sx={{
                       color: theme.palette.text.secondary,
                       '&.Mui-checked': {
-                        color: theme.palette.primary.main,
+                        color: roleAccentColor,
                       },
                     }}
                   />

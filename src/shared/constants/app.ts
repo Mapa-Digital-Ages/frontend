@@ -14,4 +14,5 @@ export const ROLE_DASHBOARD_TITLE: Record<UserRole, string> = {
   admin: 'Administrador',
   empresa: 'Painel da Empresa',
   escola: 'Painel da Escola',
+  escola_empresa: 'Painel Escola & Empresa',
 }

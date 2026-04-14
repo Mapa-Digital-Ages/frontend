@@ -15,6 +15,7 @@ test('role colors are exposed by the app theme and reusable helpers', () => {
 
   assert.equal(parentPalette.primary, theme.palette.role.responsavel.primary)
   assert.equal(parentActionTone.confirmColor, parentPalette.primary)
+  assert.ok(parentActionTone.confirmHoverColor)
   assert.equal(parentActionTone.confirmTextColor, parentPalette.contrast)
   assert.equal(parentPalette.contrast, 'rgba(255, 255, 255, 1)')
   assert.match(
@@ -23,11 +24,49 @@ test('role colors are exposed by the app theme and reusable helpers', () => {
   )
 })
 
+test('role variables are applied globally so MUI portals inherit dropdown and modal colors', () => {
+  const dashboardLayoutSource = readFileSync(
+    new URL('../../../../app/layout/DashboardLayout.tsx', import.meta.url),
+    'utf8'
+  )
+  const appButtonSource = readFileSync(
+    new URL('../../../../shared/ui/AppButton.tsx', import.meta.url),
+    'utf8'
+  )
+  const globalCssSource = readFileSync(
+    new URL('../../../../app/theme/styles/global.css', import.meta.url),
+    'utf8'
+  )
+
+  assert.match(dashboardLayoutSource, /document\.documentElement/)
+  assert.match(dashboardLayoutSource, /--app-role-current-hover-solid/)
+  assert.match(appButtonSource, /--app-role-current-hover-solid/)
+  assert.match(globalCssSource, /--app-role-current-hover-solid:/)
+})
+
+test('PageHeader derives the user greeting when an explicit eyebrow is not provided', () => {
+  const headerSource = readFileSync(
+    new URL('../../../../shared/ui/PageHeader.tsx', import.meta.url),
+    'utf8'
+  )
+  const studentDashboardPageSource = readFileSync(
+    new URL(
+      '../../../../modules/student/dashboard/page/Page.tsx',
+      import.meta.url
+    ),
+    'utf8'
+  )
+
+  assert.match(headerSource, /useAuth/)
+  assert.match(headerSource, /resolvedEyebrow/)
+  assert.doesNotMatch(studentDashboardPageSource, /eyebrow="Olá, Lucas!"/)
+})
+
 test('role themed components do not resolve AppColors role tokens directly', () => {
   const files = [
     '../../../../app/layout/DashboardLayout.tsx',
-    '../../../../modules/admin/approvals/components/ApprovalActionModal.tsx',
-    '../../../../modules/admin/approvals/components/ApprovalComponent.tsx',
+    '../../../../modules/admin/shared/components/ApprovalActionModal.tsx',
+    '../../../../modules/admin/shared/components/ApprovalComponent.tsx',
     '../../../../modules/admin/content-correction/page/Page.tsx',
     '../../../../shared/ui/AppSidebar.tsx',
     '../../../../shared/ui/PageHeader.tsx',

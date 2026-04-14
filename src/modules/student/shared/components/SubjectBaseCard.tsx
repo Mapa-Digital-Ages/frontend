@@ -1,15 +1,10 @@
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  type CardProps,
-} from '@mui/material'
+import { Box, Typography, type CardProps } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import type { ReactNode } from 'react'
 import type { SubjectContext } from '@/shared/types/common'
 import { getSubjectTheme } from '@/shared/utils/themes'
 import ProgressBar from '@/shared/ui/ProgressBar'
+import AppCard from '@/shared/ui/AppCard'
 
 type SubjectBaseCardProps = CardProps & {
   icon: ReactNode
@@ -34,18 +29,22 @@ function SubjectBaseCard({
     progressLabel ?? `${Math.round(normalizedProgress)}% concluído`
 
   return (
-    <Card
+    <AppCard
       {...cardProps}
-      sx={{
-        backgroundColor: 'background.paper',
-        border: '1px solid',
-        borderColor: 'background.border',
-        borderRadius: 'var(--app-radius-card)',
-        boxShadow: 'var(--app-card-shadow)',
-        overflow: 'hidden',
-        position: 'relative',
-        ...cardProps.sx,
-      }}
+      contentClassName="p-0"
+      contentSx={{ display: 'block', p: 0 }}
+      sx={[
+        {
+          boxShadow: 'var(--app-card-shadow)',
+          overflow: 'hidden',
+          position: 'relative',
+        },
+        ...(Array.isArray(cardProps.sx)
+          ? cardProps.sx
+          : cardProps.sx
+            ? [cardProps.sx]
+            : []),
+      ]}
     >
       <Box
         sx={{
@@ -54,7 +53,7 @@ function SubjectBaseCard({
           width: '100%',
         }}
       />
-      <CardContent
+      <Box
         sx={{
           display: 'grid',
           gap: { xs: 1.5, sm: 2 },
@@ -124,8 +123,8 @@ function SubjectBaseCard({
         >
           {resolvedLabel}
         </Typography>
-      </CardContent>
-    </Card>
+      </Box>
+    </AppCard>
   )
 }
 

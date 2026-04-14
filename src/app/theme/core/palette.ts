@@ -48,13 +48,13 @@ const lightPalette: ThemeOptions['palette'] = {
     light: AppColors.light.primaryLight,
     dark: AppColors.light.primaryDark,
     hover: AppColors.light.primaryHover,
-    contrastText: '#FFFFFF',
+    contrastText: AppColors.light.contrastText,
   },
   secondary: {
     main: AppColors.light.secondary,
     light: AppColors.light.secondaryLight,
     dark: AppColors.light.secondaryDark,
-    contrastText: '#FFFFFF',
+    contrastText: AppColors.light.contrastText,
   },
   success: {
     main: AppColors.light.success,
@@ -93,13 +93,13 @@ const darkPalette: ThemeOptions['palette'] = {
     light: AppColors.dark.primaryLight,
     dark: AppColors.dark.primaryDark,
     hover: AppColors.dark.primaryHover,
-    contrastText: '#08111F',
+    contrastText: AppColors.dark.contrastTextPrimary,
   },
   secondary: {
     main: AppColors.dark.secondary,
     light: AppColors.dark.secondaryLight,
     dark: AppColors.dark.secondaryDark,
-    contrastText: '#041816',
+    contrastText: AppColors.dark.contrastTextSecondary,
   },
   success: {
     main: AppColors.dark.success,

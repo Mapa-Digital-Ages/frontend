@@ -5,6 +5,7 @@ import { commonRoutes } from '@/modules/common/route'
 import { companyRoutes } from '@/modules/company/route'
 import { parentRoutes } from '@/modules/parent/route'
 import { schoolRoutes } from '@/modules/school/route'
+import { schoolCompanyRoutes } from '@/modules/school-company/route'
 import { studentRoutes } from '@/modules/student/route'
 
 export const router = createBrowserRouter([
@@ -14,5 +15,6 @@ export const router = createBrowserRouter([
   ...adminRoutes,
   ...schoolRoutes,
   ...companyRoutes,
+  ...schoolCompanyRoutes,
   ...commonRoutes,
 ])

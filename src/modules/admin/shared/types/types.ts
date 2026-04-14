@@ -125,8 +125,10 @@ export interface ContentApprovalDraftInput {
 }
 
 export interface ParentApprovalDraftInput {
-  email: string
-  password: string
+  childName?: string
+  email?: string
+  password?: string
+  requestedAt?: string
   title: string
 }
 

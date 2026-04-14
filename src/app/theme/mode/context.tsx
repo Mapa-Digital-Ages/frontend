@@ -1,6 +1,7 @@
-/* eslint-disable react-refresh/only-export-components -- ThemeContext e AppThemeProvider no mesmo módulo */
+/* eslint-disable react-refresh/only-export-components */
 import {
   createContext,
+  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -36,9 +37,9 @@ function getSystemMode(): PaletteMode {
 }
 
 function applyThemeToDocument(mode: PaletteMode) {
-  const rootElement = document.documentElement
-  rootElement.dataset.theme = mode
-  rootElement.classList.toggle('dark', mode === 'dark')
+  const root = document.documentElement
+  root.dataset.theme = mode
+  root.classList.toggle('dark', mode === 'dark')
 }
 
 function getInitialPreference(): ThemePreference {
@@ -55,15 +56,15 @@ export function AppThemeProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
 
-    function handleSystemModeChange() {
+    function handleChange() {
       setSystemMode(mediaQuery.matches ? 'dark' : 'light')
     }
 
-    handleSystemModeChange()
-    mediaQuery.addEventListener('change', handleSystemModeChange)
+    handleChange()
+    mediaQuery.addEventListener('change', handleChange)
 
     return () => {
-      mediaQuery.removeEventListener('change', handleSystemModeChange)
+      mediaQuery.removeEventListener('change', handleChange)
     }
   }, [])
 
@@ -71,13 +72,18 @@ export function AppThemeProvider({ children }: PropsWithChildren) {
     applyThemeToDocument(mode)
   }, [mode])
 
-  function setThemePreference(nextPreference: ThemePreference) {
+  const setThemePreference = useCallback((nextPreference: ThemePreference) => {
     setPreference(nextPreference)
     setStorageItem(STORAGE_KEYS.themeMode, nextPreference)
-  }
+  }, [])
+
+  const contextValue = useMemo<ThemeContextValue>(
+    () => ({ mode, preference, setThemePreference }),
+    [mode, preference, setThemePreference]
+  )
 
   return (
-    <ThemeContext.Provider value={{ mode, preference, setThemePreference }}>
+    <ThemeContext.Provider value={contextValue}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         {children}

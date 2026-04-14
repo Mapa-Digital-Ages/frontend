@@ -1,11 +1,10 @@
 import AutoStoriesIcon from '@mui/icons-material/AutoStories'
-import PlayCircleFilledWhiteOutlinedIcon from '@mui/icons-material/PlayCircleFilledWhiteOutlined'
 import RouteRoundedIcon from '@mui/icons-material/RouteRounded'
+import PlayCircleFilledWhiteOutlinedIcon from '@mui/icons-material/PlayCircleFilledWhiteOutlined'
 import UploadFileOutlinedIcon from '@mui/icons-material/UploadFileOutlined'
 import FavoriteBorderRoundedIcon from '@mui/icons-material/FavoriteBorderRounded'
 import ChatBubbleOutlineRoundedIcon from '@mui/icons-material/ChatBubbleOutlineRounded'
-import BarChartRoundedIcon from '@mui/icons-material/BarChartRounded'
-import PersonRoundedIcon from '@mui/icons-material/PersonRounded'
+import WidgetsRoundedIcon from '@mui/icons-material/WidgetsRounded'
 import type { SidebarItem } from '@/shared/types/common'
 import { APP_ROUTES } from '@/app/router/paths'
 
@@ -22,18 +21,8 @@ export const studentNavigation: SidebarItem[] = [
   },
   {
     label: 'Conteúdos',
-    path: APP_ROUTES.student.components,
+    path: APP_ROUTES.student.contents,
     icon: <PlayCircleFilledWhiteOutlinedIcon fontSize="medium" />,
-  },
-  {
-    label: 'Perfil / Onboarding',
-    path: APP_ROUTES.student.profile,
-    icon: <PersonRoundedIcon fontSize="medium" />,
-  },
-  {
-    label: 'Desempenho',
-    path: APP_ROUTES.student.performance,
-    icon: <BarChartRoundedIcon fontSize="medium" />,
   },
   {
     label: 'Upload de Avaliações',
@@ -41,13 +30,18 @@ export const studentNavigation: SidebarItem[] = [
     icon: <UploadFileOutlinedIcon fontSize="medium" />,
   },
   {
-    label: 'Rotina & Bem-estar',
+    label: 'Rotina & Bem-Estar',
     path: APP_ROUTES.student.routine,
     icon: <FavoriteBorderRoundedIcon fontSize="medium" />,
   },
   {
-    label: 'Chat IA',
+    label: 'Chat AI',
     path: APP_ROUTES.student.chat,
     icon: <ChatBubbleOutlineRoundedIcon fontSize="medium" />,
+  },
+  {
+    label: 'Componentes',
+    path: APP_ROUTES.student.components,
+    icon: <WidgetsRoundedIcon fontSize="medium" />,
   },
 ]

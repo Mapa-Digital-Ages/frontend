@@ -3,6 +3,7 @@ import { useTheme } from '@mui/material/styles'
 import ProgressBar from '../ui/ProgressBar'
 import StarOutlineIcon from '@mui/icons-material/StarOutline'
 import { getRoleGradient, getRolePalette } from '@/app/theme/core/roles'
+import { useAuth } from '@/app/auth/hook'
 import type { UserRole } from '@/shared/types/user'
 
 type HeaderVariant =
@@ -26,7 +27,7 @@ const headerRoleByVariant = {
   admin: 'admin',
   aluno: 'aluno',
   company: 'empresa',
-  enterpriseSchool: 'escola',
+  enterpriseSchool: 'escola_empresa',
   responsavel: 'responsavel',
   school: 'escola',
 } satisfies Record<HeaderVariant, UserRole>
@@ -53,6 +54,7 @@ function PageHeader({
   variant = 'aluno',
 }: PageHeaderProps) {
   const theme = useTheme()
+  const { user } = useAuth()
   const headerRole = getHeaderRole(variant)
   const headerPalette = getRolePalette(theme, headerRole)
   const headerBackground = getRoleGradient(
@@ -60,6 +62,8 @@ function PageHeader({
     headerRole,
     headerGradientAngleByVariant[variant]
   )
+  const resolvedEyebrow =
+    eyebrow ?? (user?.name ? `Olá, ${user.name}` : undefined)
 
   return (
     <Stack
@@ -71,9 +75,9 @@ function PageHeader({
       }}
     >
       <Box className="space-y-1 min-w-0 w-full">
-        {eyebrow && (
+        {resolvedEyebrow && (
           <Typography variant="body2" className="opacity-80">
-            {eyebrow}
+            {resolvedEyebrow}
           </Typography>
         )}
 

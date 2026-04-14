@@ -13,7 +13,7 @@ import AppInput from '@/shared/ui/AppInput'
 import { AppTag } from '@/shared/ui/AppTags'
 import AppPageContainer from '@/shared/ui/AppPageContainer'
 import { useUserRole } from '@/app/access/hook'
-import { contentApprovalService } from '@/modules/admin/approvals/services/runtime'
+import { contentApprovalService } from '@/modules/admin/content/services/runtime'
 import { getRolePalette } from '@/app/theme/core/roles'
 import type { ContentCorrectionSession } from '@/modules/admin/shared/types/types'
 

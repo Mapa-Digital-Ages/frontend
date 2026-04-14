@@ -39,6 +39,7 @@ export class AppColors {
     hoverBorder: 'rgba(189, 197, 209, 1)',
     textPrimary: 'rgba(16, 42, 67, 1)',
     textSecondary: 'rgba(82, 96, 109, 1)',
+    contrastText: 'rgba(255, 255, 255, 1)',
   } as const
 
   static readonly dark = {
@@ -64,6 +65,8 @@ export class AppColors {
     hoverBorder: 'rgba(75, 97, 132, 1)',
     textPrimary: 'rgba(244, 247, 251, 1)',
     textSecondary: 'rgba(182, 194, 207, 1)',
+    contrastTextPrimary: 'rgba(8, 17, 31, 1)',
+    contrastTextSecondary: 'rgba(4, 24, 22, 1)',
   } as const
 
   static readonly role: Record<UserRole, RoleColorPalette> = {
@@ -96,6 +99,12 @@ export class AppColors {
       primary: 'rgba(36, 158, 117, 1)',
       secondary: 'rgba(31, 132, 112, 1)',
       soft: 'rgba(209, 250, 229, 1)',
+    },
+    escola_empresa: {
+      contrast: 'rgba(255, 255, 255, 1)',
+      primary: 'rgba(14, 116, 144, 1)',
+      secondary: 'rgba(8, 145, 178, 1)',
+      soft: 'rgba(207, 250, 254, 1)',
     },
   }
 

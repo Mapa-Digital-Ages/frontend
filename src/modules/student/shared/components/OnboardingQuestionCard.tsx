@@ -1,105 +1,132 @@
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded'
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded'
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded'
-import {
-  Box,
-  Button,
-  type ButtonProps,
-  Card,
-  CardContent,
-  Stack,
-  Typography,
-} from '@mui/material'
+import { Box, Button, Stack, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
-import React from 'react'
-import type { ReactNode } from 'react'
-import { AppSubjectTag } from '@/shared/ui/AppSubjectsTags'
-import { getSubjectTheme, type SubjectTheme } from '@/shared/utils/themes'
-import type { SubjectContext } from '@/shared/types/common'
+import React, { useState } from 'react'
+import AppTags from '@/shared/ui/AppTags'
+import AppCard from '@/shared/ui/AppCard'
 import ProgressBar from '@/shared/ui/ProgressBar'
-
-interface OnboardingQuestionOption {
-  id: string
-  label: string
-}
+import { getSubjectTheme, SUBJECTS } from '@/shared/utils/themes'
+import type {
+  QuestionFlowActionInput,
+  QuestionFlowPayload,
+} from '@/modules/student/shared/types/types'
 
 interface OnboardingQuestionCardProps {
-  backButtonProps?: ButtonProps
-  currentQuestion: number
-  disableNext?: boolean
-  disablePreviousQuestion?: boolean
-  nextButtonProps?: ButtonProps
+  assessmentId?: string
+  initialAnswersByQuestionId?: Record<string, string>
+  onAnswer?: (answer: QuestionFlowActionInput) => void | Promise<void>
   onBack?: () => void
-  onNext?: () => void
-  onPreviousQuestion?: () => void
-  onSelectOption?: (optionId: string) => void
-  nextButtonLabel?: string
-  options: OnboardingQuestionOption[]
-  previousQuestionButtonProps?: ButtonProps
-  previousQuestionLabel?: string
-  progress: number
-  question: string
-  questionOrderLabel: string
-  selectedOptionId?: string
-  subject: SubjectContext
-  subjectBadgeSlot?: (params: {
-    subject: SubjectContext
-    subjectTheme: SubjectTheme
-  }) => ReactNode
+  onComplete?: (answersByQuestionId: Record<string, string>) => void
+  questions: QuestionFlowPayload[]
   title?: string
-  totalQuestions: number
+}
+
+function getProgress(
+  questions: QuestionFlowPayload[],
+  answersByQuestionId: Record<string, string>
+) {
+  if (questions.length === 0) {
+    return 0
+  }
+
+  const answeredQuestions = questions.filter(
+    question => answersByQuestionId[question.id]
+  )
+
+  return Math.round((answeredQuestions.length / questions.length) * 100)
 }
 
 function OnboardingQuestionCard({
-  backButtonProps,
-  currentQuestion,
-  disableNext = false,
-  disablePreviousQuestion = false,
-  nextButtonProps,
+  assessmentId = 'local-assessment',
+  initialAnswersByQuestionId = {},
+  onAnswer,
   onBack,
-  onNext,
-  onPreviousQuestion,
-  onSelectOption,
-  nextButtonLabel = 'Próxima questão',
-  options,
-  previousQuestionButtonProps,
-  previousQuestionLabel = 'Questão anterior',
-  progress,
-  question,
-  questionOrderLabel,
-  selectedOptionId,
-  subject,
-  subjectBadgeSlot,
+  onComplete,
+  questions,
   title = 'Questionário de Nivelamento',
-  totalQuestions,
 }: OnboardingQuestionCardProps) {
   const theme = useTheme()
-  const subjectTheme = getSubjectTheme(subject, { mode: theme.palette.mode })
-  const completionLabel = `${currentQuestion} / ${totalQuestions} questão(ões) - ${Math.round(progress)}% concluído`
-  const subjectBadge = subjectBadgeSlot?.({ subject, subjectTheme }) ?? (
-    <AppSubjectTag subject={subject} size="sm" />
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
+  const [answersByQuestionId, setAnswersByQuestionId] = useState(
+    initialAnswersByQuestionId
   )
+  const safeQuestions = questions.length
+    ? questions
+    : [
+        {
+          id: 'empty-question',
+          options: [],
+          question: 'Nenhuma questão disponível no momento.',
+          subject: SUBJECTS.matematica,
+        },
+      ]
+  const currentQuestion =
+    safeQuestions[Math.min(currentQuestionIndex, safeQuestions.length - 1)]
+  const selectedOptionId = answersByQuestionId[currentQuestion.id]
+  const progress = getProgress(safeQuestions, answersByQuestionId)
+  const isFirstQuestion = currentQuestionIndex === 0
+  const isLastQuestion = currentQuestionIndex === safeQuestions.length - 1
+  const subjectTheme = getSubjectTheme(currentQuestion.subject, {
+    mode: theme.palette.mode,
+  })
+  const completionLabel = `${currentQuestionIndex + 1} / ${safeQuestions.length} questão(ões) - ${progress}% concluído`
+  const questionOrderLabel = `Questão ${currentQuestionIndex + 1} / ${safeQuestions.length}`
+  const subjectBadge = <AppTags size="sm" tags={[currentQuestion.subject]} />
+
+  function handleSelectOption(optionId: string) {
+    const answer = {
+      assessmentId,
+      currentQuestionIndex,
+      isCompleted: isLastQuestion,
+      optionId,
+      questionId: currentQuestion.id,
+    }
+
+    setAnswersByQuestionId(currentAnswers => ({
+      ...currentAnswers,
+      [currentQuestion.id]: optionId,
+    }))
+
+    void onAnswer?.(answer)
+  }
+
+  function handlePreviousQuestion() {
+    setCurrentQuestionIndex(currentIndex => Math.max(0, currentIndex - 1))
+  }
+
+  function handleNextQuestion() {
+    if (!selectedOptionId) {
+      return
+    }
+
+    if (isLastQuestion) {
+      onComplete?.(answersByQuestionId)
+      return
+    }
+
+    setCurrentQuestionIndex(currentIndex =>
+      Math.min(safeQuestions.length - 1, currentIndex + 1)
+    )
+  }
 
   return (
-    <Card
+    <AppCard
+      contentSx={{
+        display: 'grid',
+        gap: { md: 3, xs: 2.5 },
+        p: { md: 4, xs: 2.5 },
+      }}
       sx={{
-        backgroundColor: theme.palette.background.paper,
         border: `1px solid ${subjectTheme.border.borderColor}`,
-        borderRadius: 'var(--app-radius-card)',
         boxShadow: '0 12px 30px rgba(16, 24, 40, 0.04)',
         maxWidth: 768,
       }}
     >
-      <CardContent
-        sx={{
-          display: 'grid',
-          gap: { md: 3, xs: 2.5 },
-          p: { md: 4, xs: 2.5 },
-        }}
-      >
+      {onBack ? (
         <Box>
           <Button
-            {...backButtonProps}
             onClick={onBack}
             size="small"
             startIcon={<ArrowBackIosNewRoundedIcon sx={{ fontSize: 14 }} />}
@@ -113,198 +140,201 @@ function OnboardingQuestionCard({
             Voltar
           </Button>
         </Box>
+      ) : null}
 
-        <Stack spacing={1}>
+      <Stack spacing={1}>
+        <Typography
+          sx={{
+            color: subjectTheme.text.color,
+            fontSize: { md: 24, xs: 20 },
+            fontWeight: 700,
+            lineHeight: 1.2,
+          }}
+        >
+          {title}
+        </Typography>
+        <Stack
+          direction={{ sm: 'row', xs: 'column' }}
+          spacing={1}
+          sx={{ alignItems: { sm: 'center', xs: 'flex-start' } }}
+        >
           <Typography
-            sx={{
-              color: subjectTheme.text.color,
-              fontSize: { md: 24, xs: 20 },
-              fontWeight: 700,
-              lineHeight: 1.2,
-            }}
+            sx={{ color: subjectTheme.mutedText.color, fontSize: 13 }}
           >
-            {title}
+            Disciplina:
           </Typography>
-          <Stack
-            direction={{ sm: 'row', xs: 'column' }}
-            spacing={1}
-            sx={{ alignItems: { sm: 'center', xs: 'flex-start' } }}
-          >
-            <Typography
-              sx={{ color: subjectTheme.mutedText.color, fontSize: 13 }}
-            >
-              Disciplina:
-            </Typography>
-            {subjectBadge}
-          </Stack>
+          {subjectBadge}
         </Stack>
+      </Stack>
 
-        <Box
-          sx={{
-            backgroundColor: theme.palette.background.paper,
-            border: `1px solid ${subjectTheme.border.borderColor}`,
-            borderRadius: 'var(--app-radius-control)',
-            display: 'grid',
-            gap: 1,
-            px: { md: 2.25, xs: 1.5 },
-            py: { md: 1.75, xs: 1.5 },
-          }}
-        >
-          <ProgressBar
-            showValueLabel
-            subject={subject}
-            thickness={8}
-            value={progress}
-            valueLabel={completionLabel}
-            valueLabelVariant="soft"
-          />
-        </Box>
+      <Box
+        sx={{
+          backgroundColor: theme.palette.background.paper,
+          border: `1px solid ${subjectTheme.border.borderColor}`,
+          borderRadius: 'var(--app-radius-control)',
+          display: 'grid',
+          gap: 1,
+          px: { md: 2.25, xs: 1.5 },
+          py: { md: 1.75, xs: 1.5 },
+        }}
+      >
+        <ProgressBar
+          showValueLabel
+          subject={currentQuestion.subject}
+          thickness={8}
+          value={progress}
+          valueLabel={completionLabel}
+          valueLabelVariant="soft"
+        />
+      </Box>
 
-        <Box
-          sx={{
-            backgroundColor: subjectTheme.softSurface.backgroundColor,
-            border: `1px solid ${subjectTheme.softSurface.borderColor}`,
-            borderRadius: '16px',
-            display: 'grid',
-            gap: 2,
-            p: { md: 3, xs: 2 },
-          }}
+      <Box
+        sx={{
+          backgroundColor: subjectTheme.softSurface.backgroundColor,
+          border: `1px solid ${subjectTheme.softSurface.borderColor}`,
+          borderRadius: '16px',
+          display: 'grid',
+          gap: 2,
+          p: { md: 3, xs: 2 },
+        }}
+      >
+        <Stack
+          direction={{ sm: 'row', xs: 'column' }}
+          spacing={{ sm: 2, xs: 1.5 }}
+          sx={{ justifyContent: 'space-between' }}
         >
-          <Stack
-            direction={{ sm: 'row', xs: 'column' }}
-            spacing={{ sm: 2, xs: 1.5 }}
-            sx={{ justifyContent: 'space-between' }}
-          >
-            <Stack spacing={1}>
-              <Box sx={{ alignSelf: 'flex-start' }}>{subjectBadge}</Box>
-              <Typography
-                sx={{
-                  color: subjectTheme.text.color,
-                  fontSize: { md: 22, xs: 18 },
-                  fontWeight: 700,
-                  lineHeight: 1.2,
-                }}
-              >
-                {question}
-              </Typography>
-            </Stack>
+          <Stack spacing={1}>
+            <Box sx={{ alignSelf: 'flex-start' }}>{subjectBadge}</Box>
             <Typography
               sx={{
-                backgroundColor:
-                  theme.palette.mode === 'dark'
-                    ? alpha(theme.palette.background.paper, 0.72)
-                    : subjectTheme.badge.backgroundColor,
-                border: `1px solid ${alpha(subjectTheme.color, theme.palette.mode === 'dark' ? 0.4 : 0.28)}`,
-                borderRadius: 'var(--app-radius-pill)',
-                color: subjectTheme.color,
-                fontSize: { md: 17, xs: 14 },
+                color: subjectTheme.text.color,
+                fontSize: { md: 22, xs: 18 },
                 fontWeight: 700,
-                height: 'fit-content',
-                lineHeight: 1,
-                p: 1,
-                whiteSpace: 'nowrap',
+                lineHeight: 1.2,
               }}
             >
-              {questionOrderLabel}
+              {currentQuestion.question}
             </Typography>
           </Stack>
+          <Typography
+            sx={{
+              backgroundColor:
+                theme.palette.mode === 'dark'
+                  ? alpha(theme.palette.background.paper, 0.72)
+                  : subjectTheme.badge.backgroundColor,
+              border: `1px solid ${alpha(
+                subjectTheme.color,
+                theme.palette.mode === 'dark' ? 0.4 : 0.28
+              )}`,
+              borderRadius: 'var(--app-radius-pill)',
+              color: subjectTheme.color,
+              fontSize: { md: 17, xs: 14 },
+              fontWeight: 700,
+              height: 'fit-content',
+              lineHeight: 1,
+              p: 1,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {questionOrderLabel}
+          </Typography>
+        </Stack>
 
-          <Stack spacing={2}>
-            {options.map(option => {
-              const isSelected = option.id === selectedOptionId
+        <Stack spacing={2}>
+          {currentQuestion.options.map(option => {
+            const isSelected = option.id === selectedOptionId
 
-              return (
-                <Button
-                  aria-pressed={isSelected}
-                  key={option.id}
-                  onClick={() => onSelectOption?.(option.id)}
-                  sx={{
-                    backgroundColor: isSelected
-                      ? subjectTheme.optionSelected.backgroundColor
-                      : subjectTheme.option.backgroundColor,
-                    borderColor: isSelected
-                      ? subjectTheme.optionSelected.borderColor
-                      : subjectTheme.option.borderColor,
-                    borderRadius: 'var(--app-radius-control)',
-                    color: isSelected
-                      ? subjectTheme.optionSelected.color
-                      : subjectTheme.option.color,
-                    justifyContent: 'flex-start',
-                    minHeight: 48,
-                    px: 2,
-                    py: 1.25,
-                    textAlign: 'left',
-                    textTransform: 'none',
-                    '&:hover': {
-                      backgroundColor:
-                        subjectTheme.optionSelected.backgroundColor,
-                      borderColor: subjectTheme.color,
-                    },
-                  }}
-                  variant="outlined"
-                >
-                  {option.label}
-                </Button>
-              )
-            })}
-          </Stack>
-        </Box>
+            return (
+              <Button
+                aria-pressed={isSelected}
+                key={option.id}
+                onClick={() => handleSelectOption(option.id)}
+                sx={{
+                  backgroundColor: isSelected
+                    ? subjectTheme.optionSelected.backgroundColor
+                    : subjectTheme.option.backgroundColor,
+                  borderColor: isSelected
+                    ? subjectTheme.optionSelected.borderColor
+                    : subjectTheme.option.borderColor,
+                  borderRadius: 'var(--app-radius-control)',
+                  color: isSelected
+                    ? subjectTheme.optionSelected.color
+                    : subjectTheme.option.color,
+                  justifyContent: 'flex-start',
+                  minHeight: 48,
+                  px: 2,
+                  py: 1.25,
+                  textAlign: 'left',
+                  textTransform: 'none',
+                  transition:
+                    'background-color 180ms ease, border-color 180ms ease, color 180ms ease',
+                  '&:hover': {
+                    backgroundColor:
+                      subjectTheme.optionSelected.backgroundColor,
+                    borderColor: subjectTheme.color,
+                  },
+                }}
+                variant="outlined"
+              >
+                {option.label}
+              </Button>
+            )
+          })}
+        </Stack>
+      </Box>
 
-        <Box
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 1.25,
+          gridTemplateColumns: { sm: 'repeat(2, minmax(0, 1fr))', xs: '1fr' },
+        }}
+      >
+        <Button
+          disabled={isFirstQuestion}
+          onClick={handlePreviousQuestion}
+          startIcon={<ArrowBackRoundedIcon />}
           sx={{
-            display: 'grid',
-            gap: 1.25,
-            gridTemplateColumns: { sm: 'repeat(2, minmax(0, 1fr))', xs: '1fr' },
+            borderColor: subjectTheme.border.borderColor,
+            borderRadius: 'var(--app-radius-pill)',
+            color: subjectTheme.mutedText.color,
+            fontWeight: 700,
+            minHeight: 44,
+            px: 3,
+            width: '100%',
           }}
+          variant="outlined"
         >
-          <Button
-            {...previousQuestionButtonProps}
-            disabled={disablePreviousQuestion}
-            onClick={onPreviousQuestion}
-            startIcon={<ArrowBackRoundedIcon />}
-            sx={{
-              borderColor: subjectTheme.border.borderColor,
-              borderRadius: 'var(--app-radius-pill)',
-              color: subjectTheme.mutedText.color,
-              fontWeight: 700,
-              minHeight: 44,
-              px: 3,
-              width: '100%',
-            }}
-            variant="outlined"
-          >
-            {previousQuestionLabel}
-          </Button>
-          <Button
-            {...nextButtonProps}
-            disabled={disableNext}
-            endIcon={<ArrowForwardRoundedIcon />}
-            onClick={onNext}
-            sx={{
+          Questão anterior
+        </Button>
+        <Button
+          disabled={!selectedOptionId}
+          endIcon={<ArrowForwardRoundedIcon />}
+          onClick={handleNextQuestion}
+          sx={{
+            backgroundColor: subjectTheme.solidSurface.backgroundColor,
+            borderRadius: 'var(--app-radius-pill)',
+            boxShadow: 'none',
+            color: subjectTheme.solidSurface.color,
+            fontWeight: 700,
+            minHeight: 42,
+            px: 3,
+            width: '100%',
+            '&:hover': {
               backgroundColor: subjectTheme.solidSurface.backgroundColor,
-              borderRadius: 'var(--app-radius-pill)',
-              color: subjectTheme.solidSurface.color,
-              boxShadow: 'none',
-              fontWeight: 700,
-              minHeight: 42,
-              px: 3,
-              width: '100%',
-              '&:hover': {
-                backgroundColor: subjectTheme.solidSurface.backgroundColor,
-                opacity: 0.92,
-              },
-              '&.Mui-disabled': {
-                backgroundColor: subjectTheme.progressTrack,
-                color: subjectTheme.mutedText.color,
-              },
-            }}
-            variant="contained"
-          >
-            {nextButtonLabel}
-          </Button>
-        </Box>
-      </CardContent>
-    </Card>
+              opacity: 0.92,
+            },
+            '&.Mui-disabled': {
+              backgroundColor: subjectTheme.progressTrack,
+              color: subjectTheme.mutedText.color,
+            },
+          }}
+          variant="contained"
+        >
+          {isLastQuestion ? 'Concluir' : 'Próxima questão'}
+        </Button>
+      </Box>
+    </AppCard>
   )
 }
 

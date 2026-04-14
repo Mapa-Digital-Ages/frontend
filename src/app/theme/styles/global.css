@@ -89,6 +89,15 @@
     var(--app-role-school-primary) 0%,
     var(--app-role-school-secondary) 100%
   );
+  --app-role-school-company-primary: rgba(14, 116, 144, 1);
+  --app-role-school-company-secondary: rgba(8, 145, 178, 1);
+  --app-role-school-company-soft: rgba(207, 250, 254, 1);
+  --app-role-school-company-contrast: rgba(255, 255, 255, 1);
+  --app-role-school-company-gradient: linear-gradient(
+    135deg,
+    var(--app-role-school-company-primary) 0%,
+    var(--app-role-school-company-secondary) 100%
+  );
   --app-body-gradient:
     radial-gradient(
       circle at top left,
@@ -197,6 +206,11 @@
   --color-role-school-primary: var(--app-role-school-primary);
   --color-role-school-secondary: var(--app-role-school-secondary);
   --color-role-school-soft: var(--app-role-school-soft);
+  --color-role-school-company-primary: var(--app-role-school-company-primary);
+  --color-role-school-company-secondary: var(
+    --app-role-school-company-secondary
+  );
+  --color-role-school-company-soft: var(--app-role-school-company-soft);
 }
 
 * {

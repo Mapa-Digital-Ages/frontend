@@ -29,6 +29,7 @@ interface AppActionModalProps {
   children?: ReactNode
   confirmLabel?: string
   confirmColor?: string
+  confirmHoverColor?: string
   confirmTextColor?: string
   confirmTone?: AppActionModalTone
   description?: ReactNode
@@ -67,6 +68,7 @@ function AppActionModal({
   children,
   confirmLabel = 'Confirmar',
   confirmColor,
+  confirmHoverColor,
   confirmTextColor = '#ffffff',
   confirmTone = 'primary.main',
   description,
@@ -85,7 +87,16 @@ function AppActionModal({
   const titleId = useId()
   const descriptionId = useId()
   const resolvedMode = mode ?? variant
-  const accentColor = confirmColor ?? resolveToneColor(theme, confirmTone)
+  const accentColor =
+    confirmColor ??
+    (confirmTone === 'primary.main'
+      ? 'var(--app-role-current-primary, var(--app-primary))'
+      : resolveToneColor(theme, confirmTone))
+  const accentHoverColor =
+    confirmHoverColor ??
+    (confirmTone === 'primary.main'
+      ? 'var(--app-role-current-hover-solid, var(--app-primary-dark))'
+      : resolveToneColor(theme, confirmTone))
   const confirmContent = loading ? (
     <Box className="flex items-center justify-center">
       <CircularProgress color="inherit" size={18} />
@@ -199,7 +210,7 @@ function AppActionModal({
           <AppButton
             backgroundColor={accentColor}
             disabled={disableConfirm || loading}
-            hoverBackgroundColor={accentColor}
+            hoverBackgroundColor={accentHoverColor}
             onClick={onConfirm}
             textColor={confirmTextColor}
           >

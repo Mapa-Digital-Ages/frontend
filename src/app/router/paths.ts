@@ -9,38 +9,39 @@ export const APP_ROUTES = {
   student: {
     dashboard: '/student/dashboard',
     adaptiveTrail: '/student/adaptive-trail',
-    contents: '/student/components',
+    contents: '/student/contents',
     uploads: '/student/uploads',
     routine: '/student/routine',
     chat: '/student/chat',
     components: '/student/components',
-    profile: '/student/profile',
-    /** @deprecated use profile — mantido para links legados */
-    onboardingFlow: '/student/profile',
-    subjects: '/student/components',
-    performance: '/student/performance',
   },
   parent: {
     dashboard: '/parent/dashboard',
-    students: '/parent/students',
-    studentDetails: '/parent/students/:studentId',
-    emotional: '/parent/emotional',
-    financial: '/parent/financial',
   },
   admin: {
-    approvals: '/admin/approvals',
-    correction: '/admin/approvals/corrections/:contentId',
     dashboard: '/admin/dashboard',
+    schoolsAndCompanies: '/admin/schools-companies',
+    students: '/admin/students',
+    parents: '/admin/parents',
+    contents: '/admin/contents',
+    correction: '/admin/corrections/:contentId',
   },
   school: {
     dashboard: '/school/dashboard',
-    students: '/school/students',
     classes: '/school/classes',
+    partners: '/school/partners',
+    requestPartner: '/school/request-partner',
   },
   company: {
     dashboard: '/company/dashboard',
-    partnerships: '/company/partnerships',
-    reports: '/company/reports',
+    adoptedSchools: '/company/adopted-schools',
+  },
+  schoolCompany: {
+    dashboard: '/school-company/dashboard',
+    classes: '/school-company/classes',
+    partners: '/school-company/partners',
+    requestPartner: '/school-company/request-partner',
+    adoptedSchools: '/school-company/adopted-schools',
   },
   common: {
     unauthorized: '/unauthorized',
@@ -48,7 +49,7 @@ export const APP_ROUTES = {
 } as const
 
 export function buildAdminCorrectionRoute(contentId: string) {
-  return `/admin/approvals/corrections/${contentId}`
+  return `/admin/corrections/${contentId}`
 }
 
 export function buildParentStudentDetailsRoute(studentId: string) {
@@ -61,4 +62,5 @@ export const DEFAULT_ROUTE_BY_ROLE: Record<UserRole, string> = {
   admin: APP_ROUTES.admin.dashboard,
   empresa: APP_ROUTES.company.dashboard,
   escola: APP_ROUTES.school.dashboard,
+  escola_empresa: APP_ROUTES.schoolCompany.dashboard,
 }

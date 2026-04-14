@@ -15,6 +15,7 @@ type AppButtonProps<C extends ElementType = 'button'> = MuiButtonProps<
     hasBorder?: boolean
     textColor?: string
     hoverBackgroundColor?: string
+    hoverBorderColor?: string
     backgroundColor?:
       | 'primary.main'
       | 'secondary.main'
@@ -50,14 +51,23 @@ function AppButton<C extends ElementType = 'button'>({
   borderRadius = 'var(--app-radius-control)',
   iconPosition,
   hasBorder = false,
-  textColor = 'primary.contrastText',
+  textColor = 'var(--app-role-current-contrast, var(--app-role-student-contrast))',
   hoverBackgroundColor,
+  hoverBorderColor = 'var(--app-role-action-hover-border)',
   ...props
 }: AppButtonProps<C>) {
   const hoverBackground =
     hoverBackgroundColor ??
-    hoverBackgroundMap[backgroundColor as keyof typeof hoverBackgroundMap] ??
-    backgroundColor
+    (backgroundColor === 'primary.main'
+      ? 'var(--app-role-current-hover-solid, var(--app-primary-dark))'
+      : hoverBackgroundMap[
+          backgroundColor as keyof typeof hoverBackgroundMap
+        ]) ??
+    'var(--app-role-action-hover-bg)'
+  const resolvedBackgroundColor =
+    backgroundColor === 'primary.main'
+      ? 'var(--app-role-current-primary, var(--app-primary))'
+      : backgroundColor
 
   return (
     <Button
@@ -81,11 +91,10 @@ function AppButton<C extends ElementType = 'button'>({
         transition: '0.2s',
         fontWeight: 500,
         color: textColor,
-        backgroundColor: backgroundColor,
+        backgroundColor: resolvedBackgroundColor,
         '&:hover': {
           backgroundColor: hoverBackground,
-          filter: 'brightness(0.9)',
-          borderColor: 'background.hoverBorder',
+          borderColor: hoverBorderColor,
         },
 
         padding:

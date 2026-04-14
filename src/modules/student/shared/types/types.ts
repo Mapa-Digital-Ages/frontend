@@ -1,5 +1,17 @@
 import type { SubjectContext } from '@/shared/types/common'
 
+export type Status = 'done' | 'pending' | 'overdue'
+
+export type Task = {
+  id: string
+  question: string
+  options: Array<{
+    id: string
+    label: string
+  }>
+  subject: SubjectContext
+}
+
 export type StudentComponentsLoaderData = {
   availableComponents: {
     onboardingQuestionCard: boolean
@@ -9,7 +21,7 @@ export type StudentComponentsLoaderData = {
   subjects: SubjectContext[]
 }
 
-export type StudentOnboardingFlowQuestionPayload = {
+export type QuestionFlowPayload = {
   id: string
   options: Array<{
     id: string
@@ -19,17 +31,20 @@ export type StudentOnboardingFlowQuestionPayload = {
   subject: SubjectContext
 }
 
-export type StudentOnboardingFlowLoaderData = {
+export type QuestionFlowLoaderData = {
   assessmentId: string
   initialAnswersByQuestionId?: Record<string, string>
   initialSubject?: SubjectContext
-  questions: StudentOnboardingFlowQuestionPayload[]
+  questions: QuestionFlowPayload[]
 }
 
-export type StudentOnboardingFlowActionInput = {
+export type QuestionFlowActionInput = {
   assessmentId: string
   currentQuestionIndex: number
   isCompleted?: boolean
   optionId: string
   questionId: string
 }
+
+export type StudentOnboardingFlowLoaderData = QuestionFlowLoaderData
+export type StudentOnboardingFlowActionInput = QuestionFlowActionInput

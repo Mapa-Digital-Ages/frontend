@@ -3,8 +3,6 @@ import { ProtectedRoute, RoleRoute } from '@/app/router/guards'
 import { APP_ROUTES } from '@/app/router/paths'
 import DashboardLayout from '@/app/layout/DashboardLayout'
 import CompanyDashboardPage from '@/modules/company/dashboard/page/Page'
-import CompanyPartnershipsPage from '@/modules/company/partnerships/page/Page'
-import CompanyReportsPage from '@/modules/company/reports/page/Page'
 
 export const companyRoutes: RouteObject[] = [
   {
@@ -21,12 +19,8 @@ export const companyRoutes: RouteObject[] = [
                 element: <CompanyDashboardPage />,
               },
               {
-                path: APP_ROUTES.company.partnerships,
-                element: <CompanyPartnershipsPage />,
-              },
-              {
-                path: APP_ROUTES.company.reports,
-                element: <CompanyReportsPage />,
+                path: APP_ROUTES.company.adoptedSchools,
+                element: <CompanyDashboardPage />,
               },
             ],
           },

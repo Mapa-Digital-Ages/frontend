@@ -12,7 +12,7 @@ import AppCard from '@/shared/ui/AppCard'
 import AppPageContainer from '@/shared/ui/AppPageContainer'
 import { AppSubjectTag } from '@/shared/ui/AppSubjectsTags'
 import ProgressBar from '@/shared/ui/ProgressBar'
-import { studentService } from '../services/service'
+import { studentService } from '@/modules/student/dashboard/services/service'
 import { getSubjectTheme, SUBJECTS } from '@/shared/utils/themes'
 import type { StudentTask, SummaryMetric } from '@/shared/types/common'
 import MetricsCard from '@/shared/ui/MetricsCard'
@@ -51,18 +51,30 @@ export default function Page() {
     let isActive = true
 
     async function loadPage() {
-      const [nextSummary, nextTasks] = await Promise.all([
-        studentService.getSummary(),
-        studentService.getTasks(),
-      ])
+      try {
+        const [nextSummary, nextTasks] = await Promise.all([
+          studentService.getSummary(),
+          studentService.getTasks(),
+        ])
 
-      if (!isActive) {
-        return
+        if (!isActive) {
+          return
+        }
+
+        setSummary(nextSummary)
+        setTasks(nextTasks.slice(0, 3))
+      } catch {
+        if (!isActive) {
+          return
+        }
+
+        setSummary([])
+        setTasks([])
+      } finally {
+        if (isActive) {
+          setIsLoading(false)
+        }
       }
-
-      setSummary(nextSummary)
-      setTasks(nextTasks.slice(0, 3))
-      setIsLoading(false)
     }
 
     void loadPage()
@@ -114,7 +126,6 @@ export default function Page() {
     <AppPageContainer className="gap-4 md:gap-5">
       <PageHeader
         variant="aluno"
-        eyebrow="Olá, Lucas!"
         title="Continue sua jornada no Mapa"
         subtitle="Progresso até o próximo nível:"
         tag="7º Ano"

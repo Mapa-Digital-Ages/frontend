@@ -15,7 +15,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import AppDropdown, { type DropdownOption } from '@/shared/ui/AppDropdown'
 import AppInput from '@/shared/ui/AppInput'
 import AppButton from '@/shared/ui/AppButton'
-import { SUBJECTS } from '@/shared/utils/subjectThemes'
+import { SUBJECTS } from '@/shared/utils/themes'
 import type { Task } from './Planner'
 import type { SubjectContext } from '@/shared/types/common'
 

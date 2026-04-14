@@ -4,20 +4,15 @@ import test from 'node:test'
 import { ThemeProvider } from '@mui/material/styles'
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { AppSubjectTag } from '../../../../shared/ui/AppSubjectsTags'
+import { createAppTheme } from '../../../../app/theme/core/theme'
 import OnboardingQuestionCard from '../../../../modules/student/shared/components/OnboardingQuestionCard'
+import { AppSubjectTag } from '../../../../shared/ui/AppSubjectsTags'
 import ProgressBar from '../../../../shared/ui/ProgressBar'
-import {
-  getNextOnboardingFlowState,
-  getOnboardingFlowProgress,
-  getPreviousOnboardingFlowState,
-  STUDENT_ONBOARDING_FLOW_QUESTIONS,
-} from '../../../../modules/student/shared/components/onboardingQuestionFlow'
 import {
   getSubjectContext,
   getSubjectTheme,
-} from '../../../../shared/utils/subjectThemes'
-import { createAppTheme } from '../../../../app/theme/core/theme'
+  SUBJECTS,
+} from '../../../../shared/utils/themes'
 
 function renderWithTheme(element: React.ReactElement) {
   return renderToStaticMarkup(
@@ -94,59 +89,35 @@ test('AppSubjectTag renders the discipline label', () => {
   assert.match(html, /Matemática/)
 })
 
-test('OnboardingQuestionCard renders the onboarding copy and answer options', () => {
+test('OnboardingQuestionCard renders the onboarding copy and answer options from question mocks', () => {
   const html = renderWithTheme(
     <OnboardingQuestionCard
-      currentQuestion={1}
-      options={[
-        { id: 'option-1', label: '1' },
-        { id: 'option-2', label: '4/8' },
-        { id: 'option-3', label: '4/4' },
+      questions={[
+        {
+          id: 'question-1',
+          options: [
+            { id: 'option-1', label: '1' },
+            { id: 'option-2', label: '4/8' },
+            { id: 'option-3', label: '4/4' },
+          ],
+          question: 'Quanto é 3/4 + 1/4?',
+          subject: SUBJECTS.matematica,
+        },
       ]}
-      progress={6}
-      question="Quanto é 3/4 + 1/4?"
-      questionOrderLabel="1 / 8"
-      subject={{ color: '#AD44F8', id: 'mathematics', label: 'Matemática' }}
-      title="Questionário de Nivelamento"
-      totalQuestions={16}
     />
   )
 
   assert.match(html, /Questionário de Nivelamento/)
   assert.match(html, /Quanto é 3\/4 \+ 1\/4\?/)
   assert.match(html, /Questão anterior/)
-  assert.match(html, /Próxima questão/)
-  assert.match(html, /1 \/ 16 questão\(ões\) - 6% concluído/)
+  assert.match(html, /Concluir/)
+  assert.match(html, /1 \/ 1 questão\(ões\) - 0% concluído/)
 })
 
-test('OnboardingQuestionCard source exposes navigation icons and composition slots', () => {
-  const onboardingQuestionCardSource = readFileSync(
-    new URL(
-      '../../../../modules/student/shared/components/OnboardingQuestionCard.tsx',
-      import.meta.url
-    ),
-    'utf8'
-  )
-
-  assert.match(onboardingQuestionCardSource, /ArrowBackRoundedIcon/)
-  assert.match(onboardingQuestionCardSource, /ArrowForwardRoundedIcon/)
-  assert.match(onboardingQuestionCardSource, /subjectBadgeSlot/)
-  assert.match(onboardingQuestionCardSource, /nextButtonProps/)
-  assert.match(onboardingQuestionCardSource, /previousQuestionButtonProps/)
-  assert.match(onboardingQuestionCardSource, /SubjectContext/)
-})
-
-test('student components area references the showcase and not the dashboard preview', () => {
+test('student components page renders the onboarding and chart mocks directly', () => {
   const studentComponentsPageSource = readFileSync(
     new URL(
-      '../../../../modules/student/subjects/page/Page.tsx',
-      import.meta.url
-    ),
-    'utf8'
-  )
-  const studentShowcaseSource = readFileSync(
-    new URL(
-      '../../../../modules/student/shared/components/StudentComponentsShowcase.tsx',
+      '../../../../modules/student/components/page/Page.tsx',
       import.meta.url
     ),
     'utf8'
@@ -159,103 +130,24 @@ test('student components area references the showcase and not the dashboard prev
     'utf8'
   )
 
-  assert.match(studentComponentsPageSource, /StudentComponentsShowcase/)
-  assert.match(studentComponentsPageSource, /size="sm"/)
-  assert.match(studentComponentsPageSource, /size="lg"/)
-  assert.match(studentShowcaseSource, /Abrir fluxo de onboarding/)
+  assert.match(
+    studentComponentsPageSource,
+    /<OnboardingQuestionCard questions=/
+  )
+  assert.match(studentComponentsPageSource, /<BarChart data=\{mockChartData\}/)
   assert.doesNotMatch(studentDashboardPageSource, /OnboardingQuestionCard/)
 })
 
-test('student onboarding flow page keeps local selection state for option clicks', () => {
-  const onboardingFlowPageSource = readFileSync(
+test('SubjectBaseCard uses AppCard as the reusable card shell', () => {
+  const source = readFileSync(
     new URL(
-      '../../../../modules/student/profile/page/Page.tsx',
+      '../../../../modules/student/shared/components/SubjectBaseCard.tsx',
       import.meta.url
     ),
     'utf8'
   )
 
-  assert.match(onboardingFlowPageSource, /useState/)
-  assert.match(onboardingFlowPageSource, /onSelectOption/)
-  assert.match(onboardingFlowPageSource, /setAnswersByQuestionId/)
-  assert.match(onboardingFlowPageSource, /setCurrentQuestionIndex/)
-})
-
-test('onboarding flow unlocks next question and increases progress after selection', () => {
-  const firstProgress = getOnboardingFlowProgress({
-    answersByQuestionId: {},
-    questions: STUDENT_ONBOARDING_FLOW_QUESTIONS,
-  })
-
-  assert.equal(firstProgress, 0)
-
-  const firstState = getNextOnboardingFlowState({
-    answersByQuestionId: {},
-    currentQuestionIndex: 0,
-    questions: STUDENT_ONBOARDING_FLOW_QUESTIONS,
-  })
-
-  assert.equal(firstState.canGoNext, false)
-  assert.equal(firstState.progress, 0)
-
-  const secondState = getNextOnboardingFlowState({
-    answersByQuestionId: {
-      [STUDENT_ONBOARDING_FLOW_QUESTIONS[0].id]:
-        STUDENT_ONBOARDING_FLOW_QUESTIONS[0].options[1].id,
-    },
-    currentQuestionIndex: 0,
-    questions: STUDENT_ONBOARDING_FLOW_QUESTIONS,
-  })
-
-  assert.equal(secondState.canGoNext, true)
-  assert.equal(secondState.progress, 33)
-  assert.equal(
-    secondState.currentQuestion.id,
-    STUDENT_ONBOARDING_FLOW_QUESTIONS[1].id
-  )
-})
-
-test('onboarding flow can go back to the previous question', () => {
-  const previousState = getPreviousOnboardingFlowState({
-    answersByQuestionId: {
-      [STUDENT_ONBOARDING_FLOW_QUESTIONS[0].id]:
-        STUDENT_ONBOARDING_FLOW_QUESTIONS[0].options[1].id,
-      [STUDENT_ONBOARDING_FLOW_QUESTIONS[1].id]:
-        STUDENT_ONBOARDING_FLOW_QUESTIONS[1].options[1].id,
-    },
-    currentQuestionIndex: 2,
-    questions: STUDENT_ONBOARDING_FLOW_QUESTIONS,
-  })
-
-  assert.equal(previousState.currentQuestionIndex, 1)
-  assert.equal(
-    previousState.currentQuestion.id,
-    STUDENT_ONBOARDING_FLOW_QUESTIONS[1].id
-  )
-  assert.equal(previousState.progress, 67)
-  assert.equal(
-    previousState.answersByQuestionId[STUDENT_ONBOARDING_FLOW_QUESTIONS[1].id],
-    STUDENT_ONBOARDING_FLOW_QUESTIONS[1].options[1].id
-  )
-})
-
-test('student onboarding flow page keeps route hooks ready for backend hydration', () => {
-  const onboardingFlowPageSource = readFileSync(
-    new URL(
-      '../../../../modules/student/profile/page/Page.tsx',
-      import.meta.url
-    ),
-    'utf8'
-  )
-  const studentRouteSource = readFileSync(
-    new URL('../../../../modules/student/route.tsx', import.meta.url),
-    'utf8'
-  )
-
-  assert.match(onboardingFlowPageSource, /assessmentId\?:/)
-  assert.match(onboardingFlowPageSource, /initialAnswersByQuestionId\?:/)
-  assert.match(onboardingFlowPageSource, /questions\?:/)
-  assert.match(onboardingFlowPageSource, /saveAnswer/)
-  assert.match(studentRouteSource, /studentOnboardingFlowLoader/)
-  assert.match(studentRouteSource, /studentOnboardingFlowAction/)
+  assert.match(source, /AppCard/)
+  assert.doesNotMatch(source, /<Card/)
+  assert.doesNotMatch(source, /<CardContent/)
 })
