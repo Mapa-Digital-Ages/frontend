@@ -1,0 +1,298 @@
+@font-face {
+  font-display: swap;
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 300 700;
+  src: url('/fonts/space-grotesk/SpaceGrotesk-VariableFont_wght.ttf')
+    format('truetype-variations');
+}
+
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --app-primary: rgba(31, 75, 153, 1);
+  --app-primary-light: rgba(76, 116, 189, 1);
+  --app-primary-dark: rgba(20, 53, 109, 1);
+  --app-secondary: rgba(17, 124, 116, 1);
+  --app-secondary-light: rgba(67, 167, 159, 1);
+  --app-secondary-dark: rgba(12, 89, 83, 1);
+  --app-success: rgba(46, 125, 79, 1);
+  --app-warning: rgba(199, 131, 28, 1);
+  --app-error: rgba(193, 73, 83, 1);
+  --app-info: rgba(62, 124, 177, 1);
+  --app-background: rgba(244, 247, 251, 1);
+  --app-surface: rgba(255, 255, 255, 1);
+  --app-surface-elevated: rgba(255, 255, 255, 1);
+  --app-surface-muted: rgba(255, 255, 255, 0.82);
+  --app-surface-soft: rgba(148, 163, 184, 0.08);
+  --app-foreground: rgba(16, 42, 67, 1);
+  --app-muted-foreground: rgba(82, 96, 109, 1);
+  --app-border: rgba(217, 222, 231, 0.95);
+  --app-border-strong: rgba(31, 75, 153, 0.12);
+  --app-card-border: rgba(31, 75, 153, 0.08);
+  --app-card-shadow: 0 16px 40px rgba(16, 42, 67, 0.08);
+  --app-modal-shadow: 0 28px 80px rgba(16, 42, 67, 0.16);
+  --app-input-background: rgba(148, 163, 184, 0.08);
+  --app-input-border: rgba(31, 75, 153, 0.14);
+  --app-input-border-hover: rgba(31, 75, 153, 0.26);
+  --app-input-border-focus: var(--app-primary);
+  --app-action-hover-opacity: 0.12;
+  --app-action-selected-opacity: 0.12;
+  --app-action-border-opacity: 0.24;
+  --app-overlay-soft: rgba(255, 255, 255, 0.2);
+  --app-role-student-primary: rgba(29, 78, 216, 1);
+  --app-role-student-secondary: rgba(2, 132, 199, 1);
+  --app-role-student-soft: rgba(219, 234, 254, 1);
+  --app-role-student-contrast: rgba(255, 255, 255, 1);
+  --app-role-student-gradient: linear-gradient(
+    135deg,
+    var(--app-role-student-primary) 0%,
+    var(--app-role-student-secondary) 100%
+  );
+  --app-role-parent-primary: rgba(249, 115, 22, 1);
+  --app-role-parent-secondary: rgba(234, 88, 12, 1);
+  --app-role-parent-soft: rgba(255, 237, 213, 1);
+  --app-role-parent-contrast: rgba(255, 255, 255, 1);
+  --app-role-parent-gradient: linear-gradient(
+    135deg,
+    var(--app-role-parent-primary) 0%,
+    var(--app-role-parent-secondary) 100%
+  );
+  --app-role-admin-primary: rgba(225, 29, 72, 1);
+  --app-role-admin-secondary: rgba(190, 24, 93, 1);
+  --app-role-admin-soft: rgba(255, 228, 230, 1);
+  --app-role-admin-contrast: rgba(255, 255, 255, 1);
+  --app-role-admin-gradient: linear-gradient(
+    135deg,
+    var(--app-role-admin-primary) 0%,
+    var(--app-role-admin-secondary) 100%
+  );
+  --app-role-company-primary: rgba(140, 67, 203, 1);
+  --app-role-company-secondary: rgba(97, 50, 189, 1);
+  --app-role-company-soft: rgba(243, 232, 255, 1);
+  --app-role-company-contrast: rgba(255, 255, 255, 1);
+  --app-role-company-gradient: linear-gradient(
+    135deg,
+    var(--app-role-company-primary) 0%,
+    var(--app-role-company-secondary) 100%
+  );
+  --app-role-school-primary: rgba(36, 158, 117, 1);
+  --app-role-school-secondary: rgba(31, 132, 112, 1);
+  --app-role-school-soft: rgba(209, 250, 229, 1);
+  --app-role-school-contrast: rgba(255, 255, 255, 1);
+  --app-role-school-gradient: linear-gradient(
+    135deg,
+    var(--app-role-school-primary) 0%,
+    var(--app-role-school-secondary) 100%
+  );
+  --app-role-school-company-primary: rgba(14, 116, 144, 1);
+  --app-role-school-company-secondary: rgba(8, 145, 178, 1);
+  --app-role-school-company-soft: rgba(207, 250, 254, 1);
+  --app-role-school-company-contrast: rgba(255, 255, 255, 1);
+  --app-role-school-company-gradient: linear-gradient(
+    135deg,
+    var(--app-role-school-company-primary) 0%,
+    var(--app-role-school-company-secondary) 100%
+  );
+  --app-role-current-primary: var(--app-role-student-primary);
+  --app-role-current-secondary: var(--app-role-student-secondary);
+  --app-role-current-soft: var(--app-role-student-soft);
+  --app-role-current-contrast: var(--app-role-student-contrast);
+  --app-role-current-hover-solid: var(--app-role-student-secondary);
+  --app-role-action-hover-bg: rgba(29, 78, 216, 0.12);
+  --app-role-action-hover-border: rgba(29, 78, 216, 0.24);
+  --app-role-action-selected-bg: rgba(29, 78, 216, 0.12);
+  --app-role-action-selected-border: rgba(29, 78, 216, 0.28);
+  --app-body-gradient:
+    radial-gradient(
+      circle at top left,
+      rgba(31, 75, 153, 0.1),
+      transparent 28%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(244, 247, 251, 1) 0%,
+      rgba(238, 243, 250, 1) 100%
+    );
+  color: var(--app-foreground);
+  color-scheme: light;
+  font-synthesis: none;
+  font-weight: 400;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  --dropdown-selected-background: #0d9dc9;
+  --dropdown-modal-background: #ffffff;
+  --dropdown-radius: 10px;
+  --dropdown-option-gap: 2px;
+  --app-radius-control: 12px;
+  --app-radius-card: 20px;
+  --app-radius-page: 24px;
+  --app-radius-pill: 9999px;
+}
+
+.dark {
+  --app-primary: rgba(140, 180, 255, 1);
+  --app-primary-light: rgba(177, 204, 255, 1);
+  --app-primary-dark: rgba(93, 144, 232, 1);
+  --app-secondary: rgba(120, 211, 200, 1);
+  --app-secondary-light: rgba(162, 229, 221, 1);
+  --app-secondary-dark: rgba(77, 168, 158, 1);
+  --app-success: rgba(107, 211, 139, 1);
+  --app-warning: rgba(240, 179, 90, 1);
+  --app-error: rgba(240, 139, 148, 1);
+  --app-info: rgba(128, 183, 240, 1);
+  --app-background: rgba(13, 22, 38, 1);
+  --app-surface: rgba(19, 34, 56, 1);
+  --app-surface-elevated: rgba(24, 40, 64, 1);
+  --app-surface-muted: rgba(255, 255, 255, 0.04);
+  --app-surface-soft: rgba(255, 255, 255, 0.06);
+  --app-foreground: rgba(244, 247, 251, 1);
+  --app-muted-foreground: rgba(182, 194, 207, 1);
+  --app-border: rgba(255, 255, 255, 0.1);
+  --app-border-strong: rgba(140, 180, 255, 0.16);
+  --app-card-border: rgba(140, 180, 255, 0.08);
+  --app-card-shadow: 0 18px 45px rgba(8, 17, 31, 0.3);
+  --app-modal-shadow: 0 28px 80px rgba(0, 0, 0, 0.45);
+  --app-input-background: rgba(255, 255, 255, 0.03);
+  --app-input-border: rgba(140, 180, 255, 0.14);
+  --app-input-border-hover: rgba(140, 180, 255, 0.26);
+  --app-input-border-focus: var(--app-primary);
+  --app-action-hover-opacity: 0.2;
+  --app-action-selected-opacity: 0.2;
+  --app-action-border-opacity: 0.36;
+  --app-overlay-soft: rgba(255, 255, 255, 0.12);
+  --app-body-gradient:
+    radial-gradient(
+      circle at top left,
+      rgba(140, 180, 255, 0.1),
+      transparent 32%
+    ),
+    linear-gradient(180deg, rgba(13, 22, 38, 1) 0%, rgba(16, 33, 58, 1) 100%);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --font-sans: 'Space Grotesk', sans-serif;
+  --radius-4xl: 1.125rem;
+  --radius-5xl: 1.25rem;
+  --color-background: var(--app-background);
+  --color-surface: var(--app-surface);
+  --color-surface-elevated: var(--app-surface-elevated);
+  --color-surface-muted: var(--app-surface-muted);
+  --color-surface-soft: var(--app-surface-soft);
+  --color-foreground: var(--app-foreground);
+  --color-muted-foreground: var(--app-muted-foreground);
+  --color-border: var(--app-border);
+  --color-border-strong: var(--app-border-strong);
+  --color-primary: var(--app-primary);
+  --color-primary-light: var(--app-primary-light);
+  --color-primary-dark: var(--app-primary-dark);
+  --color-secondary: var(--app-secondary);
+  --color-secondary-light: var(--app-secondary-light);
+  --color-secondary-dark: var(--app-secondary-dark);
+  --color-success: var(--app-success);
+  --color-warning: var(--app-warning);
+  --color-error: var(--app-error);
+  --color-info: var(--app-info);
+  --color-role-student-primary: var(--app-role-student-primary);
+  --color-role-student-secondary: var(--app-role-student-secondary);
+  --color-role-student-soft: var(--app-role-student-soft);
+  --color-role-parent-primary: var(--app-role-parent-primary);
+  --color-role-parent-secondary: var(--app-role-parent-secondary);
+  --color-role-parent-soft: var(--app-role-parent-soft);
+  --color-role-admin-primary: var(--app-role-admin-primary);
+  --color-role-admin-secondary: var(--app-role-admin-secondary);
+  --color-role-admin-soft: var(--app-role-admin-soft);
+  --color-role-company-primary: var(--app-role-company-primary);
+  --color-role-company-secondary: var(--app-role-company-secondary);
+  --color-role-company-soft: var(--app-role-company-soft);
+  --color-role-school-primary: var(--app-role-school-primary);
+  --color-role-school-secondary: var(--app-role-school-secondary);
+  --color-role-school-soft: var(--app-role-school-soft);
+  --color-role-school-company-primary: var(--app-role-school-company-primary);
+  --color-role-school-company-secondary: var(
+    --app-role-school-company-secondary
+  );
+  --color-role-school-company-soft: var(--app-role-school-company-soft);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+  background-color: var(--app-background);
+  background-image: var(--app-body-gradient);
+  color: var(--app-foreground);
+  font-family: var(--font-sans);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.app-subject-chip {
+  display: inline-flex;
+  max-width: 100%;
+  min-width: 0;
+  align-items: center;
+  border-radius: 9999px;
+}
+
+.app-subject-chip__label {
+  display: flex;
+  min-height: 100%;
+  align-items: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.app-subject-chip--sm {
+  height: 28px;
+}
+
+.app-subject-chip--sm .MuiChip-label {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  padding-inline: 0.75rem;
+}
+
+.app-subject-chip--md {
+  height: 36px;
+}
+
+.app-subject-chip--md .MuiChip-label {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  padding-inline: 1rem;
+}
+
+.app-subject-chip--lg {
+  height: 46px;
+}
+
+.app-subject-chip--lg .MuiChip-label {
+  font-size: 1.125rem;
+  line-height: 1.5rem;
+  padding-inline: 1.25rem;
+}

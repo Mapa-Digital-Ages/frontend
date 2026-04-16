@@ -6,27 +6,34 @@
   "scripts": {
     "dev": "vite",
     "build": "npm run typecheck && vite build",
+    "test": "jest --runInBand",
+    "coverage": "jest --coverage --runInBand",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "preview": "vite preview",
-    "validate": "npm run lint && npm run format:check && npm run typecheck"
+    "validate": "npm run lint && npm run format:check && npm run typecheck",
+    "format:staged": "lint-staged",
+    "prepare": "husky"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.9",
     "@mui/material": "^7.3.9",
+    "@mui/x-date-pickers": "^8.27.2",
+    "dayjs": "^1.11.20",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.13.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@jest/globals": "^30.3.0",
     "@tailwindcss/vite": "^4.2.1",
-    "@types/node": "^25.3.5",
+    "@types/node": "^25.6.0",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
@@ -35,10 +42,17 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
+    "husky": "^9.1.7",
+    "jest": "^30.3.0",
+    "lint-staged": "^16.4.0",
     "prettier": "^3.8.1",
     "tailwindcss": "^4.2.1",
+    "ts-jest": "^29.4.9",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.56.1",
     "vite": "^7.3.1"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,css,md,mdx,html,yml,yaml}": "prettier --write"
   }
 }
