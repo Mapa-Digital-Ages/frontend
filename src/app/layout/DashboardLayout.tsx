@@ -26,7 +26,9 @@ function DashboardLayout() {
   const { role } = useUserRole()
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [collapsed, setCollapsed] = useState(true)
+  const [desktopCollapsed, setDesktopCollapsed] = useState(false)
+  const [tabletCollapsed, setTabletCollapsed] = useState(true)
+  const collapsed = isTablet ? tabletCollapsed : desktopCollapsed
   const currentRole = role ?? APP_CONFIG.defaultRole
   const sidebarItems = NAVIGATION_BY_ROLE[currentRole]
   const userInitial = user?.name?.charAt(0).toUpperCase() ?? 'M'
@@ -108,22 +110,22 @@ function DashboardLayout() {
         mobileOpen={mobileOpen}
         onClose={() => {
           setMobileOpen(false)
-          if (isTablet) setCollapsed(true)
+          if (isTablet) setTabletCollapsed(true)
         }}
         onLogout={logout}
         role={currentRole}
         collapsed={collapsed}
         onToggleCollapse={() => {
           if (isTablet) {
-            if (collapsed) {
-              setCollapsed(false)
+            if (tabletCollapsed) {
+              setTabletCollapsed(false)
               setMobileOpen(true)
             } else {
-              setCollapsed(true)
+              setTabletCollapsed(true)
               setMobileOpen(false)
             }
           } else {
-            setCollapsed(prev => !prev)
+            setDesktopCollapsed(prev => !prev)
           }
         }}
       />
@@ -166,7 +168,7 @@ function DashboardLayout() {
           }
           onMenuClick={() => {
             if (isTablet) {
-              setCollapsed(false)
+              setTabletCollapsed(false)
               setMobileOpen(true)
             } else {
               setMobileOpen(true)
