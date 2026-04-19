@@ -21,11 +21,12 @@ import {
 
 function DashboardLayout() {
   const theme = useTheme()
-  const { isMobile } = useBreakpoint()
+  const { isMobile, isTablet, isDesktop } = useBreakpoint()
   const { logout, user } = useAuth()
   const { role } = useUserRole()
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
   const currentRole = role ?? APP_CONFIG.defaultRole
   const sidebarItems = NAVIGATION_BY_ROLE[currentRole]
   const userInitial = user?.name?.charAt(0).toUpperCase() ?? 'M'
@@ -34,6 +35,7 @@ function DashboardLayout() {
   const roleHover = getRoleHoverStyle(theme, currentRole)
   const roleSelected = getRoleSelectedStyle(theme, currentRole)
   const roleSolidHoverColor = getRoleSolidHoverColor(theme, currentRole)
+  const useOverlay = isMobile || (isTablet && !collapsed)
   const roleStyleProperties = useMemo(
     () => ({
       '--app-role-current-primary': rolePalette.primary,
@@ -85,6 +87,14 @@ function DashboardLayout() {
     }
   }, [roleStyleProperties])
 
+  const contentMarginLeft = (() => {
+    if (isMobile) return 0
+    if (isTablet && collapsed) return 80 // mini fixa no canto
+    if (isTablet && !collapsed) return 0 // overlay, sem empurrar conteúdo
+    if (isDesktop && collapsed) return 80 // desktop mini
+    return APP_CONFIG.drawerWidth // desktop expandido
+  })()
+
   return (
     <Box
       className="fixed inset-0 z-50 flex h-screen w-screen overflow-hidden"
@@ -93,16 +103,37 @@ function DashboardLayout() {
     >
       <AppSidebar
         isMobile={isMobile}
+        useOverlay={useOverlay}
         items={sidebarItems}
         mobileOpen={mobileOpen}
-        onClose={() => setMobileOpen(false)}
+        onClose={() => {
+          setMobileOpen(false)
+          if (isTablet) setCollapsed(true)
+        }}
         onLogout={logout}
         role={currentRole}
+        collapsed={collapsed}
+        onToggleCollapse={() => {
+          if (isTablet) {
+            if (collapsed) {
+              setCollapsed(false)
+              setMobileOpen(true)
+            } else {
+              setCollapsed(true)
+              setMobileOpen(false)
+            }
+          } else {
+            setCollapsed(prev => !prev)
+          }
+        }}
       />
 
       <Box
-        className="ml-0 flex min-w-0 flex-1 flex-col"
-        style={{ marginLeft: isMobile ? 0 : APP_CONFIG.drawerWidth }}
+        className="flex min-w-0 flex-1 flex-col"
+        style={{
+          marginLeft: contentMarginLeft,
+          transition: 'margin-left 0.2s ease',
+        }}
       >
         <AppTopbar
           actions={
@@ -133,8 +164,17 @@ function DashboardLayout() {
               <ChevronLeftRoundedIcon />
             </IconButton>
           }
-          onMenuClick={() => setMobileOpen(true)}
+          onMenuClick={() => {
+            if (isTablet) {
+              setCollapsed(false)
+              setMobileOpen(true)
+            } else {
+              setMobileOpen(true)
+            }
+          }}
           showMenuButton
+          isMobile={isMobile}
+          isTablet={isTablet}
         />
 
         <Box
