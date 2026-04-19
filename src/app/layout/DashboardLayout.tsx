@@ -26,7 +26,7 @@ function DashboardLayout() {
   const { role } = useUserRole()
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(() => !isDesktop)
   const currentRole = role ?? APP_CONFIG.defaultRole
   const sidebarItems = NAVIGATION_BY_ROLE[currentRole]
   const userInitial = user?.name?.charAt(0).toUpperCase() ?? 'M'
