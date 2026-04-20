@@ -30,6 +30,14 @@ export default function Page() {
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false)
 
   useEffect(() => {
+    if (mode !== 'login' && mode !== 'register') {
+      setMode('login')
+    }
+  }, [mode, setMode])
+
+  const activeMode = (mode === 'login' || mode === 'register') ? mode : 'login'
+
+  useEffect(() => {
     if (isAuthenticated && user?.role) {
       navigate(DEFAULT_ROUTE_BY_ROLE[user.role], { replace: true })
     }
@@ -85,7 +93,7 @@ export default function Page() {
       }}
     >
       <AuthModeSelect
-        value={mode}
+        value={activeMode}
         onChange={nextMode => {
           setMode(nextMode)
           setErrorMessage(null)
@@ -123,8 +131,8 @@ export default function Page() {
       <Box className="min-h-0 flex-1">
         <LoginForm
           isSubmitting={isSubmitting}
-          key={mode}
-          mode={mode}
+          key={activeMode}
+          mode={activeMode}
           onSubmit={handleSubmit}
         />
       </Box>
