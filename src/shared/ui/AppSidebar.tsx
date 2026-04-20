@@ -20,7 +20,6 @@ import {
 import type { SidebarItem } from '@/shared/types/common'
 import type { UserRole } from '@/shared/types/user'
 import { useTheme } from '@mui/material/styles'
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import { IconButton } from '@mui/material'
 
 interface AppSidebarProps {
@@ -98,17 +97,6 @@ function AppSidebar({
                   </Typography>
                 </Box>
               </Box>
-
-              {!useOverlay && (
-                <IconButton
-                  data-testid="toggle-sidebar"
-                  onClick={onToggleCollapse}
-                  size="small"
-                  sx={{ color: 'white', flexShrink: 0 }}
-                >
-                  <ChevronLeftIcon />
-                </IconButton>
-              )}
             </>
           )}
         </Box>

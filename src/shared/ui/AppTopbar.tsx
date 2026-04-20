@@ -15,7 +15,6 @@ interface AppTopbarProps extends AppBarProps {
   onMenuClick?: () => void
   showMenuButton?: boolean
   isMobile?: boolean
-  isTablet?: boolean
 }
 
 function AppTopbar({
@@ -24,7 +23,6 @@ function AppTopbar({
   onMenuClick,
   showMenuButton = false,
   isMobile = false,
-  isTablet = false,
   ...appBarProps
 }: AppTopbarProps) {
   const theme = useTheme()
@@ -55,7 +53,7 @@ function AppTopbar({
             </IconButton>
           )}
 
-          {leading && !isMobile && !isTablet && <Box>{leading}</Box>}
+          {leading && !isMobile && <Box>{leading}</Box>}
         </Box>
 
         {actions && (

@@ -2,7 +2,7 @@ import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded'
 import { Box, IconButton, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { useEffect, useMemo, useState, type CSSProperties } from 'react'
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
 import AppSidebar from '@/shared/ui/AppSidebar'
 import AppTopbar from '@/shared/ui/AppTopbar'
 import ThemeModeToggle from '@/shared/ui/ThemeMode'
@@ -24,7 +24,6 @@ function DashboardLayout() {
   const { isMobile, isTablet, isDesktop } = useBreakpoint()
   const { logout, user } = useAuth()
   const { role } = useUserRole()
-  const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [desktopCollapsed, setDesktopCollapsed] = useState(false)
   const [tabletCollapsed, setTabletCollapsed] = useState(true)
@@ -157,14 +156,17 @@ function DashboardLayout() {
             </Box>
           }
           leading={
-            <IconButton
-              aria-label="Voltar"
-              onClick={() => navigate(-1)}
-              size="small"
-              sx={{ color: theme.palette.text.secondary }}
-            >
-              <ChevronLeftRoundedIcon />
-            </IconButton>
+            !isTablet && !desktopCollapsed ? (
+              <IconButton
+                aria-label="Recolher menu"
+                onClick={() => setDesktopCollapsed(true)}
+                size="small"
+                data-testid="toggle-sidebar"
+                sx={{ color: theme.palette.text.secondary }}
+              >
+                <ChevronLeftRoundedIcon />
+              </IconButton>
+            ) : null
           }
           onMenuClick={() => {
             if (isTablet) {
@@ -176,7 +178,6 @@ function DashboardLayout() {
           }}
           showMenuButton
           isMobile={isMobile}
-          isTablet={isTablet}
         />
 
         <Box
