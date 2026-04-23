@@ -13,8 +13,77 @@ import {
   setCookie,
 } from '@/shared/lib/storage/cookies'
 
+const env = (
+  import.meta as ImportMeta & {
+    env?: Record<string, string | boolean | undefined>
+  }
+).env
+
+const allowLocalAuth = env?.VITE_MODE === 'development'
+
+const LOCAL_AUTH_PASSWORD = '12345678'
+
+const LOCAL_AUTH_USERS: Array<{
+  email: string
+  name: string
+  role: UserRole
+}> = [
+  { email: 'admin@mapa.local', name: 'Administrador Local', role: 'admin' },
+  { email: 'aluno@mapa.local', name: 'Aluno Local', role: 'aluno' },
+  {
+    email: 'responsavel@mapa.local',
+    name: 'Responsavel Local',
+    role: 'responsavel',
+  },
+  { email: 'empresa@mapa.local', name: 'Empresa Local', role: 'empresa' },
+  { email: 'escola@mapa.local', name: 'Escola Local', role: 'escola' },
+  {
+    email: 'escola.empresa@mapa.local',
+    name: 'Escola Empresa Local',
+    role: 'escola_empresa',
+  },
+]
+
+function persistAuthSession(
+  result: Pick<LoginApiResponse, 'token' | 'role' | 'name' | 'email'>
+) {
+  setCookie(COOKIE_KEYS.authToken, result.token)
+  setCookie(COOKIE_KEYS.authRole, result.role)
+  setCookie(COOKIE_KEYS.authName, result.name)
+  setCookie(COOKIE_KEYS.authEmail, result.email)
+}
+
+function resolveLocalLogin(
+  credentials: AuthCredentials
+): LoginApiResponse | null {
+  const normalizedEmail = credentials.email.trim().toLowerCase()
+  const matchedUser = LOCAL_AUTH_USERS.find(
+    user => user.email.toLowerCase() === normalizedEmail
+  )
+
+  if (!matchedUser || credentials.password !== LOCAL_AUTH_PASSWORD) {
+    return null
+  }
+
+  return {
+    token: `local-token-${matchedUser.role}`,
+    role: matchedUser.role,
+    name: matchedUser.name,
+    email: matchedUser.email,
+  }
+}
+
 export const authService = {
   async login(credentials: AuthCredentials): Promise<LoginApiResponse> {
+    if (allowLocalAuth) {
+      const localLoginResult = resolveLocalLogin(credentials)
+
+      if (localLoginResult) {
+        persistAuthSession(localLoginResult)
+        return localLoginResult
+      }
+    }
+
     try {
       const response = await httpClient.post<LoginApiResponse>('login', {
         email: credentials.email,
@@ -34,10 +103,7 @@ export const authService = {
         throw new ParentStatusError(result.status)
       }
 
-      setCookie(COOKIE_KEYS.authToken, result.token)
-      setCookie(COOKIE_KEYS.authRole, result.role)
-      setCookie(COOKIE_KEYS.authName, result.name)
-      setCookie(COOKIE_KEYS.authEmail, result.email)
+      persistAuthSession(result)
 
       return result
     } catch (error) {
