@@ -22,6 +22,7 @@ import BarChart from '@/modules/student/shared/components/BarChart'
 import dayjs from 'dayjs'
 import OnboardingQuestionCard from '@/modules/student/shared/components/OnboardingQuestionCard'
 import type { QuestionFlowPayload } from '@/modules/student/shared/types/types'
+import EmotionalContainer from '@/shared/ui/EmotionalContainer'
 
 const mockChartData = [
   { label: 'Seg', value: 2 },
@@ -227,6 +228,7 @@ export default function Page() {
             border: `1px solid ${theme.palette.divider}`,
           }}
         >
+          <EmotionalContainer />
           <Planner tasks={tasks} />
           <Typography variant="h6">Testes de Input</Typography>
 

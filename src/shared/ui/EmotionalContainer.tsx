@@ -1,77 +1,90 @@
-import CloseIcon from '@mui/icons-material/Close'
-import SentimentNeutralIcon from '@mui/icons-material/SentimentNeutral'
-import SentimentSatisfiedAltIcon from '@mui/icons-material/SentimentSatisfiedAlt'
-import SentimentVeryDissatisfiedIcon from '@mui/icons-material/SentimentVeryDissatisfied'
 import {
   Box,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  Stack,
   Typography,
+  Stack,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  IconButton,
 } from '@mui/material'
-import { alpha, useTheme } from '@mui/material/styles'
+import SentimentSatisfiedAltIcon from '@mui/icons-material/SentimentSatisfiedAlt'
+import SentimentNeutralIcon from '@mui/icons-material/SentimentNeutral'
+import SentimentVeryDissatisfiedIcon from '@mui/icons-material/SentimentVeryDissatisfied'
+import CloseIcon from '@mui/icons-material/Close'
 import { useState, type ReactNode } from 'react'
+import { useTheme } from '@mui/material/styles'
+import dayjs from 'dayjs'
+import isoWeek from 'dayjs/plugin/isoWeek'
+import 'dayjs/locale/pt-br'
 
-type EmotionButtonColor = 'error' | 'success' | 'warning'
+dayjs.locale('pt-br')
+dayjs.extend(isoWeek)
+
+type EmotionButtonColor = 'success' | 'warning' | 'error'
 
 interface EmotionButtonProps {
-  color: EmotionButtonColor
   icon: ReactNode
   label: string
+  color: EmotionButtonColor
   onClick: () => void
   testId: string
+  width?: string
+  height?: string
 }
 
 function EmotionButton({
-  color,
   icon,
   label,
+  color,
   onClick,
   testId,
+  width,
+  height,
 }: EmotionButtonProps) {
   const theme = useTheme()
-  const mainColor = theme.palette[color].main
-  const hoverBackgroundColor = alpha(
-    mainColor,
-    theme.palette.mode === 'dark' ? 0.14 : 0.08
-  )
-  const hoverBorderColor = alpha(
-    mainColor,
-    theme.palette.mode === 'dark' ? 0.46 : 0.32
-  )
+  const hoverBackgrounds: Record<EmotionButtonColor, string> = {
+    success:
+      theme.palette.mode === 'dark'
+        ? 'rgba(184, 246, 181, 0.4)'
+        : 'rgba(184, 246, 181, 0.8)',
+    warning:
+      theme.palette.mode === 'dark'
+        ? 'rgba(244, 253, 177, 0.4)'
+        : 'rgba(244, 253, 177, 0.8)',
+    error:
+      theme.palette.mode === 'dark'
+        ? 'rgba(253, 194, 200, 0.4)'
+        : 'rgba(253, 194, 200, 0.8)',
+  }
 
   return (
     <Box
       component="button"
-      data-testid={testId}
       onClick={onClick}
+      data-testid={testId}
       sx={{
-        alignItems: 'center',
-        backgroundColor: 'transparent',
-        border: '1px solid',
-        borderColor: mainColor,
-        borderRadius: 'var(--app-radius-control)',
-        color: mainColor,
-        cursor: 'pointer',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 1,
-        height: 92,
         justifyContent: 'center',
-        transition:
-          'background-color 180ms ease, border-color 180ms ease, transform 180ms ease',
-        width: { sm: 164, xs: '100%' },
+        width: width || '163.33px',
+        height: height || '92px',
+        flexDirection: 'column',
+        cursor: 'pointer',
+        borderRadius: '12px',
+        border: '1px solid',
+        borderColor: `${color}.main`,
+        backgroundColor: 'transparent',
+        color: `${color}.main`,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1,
+        transition: 'all 0.2s ease-in-out',
         '&:hover': {
-          backgroundColor: hoverBackgroundColor,
-          borderColor: hoverBorderColor,
-          transform: 'translateY(-1px)',
+          backgroundColor: hoverBackgrounds[color],
+          opacity: 0.9,
         },
       }}
     >
       {icon}
-      <Typography fontWeight={700}>{label}</Typography>
+      <Typography fontWeight="bold">{label}</Typography>
     </Box>
   )
 }
@@ -79,12 +92,39 @@ function EmotionButton({
 export default function EmotionalContainer() {
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedEmotion, setSelectedEmotion] = useState('')
+  const startOfWeek = dayjs().startOf('isoWeek')
+  const initialWeek = Array.from({ length: 7 }).map((_, index) => {
+    const date = startOfWeek.add(index, 'day')
+
+    return { date, mood: null as string | null }
+  })
+
+  const [weeklyMood, setWeeklyMood] = useState(initialWeek)
 
   function handleEmotionSelect(emotionLabel: string) {
+    const moodMap: Record<string, string> = {
+      Bem: 'good',
+      Regular: 'regular',
+      Mal: 'bad',
+    }
+
+    const today = dayjs().format('YYYY-MM-DD')
+
+    setWeeklyMood(prev =>
+      prev.map(day =>
+        day.date.format('YYYY-MM-DD') === today
+          ? { ...day, mood: moodMap[emotionLabel] }
+          : day
+      )
+    )
+
     setSelectedEmotion(emotionLabel)
     setModalOpen(true)
   }
 
+  function handleModalClose() {
+    setModalOpen(false)
+  }
   return (
     <Box
       data-testid="card-checkin-emocional"
@@ -94,68 +134,122 @@ export default function EmotionalContainer() {
         borderColor: 'background.border',
         borderRadius: 'var(--app-radius-card)',
         boxShadow: 'none',
-        maxWidth: 556,
         p: 3,
         width: '100%',
+        maxWidth: '556px',
       }}
     >
       <Typography
-        sx={{ color: 'text.primary', fontWeight: 700, mb: 3 }}
         variant="h6"
+        sx={{ mb: 3, fontWeight: 'bold', color: 'text.primary' }}
       >
         Check-in emocional
       </Typography>
 
-      <Stack direction={{ sm: 'row', xs: 'column' }} spacing={2} sx={{ mb: 4 }}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 4 }}>
         <EmotionButton
+          testId="emotion-button-good"
+          label="Bem"
           color="success"
           icon={<SentimentSatisfiedAltIcon sx={{ fontSize: 28 }} />}
-          label="Bem"
           onClick={() => handleEmotionSelect('Bem')}
-          testId="emotion-button-good"
         />
+
         <EmotionButton
+          testId="emotion-button-regular"
+          label="Regular"
           color="warning"
           icon={<SentimentNeutralIcon sx={{ fontSize: 28 }} />}
-          label="Regular"
           onClick={() => handleEmotionSelect('Regular')}
-          testId="emotion-button-regular"
         />
+
         <EmotionButton
+          testId="emotion-button-bad"
+          label="Mal"
           color="error"
           icon={<SentimentVeryDissatisfiedIcon sx={{ fontSize: 28 }} />}
-          label="Mal"
           onClick={() => handleEmotionSelect('Mal')}
-          testId="emotion-button-bad"
         />
       </Stack>
 
-      <Typography sx={{ color: 'text.primary', fontWeight: 700 }} variant="h6">
+      <Typography
+        variant="h6"
+        sx={{ fontWeight: 'bold', color: 'text.primary' }}
+      >
         Humor da Semana
       </Typography>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        sx={{ mt: 2, flexWrap: 'wrap' }}
+      >
+        {weeklyMood.map(({ date, mood }) => {
+          let icon = null
+          let color = 'text.secondary'
+
+          if (mood === 'good') {
+            icon = <SentimentSatisfiedAltIcon sx={{ fontSize: 24 }} />
+            color = 'success.main'
+          } else if (mood === 'regular') {
+            icon = <SentimentNeutralIcon sx={{ fontSize: 24 }} />
+            color = 'warning.main'
+          } else if (mood === 'bad') {
+            icon = <SentimentVeryDissatisfiedIcon sx={{ fontSize: 24 }} />
+            color = 'error.main'
+          }
+
+          const label =
+            date.format('ddd').charAt(0).toUpperCase() +
+            date.format('ddd').slice(1)
+
+          return (
+            <Box
+              key={date.toString()}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.8,
+                color,
+              }}
+            >
+              {icon && icon}
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: 500,
+                  fontSize: '12px',
+                  color: 'text.primary',
+                }}
+              >
+                {label}
+              </Typography>
+            </Box>
+          )
+        })}
+      </Stack>
       <Dialog
-        onClose={() => setModalOpen(false)}
         open={modalOpen}
+        onClose={handleModalClose}
         PaperProps={{
-          sx: { borderRadius: 'var(--app-radius-card)', p: 2 },
+          sx: { borderRadius: '16px', padding: '16px' },
         }}
       >
         <DialogTitle
           sx={{
-            alignItems: 'center',
             display: 'flex',
             justifyContent: 'space-between',
+            alignItems: 'center',
             pb: 1,
           }}
         >
-          <Typography fontWeight={700}>Confirmação</Typography>
-          <IconButton onClick={() => setModalOpen(false)} size="small">
+          <Typography fontWeight="bold">Confirmação</Typography>
+          <IconButton onClick={handleModalClose} size="small">
             <CloseIcon />
           </IconButton>
         </DialogTitle>
 
         <DialogContent>
-          <Typography sx={{ color: 'text.secondary' }}>
+          <Typography>
             Você registrou seu humor hoje como: {selectedEmotion}
           </Typography>
         </DialogContent>
