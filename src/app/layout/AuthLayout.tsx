@@ -14,7 +14,6 @@ export type LayoutMode =
   | 'forgot_password_code'
   | 'forgot_password_new'
 
-
 function SiteLogo() {
   return (
     <Box
@@ -64,22 +63,26 @@ function AuthLayout() {
       case 'register':
         return {
           title: 'Cadastre-se no Mapa Digital',
-          subtitle: 'Seja bem-vindo! Descubra um novo jeito de aprender, acompanhar e transformar a educação.',
+          subtitle:
+            'Seja bem-vindo! Descubra um novo jeito de aprender, acompanhar e transformar a educação.',
         }
       case 'forgot_password_email':
         return {
           title: 'Esqueceu sua senha?',
-          subtitle: 'Você receberá um código no seu e-mail para recuperação de senha.',
+          subtitle:
+            'Você receberá um código no seu e-mail para recuperação de senha.',
         }
       case 'forgot_password_code':
         return {
           title: 'Enviamos um código para seu e-mail',
-          subtitle: 'Insira nos campos destinados o código de verificação de 6 dígitos enviado para seu e-mail.',
+          subtitle:
+            'Insira nos campos destinados o código de verificação de 6 dígitos enviado para seu e-mail.',
         }
       case 'forgot_password_new':
         return {
           title: 'Crie uma nova senha',
-          subtitle: 'Digite e confirme sua nova senha para ter acesso ao seu login.',
+          subtitle:
+            'Digite e confirme sua nova senha para ter acesso ao seu login.',
         }
       case 'login':
       default:

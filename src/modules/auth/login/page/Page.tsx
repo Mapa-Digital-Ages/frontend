@@ -37,7 +37,7 @@ export default function Page() {
     }
   }, [mode, setMode])
 
-  const activeMode = (mode === 'login' || mode === 'register') ? mode : 'login'
+  const activeMode = mode === 'login' || mode === 'register' ? mode : 'login'
 
   useEffect(() => {
     if (isAuthenticated && user?.role) {

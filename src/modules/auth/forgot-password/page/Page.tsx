@@ -99,7 +99,11 @@ export default function Page() {
     >
       <Box className="min-h-0 flex-1 flex flex-col justify-center">
         {step === 1 && (
-          <form className="flex flex-col gap-4" onSubmit={handleSubmitEmail} noValidate>
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={handleSubmitEmail}
+            noValidate
+          >
             <AppInput
               label="E-mail"
               type="email"
@@ -204,7 +208,9 @@ export default function Page() {
             </Stack>
 
             {codeError && (
-              <Typography sx={{ color: '#dc2626', fontSize: '0.85rem', mt: -1 }}>
+              <Typography
+                sx={{ color: '#dc2626', fontSize: '0.85rem', mt: -1 }}
+              >
                 {codeError}
               </Typography>
             )}
@@ -266,7 +272,11 @@ export default function Page() {
         )}
 
         {step === 3 && (
-          <form className="flex flex-col gap-4" onSubmit={handleSubmitPassword} noValidate>
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={handleSubmitPassword}
+            noValidate
+          >
             <AppInput
               label="Senha"
               type="password"
@@ -295,9 +305,10 @@ export default function Page() {
                 '&:hover .MuiOutlinedInput-notchedOutline': {
                   borderColor: passwordError ? '#dc2626' : '#94a3b8',
                 },
-                '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: passwordError ? '#dc2626' : '#359CDF',
-                },
+                '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline':
+                  {
+                    borderColor: passwordError ? '#dc2626' : '#359CDF',
+                  },
               }}
             />
             <AppButton
