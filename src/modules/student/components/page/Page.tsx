@@ -121,8 +121,6 @@ const dropdownOptions: DropdownOption[] = [
   { label: '9º Ano', value: '9' },
 ]
 
-
-
 export default function Page() {
   const [tasks, setTasks] = useState<Task[]>(initialTasks)
   const [singleValue, setSingleValue] = useState<string | number>('7')
@@ -352,11 +350,11 @@ export default function Page() {
       </Box>
 
       <AppButton
-            label="Abrir Modal Upload"
-            backgroundColor="primary.main"
-            data-testid="upload-activity-button"
-            onClick={() => setIsUploadModalOpen(true)}
-          />
+        label="Abrir Modal Upload"
+        backgroundColor="primary.main"
+        data-testid="upload-activity-button"
+        onClick={() => setIsUploadModalOpen(true)}
+      />
 
       <AppLink to="/student/dashboard">Ir para dashboard</AppLink>
       <AppLink href="https://google.com">Ir para o Google</AppLink>

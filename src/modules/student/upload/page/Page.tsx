@@ -115,7 +115,7 @@ export default function Page() {
           {tasks.map(task => (
             <Box
               key={task.id}
-             className="flex flex-col gap-4 rounded-2xl border border-slate-200 p-4 sm:flex-row sm:items-center"
+              className="flex flex-col gap-4 rounded-2xl border border-slate-200 p-4 sm:flex-row sm:items-center"
               sx={{
                 backgroundColor: 'var(--app-surface-muted)',
               }}
@@ -133,10 +133,7 @@ export default function Page() {
                 </Typography>
 
                 <Box className="mt-1 flex items-center gap-2">
-                  <AppSubjectTag
-                    size="sm"
-                    subject={SUBJECTS[task.subject]}
-                  />
+                  <AppSubjectTag size="sm" subject={SUBJECTS[task.subject]} />
 
                   <Typography
                     className="text-sm"
