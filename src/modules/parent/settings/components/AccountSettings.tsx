@@ -1,13 +1,15 @@
 import BlockRoundedIcon from '@mui/icons-material/BlockRounded'
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded'
-import { Box, Typography } from '@mui/material'
+import { Box, Typography, useTheme } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
 import AppActionModal from '@/shared/ui/AppActionModal'
 import AppButton from '@/shared/ui/AppButton'
 import AppCard from '@/shared/ui/AppCard'
 import AppInput from '@/shared/ui/AppInput'
 import type { ParentAccountSettings } from '@/modules/parent/settings/services/service'
+import { getRolePalette, getSelectedStyle } from '@/app/theme/core/roles'
+import { useParentRole } from '../../shared/hooks/useParentRole'
 
 interface AccountSettingsProps {
   initialValues: ParentAccountSettings
@@ -68,6 +70,10 @@ function AccountSettings({
   const [pendingAction, setPendingAction] = useState<PendingAccountAction>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [isSubmittingAction, setIsSubmittingAction] = useState(false)
+  const theme = useTheme()
+  const role = useParentRole()
+  const rolePalette = getRolePalette(theme, role)
+  const selectColor = getSelectedStyle(theme, rolePalette.contrast)
 
   useEffect(() => {
     const nextValues = { ...EMPTY_ACCOUNT_SETTINGS, ...initialValues }
@@ -176,7 +182,6 @@ function AccountSettings({
             responsável.
           </Typography>
         </Box>
-
         <Box
           component="form"
           className="grid gap-3"
@@ -184,8 +189,14 @@ function AccountSettings({
             event.preventDefault()
             void handleSave()
           }}
+          sx={{
+            p: 2,
+            border: '1px solid',
+            borderColor: 'background.border',
+            borderRadius: 'var(--app-radius-control)',
+          }}
         >
-          <Box className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Box className="space-y-1">
             <AppInput
               error={nameError}
               helperText={nameError ? 'Informe seu nome completo.' : undefined}
@@ -205,14 +216,6 @@ function AccountSettings({
               value={form.email}
             />
           </Box>
-
-          <AppInput
-            label="Telefone"
-            onChange={event => updateField('phone', event.target.value)}
-            placeholder="(00) 00000-0000"
-            value={form.phone ?? ''}
-          />
-
           <Box
             sx={{
               display: 'flex',
@@ -244,59 +247,160 @@ function AccountSettings({
             </AppButton>
           </Box>
         </Box>
-
+      </AppCard>
+      <AppCard>
+        <Box className="space-y-1">
+          <Typography
+            sx={{
+              color: 'text.primary',
+              fontSize: { md: 20, xs: 18 },
+              fontWeight: 700,
+              minWidth: 0,
+            }}
+          >
+            Ações de conta
+          </Typography>
+          <Typography
+            sx={{
+              color: 'text.secondary',
+              fontSize: { md: 15, xs: 14 },
+              maxWidth: 720,
+            }}
+          >
+            aassd
+          </Typography>
+        </Box>
         <Box
           sx={{
-            border: '1px solid',
-            borderColor: 'error.main',
-            borderRadius: '16px',
+            alignItems: 'center',
             display: 'flex',
-            flexDirection: 'column',
-            gap: 2,
-            p: 2,
+            gap: 1.5,
+            minWidth: 0,
+            justifyContent: 'space-between',
+            width: '100%',
           }}
         >
-          <Box className="flex min-w-0 flex-col gap-1">
+          <Box className="-space-y-1">
             <Typography
               sx={{
-                color: 'error.main',
                 fontSize: { md: 18, xs: 16 },
                 fontWeight: 700,
               }}
             >
-              Zona de risco
+              Alterar senha
             </Typography>
             <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
               Ações de conta podem interromper seu acesso ao painel.
             </Typography>
           </Box>
-
-          <Box
+          <AppButton
+            onClick={() => setPendingAction('disable')}
+            startIcon={<BlockRoundedIcon fontSize="small" />}
             sx={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 1.5,
+              borderRadius: 'var(--app-radius-control)',
+              fontSize: 12,
+              fontWeight: 700,
+              minHeight: 28,
+              textTransform: 'none',
+              background: 'transparent',
+              border: '1px solid',
+              borderColor: 'background.border',
+              '&:hover': {
+                backgroundColor: selectColor,
+              },
             }}
           >
-            <AppButton
-              backgroundColor="background.paper"
-              hasBorder
-              onClick={() => setPendingAction('disable')}
-              startIcon={<BlockRoundedIcon fontSize="small" />}
-              textColor="warning.main"
-              variant="outlined"
+            Trocar senha
+          </AppButton>
+        </Box>
+        <Box
+          sx={{
+            alignItems: 'center',
+            display: 'flex',
+            gap: 1.5,
+            minWidth: 0,
+            justifyContent: 'space-between',
+            width: '100%',
+          }}
+        >
+          <Box className="-space-y-1">
+            <Typography
+              sx={{
+                fontSize: { md: 18, xs: 16 },
+                fontWeight: 700,
+              }}
             >
-              Desabilitar conta
-            </AppButton>
-            <AppButton
-              backgroundColor="error.main"
-              hoverBackgroundColor="error.dark"
-              onClick={() => setPendingAction('delete')}
-              startIcon={<DeleteOutlineRoundedIcon fontSize="small" />}
+              Desabilitar Conta
+            </Typography>
+            <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
+              Ações de conta podem interromper seu acesso ao painel.
+            </Typography>
+          </Box>
+          <AppButton
+            onClick={() => setPendingAction('disable')}
+            startIcon={<BlockRoundedIcon fontSize="small" />}
+            sx={{
+              borderRadius: 'var(--app-radius-control)',
+              fontSize: 12,
+              fontWeight: 700,
+              minHeight: 28,
+              textTransform: 'none',
+              background: 'transparent',
+              border: '1px solid',
+              color: theme.palette.error.main,
+              borderColor: theme.palette.error.main,
+              '&:hover': {
+                backgroundColor: selectColor,
+              },
+            }}
+          >
+            Desabilitar conta
+          </AppButton>
+        </Box>
+
+        <Box
+          sx={{
+            alignItems: 'center',
+            display: 'flex',
+            gap: 1.5,
+            minWidth: 0,
+            justifyContent: 'space-between',
+            width: '100%',
+          }}
+        >
+          <Box className="-space-y-1">
+            <Typography
+              sx={{
+                fontSize: { md: 18, xs: 16 },
+                fontWeight: 700,
+              }}
             >
               Excluir conta
-            </AppButton>
+            </Typography>
+            <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
+              Ações de conta podem interromper seu acesso ao painel.
+            </Typography>
           </Box>
+          <AppButton
+            onClick={() => setPendingAction('delete')}
+            startIcon={<BlockRoundedIcon fontSize="small" />}
+            sx={{
+              borderRadius: 'var(--app-radius-control)',
+              fontSize: 12,
+              fontWeight: 700,
+              minHeight: 28,
+              textTransform: 'none',
+              background: 'transparent',
+              border: '1px solid',
+              color: theme.palette.error.main,
+              borderColor: theme.palette.error.main,
+              '&:hover': {
+                backgroundColor: selectColor,
+              },
+            }}
+          >
+            Excluir conta
+          </AppButton>
         </Box>
       </AppCard>
 

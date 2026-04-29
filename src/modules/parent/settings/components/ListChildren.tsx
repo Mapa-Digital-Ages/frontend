@@ -1,72 +1,61 @@
-import { Box, IconButton, Typography } from '@mui/material'
-import AppCard from '@/shared/ui/AppCard'
-import type { ParentChild } from '@/modules/parent/settings/types/types'
-import ListChildrenCard from './ListChildrenCard'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
+import { Box, IconButton, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { getRoleAccentColor, getHoverStyle } from '@/app/theme/core/roles'
-import { useParentRole } from '../../shared/hooks/useParentRole'
-import { SearchBarAndFilter } from '@/shared/ui/SearchBarAndFilter'
-import Pagination from '@/shared/ui/Pagination'
+import { getHoverStyle, getRoleAccentColor } from '@/app/theme/core/roles'
+import { useParentRole } from '@/modules/parent/shared/hooks/useParentRole'
 import EmptyState from '@/shared/ui/EmptyState'
-import type { DropdownOption } from '@/shared/ui/AppDropdown'
+import AppCard from '@/shared/ui/AppCard'
+import Pagination from '@/shared/ui/Pagination'
+import { SearchBarAndFilter } from '@/shared/ui/SearchBarAndFilter'
 import type {
+  ParentDashboardChild,
   ResultsSummary,
-  Status,
 } from '@/modules/parent/settings/types/types'
-
-export interface StatusOption extends DropdownOption {
-  value: Status
-}
+import ListChildrenCard from './ListChildrenCard'
 
 interface ListChildrenProps {
-  children: ParentChild[]
-  selectedChildId: string | null
-  onSelect: (id: string) => void
-  title?: string
-  description?: string
+  children: ParentDashboardChild[]
   currentPage: number
+  description?: string
   emptyStateDescription: string
   emptyStateTitle: string
   onCreate?: () => void | Promise<void>
-  onDelete?: () => void | Promise<void>
-  onEdit?: () => void | Promise<void>
+  onDelete?: (child: ParentDashboardChild) => void | Promise<void>
+  onEdit?: (child: ParentDashboardChild) => void | Promise<void>
   onPageChange: (page: number) => void
   onQueryChange: (query: string) => void
+  onSelect: (id: string) => void
   query: string
-  searchPlaceholder: string
-  totalPages: number
-  filterOptions: StatusOption[]
   resultsSummary: ResultsSummary
-  selectedStatus: Status
-  onStatusChange: (status: Status) => void
+  searchPlaceholder: string
+  selectedChildId: string | null
+  title?: string
+  totalPages: number
 }
 
 export default function ListChildren({
   children,
-  selectedChildId,
-  onSelect,
-  title,
-  description,
   currentPage,
+  description = 'Gerencie os filhos vinculados ao responsável.',
   emptyStateDescription,
   emptyStateTitle,
+  onCreate,
+  onDelete,
+  onEdit,
   onPageChange,
   onQueryChange,
+  onSelect,
   query,
-  searchPlaceholder,
-  totalPages,
-  filterOptions,
   resultsSummary,
-  selectedStatus,
-  onStatusChange,
+  searchPlaceholder,
+  selectedChildId,
+  title = 'Filhos',
+  totalPages,
 }: ListChildrenProps) {
   const theme = useTheme()
   const role = useParentRole()
   const accentColor = getRoleAccentColor(theme, role)
   const accentHover = getHoverStyle(theme, accentColor)
-
-  if (children.length === 0) return null
 
   return (
     <AppCard
@@ -111,48 +100,38 @@ export default function ListChildren({
               {description}
             </Typography>
           </Box>
-          <Box
+          <IconButton
+            aria-label="Adicionar filho"
+            onClick={onCreate}
             sx={{
-              alignItems: 'flex-start',
-              display: 'flex',
-              gap: 1.5,
-              justifyContent: 'space-between',
-              minWidth: 0,
+              backgroundColor: 'background.paper',
+              border: '1px solid',
+              borderColor: 'background.border',
+              borderRadius: 'var(--app-radius-control)',
+              color: 'text.primary',
+              flexShrink: 0,
+              height: 32,
+              width: 32,
+              '&:hover': {
+                backgroundColor: accentHover.backgroundColor,
+                borderColor: accentHover.borderColor,
+              },
             }}
           >
-            <IconButton
-              aria-label="Adicionar"
-              sx={{
-                backgroundColor: 'background.paper',
-                border: '1px solid',
-                borderColor: 'background.border',
-                borderRadius: 'var(--app-radius-control)',
-                color: 'text.primary',
-                flexShrink: 0,
-                height: 32,
-                width: 32,
-                '&:hover': {
-                  backgroundColor: accentHover.backgroundColor,
-                  borderColor: accentHover.borderColor,
-                },
-              }}
-            >
-              <AddRoundedIcon fontSize="small" />
-            </IconButton>
-          </Box>
+            <AddRoundedIcon fontSize="small" />
+          </IconButton>
         </Box>
       </Box>
+
       <Box sx={{ flexShrink: 0 }}>
         <SearchBarAndFilter
-          filterOptions={filterOptions}
           onQueryChange={onQueryChange}
-          onStatusChange={status => onStatusChange(status as Status)}
           query={query}
           resultsSummary={resultsSummary}
           searchPlaceholder={searchPlaceholder}
-          selectedStatus={selectedStatus}
         />
       </Box>
+
       <Box
         sx={{
           borderTop: `1px solid ${theme.palette.divider}`,
@@ -166,14 +145,15 @@ export default function ListChildren({
         {children.length > 0 ? (
           <Box
             className="grid gap-4"
+            role="list"
             sx={{
               flex: 1,
               maxHeight: { md: 360, xs: 'none' },
               minHeight: 0,
               overflowX: 'hidden',
               overflowY: 'auto',
-              pr: { md: 1, xs: 0.75 },
               pl: { md: 0.5, xs: 0.75 },
+              pr: { md: 1, xs: 0.75 },
               pt: { md: 0.5, xs: 0.75 },
             }}
           >
@@ -181,6 +161,8 @@ export default function ListChildren({
               <ListChildrenCard
                 child={child}
                 key={child.id}
+                onDelete={onDelete}
+                onEdit={onEdit}
                 onSelect={onSelect}
                 selected={child.id === selectedChildId}
               />
@@ -199,12 +181,7 @@ export default function ListChildren({
               py: 2,
             }}
           >
-            <Box
-              sx={{
-                maxWidth: 720,
-                width: '100%',
-              }}
-            >
+            <Box sx={{ maxWidth: 720, width: '100%' }}>
               <EmptyState
                 description={emptyStateDescription}
                 title={emptyStateTitle}
@@ -213,6 +190,7 @@ export default function ListChildren({
           </Box>
         )}
       </Box>
+
       <Box
         sx={{
           flexShrink: 0,

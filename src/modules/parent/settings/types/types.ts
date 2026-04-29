@@ -10,7 +10,10 @@ export interface ParentChildren {
   id: string
   name: string
   grade: string
+  status?: string
 }
+
+export type ParentDashboardChild = ParentChildren
 
 export interface StudentDisciplineProgress {
   subjectId: string

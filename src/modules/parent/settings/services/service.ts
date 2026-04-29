@@ -6,7 +6,10 @@ import type {
   WeeklyMoodEntry,
 } from '@/shared/types/common'
 import { getCookie, setCookie } from '@/shared/lib/storage/cookies'
-import type { StudentDisciplineProgress } from '../types/types'
+import type {
+  ParentDashboardChild,
+  StudentDisciplineProgress,
+} from '../types/types'
 import type { Task } from '@/modules/student/shared/components/Planner'
 
 export interface RegisterChildRequest {
@@ -30,6 +33,21 @@ export interface ParentAccountSettings {
   phone?: string
 }
 
+export interface UpdateChildRequest {
+  birth_date?: string
+  first_name: string
+  last_name: string
+  student_class: string
+}
+
+interface StudentApiResponse {
+  id: string
+  user_id?: string
+  first_name: string
+  last_name: string
+  student_class: string
+}
+
 export const parentSettingsService = {
   getTitle(): string {
     return 'Painel de Configuração'
@@ -39,6 +57,20 @@ export const parentSettingsService = {
 function persistAccountSettings(settings: ParentAccountSettings) {
   setCookie(COOKIE_KEYS.authName, settings.name)
   setCookie(COOKIE_KEYS.authEmail, settings.email)
+}
+
+function formatClassLabel(studentClass: string) {
+  return studentClass ? `${studentClass}º Ano` : 'Ano não informado'
+}
+
+function mapStudentResponseToChild(
+  student: StudentApiResponse
+): ParentDashboardChild {
+  return {
+    id: student.id ?? student.user_id ?? crypto.randomUUID(),
+    name: `${student.first_name} ${student.last_name}`.trim(),
+    grade: formatClassLabel(student.student_class),
+  }
 }
 
 export const parentService = {
@@ -89,6 +121,38 @@ export const parentService = {
   async getChildren() {
     const response = await httpClient.get<ParentChild[]>('parent/children')
     return response.data
+  },
+
+  async createChild(data: RegisterChildRequest): Promise<ParentDashboardChild> {
+    const response = await httpClient.post<StudentApiResponse>('student', {
+      first_name: data.first_name,
+      last_name: data.last_name,
+      email: data.email,
+      password: data.password,
+      birth_date: data.birth_date,
+      student_class: data.student_class,
+    })
+    return mapStudentResponseToChild(response.data)
+  },
+
+  async updateChild(
+    childId: string,
+    data: UpdateChildRequest
+  ): Promise<ParentDashboardChild> {
+    const response = await httpClient.put<StudentApiResponse>(
+      `student/${childId}`,
+      {
+        birth_date: data.birth_date || undefined,
+        first_name: data.first_name,
+        last_name: data.last_name,
+        student_class: data.student_class,
+      }
+    )
+    return mapStudentResponseToChild(response.data)
+  },
+
+  async deleteChild(childId: string): Promise<void> {
+    await httpClient.delete(`student/${childId}`)
   },
 
   async getStudentSummary(studentId: string) {

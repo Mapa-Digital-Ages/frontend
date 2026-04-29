@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
-import { parentService } from '../services/service'
+import {
+  parentService,
+  type RegisterChildRequest,
+  type UpdateChildRequest,
+} from '../services/service'
 import {
   CHILD_MOCK_DATA,
   MOCK_CHILDREN,
@@ -22,6 +26,9 @@ interface UseParentDashboardResult {
   tasks: Task[]
   wellBeing: WeeklyMoodEntry[]
   selectedChildId: string | null
+  createChild: (data: RegisterChildRequest) => Promise<void>
+  updateChild: (childId: string, data: UpdateChildRequest) => Promise<void>
+  deleteChild: (childId: string) => Promise<void>
   selectChild: (id: string) => void
 }
 
@@ -71,6 +78,35 @@ function mockState(): DashboardState {
   return mockStateForChild('mock-student-1', MOCK_CHILDREN)
 }
 
+function generateLocalChildId() {
+  return globalThis.crypto?.randomUUID?.() ?? `local-child-${Date.now()}`
+}
+
+function formatClassLabel(studentClass: string) {
+  return studentClass ? `${studentClass}º Ano` : 'Ano não informado'
+}
+
+function localChildFromCreate(
+  data: RegisterChildRequest
+): ParentDashboardChild {
+  return {
+    id: generateLocalChildId(),
+    name: `${data.first_name} ${data.last_name}`.trim(),
+    grade: formatClassLabel(data.student_class),
+  }
+}
+
+function localChildFromUpdate(
+  childId: string,
+  data: UpdateChildRequest
+): ParentDashboardChild {
+  return {
+    id: childId,
+    name: `${data.first_name} ${data.last_name}`.trim(),
+    grade: formatClassLabel(data.student_class),
+  }
+}
+
 export function useParentSettings(): UseParentDashboardResult {
   const [state, setState] = useState<DashboardState>(LOADING_STATE)
 
@@ -78,6 +114,69 @@ export function useParentSettings(): UseParentDashboardResult {
     setState(prev => {
       const child = prev.children.find(c => c.id === id) ?? prev.child
       return { ...prev, selectedChildId: id, child }
+    })
+  }, [])
+
+  const createChild = useCallback(async (data: RegisterChildRequest) => {
+    let child: ParentDashboardChild
+    try {
+      child = await parentService.createChild(data)
+    } catch {
+      child = localChildFromCreate(data)
+    }
+
+    setState(prev => ({
+      ...prev,
+      child: prev.child ?? child,
+      children: [...prev.children, child],
+      selectedChildId: prev.selectedChildId ?? child.id,
+    }))
+  }, [])
+
+  const updateChild = useCallback(
+    async (childId: string, data: UpdateChildRequest) => {
+      let updatedChild: ParentDashboardChild
+      try {
+        updatedChild = await parentService.updateChild(childId, data)
+      } catch {
+        updatedChild = localChildFromUpdate(childId, data)
+      }
+
+      setState(prev => ({
+        ...prev,
+        child: prev.child?.id === childId ? updatedChild : prev.child,
+        children: prev.children.map(child =>
+          child.id === childId ? updatedChild : child
+        ),
+      }))
+    },
+    []
+  )
+
+  const deleteChild = useCallback(async (childId: string) => {
+    try {
+      await parentService.deleteChild(childId)
+    } catch {
+      // Keep the settings page usable with the existing local mock fallback.
+    }
+
+    setState(prev => {
+      const children = prev.children.filter(child => child.id !== childId)
+      const nextSelectedChildId =
+        prev.selectedChildId === childId
+          ? (children[0]?.id ?? null)
+          : prev.selectedChildId
+      const child =
+        nextSelectedChildId != null
+          ? (children.find(item => item.id === nextSelectedChildId) ?? null)
+          : null
+
+      return {
+        ...prev,
+        child,
+        children,
+        selectedChildId: nextSelectedChildId,
+      }
     })
   }, [])
 
@@ -153,5 +252,5 @@ export function useParentSettings(): UseParentDashboardResult {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChildId])
 
-  return { ...state, selectChild }
+  return { ...state, createChild, deleteChild, selectChild, updateChild }
 }

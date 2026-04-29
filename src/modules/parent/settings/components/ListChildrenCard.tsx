@@ -1,17 +1,30 @@
-import { Box, IconButton, Typography } from '@mui/material'
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
+import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded'
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
+import {
+  Box,
+  IconButton,
+  Menu,
+  MenuItem,
+  Tooltip,
+  Typography,
+} from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
+import { useState, type KeyboardEvent, type MouseEvent } from 'react'
 import {
   getHoverStyle,
   getRolePalette,
   getRoleSelectedStyle,
 } from '@/app/theme/core/roles'
 import { useParentRole } from '@/modules/parent/shared/hooks/useParentRole'
-import type { ParentChild } from '@/modules/parent/settings/types/types'
-import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded'
+import type { ParentDashboardChild } from '@/modules/parent/settings/types/types'
 
 interface ListChildrenCardProps {
-  child: ParentChild
+  child: ParentDashboardChild
   selected: boolean
+  onDelete?: (child: ParentDashboardChild) => void | Promise<void>
+  onEdit?: (child: ParentDashboardChild) => void | Promise<void>
   onSelect: (id: string) => void
 }
 
@@ -31,6 +44,8 @@ function getInitials(name: string): string {
 function ListChildrenCard({
   child,
   selected,
+  onDelete,
+  onEdit,
   onSelect,
 }: ListChildrenCardProps) {
   const theme = useTheme()
@@ -38,16 +53,42 @@ function ListChildrenCard({
   const rolePalette = getRolePalette(theme, role)
   const selectedStyle = getRoleSelectedStyle(theme, role)
   const hoverStyle = getHoverStyle(theme, rolePalette.primary)
+  const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null)
   const initials = getInitials(child.name)
   const selectedLabel = selected ? 'Selecionado' : 'Selecionar'
+  const isMenuOpen = Boolean(menuAnchorEl)
+
+  function handleMenuOpen(event: MouseEvent<HTMLElement>) {
+    event.stopPropagation()
+    setMenuAnchorEl(event.currentTarget)
+  }
+
+  function handleMenuClose() {
+    setMenuAnchorEl(null)
+  }
+
+  function handleAction(
+    action: ((child: ParentDashboardChild) => void | Promise<void>) | undefined
+  ) {
+    handleMenuClose()
+    void action?.(child)
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== 'Enter' && event.key !== ' ') return
+    event.preventDefault()
+    onSelect(child.id)
+  }
 
   return (
     <Box role="listitem" sx={{ minWidth: 0 }}>
       <Box
         aria-label={`${selectedLabel} ${child.name}, ${child.grade}`}
         aria-pressed={selected}
-        component="button"
         onClick={() => onSelect(child.id)}
+        onKeyDown={handleKeyDown}
+        role="button"
+        tabIndex={0}
         sx={{
           backgroundColor: selected
             ? selectedStyle.backgroundColor
@@ -82,7 +123,6 @@ function ListChildrenCard({
             outlineOffset: '1px',
           },
         }}
-        type="button"
       >
         <Box
           sx={{
@@ -145,14 +185,11 @@ function ListChildrenCard({
             </Typography>
           </Box>
         </Box>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'flex-start',
-          }}
-        >
+        <Tooltip title="Mais ações">
           <IconButton
-            aria-label="Adicionar"
+            aria-label={`Mais ações para ${child.name}`}
+            onClick={handleMenuOpen}
+            size="small"
             sx={{
               backgroundColor: 'background.paper',
               border: '1px solid',
@@ -170,8 +207,45 @@ function ListChildrenCard({
           >
             <MoreHorizRoundedIcon fontSize="small" />
           </IconButton>
-        </Box>
+        </Tooltip>
       </Box>
+
+      <Menu
+        anchorEl={menuAnchorEl}
+        onClose={handleMenuClose}
+        open={isMenuOpen}
+        slotProps={{
+          paper: {
+            sx: {
+              border: '1px solid',
+              borderColor: 'background.border',
+              borderRadius: '16px',
+              minWidth: 180,
+              mt: 1,
+            },
+          },
+        }}
+      >
+        <MenuItem onClick={() => handleAction(onEdit)} sx={{ gap: 1.25 }}>
+          <EditOutlinedIcon fontSize="small" />
+          <Typography sx={{ fontSize: 14, fontWeight: 600 }}>Editar</Typography>
+        </MenuItem>
+        <MenuItem onClick={() => handleAction(onEdit)} sx={{ gap: 1.25 }}>
+          <LockOutlinedIcon fontSize="small" />
+          <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+            Alterar senha
+          </Typography>
+        </MenuItem>
+        <MenuItem
+          onClick={() => handleAction(onDelete)}
+          sx={{ color: 'error.main', gap: 1.25 }}
+        >
+          <DeleteOutlineRoundedIcon fontSize="small" />
+          <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+            Excluir
+          </Typography>
+        </MenuItem>
+      </Menu>
     </Box>
   )
 }

@@ -21,10 +21,14 @@ test('parent settings page renders AccountSettings with parent service callbacks
   const source = readSource('modules/parent/settings/page/Page.tsx')
 
   assert.match(source, /AccountSettings/)
+  assert.match(source, /ChildSettingsModal/)
   assert.match(source, /parentService\.getAccountSettings/)
   assert.match(source, /parentService\.updateAccountSettings/)
   assert.match(source, /parentService\.disableAccount/)
   assert.match(source, /parentService\.deleteAccount/)
+  assert.match(source, /createChild/)
+  assert.match(source, /updateChild/)
+  assert.match(source, /deleteChild/)
 })
 
 test('parent settings service centralizes account endpoints', () => {
@@ -35,4 +39,7 @@ test('parent settings service centralizes account endpoints', () => {
   assert.match(source, /updateAccountSettings/)
   assert.match(source, /disableAccount/)
   assert.match(source, /deleteAccount/)
+  assert.match(source, /createChild/)
+  assert.match(source, /updateChild/)
+  assert.match(source, /deleteChild/)
 })
