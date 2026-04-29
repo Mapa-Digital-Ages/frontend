@@ -353,15 +353,25 @@ function ApprovalComponent<TItem extends { id: string }>({
             sx={{
               alignItems: 'center',
               display: 'flex',
-              flex: 1,
+              flex: '1 1 auto',
               justifyContent: 'center',
-              minHeight: 'fit-content',
+              minHeight: 0,
+              overflow: 'hidden',
+              px: { md: 2, xs: 1 },
+              py: 2,
             }}
           >
-            <EmptyState
-              description={emptyStateDescription}
-              title={emptyStateTitle}
-            />
+            <Box
+              sx={{
+                maxWidth: 720,
+                width: '100%',
+              }}
+            >
+              <EmptyState
+                description={emptyStateDescription}
+                title={emptyStateTitle}
+              />
+            </Box>
           </Box>
         )}
       </Box>

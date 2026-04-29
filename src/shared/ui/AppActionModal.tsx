@@ -64,7 +64,6 @@ function resolveToneColor(theme: Theme, tone: AppActionModalTone) {
 }
 
 function AppActionModal({
-  accentSoftColor,
   cancelLabel = 'Cancelar',
   children,
   confirmLabel = 'Confirmar',
@@ -98,11 +97,6 @@ function AppActionModal({
     (confirmTone === 'primary.main'
       ? 'var(--app-role-current-hover-solid, var(--app-primary-dark))'
       : resolveToneColor(theme, confirmTone))
-  const resolvedAccentSoftColor =
-    accentSoftColor ??
-    (confirmTone === 'primary.main'
-      ? 'var(--app-role-current-soft, var(--app-surface-soft))'
-      : 'var(--app-surface-soft)')
   const confirmContent = loading ? (
     <Box className="flex items-center justify-center">
       <CircularProgress color="inherit" size={18} />
@@ -137,7 +131,6 @@ function AppActionModal({
     >
       <DialogTitle
         sx={{
-          backgroundColor: resolvedAccentSoftColor,
           borderColor: 'background.border',
           pt: 2,
         }}

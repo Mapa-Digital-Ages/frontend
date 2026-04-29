@@ -29,6 +29,7 @@ export type Task = {
 interface PlannerProps {
   tasks: Task[]
   sx?: SxProps<Theme>
+  hideStatus?: boolean
 }
 
 const dayMap: Record<string, string> = {
@@ -110,7 +111,7 @@ function getTaskIcon(status: Task['status']) {
   return renderIconBox(current.icon, current.color, current.bg)
 }
 
-function Planner({ tasks, sx }: PlannerProps) {
+function Planner({ tasks, sx, hideStatus = false }: PlannerProps) {
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
   const startOfWeek = dayjs().startOf('week').add(1, 'day')
   const endOfWeek = dayjs().endOf('week').add(1, 'day')
@@ -230,30 +231,31 @@ function Planner({ tasks, sx }: PlannerProps) {
                     </Box>
                   </Box>
                 </Box>
-
-                <Typography
-                  sx={{
-                    color: 'text.secondary',
-                    minWidth: 0,
-                    maxWidth: 100,
-                    flexShrink: 1,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    textAlign: 'right',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'flex-end',
-                    mt: { xs: 1, sm: 0 },
-                    width: { xs: '100%', sm: 'auto' },
-                  }}
-                >
-                  {dayTasks[0].status === 'done'
-                    ? 'Concluído'
-                    : dayTasks[0].status === 'adjust'
-                      ? 'Ajustar'
-                      : 'Pendente'}
-                </Typography>
+                {!hideStatus && (
+                  <Typography
+                    sx={{
+                      color: 'text.secondary',
+                      minWidth: 0,
+                      maxWidth: 100,
+                      flexShrink: 1,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      textAlign: 'right',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'flex-end',
+                      mt: { xs: 1, sm: 0 },
+                      width: { xs: '100%', sm: 'auto' },
+                    }}
+                  >
+                    {dayTasks[0].status === 'done'
+                      ? 'Concluído'
+                      : dayTasks[0].status === 'adjust'
+                        ? 'Ajustar'
+                        : 'Pendente'}
+                  </Typography>
+                )}
               </Box>
             ) : (
               <Box
@@ -286,26 +288,28 @@ function Planner({ tasks, sx }: PlannerProps) {
                   </Box>
                 </Box>
 
-                <Typography
-                  sx={{
-                    color: 'text.secondary',
-                    minWidth: 0,
-                    maxWidth: 110,
-                    textAlign: 'right',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'flex-end',
-                    flexShrink: 1,
-                    fontWeight: 500,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    width: { xs: '100%', sm: 'auto' },
-                    mt: { xs: 1, sm: 0 },
-                  }}
-                >
-                  Ver tarefas →
-                </Typography>
+                {!hideStatus && (
+                  <Typography
+                    sx={{
+                      color: 'text.secondary',
+                      minWidth: 0,
+                      maxWidth: 110,
+                      textAlign: 'right',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'flex-end',
+                      flexShrink: 1,
+                      fontWeight: 500,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      width: { xs: '100%', sm: 'auto' },
+                      mt: { xs: 1, sm: 0 },
+                    }}
+                  >
+                    Ver tarefas →
+                  </Typography>
+                )}
               </Box>
             )}
           </Box>
@@ -344,22 +348,24 @@ function Planner({ tasks, sx }: PlannerProps) {
                   </Box>
                 </Box>
 
-                <Typography
-                  sx={{
-                    color: 'text.secondary',
-                    minWidth: 90,
-                    textAlign: 'right',
-                    display: { xs: 'none', sm: 'flex' },
-                    alignItems: 'center',
-                    justifyContent: 'flex-end',
-                  }}
-                >
-                  {task.status === 'done'
-                    ? 'Concluído'
-                    : task.status === 'adjust'
-                      ? 'Ajustar'
-                      : 'Pendente'}
-                </Typography>
+                {!hideStatus && (
+                  <Typography
+                    sx={{
+                      color: 'text.secondary',
+                      minWidth: 90,
+                      textAlign: 'right',
+                      display: { xs: 'none', sm: 'flex' },
+                      alignItems: 'center',
+                      justifyContent: 'flex-end',
+                    }}
+                  >
+                    {task.status === 'done'
+                      ? 'Concluído'
+                      : task.status === 'adjust'
+                        ? 'Ajustar'
+                        : 'Pendente'}
+                  </Typography>
+                )}
               </Box>
             ))}
         </DialogContent>
