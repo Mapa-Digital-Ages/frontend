@@ -2,7 +2,7 @@ import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined'
 import SendRoundedIcon from '@mui/icons-material/SendRounded'
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined'
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded'
-import { Box, IconButton, Typography } from '@mui/material'
+import { Box, Button, IconButton, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
@@ -274,17 +274,17 @@ export default function Page() {
 
           <Box
             sx={{
-              display: 'grid',
+              alignItems: 'center',
+              display: 'flex',
               flexShrink: 0,
+              flexWrap: { md: 'nowrap', xs: 'wrap' },
               gap: 1,
-              gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+              justifyContent: 'center',
               px: { md: 2, xs: 1.5 },
-              py: 1,
             }}
           >
             {quickActions.map(action => (
-              <Box
-                component="button"
+              <Button
                 key={action}
                 onClick={() => setDraftMessage(action)}
                 sx={{
@@ -300,19 +300,22 @@ export default function Page() {
                   fontWeight: 700,
                   gap: 0.75,
                   justifyContent: 'center',
-                  minWidth: 0,
+                  height: 34,
+                  minHeight: 34,
+                  lineHeight: 1,
+                  textTransform: 'none',
+                  width: 'fit-content',
+                  maxWidth: '100%',
+                  whiteSpace: 'nowrap',
                   px: 1.5,
-                  py: 0.75,
                   transition: '160ms ease',
-                  width: '100%',
                   '&:hover': {
                     backgroundColor: alpha(accent.primary, 0.08),
                     borderColor: alpha(accent.primary, 0.38),
                   },
                 }}
-                type="button"
               >
-                <AutoAwesomeRoundedIcon sx={{ fontSize: 15 }} />
+                <AutoAwesomeRoundedIcon sx={{ fontSize: 15, flexShrink: 0 }} />
                 <Box
                   component="span"
                   sx={{
@@ -324,7 +327,7 @@ export default function Page() {
                 >
                   {action}
                 </Box>
-              </Box>
+              </Button>
             ))}
           </Box>
 

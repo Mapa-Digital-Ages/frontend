@@ -25,7 +25,8 @@ test('ListChildrenCard uses planner-like rows with initials and selected state',
   )
 
   assert.match(source, /role="listitem"/)
-  assert.match(source, /role="button"/)
+  assert.match(source, /ListItemButton/)
+  assert.match(source, /Avatar/)
   assert.match(source, /aria-pressed/)
   assert.match(source, /getInitials/)
   assert.match(source, /child\.grade/)

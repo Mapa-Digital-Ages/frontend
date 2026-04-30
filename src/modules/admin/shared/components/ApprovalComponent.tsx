@@ -1,7 +1,14 @@
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import ModeEditOutlineOutlinedIcon from '@mui/icons-material/ModeEditOutlineOutlined'
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined'
-import { Box, Button, IconButton, Typography } from '@mui/material'
+import {
+  Box,
+  Button,
+  IconButton,
+  List,
+  ListItem,
+  Typography,
+} from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import type { ReactNode } from 'react'
 import EmptyState from '@/shared/ui/EmptyState'
@@ -78,7 +85,6 @@ function ApprovalComponent<TItem extends { id: string }>({
   const accentColor = getRoleAccentColor(theme, role)
   const errorColor = theme.palette.error.main
   const isSelecting = selectionMode != null
-
   const accentHover = getHoverStyle(theme, accentColor)
   const errorHover = getHoverStyle(theme, errorColor)
   const editSelected = getSelectedStyle(theme, accentColor)
@@ -307,10 +313,14 @@ function ApprovalComponent<TItem extends { id: string }>({
         }}
       >
         {items.length > 0 ? (
-          <Box
-            className="grid gap-4"
+          <List
+            disablePadding
             sx={{
+              display: 'flex',
               flex: 1,
+              flexDirection: 'column',
+              gap: 2,
+              width: '100%',
               maxHeight: { md: 360, xs: 'none' },
               minHeight: 0,
               overflowX: 'hidden',
@@ -321,7 +331,8 @@ function ApprovalComponent<TItem extends { id: string }>({
             }}
           >
             {items.map(item => (
-              <Box
+              <ListItem
+                disablePadding
                 key={item.id}
                 onClick={
                   isSelecting && onItemSelect
@@ -329,7 +340,10 @@ function ApprovalComponent<TItem extends { id: string }>({
                     : undefined
                 }
                 sx={{
+                  display: 'block',
                   flexShrink: 0,
+                  minWidth: 0,
+                  width: '100%',
                   ...(isSelecting && selectionOutline
                     ? {
                         borderRadius: 'var(--app-radius-card, 16px)',
@@ -345,9 +359,9 @@ function ApprovalComponent<TItem extends { id: string }>({
                 }}
               >
                 {renderItem(item)}
-              </Box>
+              </ListItem>
             ))}
-          </Box>
+          </List>
         ) : (
           <Box
             sx={{

@@ -1,5 +1,5 @@
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
-import { Box, IconButton, Typography } from '@mui/material'
+import { Box, IconButton, List, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { getHoverStyle, getRoleAccentColor } from '@/app/theme/core/roles'
 import { useParentRole } from '@/modules/parent/shared/hooks/useParentRole'
@@ -143,11 +143,12 @@ export default function ListChildren({
         }}
       >
         {children.length > 0 ? (
-          <Box
+          <List
+            disablePadding
             className="grid gap-4"
             role="list"
             sx={{
-              flex: 1,
+              display: 'grid',
               maxHeight: { md: 360, xs: 'none' },
               minHeight: 0,
               overflowX: 'hidden',
@@ -167,7 +168,7 @@ export default function ListChildren({
                 selected={child.id === selectedChildId}
               />
             ))}
-          </Box>
+          </List>
         ) : (
           <Box
             sx={{

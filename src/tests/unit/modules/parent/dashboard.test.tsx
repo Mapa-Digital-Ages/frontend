@@ -22,7 +22,8 @@ test('parent dashboard has child selector in PageHeader actions', () => {
 
   assert.match(source, /actions=/)
   assert.match(source, /selectChild/)
-  assert.match(source, /children\.map/)
+  assert.match(source, /ChildSwitcher/)
+  assert.match(source, /children=\{children\}/)
 })
 
 test('parent dashboard delegates child registration to ChildRegistrationModal', () => {

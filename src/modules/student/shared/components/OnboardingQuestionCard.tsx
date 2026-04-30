@@ -1,7 +1,15 @@
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded'
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded'
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded'
-import { Box, Button, Stack, Typography } from '@mui/material'
+import {
+  Box,
+  Button,
+  FormControlLabel,
+  Radio,
+  RadioGroup,
+  Stack,
+  Typography,
+} from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import React, { useState } from 'react'
 import AppTags from '@/shared/ui/AppTags'
@@ -240,19 +248,25 @@ function OnboardingQuestionCard({
           </Typography>
         </Stack>
 
-        <Stack spacing={2}>
+        <RadioGroup
+          onChange={event => handleSelectOption(event.target.value)}
+          value={selectedOptionId ?? ''}
+          sx={{ gap: 2 }}
+        >
           {currentQuestion.options.map(option => {
             const isSelected = option.id === selectedOptionId
 
             return (
-              <Button
-                aria-pressed={isSelected}
+              <FormControlLabel
                 key={option.id}
-                onClick={() => handleSelectOption(option.id)}
+                value={option.id}
+                control={<Radio sx={{ display: 'none' }} />}
+                label={option.label}
                 sx={{
                   backgroundColor: isSelected
                     ? subjectTheme.optionSelected.backgroundColor
                     : subjectTheme.option.backgroundColor,
+                  border: '1px solid',
                   borderColor: isSelected
                     ? subjectTheme.optionSelected.borderColor
                     : subjectTheme.option.borderColor,
@@ -261,26 +275,30 @@ function OnboardingQuestionCard({
                     ? subjectTheme.optionSelected.color
                     : subjectTheme.option.color,
                   justifyContent: 'flex-start',
+                  m: 0,
                   minHeight: 48,
                   px: 2,
                   py: 1.25,
                   textAlign: 'left',
-                  textTransform: 'none',
                   transition:
                     'background-color 180ms ease, border-color 180ms ease, color 180ms ease',
+                  width: '100%',
+                  '& .MuiFormControlLabel-label': {
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    lineHeight: 1.75,
+                  },
                   '&:hover': {
                     backgroundColor:
                       subjectTheme.optionSelected.backgroundColor,
                     borderColor: subjectTheme.color,
+                    cursor: 'pointer',
                   },
                 }}
-                variant="outlined"
-              >
-                {option.label}
-              </Button>
+              />
             )
           })}
-        </Stack>
+        </RadioGroup>
       </Box>
 
       <Box

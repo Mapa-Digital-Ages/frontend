@@ -3,15 +3,20 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import {
+  Avatar,
   Box,
   IconButton,
+  ListItem,
+  ListItemAvatar,
+  ListItemButton,
+  ListItemText,
   Menu,
   MenuItem,
   Tooltip,
   Typography,
 } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
-import { useState, type KeyboardEvent, type MouseEvent } from 'react'
+import { useState, type MouseEvent } from 'react'
 import {
   getHoverStyle,
   getRolePalette,
@@ -74,21 +79,44 @@ function ListChildrenCard({
     void action?.(child)
   }
 
-  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    if (event.key !== 'Enter' && event.key !== ' ') return
-    event.preventDefault()
-    onSelect(child.id)
-  }
-
   return (
-    <Box role="listitem" sx={{ minWidth: 0 }}>
-      <Box
-        aria-label={`${selectedLabel} ${child.name}, ${child.grade}`}
-        aria-pressed={selected}
-        onClick={() => onSelect(child.id)}
-        onKeyDown={handleKeyDown}
-        role="button"
-        tabIndex={0}
+    <Box sx={{ minWidth: 0 }}>
+      <ListItem
+        disablePadding
+        role="listitem"
+        secondaryAction={
+          <Tooltip title="Mais ações">
+            <IconButton
+              aria-label={`Mais ações para ${child.name}`}
+              onClick={handleMenuOpen}
+              size="small"
+              sx={{
+                backgroundColor: selected
+                  ? selectedStyle.backgroundColor
+                  : 'background.paper',
+                border: '1px solid',
+                borderColor: selected
+                  ? selectedStyle.borderColor
+                  : 'background.border',
+                borderRadius: 'var(--app-radius-control)',
+                color: 'text.primary',
+                flexShrink: 0,
+                height: 32,
+                width: 32,
+                '&:hover': {
+                  backgroundColor: selected
+                    ? selectedStyle.backgroundColor
+                    : hoverStyle.backgroundColor,
+                  borderColor: selected
+                    ? selectedStyle.borderColor
+                    : hoverStyle.borderColor,
+                },
+              }}
+            >
+              <MoreHorizRoundedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        }
         sx={{
           backgroundColor: selected
             ? selectedStyle.backgroundColor
@@ -96,16 +124,13 @@ function ListChildrenCard({
           border: '1px solid',
           borderColor: selected
             ? selectedStyle.borderColor
-            : alpha(rolePalette.primary, 0.24),
+            : 'background.border',
           borderRadius: '12px',
           color: 'text.primary',
-          cursor: 'pointer',
-          display: 'flex',
-          gap: 1.5,
-          justifyContent: 'space-between',
           minWidth: 0,
+          overflow: 'hidden',
           p: 1.5,
-          textAlign: 'left',
+          pr: 6,
           transition:
             'background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease',
           width: '100%',
@@ -117,48 +142,66 @@ function ListChildrenCard({
               ? selectedStyle.borderColor
               : hoverStyle.borderColor,
           },
-          '&:focus-visible': {
-            boxShadow: `0 0 0 3px ${alpha(rolePalette.primary, 0.18)}`,
-            outline: `1px solid ${alpha(rolePalette.primary, 0.72)}`,
-            outlineOffset: '1px',
+          '&:focus-within': {
+            boxShadow: `${alpha(rolePalette.primary, 0.18)}`,
+          },
+          '& .MuiListItemSecondaryAction-root': {
+            right: 12,
           },
         }}
       >
-        <Box
+        <ListItemButton
+          aria-label={`${selectedLabel} ${child.name}, ${child.grade}`}
+          aria-pressed={selected}
+          onClick={() => onSelect(child.id)}
+          selected={selected}
           sx={{
-            alignItems: 'center',
-            display: 'flex',
-            flex: '1 1 200px',
+            borderRadius: '10px',
             gap: 1.5,
             minWidth: 0,
+            p: 0,
+            textAlign: 'left',
+            '&.Mui-selected': {
+              backgroundColor: 'transparent',
+            },
+            '&.Mui-selected:hover': {
+              backgroundColor: 'transparent',
+            },
+            '&:hover': {
+              backgroundColor: 'transparent',
+            },
           }}
         >
-          <Box
-            aria-hidden="true"
-            sx={{
-              alignItems: 'center',
-              backgroundColor: selected
-                ? rolePalette.primary
-                : alpha(rolePalette.primary, 0.14),
-              borderRadius: '50%',
-              color: selected ? rolePalette.contrast : rolePalette.primary,
-              display: 'flex',
-              flexShrink: 0,
-              fontSize: 14,
-              fontWeight: 800,
-              height: 40,
-              justifyContent: 'center',
-              letterSpacing: '0.02em',
-              minHeight: 40,
-              minWidth: 40,
-              width: 40,
-            }}
-          >
-            {initials}
-          </Box>
-          <Box sx={{ minWidth: 0 }}>
-            <Typography
+          <ListItemAvatar sx={{ minWidth: 0, mr: 1.5 }}>
+            <Avatar
+              aria-hidden="true"
+              variant="circular"
               sx={{
+                backgroundColor: selected
+                  ? rolePalette.primary
+                  : alpha(rolePalette.primary, 0.14),
+                color: selected ? rolePalette.contrast : rolePalette.primary,
+                fontSize: 14,
+                fontWeight: 800,
+                height: 40,
+                letterSpacing: '0.02em',
+                width: 40,
+              }}
+            >
+              {initials}
+            </Avatar>
+          </ListItemAvatar>
+          <ListItemText
+            primary={child.name}
+            secondary={child.grade}
+            slotProps={{
+              primary: {
+                title: child.name,
+              },
+            }}
+            sx={{
+              minWidth: 0,
+              '& .MuiListItemText-primary': {
                 color: 'text.primary',
                 fontSize: '1rem',
                 fontWeight: 700,
@@ -166,49 +209,19 @@ function ListChildrenCard({
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
-              }}
-              title={child.name}
-            >
-              {child.name}
-            </Typography>
-            <Typography
-              sx={{
+              },
+              '& .MuiListItemText-secondary': {
                 color: 'text.secondary',
                 fontSize: 14,
                 minWidth: 0,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
-              }}
-            >
-              {child.grade}
-            </Typography>
-          </Box>
-        </Box>
-        <Tooltip title="Mais ações">
-          <IconButton
-            aria-label={`Mais ações para ${child.name}`}
-            onClick={handleMenuOpen}
-            size="small"
-            sx={{
-              backgroundColor: 'background.paper',
-              border: '1px solid',
-              borderColor: 'background.border',
-              borderRadius: 'var(--app-radius-control)',
-              color: 'text.primary',
-              flexShrink: 0,
-              height: 32,
-              width: 32,
-              '&:hover': {
-                backgroundColor: hoverStyle.backgroundColor,
-                borderColor: hoverStyle.borderColor,
               },
             }}
-          >
-            <MoreHorizRoundedIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      </Box>
+          />
+        </ListItemButton>
+      </ListItem>
 
       <Menu
         anchorEl={menuAnchorEl}

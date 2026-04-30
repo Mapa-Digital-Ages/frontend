@@ -1,4 +1,4 @@
-import { Box, IconButton, Typography } from '@mui/material'
+import { Box, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
 import type { ParentDashboardChild } from '@/modules/parent/dashboard/types/types'
 import { useTheme } from '@mui/material/styles'
 import { getRolePalette, getSelectedStyle } from '@/app/theme/core/roles'
@@ -31,17 +31,28 @@ function ChildSwitcher({
   if (children.length === 0) return null
 
   return (
-    <Box
-      role="group"
+    <ToggleButtonGroup
+      exclusive
+      onChange={(_, nextChildId: string | null) => {
+        if (nextChildId) {
+          onSelect(nextChildId)
+        }
+      }}
+      value={selectedChildId}
       aria-label="Selecionar filho"
       sx={{
-        height: 32,
-        display: 'flex',
         alignItems: 'center',
         border: '1px solid',
         borderColor: rolePalette.contrast,
         borderRadius: 'var(--app-radius-pill)',
+        display: 'flex',
         gap: 1,
+        height: 32,
+        p: 0,
+        '& .MuiToggleButtonGroup-grouped': {
+          border: 0,
+          margin: 0,
+        },
       }}
     >
       {children.map(child => {
@@ -50,24 +61,32 @@ function ChildSwitcher({
         const firstName = child.name.split(' ')[0]
 
         return (
-          <IconButton
+          <ToggleButton
             key={child.id}
-            aria-checked={isSelected}
             aria-label={`${child.name} — ${child.grade}`}
-            onClick={() => onSelect(child.id)}
+            value={child.id}
             sx={{
-              display: 'flex',
               alignItems: 'center',
+              backgroundColor: isSelected ? selectColor : 'transparent',
+              borderRadius: 'var(--app-radius-pill) !important',
+              cursor: 'pointer',
+              display: 'flex',
               gap: 0.75,
+              minHeight: 30,
+              minWidth: 30,
               px: isSelected ? 1 : 0.5,
               py: 0.5,
-              borderRadius: 'var(--app-radius-pill)',
-              cursor: 'pointer',
+              textTransform: 'none',
               transition:
                 'background-color 0.15s ease, border-color 0.15s ease',
-              backgroundColor: isSelected ? selectColor : 'transparent',
               '&:hover': {
                 backgroundColor: isSelected ? selectColor : selectColor,
+              },
+              '&.Mui-selected': {
+                backgroundColor: selectColor,
+              },
+              '&.Mui-selected:hover': {
+                backgroundColor: selectColor,
               },
             }}
           >
@@ -104,10 +123,10 @@ function ChildSwitcher({
                 {firstName}
               </Typography>
             ) : null}
-          </IconButton>
+          </ToggleButton>
         )
       })}
-    </Box>
+    </ToggleButtonGroup>
   )
 }
 

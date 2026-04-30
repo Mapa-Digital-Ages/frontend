@@ -10,11 +10,15 @@ test('EmotionalContainer supports summary mode with wellBeing prop', () => {
 })
 
 test('ParentEmotionalSummary file exists', () => {
-  assert.ok(sourceExists('shared/ui/ParentEmotionalSummary.tsx'))
+  assert.ok(
+    sourceExists('modules/parent/shared/components/ParentEmotionalSummary.tsx')
+  )
 })
 
 test('ParentEmotionalSummary has carousel navigation', () => {
-  const source = readSource('shared/ui/ParentEmotionalSummary.tsx')
+  const source = readSource(
+    'modules/parent/shared/components/ParentEmotionalSummary.tsx'
+  )
 
   assert.match(source, /ChevronLeft|ArrowBack|NavigateBefore/)
   assert.match(source, /ChevronRight|ArrowForward|NavigateNext/)
@@ -22,20 +26,26 @@ test('ParentEmotionalSummary has carousel navigation', () => {
 })
 
 test('ParentEmotionalSummary shows week date badge', () => {
-  const source = readSource('shared/ui/ParentEmotionalSummary.tsx')
+  const source = readSource(
+    'modules/parent/shared/components/ParentEmotionalSummary.tsx'
+  )
 
   assert.match(source, /Resumo Socioemocional/)
   assert.match(source, /format.*DD.*MMM|format.*D.*MMM/)
 })
 
 test('ParentEmotionalSummary handles null mood with HelpOutline icon', () => {
-  const source = readSource('shared/ui/ParentEmotionalSummary.tsx')
+  const source = readSource(
+    'modules/parent/shared/components/ParentEmotionalSummary.tsx'
+  )
 
-  assert.match(source, /HelpOutline/)
+  assert.match(source, /NotInterested/)
 })
 
 test('ParentEmotionalSummary colours insight phrases by mood', () => {
-  const source = readSource('shared/ui/ParentEmotionalSummary.tsx')
+  const source = readSource(
+    'modules/parent/shared/components/ParentEmotionalSummary.tsx'
+  )
 
   assert.match(source, /moodPhraseStyle|phraseStyle/)
   assert.match(source, /rgba\(34,197,94/)

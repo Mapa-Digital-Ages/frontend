@@ -12,7 +12,7 @@ test('AccountSettings exposes account editing and danger-zone actions', () => {
   assert.match(source, /onDisableAccount/)
   assert.match(source, /onDeleteAccount/)
   assert.match(source, /Dados da conta/)
-  assert.match(source, /Desabilitar conta/)
+  assert.match(source, /Desativar conta/)
   assert.match(source, /Excluir conta/)
   assert.match(source, /AppActionModal/)
 })

@@ -1,4 +1,4 @@
-import { Box, Typography } from '@mui/material'
+import { Alert, Box, Typography } from '@mui/material'
 import AppActionModal from '@/shared/ui/AppActionModal'
 import AppDropdown, { type DropdownOption } from '@/shared/ui/AppDropdown'
 import AppInput from '@/shared/ui/AppInput'
@@ -141,7 +141,6 @@ function ChildSettingsModal({
               value={form.last_name}
             />
           </Box>
-
           {isCreate ? (
             <>
               <AppInput
@@ -162,7 +161,6 @@ function ChildSettingsModal({
               />
             </>
           ) : null}
-
           <AppInput
             label="Data de nascimento"
             onChange={event => onChange('birth_date', event.target.value)}
@@ -182,11 +180,15 @@ function ChildSettingsModal({
             sx={selectSx}
             value={form.student_class}
           />
-
           {feedbackMessage ? (
-            <Typography color="error.main" sx={{ fontSize: 14 }}>
+            <Alert
+              icon={false}
+              severity="error"
+              variant="outlined"
+              sx={{ borderRadius: '10px', fontSize: 14, py: 0.5 }}
+            >
               {feedbackMessage}
-            </Typography>
+            </Alert>
           ) : null}
         </Box>
       )}

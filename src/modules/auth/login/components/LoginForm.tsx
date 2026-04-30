@@ -1,4 +1,5 @@
 import { Box, Stack, Typography } from '@mui/material'
+import { alpha, useTheme, type Theme } from '@mui/material/styles'
 import { useState, type FormEvent } from 'react'
 import AppButton from '@/shared/ui/AppButton'
 import AppInput from '@/shared/ui/AppInput'
@@ -24,49 +25,65 @@ type LoginFormErrors = Partial<
   Record<keyof AuthCredentials | 'confirmPassword' | 'fullName', string>
 >
 
-function getAuthInputSx(hasError: boolean) {
-  const borderColor = hasError ? '#dc2626' : '#cbd5e1'
-  const hoverBorderColor = hasError ? '#dc2626' : '#94a3b8'
-  const focusedBorderColor = hasError ? '#dc2626' : '#359CDF'
+function getAuthInputSx(hasError: boolean, theme: Theme) {
+  const isDark = theme.palette.mode === 'dark'
+  const fieldBackground = isDark
+    ? alpha(theme.palette.common.white, 0.03)
+    : '#ffffff'
+  const fieldTextColor = theme.palette.text.primary
+  const fieldMutedColor = theme.palette.text.secondary
+  const borderColor = hasError
+    ? theme.palette.error.main
+    : isDark
+      ? theme.palette.background.border
+      : '#cbd5e1'
+  const hoverBorderColor = hasError
+    ? theme.palette.error.main
+    : isDark
+      ? theme.palette.background.hoverBorder
+      : '#94a3b8'
+  const focusedBorderColor = hasError
+    ? theme.palette.error.main
+    : theme.palette.primary.main
 
   return {
     '& .MuiOutlinedInput-root': {
-      backgroundColor: '#ffffff',
-      color: '#0f172a',
+      backgroundColor: fieldBackground,
+      color: fieldTextColor,
       height: 48,
       fontSize: '0.95rem',
     },
     '& .MuiInputBase-input': {
-      color: '#0f172a',
-      caretColor: '#0f172a',
+      color: fieldTextColor,
+      caretColor: fieldTextColor,
       fontSize: '0.95rem',
       height: '24px',
       lineHeight: '24px',
       paddingBottom: '12px',
       paddingTop: '12px',
       '&::placeholder': {
-        color: '#64748b',
+        color: fieldMutedColor,
         opacity: 1,
       },
       '&:-webkit-autofill, &:-webkit-autofill:hover, &:-webkit-autofill:focus, &:-webkit-autofill:active':
         {
-          backgroundColor: '#ffffff',
+          backgroundColor: fieldBackground,
           backgroundImage: 'none',
-          color: '#0f172a',
+          color: fieldTextColor,
           fontFamily: 'inherit',
           fontSize: '0.95rem',
           height: '24px',
           lineHeight: '24px',
           paddingBottom: '12px',
           paddingTop: '12px',
-          WebkitBoxShadow: '0 0 0 1000px #ffffff inset',
-          WebkitTextFillColor: '#0f172a',
-          caretColor: '#0f172a',
+          WebkitBoxShadow: `0 0 0 1000px ${fieldBackground} inset`,
+          WebkitTextFillColor: fieldTextColor,
+          caretColor: fieldTextColor,
           transition: 'background-color 9999s ease-out 0s',
         },
     },
     '& .MuiInputAdornment-root .MuiSvgIcon-root, & .MuiIconButton-root': {
-      color: '#64748b',
+      color: fieldMutedColor,
     },
     '& .MuiOutlinedInput-notchedOutline': {
       borderColor,
@@ -78,12 +95,13 @@ function getAuthInputSx(hasError: boolean) {
       borderColor: focusedBorderColor,
     },
     '& .MuiFormHelperText-root': {
-      color: hasError ? '#dc2626' : '#64748b',
+      color: hasError ? theme.palette.error.main : fieldMutedColor,
     },
   }
 }
 
 function LoginForm({ isSubmitting = false, mode, onSubmit }: LoginFormProps) {
+  const theme = useTheme()
   const [values, setValues] = useState<AuthCredentials>({
     email: '',
     password: '',
@@ -160,7 +178,7 @@ function LoginForm({ isSubmitting = false, mode, onSubmit }: LoginFormProps) {
         boxSizing: 'border-box',
         pb: 7,
         '& .auth-login-input .MuiTypography-root': {
-          color: '#334155',
+          color: 'text.secondary',
         },
       }}
     >
@@ -190,7 +208,7 @@ function LoginForm({ isSubmitting = false, mode, onSubmit }: LoginFormProps) {
               }))
             }}
             placeholder="Ex.: Lucas Silva"
-            sx={getAuthInputSx(Boolean(errors.fullName))}
+            sx={getAuthInputSx(Boolean(errors.fullName), theme)}
             value={fullName}
           />
         )}
@@ -210,7 +228,7 @@ function LoginForm({ isSubmitting = false, mode, onSubmit }: LoginFormProps) {
             label="E-mail"
             onChange={event => updateField('email', event.target.value)}
             placeholder="voce@exemplo.com"
-            sx={getAuthInputSx(Boolean(errors.email))}
+            sx={getAuthInputSx(Boolean(errors.email), theme)}
             type="email"
             value={values.email}
           />
@@ -225,7 +243,7 @@ function LoginForm({ isSubmitting = false, mode, onSubmit }: LoginFormProps) {
             onChange={event => updateField('password', event.target.value)}
             type="password"
             placeholder="digite sua senha"
-            sx={getAuthInputSx(Boolean(errors.password))}
+            sx={getAuthInputSx(Boolean(errors.password), theme)}
             value={values.password}
           />
 
@@ -236,21 +254,21 @@ function LoginForm({ isSubmitting = false, mode, onSubmit }: LoginFormProps) {
                 href="#"
                 onClick={event => event.preventDefault()}
                 sx={{
-                  color: '#359CDF',
+                  color: 'primary.main',
                   fontSize: '0.875rem',
-                  textDecorationColor: '#359CDF',
+                  textDecorationColor: theme.palette.primary.main,
                   '&:hover': {
-                    color: '#218cc9',
-                    textDecorationColor: '#218cc9',
+                    color: 'primary.dark',
+                    textDecorationColor: theme.palette.primary.dark,
                   },
                   '&:active': {
-                    color: '#1b78ad',
+                    color: 'primary.dark',
                   },
                   '&:visited': {
-                    color: '#359CDF',
+                    color: 'primary.main',
                   },
                   '&:focus-visible': {
-                    outline: '2px solid #359CDF',
+                    outline: `2px solid ${theme.palette.primary.main}`,
                   },
                 }}
               >
@@ -277,7 +295,7 @@ function LoginForm({ isSubmitting = false, mode, onSubmit }: LoginFormProps) {
                 confirmPassword: undefined,
               }))
             }}
-            sx={getAuthInputSx(Boolean(errors.confirmPassword))}
+            sx={getAuthInputSx(Boolean(errors.confirmPassword), theme)}
             type="password"
             value={confirmPassword}
           />
@@ -290,23 +308,23 @@ function LoginForm({ isSubmitting = false, mode, onSubmit }: LoginFormProps) {
         disabled={isSubmitting}
         fullWidth
         size="medium"
-        textColor="#ffffff"
+        textColor={theme.palette.common.white}
         sx={{
-          position: 'absolute',
-          right: 0,
           bottom: 0,
+          backgroundColor: 'primary.main',
+          color: theme.palette.common.white,
+          fontSize: '1rem',
           left: 0,
           minHeight: 50,
-          fontSize: '1rem',
-          backgroundColor: '#359CDF',
-          color: '#ffffff',
-          '&:hover': {
-            backgroundColor: '#218cc9',
-            filter: 'none',
-          },
+          position: 'absolute',
+          right: 0,
           '&.Mui-disabled': {
-            backgroundColor: '#9ccfe9',
-            color: '#ffffff',
+            backgroundColor: alpha(theme.palette.primary.main, 0.45),
+            color: alpha(theme.palette.common.white, 0.72),
+          },
+          '&:hover': {
+            backgroundColor: 'primary.dark',
+            filter: 'none',
           },
         }}
         type="submit"

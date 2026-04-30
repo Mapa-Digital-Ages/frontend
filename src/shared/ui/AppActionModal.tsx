@@ -9,7 +9,12 @@ import {
   IconButton,
   Typography,
 } from '@mui/material'
-import { useTheme, type Breakpoint, type Theme } from '@mui/material/styles'
+import {
+  alpha,
+  useTheme,
+  type Breakpoint,
+  type Theme,
+} from '@mui/material/styles'
 import { useId, type ReactNode } from 'react'
 import AppButton from '@/shared/ui/AppButton'
 
@@ -63,12 +68,34 @@ function resolveToneColor(theme: Theme, tone: AppActionModalTone) {
   }
 }
 
+function resolveToneHoverColor(theme: Theme, tone: AppActionModalTone) {
+  switch (tone) {
+    case 'secondary.main':
+      return theme.palette.secondary.dark ?? theme.palette.secondary.main
+    case 'error.main':
+      return theme.palette.error.dark ?? theme.palette.error.main
+    case 'warning.main':
+      return theme.palette.warning.dark ?? theme.palette.warning.main
+    case 'info.main':
+      return theme.palette.info.dark ?? theme.palette.info.main
+    case 'success.main':
+      return theme.palette.success.dark ?? theme.palette.success.main
+    case 'primary.main':
+    default:
+      return theme.palette.primary.dark ?? theme.palette.primary.main
+  }
+}
+
+function getSoftHover(theme: Theme, color: string, opacity = 0.1) {
+  return alpha(color, theme.palette.mode === 'dark' ? opacity + 0.04 : opacity)
+}
+
 function AppActionModal({
   cancelLabel = 'Cancelar',
   children,
+  confirmHoverColor,
   confirmLabel = 'Confirmar',
   confirmColor,
-  confirmHoverColor,
   confirmTextColor = '#ffffff',
   confirmTone = 'primary.main',
   description,
@@ -87,16 +114,31 @@ function AppActionModal({
   const titleId = useId()
   const descriptionId = useId()
   const resolvedMode = mode ?? variant
-  const accentColor =
+  const resolvedAccentColor =
     confirmColor ??
     (confirmTone === 'primary.main'
       ? 'var(--app-role-current-primary, var(--app-primary))'
       : resolveToneColor(theme, confirmTone))
-  const accentHoverColor =
+  const resolvedConfirmHoverColor =
     confirmHoverColor ??
-    (confirmTone === 'primary.main'
-      ? 'var(--app-role-current-hover-solid, var(--app-primary-dark))'
-      : resolveToneColor(theme, confirmTone))
+    (confirmColor
+      ? confirmColor
+      : confirmTone === 'primary.main'
+        ? 'var(--app-role-current-primary, var(--app-primary))'
+        : resolveToneHoverColor(theme, confirmTone))
+  const neutralHoverBackground =
+    theme.palette.mode === 'dark'
+      ? alpha(theme.palette.common.white, 0.07)
+      : alpha(theme.palette.text.primary, 0.05)
+  const neutralHoverBorder =
+    theme.palette.mode === 'dark'
+      ? alpha(theme.palette.common.white, 0.16)
+      : alpha(theme.palette.text.primary, 0.12)
+  const closeHoverBackground = getSoftHover(
+    theme,
+    theme.palette.text.primary,
+    0.08
+  )
   const confirmContent = loading ? (
     <Box className="flex items-center justify-center">
       <CircularProgress color="inherit" size={18} />
@@ -169,6 +211,16 @@ function AppActionModal({
               color: 'text.secondary',
               height: 32,
               width: 32,
+              transition:
+                'background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease',
+              '&:hover': {
+                backgroundColor: closeHoverBackground,
+                borderColor: neutralHoverBorder,
+                color: 'text.primary',
+              },
+              '&:active': {
+                transform: 'scale(0.96)',
+              },
             }}
           >
             <CloseRoundedIcon fontSize="small" />
@@ -201,18 +253,54 @@ function AppActionModal({
         <AppButton
           backgroundColor="background.paper"
           hasBorder
+          hoverBackgroundColor={neutralHoverBackground}
           label={cancelLabel}
           onClick={onClose}
           textColor="text.primary"
           variant="outlined"
+          sx={{
+            borderColor: 'background.border',
+            transition:
+              'background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease',
+            '&:hover': {
+              backgroundColor: neutralHoverBackground,
+              borderColor: neutralHoverBorder,
+            },
+            '&:active': {
+              transform: 'translateY(1px)',
+            },
+          }}
         />
+
         {onConfirm ? (
           <AppButton
-            backgroundColor={accentColor}
+            backgroundColor={resolvedAccentColor}
             disabled={disableConfirm || loading}
-            hoverBackgroundColor={accentHoverColor}
+            hoverBackgroundColor={resolvedConfirmHoverColor}
             onClick={onConfirm}
             textColor={confirmTextColor}
+            sx={{
+              borderColor: resolvedAccentColor,
+              transition:
+                'background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease',
+              '&:hover': {
+                backgroundColor: resolvedConfirmHoverColor,
+                borderColor: resolvedConfirmHoverColor,
+              },
+              '&:active': {
+                transform: 'translateY(1px)',
+              },
+              '&:disabled': {
+                backgroundColor: alpha(
+                  confirmColor && confirmColor.startsWith('rgb')
+                    ? confirmColor
+                    : resolveToneColor(theme, confirmTone),
+                  0.42
+                ),
+                color: alpha(theme.palette.common.white, 0.72),
+                boxShadow: 'none',
+              },
+            }}
           >
             {confirmContent}
           </AppButton>

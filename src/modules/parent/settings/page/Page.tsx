@@ -11,6 +11,7 @@ import ChildSettingsModal, {
 import ListChildren from '../components/ListChildren'
 import { useParentSettings } from '../hooks/useParentSettings'
 import type { ParentDashboardChild, ResultsSummary } from '../types/types'
+import { Box } from '@mui/material'
 
 const DEFAULT_PAGE_INDEX = 1
 const PAGE_SIZE = 10
@@ -195,56 +196,65 @@ export default function Page() {
         subtitle="Configure sua conta"
         variant="responsavel"
       />
-      <ListChildren
-        children={visibleChildren}
-        currentPage={safeCurrentPage}
-        description="Gerencie os filhos vinculados a este responsável."
-        emptyStateDescription="Nenhum filho corresponde à busca atual."
-        emptyStateTitle="Nenhum filho encontrado"
-        onCreate={openCreateModal}
-        onDelete={openDeleteModal}
-        onEdit={openEditModal}
-        onPageChange={page => setCurrentPage(page)}
-        onQueryChange={nextQuery => {
-          setQuery(nextQuery)
-          setCurrentPage(DEFAULT_PAGE_INDEX)
+      <Box
+        className="grid grid-cols-2 md:grid-cols-2 gap-5"
+        sx={{
+          display: 'grid',
         }}
-        onSelect={selectChild}
-        query={query}
-        resultsSummary={childrenResultsSummary}
-        searchPlaceholder="Pesquisar filhos..."
-        selectedChildId={selectedChildId}
-        title="Filhos"
-        totalPages={totalPages}
-      />
-      <ChildSettingsModal
-        child={childAction?.child}
-        disableConfirm={isModalConfirmDisabled}
-        feedbackMessage={childFeedback}
-        form={childForm}
-        mode={childAction?.mode ?? null}
-        onChange={updateChildForm}
-        onClose={closeChildModal}
-        onConfirm={handleChildActionConfirm}
-        open={childAction != null}
-        submitting={isSubmittingChild}
-      />
-      <AccountSettings
-        initialValues={accountSettings}
-        onDeleteAccount={async () => {
-          await parentService.deleteAccount()
-          logout()
-        }}
-        onDisableAccount={async () => {
-          await parentService.disableAccount()
-          logout()
-        }}
-        onSave={async settings => {
-          const updatedSettings =
-            await parentService.updateAccountSettings(settings)
-          setAccountSettings(updatedSettings)
-        }}
-      />
+      >
+        <ListChildren
+          children={visibleChildren}
+          currentPage={safeCurrentPage}
+          description="Gerencie os filhos vinculados a este responsável."
+          emptyStateDescription="Nenhum filho corresponde à busca atual."
+          emptyStateTitle="Nenhum filho encontrado"
+          onCreate={openCreateModal}
+          onDelete={openDeleteModal}
+          onEdit={openEditModal}
+          onPageChange={page => setCurrentPage(page)}
+          onQueryChange={nextQuery => {
+            setQuery(nextQuery)
+            setCurrentPage(DEFAULT_PAGE_INDEX)
+          }}
+          onSelect={selectChild}
+          query={query}
+          resultsSummary={childrenResultsSummary}
+          searchPlaceholder="Pesquisar filhos..."
+          selectedChildId={selectedChildId}
+          title="Filhos"
+          totalPages={totalPages}
+        />
+        <Box className="flex flex-col gap-4">
+          <AccountSettings
+            initialValues={accountSettings}
+            onDeleteAccount={async () => {
+              await parentService.deleteAccount()
+              logout()
+            }}
+            onDisableAccount={async () => {
+              await parentService.disableAccount()
+              logout()
+            }}
+            onSave={async settings => {
+              const updatedSettings =
+                await parentService.updateAccountSettings(settings)
+              setAccountSettings(updatedSettings)
+            }}
+          />
+        </Box>
+        <ChildSettingsModal
+          child={childAction?.child}
+          disableConfirm={isModalConfirmDisabled}
+          feedbackMessage={childFeedback}
+          form={childForm}
+          mode={childAction?.mode ?? null}
+          onChange={updateChildForm}
+          onClose={closeChildModal}
+          onConfirm={handleChildActionConfirm}
+          open={childAction != null}
+          submitting={isSubmittingChild}
+        />
+      </Box>
     </AppPageContainer>
   )
 }

@@ -6,6 +6,8 @@ import {
   DialogTitle,
   DialogContent,
   IconButton,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material'
 import SentimentVerySatisfiedIcon from '@mui/icons-material/SentimentVerySatisfied'
 import SentimentNeutralIcon from '@mui/icons-material/SentimentNeutral'
@@ -18,20 +20,18 @@ import { alpha } from '@mui/material/styles'
 import dayjs from 'dayjs'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import 'dayjs/locale/pt-br'
-import type { WeeklyMoodEntry } from '@/shared/types/common'
-import ParentEmotionalSummary from '@/modules/parent/shared/components/ParentEmotionalSummary'
 
 dayjs.locale('pt-br')
 dayjs.extend(isoWeek)
 
 type EmotionButtonColor = 'success' | 'warning' | 'error'
-
 interface EmotionButtonProps {
   icon: ReactNode
   label: string
   color: EmotionButtonColor
   onClick: () => void
   testId: string
+  value: string
   width?: string
   height?: string
 }
@@ -42,6 +42,7 @@ function EmotionButton({
   color,
   onClick,
   testId,
+  value,
   width,
   height,
 }: EmotionButtonProps) {
@@ -62,34 +63,42 @@ function EmotionButton({
   }
 
   return (
-    <Box
-      component="button"
+    <ToggleButton
       data-testid={testId}
       onClick={onClick}
+      value={value}
       sx={{
-        justifyContent: 'center',
-        width: width || '163.33px',
-        height: height || '92px',
-        flexDirection: 'column',
-        cursor: 'pointer',
-        borderRadius: '12px',
+        alignItems: 'center',
+        backgroundColor: 'transparent',
         border: '1px solid',
         borderColor: `${color}.main`,
-        backgroundColor: 'transparent',
+        borderRadius: '12px !important',
         color: `${color}.main`,
+        cursor: 'pointer',
         display: 'flex',
-        alignItems: 'center',
+        flexDirection: 'column',
         gap: 1,
+        height: height || '92px',
+        justifyContent: 'center',
+        textTransform: 'none',
         transition: 'all 0.2s ease-in-out',
+        width: width || '163.33px',
         '&:hover': {
           backgroundColor: hoverBackgrounds[color],
           opacity: 0.9,
+        },
+        '&.Mui-selected': {
+          backgroundColor: hoverBackgrounds[color],
+          color: `${color}.main`,
+        },
+        '&.Mui-selected:hover': {
+          backgroundColor: hoverBackgrounds[color],
         },
       }}
     >
       {icon}
       <Typography fontWeight="bold">{label}</Typography>
-    </Box>
+    </ToggleButton>
   )
 }
 
@@ -149,13 +158,27 @@ export default function EmotionalContainer() {
         Check-in emocional
       </Typography>
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 4 }}>
+      <ToggleButtonGroup
+        exclusive
+        value={selectedEmotion}
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: 2,
+          mb: 4,
+          '& .MuiToggleButtonGroup-grouped': {
+            border: '1px solid',
+            margin: 0,
+          },
+        }}
+      >
         <EmotionButton
           testId="emotion-button-good"
           label="Bem"
           color="success"
           icon={<SentimentVerySatisfiedIcon sx={{ fontSize: 28 }} />}
           onClick={() => handleEmotionSelect('Bem')}
+          value="Bem"
         />
         <EmotionButton
           testId="emotion-button-regular"
@@ -163,6 +186,7 @@ export default function EmotionalContainer() {
           color="warning"
           icon={<SentimentNeutralIcon sx={{ fontSize: 28 }} />}
           onClick={() => handleEmotionSelect('Regular')}
+          value="Regular"
         />
         <EmotionButton
           testId="emotion-button-bad"
@@ -170,8 +194,9 @@ export default function EmotionalContainer() {
           color="error"
           icon={<SentimentVeryDissatisfiedIcon sx={{ fontSize: 28 }} />}
           onClick={() => handleEmotionSelect('Mal')}
+          value="Mal"
         />
-      </Stack>
+      </ToggleButtonGroup>
 
       <Typography
         variant="h6"

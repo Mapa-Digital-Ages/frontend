@@ -1,15 +1,22 @@
 import BlockRoundedIcon from '@mui/icons-material/BlockRounded'
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded'
-import { Box, Typography, useTheme } from '@mui/material'
+import {
+  Box,
+  List,
+  ListItem,
+  ListItemText,
+  Typography,
+  useTheme,
+} from '@mui/material'
+import { alpha, Theme } from '@mui/material/styles'
 import { useEffect, useMemo, useState } from 'react'
 import AppActionModal from '@/shared/ui/AppActionModal'
 import AppButton from '@/shared/ui/AppButton'
 import AppCard from '@/shared/ui/AppCard'
 import AppInput from '@/shared/ui/AppInput'
 import type { ParentAccountSettings } from '@/modules/parent/settings/services/service'
-import { getRolePalette, getSelectedStyle } from '@/app/theme/core/roles'
-import { useParentRole } from '../../shared/hooks/useParentRole'
+import { HowToVoteRounded } from '@mui/icons-material'
 
 interface AccountSettingsProps {
   initialValues: ParentAccountSettings
@@ -18,7 +25,7 @@ interface AccountSettingsProps {
   onDeleteAccount?: () => void | Promise<void>
 }
 
-type PendingAccountAction = 'disable' | 'delete' | null
+type PendingAccountAction = 'password' | 'disable' | 'delete' | null
 
 const EMPTY_ACCOUNT_SETTINGS: ParentAccountSettings = {
   email: '',
@@ -71,9 +78,14 @@ function AccountSettings({
   const [isSaving, setIsSaving] = useState(false)
   const [isSubmittingAction, setIsSubmittingAction] = useState(false)
   const theme = useTheme()
-  const role = useParentRole()
-  const rolePalette = getRolePalette(theme, role)
-  const selectColor = getSelectedStyle(theme, rolePalette.contrast)
+  const neutralHoverBackground =
+    theme.palette.mode === 'dark'
+      ? alpha(theme.palette.common.white, 0.07)
+      : alpha(theme.palette.text.primary, 0.05)
+  const neutralHoverBorder =
+    theme.palette.mode === 'dark'
+      ? alpha(theme.palette.common.white, 0.16)
+      : alpha(theme.palette.text.primary, 0.12)
 
   useEffect(() => {
     const nextValues = { ...EMPTY_ACCOUNT_SETTINGS, ...initialValues }
@@ -114,6 +126,11 @@ function AccountSettings({
   async function handleConfirmAccountAction() {
     if (!pendingAction) return
 
+    if (pendingAction === 'password') {
+      setPendingAction(null)
+      return
+    }
+
     setIsSubmittingAction(true)
     setFeedbackMessage(null)
     try {
@@ -126,7 +143,7 @@ function AccountSettings({
     } catch {
       setFeedbackMessage(
         pendingAction === 'disable'
-          ? 'Não foi possível desabilitar a conta.'
+          ? 'Não foi possível desativar a conta.'
           : 'Não foi possível excluir a conta.'
       )
     } finally {
@@ -134,25 +151,36 @@ function AccountSettings({
     }
   }
 
-  const actionCopy =
-    pendingAction === 'disable'
-      ? {
-          confirmLabel: 'Desabilitar',
-          description:
-            'Sua conta será desativada e o acesso ficará bloqueado até reativação administrativa.',
-          title: 'Desabilitar conta?',
-        }
-      : {
-          confirmLabel: 'Excluir',
-          description:
-            'Essa ação remove o acesso da conta e pode afetar vínculos existentes com os filhos.',
-          title: 'Excluir conta?',
-        }
+  const actionCopy = (() => {
+    if (pendingAction === 'password') {
+      return {
+        confirmLabel: 'Entendi',
+        description:
+          'Para alterar a senha, use o fluxo de recuperação na tela de login ou solicite uma redefinição ao suporte.',
+        title: 'Alterar senha',
+      }
+    }
+
+    if (pendingAction === 'disable') {
+      return {
+        confirmLabel: 'Desativar',
+        description:
+          'Sua conta será desativada e o acesso ficará bloqueado até reativação administrativa.',
+        title: 'Desativar conta?',
+      }
+    }
+
+    return {
+      confirmLabel: 'Excluir',
+      description:
+        'Essa ação remove o acesso da conta e pode afetar vínculos existentes com os filhos.',
+      title: 'Excluir conta?',
+    }
+  })()
 
   return (
     <>
       <AppCard
-        className="flex h-full min-h-0 flex-col"
         contentSx={{
           display: 'flex',
           flexDirection: 'column',
@@ -161,7 +189,7 @@ function AccountSettings({
           minWidth: 0,
         }}
       >
-        <Box className="flex min-w-0 flex-col gap-1">
+        <Box>
           <Typography
             sx={{
               color: 'text.primary',
@@ -188,12 +216,6 @@ function AccountSettings({
           onSubmit={event => {
             event.preventDefault()
             void handleSave()
-          }}
-          sx={{
-            p: 2,
-            border: '1px solid',
-            borderColor: 'background.border',
-            borderRadius: 'var(--app-radius-control)',
           }}
         >
           <Box className="space-y-1">
@@ -267,146 +289,187 @@ function AccountSettings({
               maxWidth: 720,
             }}
           >
-            aassd
+            Gerencie senha, acesso e ações sensíveis vinculadas ao seu perfil.
           </Typography>
         </Box>
-        <Box
+        <List
+          disablePadding
           sx={{
-            alignItems: 'center',
-            display: 'flex',
+            display: 'grid',
             gap: 1.5,
-            minWidth: 0,
-            justifyContent: 'space-between',
-            width: '100%',
           }}
         >
-          <Box className="-space-y-1">
-            <Typography
+          <ListItem
+            disablePadding
+            sx={{
+              alignItems: { sm: 'center', xs: 'stretch' },
+              display: 'flex',
+              flexDirection: { sm: 'row', xs: 'column' },
+              gap: { sm: 2, xs: 1 },
+              justifyContent: 'space-between',
+              minWidth: 0,
+            }}
+          >
+            <ListItemText
+              primary="Alterar senha"
+              secondary="Atualize sua senha de acesso de forma segura."
               sx={{
-                fontSize: { md: 18, xs: 16 },
-                fontWeight: 700,
+                minWidth: 0,
+                pr: { sm: 2, xs: 0 },
+                '& .MuiListItemText-primary': {
+                  fontSize: { md: 18, xs: 16 },
+                  fontWeight: 700,
+                  color: 'text.primary',
+                },
+                '& .MuiListItemText-secondary': {
+                  color: 'text.secondary',
+                  fontSize: 14,
+                },
+              }}
+            />
+            <AppButton
+              backgroundColor="background.paper"
+              hasBorder
+              hoverBackgroundColor={neutralHoverBackground}
+              onClick={() => setPendingAction('password')}
+              textColor="text.primary"
+              variant="outlined"
+              sx={{
+                borderColor: 'background.border',
+                transition:
+                  'background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease',
+                '&:hover': {
+                  backgroundColor: neutralHoverBackground,
+                  borderColor: neutralHoverBorder,
+                },
+                '&:active': {
+                  transform: 'translateY(1px)',
+                },
               }}
             >
               Alterar senha
-            </Typography>
-            <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
-              Ações de conta podem interromper seu acesso ao painel.
-            </Typography>
-          </Box>
-          <AppButton
-            onClick={() => setPendingAction('disable')}
-            startIcon={<BlockRoundedIcon fontSize="small" />}
+            </AppButton>
+          </ListItem>
+          <ListItem
+            disablePadding
             sx={{
-              borderRadius: 'var(--app-radius-control)',
-              fontSize: 12,
-              fontWeight: 700,
-              minHeight: 28,
-              textTransform: 'none',
-              background: 'transparent',
-              border: '1px solid',
-              borderColor: 'background.border',
-              '&:hover': {
-                backgroundColor: selectColor,
-              },
+              alignItems: { sm: 'center', xs: 'stretch' },
+              display: 'flex',
+              flexDirection: { sm: 'row', xs: 'column' },
+              gap: { sm: 2, xs: 1 },
+              justifyContent: 'space-between',
+              minWidth: 0,
             }}
           >
-            Trocar senha
-          </AppButton>
-        </Box>
-        <Box
-          sx={{
-            alignItems: 'center',
-            display: 'flex',
-            gap: 1.5,
-            minWidth: 0,
-            justifyContent: 'space-between',
-            width: '100%',
-          }}
-        >
-          <Box className="-space-y-1">
-            <Typography
+            <ListItemText
+              primary="Desativar conta"
+              secondary="Bloqueie temporariamente o acesso ao painel."
               sx={{
-                fontSize: { md: 18, xs: 16 },
-                fontWeight: 700,
+                minWidth: 0,
+                pr: { sm: 2, xs: 0 },
+                '& .MuiListItemText-primary': {
+                  fontSize: { md: 18, xs: 16 },
+                  fontWeight: 700,
+                  color: 'text.primary',
+                },
+                '& .MuiListItemText-secondary': {
+                  color: 'text.secondary',
+                  fontSize: 14,
+                },
+              }}
+            />
+            <AppButton
+              backgroundColor={'transparent'}
+              hasBorder
+              textColor="var(--app-error)"
+              hoverBackgroundColor={neutralHoverBackground}
+              onClick={() => setPendingAction('disable')}
+              sx={{
+                borderColor: 'var(--app-error)',
+                transition:
+                  'background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease',
+                '&:hover': {
+                  backgroundColor: neutralHoverBackground,
+                  borderColor: 'var(--app-error)',
+                },
+                '&:active': {
+                  transform: 'translateY(1px)',
+                },
+                '&:disabled': {
+                  color: alpha(theme.palette.common.white, 0.72),
+                  boxShadow: 'none',
+                },
               }}
             >
-              Desabilitar Conta
-            </Typography>
-            <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
-              Ações de conta podem interromper seu acesso ao painel.
-            </Typography>
-          </Box>
-          <AppButton
-            onClick={() => setPendingAction('disable')}
-            startIcon={<BlockRoundedIcon fontSize="small" />}
+              Desativar conta
+            </AppButton>
+          </ListItem>
+          <ListItem
+            disablePadding
             sx={{
-              borderRadius: 'var(--app-radius-control)',
-              fontSize: 12,
-              fontWeight: 700,
-              minHeight: 28,
-              textTransform: 'none',
-              background: 'transparent',
-              border: '1px solid',
-              color: theme.palette.error.main,
-              borderColor: theme.palette.error.main,
-              '&:hover': {
-                backgroundColor: selectColor,
-              },
+              alignItems: { sm: 'center', xs: 'stretch' },
+              display: 'flex',
+              flexDirection: { sm: 'row', xs: 'column' },
+              gap: { sm: 2, xs: 1 },
+              justifyContent: 'space-between',
+              minWidth: 0,
             }}
           >
-            Desabilitar conta
-          </AppButton>
-        </Box>
-
-        <Box
-          sx={{
-            alignItems: 'center',
-            display: 'flex',
-            gap: 1.5,
-            minWidth: 0,
-            justifyContent: 'space-between',
-            width: '100%',
-          }}
-        >
-          <Box className="-space-y-1">
-            <Typography
+            <ListItemText
+              primary="Excluir conta"
+              secondary="Remova permanentemente o acesso desta conta."
               sx={{
-                fontSize: { md: 18, xs: 16 },
-                fontWeight: 700,
+                minWidth: 0,
+                pr: { sm: 2, xs: 0 },
+                '& .MuiListItemText-primary': {
+                  fontSize: { md: 18, xs: 16 },
+                  fontWeight: 700,
+                  color: 'text.primary',
+                },
+                '& .MuiListItemText-secondary': {
+                  color: 'text.secondary',
+                  fontSize: 14,
+                },
+              }}
+            />
+            <AppButton
+              backgroundColor={'transparent'}
+              hasBorder
+              textColor="var(--app-error)"
+              hoverBackgroundColor={neutralHoverBackground}
+              onClick={() => setPendingAction('delete')}
+              sx={{
+                borderColor: 'var(--app-error)',
+                transition:
+                  'background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease',
+                '&:hover': {
+                  backgroundColor: neutralHoverBackground,
+                  borderColor: 'var(--app-error)',
+                },
+                '&:active': {
+                  transform: 'translateY(1px)',
+                },
+                '&:disabled': {
+                  color: alpha(theme.palette.common.white, 0.72),
+                  boxShadow: 'none',
+                },
               }}
             >
               Excluir conta
-            </Typography>
-            <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
-              Ações de conta podem interromper seu acesso ao painel.
-            </Typography>
-          </Box>
-          <AppButton
-            onClick={() => setPendingAction('delete')}
-            startIcon={<BlockRoundedIcon fontSize="small" />}
-            sx={{
-              borderRadius: 'var(--app-radius-control)',
-              fontSize: 12,
-              fontWeight: 700,
-              minHeight: 28,
-              textTransform: 'none',
-              background: 'transparent',
-              border: '1px solid',
-              color: theme.palette.error.main,
-              borderColor: theme.palette.error.main,
-              '&:hover': {
-                backgroundColor: selectColor,
-              },
-            }}
-          >
-            Excluir conta
-          </AppButton>
-        </Box>
+            </AppButton>
+          </ListItem>
+        </List>
       </AppCard>
 
       <AppActionModal
         confirmLabel={actionCopy.confirmLabel}
-        confirmTone={pendingAction === 'delete' ? 'error.main' : 'warning.main'}
+        confirmTone={
+          pendingAction === 'delete'
+            ? 'error.main'
+            : pendingAction === 'disable'
+              ? 'error.main'
+              : 'primary.main'
+        }
         description={actionCopy.description}
         loading={isSubmittingAction}
         mode="confirm"

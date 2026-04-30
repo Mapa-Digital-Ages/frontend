@@ -355,7 +355,7 @@ test('approval queue panel reuses shared toolbar and pagination components', () 
   assert.match(searchBarAndFilterSource, /displayLabel="Filtros"/)
   assert.match(
     searchBarAndFilterSource,
-    /onStatusChange: \(status: string\) => void/
+    /onStatusChange\?: \(status: string\) => void/
   )
   assert.doesNotMatch(searchBarAndFilterSource, /ChangeEvent/)
   assert.match(searchBarAndFilterSource, /height: 44/)

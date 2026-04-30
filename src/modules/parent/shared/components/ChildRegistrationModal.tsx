@@ -1,4 +1,4 @@
-import { Box, Typography } from '@mui/material'
+import { Alert, Box } from '@mui/material'
 import AppActionModal from '@/shared/ui/AppActionModal'
 import AppDropdown, { type DropdownOption } from '@/shared/ui/AppDropdown'
 import AppInput from '@/shared/ui/AppInput'
@@ -23,21 +23,17 @@ type FeedbackTone = 'warning' | 'error'
 
 const feedbackTokens: Record<
   FeedbackTone,
-  { container: object; text: object }
+  { border: string; color: string; backgroundColor: string }
 > = {
   warning: {
-    container: {
-      backgroundColor: 'rgba(234,179,8,0.08)',
-      border: '1px solid rgba(234,179,8,0.35)',
-    },
-    text: { color: '#eab308' },
+    backgroundColor: 'rgba(234,179,8,0.08)',
+    border: 'rgba(234,179,8,0.35)',
+    color: '#eab308',
   },
   error: {
-    container: {
-      backgroundColor: 'rgba(239,68,68,0.08)',
-      border: '1px solid rgba(239,68,68,0.35)',
-    },
-    text: { color: '#ef4444' },
+    backgroundColor: 'rgba(239,68,68,0.08)',
+    border: 'rgba(239,68,68,0.35)',
+    color: '#ef4444',
   },
 }
 
@@ -128,21 +124,23 @@ function ChildRegistrationModal({
         />
 
         {feedbackTone ? (
-          <Box
+          <Alert
+            icon={false}
+            severity={feedbackTone}
+            variant="outlined"
             sx={{
-              ...feedbackTokens[feedbackTone].container,
+              alignItems: 'center',
+              backgroundColor: feedbackTokens[feedbackTone].backgroundColor,
+              borderColor: feedbackTokens[feedbackTone].border,
               borderRadius: '10px',
+              color: feedbackTokens[feedbackTone].color,
+              fontWeight: 500,
               px: 2,
-              py: 1,
+              py: 0.5,
             }}
           >
-            <Typography
-              variant="body2"
-              sx={{ ...feedbackTokens[feedbackTone].text, fontWeight: 500 }}
-            >
-              {feedbackMessage}
-            </Typography>
-          </Box>
+            {feedbackMessage}
+          </Alert>
         ) : null}
       </Box>
     </AppActionModal>

@@ -1,4 +1,5 @@
-import { Box, Stack, Typography } from '@mui/material'
+import { Paper, Stack, Typography } from '@mui/material'
+import { alpha, useTheme } from '@mui/material/styles'
 import AppButton from '@/shared/ui/AppButton'
 import AppInput from '@/shared/ui/AppInput'
 import { Link as RouterLink } from 'react-router-dom'
@@ -7,6 +8,7 @@ import { useState } from 'react'
 import { forgotPasswordService } from '../services/service'
 
 export default function Page() {
+  const theme = useTheme()
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
 
@@ -17,15 +19,21 @@ export default function Page() {
   }
 
   return (
-    <Box
-      className="flex flex-col bg-white p-7 md:p-8"
+    <Paper
+      className="flex flex-col p-7 md:p-8"
       component="form"
+      elevation={0}
       onSubmit={handleSubmit}
       sx={{
-        width: '100%',
-        height: { xs: 'auto', md: 480 },
-        border: '1px solid rgba(16, 42, 67, 0.1)',
+        backgroundColor: 'background.paper',
+        border: '1px solid',
+        borderColor:
+          theme.palette.mode === 'dark'
+            ? 'background.border'
+            : alpha(theme.palette.common.black, 0.1),
         borderRadius: '16px',
+        height: { xs: 'auto', md: 480 },
+        width: '100%',
       }}
     >
       <Typography sx={{ fontSize: 22, fontWeight: 700, mb: 1 }}>
@@ -59,6 +67,6 @@ export default function Page() {
           Voltar ao login
         </AppButton>
       </Stack>
-    </Box>
+    </Paper>
   )
 }
