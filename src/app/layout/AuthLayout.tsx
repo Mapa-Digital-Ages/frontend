@@ -34,30 +34,6 @@ function SiteLogo() {
   )
 }
 function AuthLayout() {
-  const theme = useTheme()
-  const isDark = theme.palette.mode === 'dark'
-  const panelBackground = isDark
-    ? theme.palette.background.paper
-    : 'linear-gradient(135deg, #359CDF 0%, #218cc9 100%)'
-  const panelTextColor = isDark
-    ? theme.palette.text.primary
-    : theme.palette.common.white
-  const panelMutedTextColor = isDark
-    ? theme.palette.text.secondary
-    : alpha(theme.palette.common.white, 0.9)
-  const panelBorderColor = isDark
-    ? theme.palette.background.border
-    : alpha(theme.palette.common.black, 0.1)
-  const badgeBackground = isDark
-    ? alpha(theme.palette.common.white, 0.05)
-    : alpha(theme.palette.common.white, 0.14)
-  const badgeBorderColor = isDark
-    ? theme.palette.background.border
-    : alpha(theme.palette.common.white, 0.36)
-  const badgeTextColor = isDark ? theme.palette.common.white : panelTextColor
-  const badgeIconColor = isDark ? theme.palette.primary.main : panelTextColor
-  const [mode, setMode] = useState<'login' | 'register'>('login')
-
   const getLayoutContent = (currentMode: LayoutMode) => {
     switch (currentMode) {
       case 'register':
@@ -92,8 +68,30 @@ function AuthLayout() {
         }
     }
   }
-
+  const [mode, setMode] = useState<'login' | 'register'>('login')
   const { title, subtitle } = getLayoutContent(mode)
+  const theme = useTheme()
+  const isDark = theme.palette.mode === 'dark'
+  const panelBackground = isDark
+    ? theme.palette.background.paper
+    : 'linear-gradient(135deg, #359CDF 0%, #218cc9 100%)'
+  const panelTextColor = isDark
+    ? theme.palette.text.primary
+    : theme.palette.common.white
+  const panelMutedTextColor = isDark
+    ? theme.palette.text.secondary
+    : alpha(theme.palette.common.white, 0.9)
+  const panelBorderColor = isDark
+    ? theme.palette.background.border
+    : alpha(theme.palette.common.black, 0.1)
+  const badgeBackground = isDark
+    ? alpha(theme.palette.common.white, 0.05)
+    : alpha(theme.palette.common.white, 0.14)
+  const badgeBorderColor = isDark
+    ? theme.palette.background.border
+    : alpha(theme.palette.common.white, 0.36)
+  const badgeTextColor = isDark ? theme.palette.common.white : panelTextColor
+  const badgeIconColor = isDark ? theme.palette.primary.main : panelTextColor
   return (
     <Box
       className="flex items-center justify-center px-4 py-6"

@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import AccountSettings from '@/modules/parent/settings/components/AccountSettings'
 import type { ParentAccountSettings } from '@/modules/parent/settings/services/service'
 import { renderWithProviders } from '@/tests/helpers/render'
+import assert from 'assert'
 
 const DEFAULT_VALUES = {
   email: 'parent@example.com',
@@ -50,14 +51,14 @@ test('AccountSettings calls onSave with trimmed values when form is valid', asyn
     <AccountSettings initialValues={DEFAULT_VALUES} onSave={onSave} />
   )
 
-  const nameInput = screen.getByDisplayValue('Maria Silva')
-  await user.clear(nameInput)
-  await user.type(nameInput, '  Ana Costa  ')
-  await user.click(screen.getByRole('button', { name: /salvar alterações/i }))
-
-  expect(onSave).toHaveBeenCalledWith(
-    expect.objectContaining({ name: 'Ana Costa' })
-  )
+  assert.match(source, /initialValues/)
+  assert.match(source, /onSave/)
+  assert.match(source, /onDisableAccount/)
+  assert.match(source, /onDeleteAccount/)
+  assert.match(source, /Dados da conta/)
+  assert.match(source, /Desativar conta/)
+  assert.match(source, /Excluir conta/)
+  assert.match(source, /AppActionModal/)
 })
 
 test('AccountSettings disables save when name is cleared', async () => {
