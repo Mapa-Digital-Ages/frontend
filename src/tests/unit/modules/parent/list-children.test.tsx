@@ -65,16 +65,8 @@ test('ListChildren shows empty state when children list is empty', () => {
 test('ListChildren renders a card for each child', () => {
   renderListChildren({ children: MOCK_CHILDREN })
 
-  assert.match(source, /role="listitem"/)
-  assert.match(source, /ListItemButton/)
-  assert.match(source, /Avatar/)
-  assert.match(source, /aria-pressed/)
-  assert.match(source, /getInitials/)
-  assert.match(source, /child\.grade/)
-  assert.match(source, /handleMenuOpen/)
-  assert.match(source, /Editar/)
-  assert.match(source, /Excluir/)
-  assert.match(source, /getRoleSelectedStyle/)
+  expect(screen.getByText('Lucas Silva')).toBeInTheDocument()
+  expect(screen.getByText('Ana Costa')).toBeInTheDocument()
 })
 
 test('ListChildren calls onSelect with child id when card is clicked', async () => {

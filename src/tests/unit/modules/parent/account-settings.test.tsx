@@ -51,14 +51,14 @@ test('AccountSettings calls onSave with trimmed values when form is valid', asyn
     <AccountSettings initialValues={DEFAULT_VALUES} onSave={onSave} />
   )
 
-  assert.match(source, /initialValues/)
-  assert.match(source, /onSave/)
-  assert.match(source, /onDisableAccount/)
-  assert.match(source, /onDeleteAccount/)
-  assert.match(source, /Dados da conta/)
-  assert.match(source, /Desativar conta/)
-  assert.match(source, /Excluir conta/)
-  assert.match(source, /AppActionModal/)
+  const nameInput = screen.getByDisplayValue('Maria Silva')
+  await user.clear(nameInput)
+  await user.type(nameInput, '  Ana Costa  ')
+  await user.click(screen.getByRole('button', { name: /salvar alterações/i }))
+
+  expect(onSave).toHaveBeenCalledWith(
+    expect.objectContaining({ name: 'Ana Costa' })
+  )
 })
 
 test('AccountSettings disables save when name is cleared', async () => {
