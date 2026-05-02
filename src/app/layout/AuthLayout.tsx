@@ -67,7 +67,7 @@ function AuthLayout() {
         className="grid items-stretch gap-5"
         sx={{
           width: 'min(100%, 1300px)',
-          height: { xs: 'auto', md: 600 },
+          height: { xs: 'auto', md: mode === 'register' ? 720 : 600 },
           gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
           justifyContent: 'center',
         }}

@@ -45,7 +45,7 @@ export default function Page() {
 
     try {
       if (mode === 'register') {
-        if (!('name' in values)) {
+        if (!('firstName' in values)) {
           throw new Error('Nome não informado para cadastro.')
         }
 
@@ -87,9 +87,9 @@ export default function Page() {
           theme.palette.mode === 'dark'
             ? 'background.border'
             : alpha(theme.palette.common.black, 0.1),
-        borderRadius: '16px',
-        height: { xs: 600, md: 600 },
         width: '100%',
+        height: mode === 'register' ? 720 : 600,
+        borderRadius: '16px',
       }}
     >
       <AuthModeSelect
@@ -103,7 +103,8 @@ export default function Page() {
       <Box
         sx={{
           mt: 1,
-          height: 8,
+          height: errorMessage ? 52 : 8,
+          flexShrink: 0,
           position: 'relative',
           zIndex: 1,
         }}
