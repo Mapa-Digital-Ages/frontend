@@ -66,18 +66,6 @@ function mapBackendRole(rawRole: string): UserRole {
   return BACKEND_ROLE_MAP[rawRole.toLowerCase()] ?? (rawRole as UserRole)
 }
 
-function splitName(fullName: string): {
-  first_name: string
-  last_name: string
-} {
-  const trimmed = fullName.trim().replace(/\s+/g, ' ')
-  const [first, ...rest] = trimmed.split(' ')
-  return {
-    first_name: first ?? '',
-    last_name: rest.join(' '),
-  }
-}
-
 function resolveLocalLogin(
   credentials: AuthCredentials
 ): LoginApiResponse | null {
@@ -144,12 +132,11 @@ export const authService = {
   },
 
   async register(credentials: RegisterCredentials): Promise<void> {
-    const { first_name, last_name } = splitName(credentials.name)
     await httpClient.post(
       'register/guardian',
       {
-        first_name,
-        last_name,
+        first_name: credentials.firstName,
+        last_name: credentials.lastName,
         email: credentials.email,
         password: credentials.password,
       },

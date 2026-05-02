@@ -13,12 +13,6 @@ import {
 import type { ApiResponse } from '@/shared/types/api'
 import type { StudentDisciplineProgress } from '../types/types'
 import type { Task } from '@/modules/student/shared/components/Planner'
-import {
-  CHILD_MOCK_DATA,
-  MOCK_CHILDREN,
-} from '@/modules/parent/__mocks__/parentDashboard.mock'
-
-const USE_MOCK = import.meta.env.DEV
 
 export interface RegisterChildRequest {
   first_name: string
@@ -155,11 +149,6 @@ export const parentService = {
   },
 
   async getStudentSummary(studentId: string) {
-    if (USE_MOCK) {
-      const entry =
-        CHILD_MOCK_DATA[studentId] ?? CHILD_MOCK_DATA[MOCK_CHILDREN[0].id]
-      return entry.metrics
-    }
     const response = await httpClient.get<SummaryMetric[]>(
       `student/${studentId}/summary`
     )
@@ -167,11 +156,6 @@ export const parentService = {
   },
 
   async getStudentDisciplines(studentId: string) {
-    if (USE_MOCK) {
-      const entry =
-        CHILD_MOCK_DATA[studentId] ?? CHILD_MOCK_DATA[MOCK_CHILDREN[0].id]
-      return entry.disciplines
-    }
     const response = await httpClient.get<StudentDisciplineProgress[]>(
       `student/${studentId}/disciplines`
     )
@@ -184,11 +168,6 @@ export const parentService = {
   },
 
   async getStudentWellBeing(studentId: string) {
-    if (USE_MOCK) {
-      const entry =
-        CHILD_MOCK_DATA[studentId] ?? CHILD_MOCK_DATA[MOCK_CHILDREN[0].id]
-      return entry.wellBeing
-    }
     const response = await httpClient.get<WeeklyMoodEntry[]>(
       `student/${studentId}/well-being`
     )
