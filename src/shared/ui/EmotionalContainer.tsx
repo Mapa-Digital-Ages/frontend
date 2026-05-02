@@ -146,7 +146,14 @@ export default function EmotionalContainer() {
         Check-in emocional
       </Typography>
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 4 }}>
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{
+          mb: 4,
+          width: '100%',
+        }}
+      >
         <EmotionButton
           testId="emotion-button-good"
           label="Bem"
