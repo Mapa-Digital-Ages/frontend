@@ -158,18 +158,12 @@ export default function EmotionalContainer() {
         Check-in emocional
       </Typography>
 
-      <ToggleButtonGroup
-        exclusive
-        value={selectedEmotion}
+      <Stack
+        direction="row"
+        spacing={1}
         sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row' },
-          gap: 2,
           mb: 4,
-          '& .MuiToggleButtonGroup-grouped': {
-            border: '1px solid',
-            margin: 0,
-          },
+          width: '100%',
         }}
       >
         <EmotionButton
@@ -196,7 +190,7 @@ export default function EmotionalContainer() {
           onClick={() => handleEmotionSelect('Mal')}
           value="Mal"
         />
-      </ToggleButtonGroup>
+      </Stack>
 
       <Typography
         variant="h6"

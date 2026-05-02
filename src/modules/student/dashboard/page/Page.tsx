@@ -70,7 +70,7 @@ export default function Page() {
         progress={85}
       />
 
-      <Box className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <Box className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <SubjectBaseCard
           icon={<MenuBookRoundedIcon fontSize="medium" />}
           progress={78}
@@ -93,10 +93,12 @@ export default function Page() {
         />
       </Box>
 
-      <Box className="grid grid-cols-1 gap-4 md:grid-cols-[1.1fr_1fr]">
-        <Planner tasks={tasks} />
+      <Box className="grid grid-cols-1 gap-4 lg:grid-cols-[1.1fr_1fr]">
+        <Box className="min-w-0">
+          <Planner tasks={tasks} />
+        </Box>
 
-        <Box className="max-w-[600px]">
+        <Box className="w-full max-w-none lg:max-w-[600px]">
           <EmotionalContainer />
         </Box>
       </Box>
