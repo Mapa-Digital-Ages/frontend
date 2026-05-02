@@ -342,15 +342,11 @@ function LoginForm({ isSubmitting = false, mode, onSubmit }: LoginFormProps) {
         size="medium"
         textColor={theme.palette.common.white}
         sx={{
-          bottom: 0,
           backgroundColor: 'primary.main',
           color: theme.palette.common.white,
           fontSize: '1rem',
-          left: 0,
           mt: 2,
           minHeight: 50,
-          position: 'absolute',
-          right: 0,
           '&.Mui-disabled': {
             backgroundColor: alpha(theme.palette.primary.main, 0.45),
             color: alpha(theme.palette.common.white, 0.72),
