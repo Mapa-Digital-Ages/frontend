@@ -21,7 +21,10 @@ interface LoginFormProps {
 }
 
 type LoginFormErrors = Partial<
-  Record<keyof AuthCredentials | 'confirmPassword' | 'fullName', string>
+  Record<
+    keyof AuthCredentials | 'confirmPassword' | 'firstName' | 'lastName',
+    string
+  >
 >
 
 function getAuthInputSx(hasError: boolean) {
@@ -88,7 +91,8 @@ function LoginForm({ isSubmitting = false, mode, onSubmit }: LoginFormProps) {
     email: '',
     password: '',
   })
-  const [fullName, setFullName] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [errors, setErrors] = useState<LoginFormErrors>({})
 
@@ -109,8 +113,12 @@ function LoginForm({ isSubmitting = false, mode, onSubmit }: LoginFormProps) {
   function validate() {
     const nextErrors: LoginFormErrors = {}
 
-    if (mode === 'register' && !isRequired(fullName)) {
-      nextErrors.fullName = 'Informe seu nome completo.'
+    if (mode === 'register' && !isRequired(firstName)) {
+      nextErrors.firstName = 'Informe seu nome.'
+    }
+
+    if (mode === 'register' && !isRequired(lastName)) {
+      nextErrors.lastName = 'Informe seu sobrenome.'
     }
 
     if (!isRequired(values.email) || !isValidEmail(values.email)) {
@@ -145,7 +153,8 @@ function LoginForm({ isSubmitting = false, mode, onSubmit }: LoginFormProps) {
       mode === 'register'
         ? {
             ...submitValues,
-            name: fullName.trim(),
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
           }
         : submitValues
     )
@@ -153,19 +162,17 @@ function LoginForm({ isSubmitting = false, mode, onSubmit }: LoginFormProps) {
 
   return (
     <Box
-      className="relative h-full"
       component="form"
       onSubmit={handleSubmit}
       sx={{
         boxSizing: 'border-box',
-        pb: 7,
         '& .auth-login-input .MuiTypography-root': {
           color: '#334155',
         },
       }}
     >
       <Stack
-        spacing={mode === 'register' ? 1 : 0}
+        spacing={0}
         sx={{
           height: '100%',
           overflowY: 'visible',
@@ -173,33 +180,57 @@ function LoginForm({ isSubmitting = false, mode, onSubmit }: LoginFormProps) {
         }}
       >
         {mode === 'register' && (
-          <AppInput
-            className="auth-login-input"
-            data-testid="input-fullname"
-            backgroundColor="#ffffff"
-            type="name"
-            error={Boolean(errors.fullName)}
-            helperText={errors.fullName ?? ' '}
-            inputSize="medium"
-            label="Nome completo"
-            onChange={event => {
-              setFullName(event.target.value)
-              setErrors(currentErrors => ({
-                ...currentErrors,
-                fullName: undefined,
-              }))
-            }}
-            placeholder="Ex.: Lucas Silva"
-            sx={getAuthInputSx(Boolean(errors.fullName))}
-            value={fullName}
-          />
+          <Stack spacing={0}>
+            <AppInput
+              fullWidth
+              className="auth-login-input"
+              data-testid="input-firstname"
+              backgroundColor="#ffffff"
+              type="name"
+              error={Boolean(errors.firstName)}
+              helperText={errors.firstName ?? ' '}
+              inputSize="medium"
+              label="Nome"
+              onChange={event => {
+                setFirstName(event.target.value)
+                setErrors(currentErrors => ({
+                  ...currentErrors,
+                  firstName: undefined,
+                }))
+              }}
+              placeholder="Ex.: Lucas"
+              sx={{ ...getAuthInputSx(Boolean(errors.firstName)) }}
+              value={firstName}
+            />
+            <AppInput
+              fullWidth
+              className="auth-login-input"
+              data-testid="input-lastname"
+              backgroundColor="#ffffff"
+              type="name"
+              error={Boolean(errors.lastName)}
+              helperText={errors.lastName ?? ' '}
+              inputSize="medium"
+              label="Sobrenome"
+              onChange={event => {
+                setLastName(event.target.value)
+                setErrors(currentErrors => ({
+                  ...currentErrors,
+                  lastName: undefined,
+                }))
+              }}
+              placeholder="Ex.: Silva"
+              sx={{ ...getAuthInputSx(Boolean(errors.lastName)) }}
+              value={lastName}
+            />
+          </Stack>
         )}
 
         {mode === 'login' && (
           <Box aria-hidden sx={{ flexShrink: 0, height: { xs: 52, md: 64 } }} />
         )}
 
-        <Stack spacing={mode === 'register' ? 0 : 3}>
+        <Stack spacing={0}>
           <AppInput
             className="auth-login-input"
             data-testid="input-email"
@@ -224,7 +255,7 @@ function LoginForm({ isSubmitting = false, mode, onSubmit }: LoginFormProps) {
             label="Senha"
             onChange={event => updateField('password', event.target.value)}
             type="password"
-            placeholder="digite sua senha"
+            placeholder="Digite sua senha"
             sx={getAuthInputSx(Boolean(errors.password))}
             value={values.password}
           />
@@ -269,7 +300,7 @@ function LoginForm({ isSubmitting = false, mode, onSubmit }: LoginFormProps) {
             helperText={errors.confirmPassword ?? ' '}
             inputSize="medium"
             label="Confirmar senha"
-            placeholder="confirme sua senha"
+            placeholder="Confirme sua senha"
             onChange={event => {
               setConfirmPassword(event.target.value)
               setErrors(currentErrors => ({
@@ -292,10 +323,7 @@ function LoginForm({ isSubmitting = false, mode, onSubmit }: LoginFormProps) {
         size="medium"
         textColor="#ffffff"
         sx={{
-          position: 'absolute',
-          right: 0,
-          bottom: 0,
-          left: 0,
+          mt: 2,
           minHeight: 50,
           fontSize: '1rem',
           backgroundColor: '#359CDF',

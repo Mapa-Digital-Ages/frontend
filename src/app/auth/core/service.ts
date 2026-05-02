@@ -129,7 +129,8 @@ export const authService = {
     await httpClient.post(
       'register/responsavel',
       {
-        name: credentials.name,
+        first_name: credentials.firstName,
+        last_name: credentials.lastName,
         email: credentials.email,
         password: credentials.password,
       },
