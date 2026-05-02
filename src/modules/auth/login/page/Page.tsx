@@ -97,6 +97,7 @@ export default function Page() {
             : alpha(theme.palette.common.black, 0.1),
         width: '100%',
         height: mode === 'register' ? 720 : 600,
+        border: '1px solid rgba(16, 42, 67, 0.1)',
         borderRadius: '16px',
       }}
     >

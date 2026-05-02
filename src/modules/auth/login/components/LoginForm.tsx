@@ -347,6 +347,7 @@ function LoginForm({ isSubmitting = false, mode, onSubmit }: LoginFormProps) {
           color: theme.palette.common.white,
           fontSize: '1rem',
           left: 0,
+          mt: 2,
           minHeight: 50,
           position: 'absolute',
           right: 0,

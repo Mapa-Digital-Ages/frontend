@@ -34,6 +34,8 @@ function SiteLogo() {
   )
 }
 function AuthLayout() {
+  const [mode, setMode] = useState<'login' | 'register'>('login')
+
   const getLayoutContent = (currentMode: LayoutMode) => {
     switch (currentMode) {
       case 'register':
@@ -68,8 +70,6 @@ function AuthLayout() {
         }
     }
   }
-  const [mode, setMode] = useState<'login' | 'register'>('login')
-  const { title, subtitle } = getLayoutContent(mode)
   const theme = useTheme()
   const isDark = theme.palette.mode === 'dark'
   const panelBackground = isDark
@@ -92,6 +92,8 @@ function AuthLayout() {
     : alpha(theme.palette.common.white, 0.36)
   const badgeTextColor = isDark ? theme.palette.common.white : panelTextColor
   const badgeIconColor = isDark ? theme.palette.primary.main : panelTextColor
+
+  const { title, subtitle } = getLayoutContent(mode)
   return (
     <Box
       className="flex items-center justify-center px-4 py-6"
