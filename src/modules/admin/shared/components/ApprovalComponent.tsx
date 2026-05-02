@@ -19,7 +19,6 @@ import AppCard from '@/shared/ui/AppCard'
 import {
   getRoleAccentColor,
   getHoverStyle,
-  getSelectedStyle,
   getSelectionOutlineStyle,
 } from '@/app/theme/core/roles'
 import type {
@@ -87,8 +86,6 @@ function ApprovalComponent<TItem extends { id: string }>({
   const isSelecting = selectionMode != null
   const accentHover = getHoverStyle(theme, accentColor)
   const errorHover = getHoverStyle(theme, errorColor)
-  const editSelected = getSelectedStyle(theme, accentColor)
-  const deleteSelected = getSelectedStyle(theme, errorColor)
 
   const selectionColor = selectionMode === 'delete' ? errorColor : accentColor
   const selectionOutline = isSelecting
@@ -178,64 +175,6 @@ function ApprovalComponent<TItem extends { id: string }>({
                 }}
               >
                 <AddRoundedIcon fontSize="small" />
-              </IconButton>
-            ) : null}
-            {onEdit ? (
-              <IconButton
-                aria-label="Editar"
-                onClick={onEdit}
-                sx={{
-                  backgroundColor:
-                    selectionMode === 'edit'
-                      ? editSelected.backgroundColor
-                      : 'background.paper',
-                  border: '1px solid',
-                  borderColor:
-                    selectionMode === 'edit'
-                      ? editSelected.borderColor
-                      : 'background.border',
-                  borderRadius: 'var(--app-radius-control)',
-                  color:
-                    selectionMode === 'edit' ? accentColor : 'text.primary',
-                  flexShrink: 0,
-                  height: 32,
-                  width: 32,
-                  '&:hover': {
-                    backgroundColor: accentHover.backgroundColor,
-                    borderColor: accentHover.borderColor,
-                  },
-                }}
-              >
-                <ModeEditOutlineOutlinedIcon fontSize="small" />
-              </IconButton>
-            ) : null}
-            {onDelete ? (
-              <IconButton
-                aria-label="Excluir"
-                onClick={onDelete}
-                sx={{
-                  backgroundColor:
-                    selectionMode === 'delete'
-                      ? deleteSelected.backgroundColor
-                      : 'background.paper',
-                  border: '1px solid',
-                  borderColor:
-                    selectionMode === 'delete'
-                      ? deleteSelected.borderColor
-                      : 'background.border',
-                  borderRadius: 'var(--app-radius-control)',
-                  color:
-                    selectionMode === 'delete' ? errorColor : 'text.primary',
-                  flexShrink: 0,
-                  height: 32,
-                  width: 32,
-                  '&:hover': {
-                    backgroundColor: errorHover.backgroundColor,
-                    borderColor: errorHover.borderColor,
-                  },
-                }}
-              >
-                <DeleteOutlineOutlinedIcon fontSize="small" />
               </IconButton>
             ) : null}
           </Box>
