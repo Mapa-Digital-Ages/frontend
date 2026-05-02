@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react'
 import AppButton from '@/shared/ui/AppButton'
 import AppInput from '@/shared/ui/AppInput'
 import AppLink from '@/shared/ui/AppLink'
+import { APP_ROUTES } from '@/app/router/paths'
 import type {
   AuthCredentials,
   RegisterCredentials,
@@ -264,8 +265,7 @@ function LoginForm({ isSubmitting = false, mode, onSubmit }: LoginFormProps) {
             <Box className="flex justify-end">
               <AppLink
                 data-testid="link-forgot-password"
-                href="#"
-                onClick={event => event.preventDefault()}
+                to={APP_ROUTES.auth.forgotPassword}
                 sx={{
                   color: '#359CDF',
                   fontSize: '0.875rem',
