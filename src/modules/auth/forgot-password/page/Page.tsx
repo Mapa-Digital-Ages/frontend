@@ -7,6 +7,7 @@ import { APP_ROUTES } from '@/app/router/paths'
 import React, { useState, useEffect } from 'react'
 import type { LayoutMode } from '@/app/layout/AuthLayout'
 import { isValidEmail } from '@/shared/utils/validators'
+import { forgotPasswordService } from '../services/service'
 
 export default function Page() {
   const { setMode } = useOutletContext<{
@@ -19,6 +20,7 @@ export default function Page() {
   const [emailError, setEmailError] = useState('')
   const [code, setCode] = useState(['', '', '', '', '', ''])
   const [codeError, setCodeError] = useState('')
+  const [generatedCode, setGeneratedCode] = useState<string | null>(null)
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordError, setPasswordError] = useState('')
@@ -45,14 +47,21 @@ export default function Page() {
     }
   }
 
-  function handleSubmitEmail(e: React.FormEvent) {
+  async function handleSubmitEmail(e: React.FormEvent) {
     e.preventDefault()
     if (!isValidEmail(email)) {
       setEmailError('Informe um e-mail válido.')
       return
     }
-    setEmailError('')
-    setStep(2)
+
+    try {
+      const result = await forgotPasswordService.requestReset(email)
+      setGeneratedCode(result.resetCode)
+      setEmailError('')
+      setStep(2)
+    } catch {
+      setEmailError('Não foi possível enviar o código. Tente novamente.')
+    }
   }
 
   function handleSubmitCode(e: React.FormEvent) {
@@ -62,18 +71,11 @@ export default function Page() {
       return
     }
 
-    // Mock de validação: só avança se o código for '123456'
-    const enteredCode = code.join('')
-    if (enteredCode !== '123456') {
-      setCodeError('Código inválido. Para testar, use: 123456')
-      return
-    }
-
     setCodeError('')
     setStep(3)
   }
 
-  function handleSubmitPassword(e: React.FormEvent) {
+  async function handleSubmitPassword(e: React.FormEvent) {
     e.preventDefault()
     if (!password || !confirmPassword) {
       setPasswordError('Preencha os dois campos de senha.')
@@ -83,10 +85,23 @@ export default function Page() {
       setPasswordError('As senhas devem ser iguais.')
       return
     }
-    setPasswordError('')
-    setPassword('')
-    setConfirmPassword('')
-    navigate(APP_ROUTES.auth.login)
+
+    try {
+      await forgotPasswordService.confirmReset({
+        email,
+        code: code.join(''),
+        newPassword: password,
+      })
+      setPasswordError('')
+      setPassword('')
+      setConfirmPassword('')
+      navigate(APP_ROUTES.auth.login)
+    } catch {
+      setPassword('')
+      setConfirmPassword('')
+      setCodeError('Código inválido ou expirado.')
+      setStep(2)
+    }
   }
 
   return (
@@ -214,6 +229,12 @@ export default function Page() {
                 sx={{ color: '#dc2626', fontSize: '0.85rem', mt: -1 }}
               >
                 {codeError}
+              </Typography>
+            )}
+
+            {generatedCode && (
+              <Typography sx={{ color: '#64748b', fontSize: '0.85rem' }}>
+                Código para teste: {generatedCode}
               </Typography>
             )}
 
