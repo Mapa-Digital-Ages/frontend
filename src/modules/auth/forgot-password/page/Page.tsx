@@ -2,7 +2,7 @@ import { Box, Stack, Typography, TextField } from '@mui/material'
 import AppButton from '@/shared/ui/AppButton'
 import AppInput from '@/shared/ui/AppInput'
 import AppLink from '@/shared/ui/AppLink'
-import { Link as RouterLink, useOutletContext } from 'react-router-dom'
+import { useNavigate, useOutletContext } from 'react-router-dom'
 import { APP_ROUTES } from '@/app/router/paths'
 import React, { useState, useEffect } from 'react'
 import type { LayoutMode } from '@/app/layout/AuthLayout'
@@ -12,6 +12,7 @@ export default function Page() {
   const { setMode } = useOutletContext<{
     setMode: (mode: LayoutMode) => void
   }>()
+  const navigate = useNavigate()
 
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [email, setEmail] = useState('')
@@ -85,6 +86,7 @@ export default function Page() {
     setPasswordError('')
     setPassword('')
     setConfirmPassword('')
+    navigate(APP_ROUTES.auth.login)
   }
 
   return (
