@@ -54,7 +54,7 @@ export default function Page() {
           width: '100%',
           backgroundColor: 'background.paper',
           borderRadius: 2,
-          p: 3,
+          p: { xs: 2, md: 3 },
         }}
       >
         <Stack spacing={2}>
@@ -100,7 +100,10 @@ export default function Page() {
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gridTemplateColumns: {
+                xs: '1fr',
+                lg: 'repeat(2, minmax(0, 1fr))',
+              },
               gap: 2,
               mt: 2,
             }}
@@ -153,6 +156,7 @@ export default function Page() {
                 <Box
                   sx={{
                     display: 'flex',
+                    flexDirection: { xs: 'column', sm: 'row' },
                     gap: 1,
                     mb: 1.5,
                     alignItems: 'center',
