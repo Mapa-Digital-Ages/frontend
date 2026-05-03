@@ -4,6 +4,7 @@ import ProgressBar from '../ui/ProgressBar'
 import StarOutlineIcon from '@mui/icons-material/StarOutline'
 import { getRoleGradient, getRolePalette } from '@/app/theme/core/roles'
 import { useAuth } from '@/app/auth/hook'
+import type { ReactNode } from 'react'
 import type { UserRole } from '@/shared/types/user'
 
 type HeaderVariant =
@@ -21,6 +22,7 @@ interface PageHeaderProps {
   tag?: string
   progress?: number
   variant?: HeaderVariant
+  actions?: ReactNode
 }
 
 const headerRoleByVariant = {
@@ -31,15 +33,6 @@ const headerRoleByVariant = {
   responsavel: 'responsavel',
   school: 'escola',
 } satisfies Record<HeaderVariant, UserRole>
-
-const headerGradientAngleByVariant = {
-  admin: '135deg',
-  aluno: '135deg',
-  company: '135deg',
-  enterpriseSchool: '135deg',
-  responsavel: '135deg',
-  school: '135deg',
-} satisfies Record<HeaderVariant, string>
 
 function getHeaderRole(variant: HeaderVariant) {
   return headerRoleByVariant[variant]
@@ -52,16 +45,13 @@ function PageHeader({
   tag,
   progress,
   variant = 'aluno',
+  actions,
 }: PageHeaderProps) {
   const theme = useTheme()
   const { user } = useAuth()
   const headerRole = getHeaderRole(variant)
   const headerPalette = getRolePalette(theme, headerRole)
-  const headerBackground = getRoleGradient(
-    theme,
-    headerRole,
-    headerGradientAngleByVariant[variant]
-  )
+  const headerBackground = getRoleGradient(theme, headerRole)
   const resolvedEyebrow =
     eyebrow ?? (user?.name ? `Olá, ${user.name}` : undefined)
 
@@ -81,17 +71,21 @@ function PageHeader({
           </Typography>
         )}
 
-        <Box className="mt-2 mb-2 flex items-start justify-between w-full">
-          <Typography
-            variant="h3"
-            sx={{ fontSize: '24px' }}
-            className="mt-2 text-left"
-          >
-            {title}
-          </Typography>
+        <Box className="mt-2 mb-2 flex items-center justify-between w-full gap-3">
+          <Box className="min-w-0 flex-1">
+            <Typography
+              variant="h3"
+              sx={{ fontSize: '24px' }}
+              className="mt-2 text-left"
+            >
+              {title}
+            </Typography>
+          </Box>
 
-          {tag && (
-            <Box className="mr-4 flex items-center gap-2 rounded-xl bg-white/20 px-8 py-2 font-semibold whitespace-nowrap text-sm">
+          {actions && <Box className="shrink-0">{actions}</Box>}
+
+          {tag && !actions && (
+            <Box className="mr-4 flex items-center gap-2 rounded-xl px-8 py-2 font-semibold whitespace-nowrap text-sm shrink-0">
               <StarOutlineIcon fontSize="medium" className="opacity-90" />
               {tag}
             </Box>

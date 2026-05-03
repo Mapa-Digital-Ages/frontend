@@ -17,6 +17,7 @@ export const APP_ROUTES = {
   },
   parent: {
     dashboard: '/parent/dashboard',
+    settings: '/parent/settings',
   },
   admin: {
     dashboard: '/admin/dashboard',
@@ -49,11 +50,11 @@ export const APP_ROUTES = {
 } as const
 
 export function buildAdminCorrectionRoute(contentId: string) {
-  return `/admin/corrections/${contentId}`
+  return `/admin/corrections/${encodeURIComponent(contentId)}`
 }
 
 export function buildParentStudentDetailsRoute(studentId: string) {
-  return `/parent/students/${studentId}`
+  return `/parent/students/${encodeURIComponent(studentId)}`
 }
 
 export const DEFAULT_ROUTE_BY_ROLE: Record<UserRole, string> = {

@@ -83,12 +83,18 @@ export interface ParentApprovalValidation {
   studentLinked: boolean
 }
 
+export interface ParentNames {
+  firstName: string
+  lastName: string
+}
+
 export interface ParentApprovalItem extends BaseApprovalItem {
   id: string
   kind: 'parent'
   roleLabel?: string
   status: ParentApprovalStatus
-  childName: string
+  name: ParentNames
+  childName?: string
   validation: ParentApprovalValidation
 }
 
@@ -127,9 +133,11 @@ export interface ContentApprovalDraftInput {
 export interface ParentApprovalDraftInput {
   childName?: string
   email?: string
+  first_name: string
+  last_name: string
   password?: string
   requestedAt?: string
-  title: string
+  title?: string
 }
 
 export interface ApprovalCorrectionInput {

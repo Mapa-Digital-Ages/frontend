@@ -70,7 +70,7 @@ export function buildApprovalQueueQuery(query: ApprovalQueueQuery) {
   return {
     page: query.page,
     page_size: query.pageSize,
-    query: query.query || undefined,
+    query: query.query.trim() || undefined,
     status:
       query.status === 'all'
         ? undefined

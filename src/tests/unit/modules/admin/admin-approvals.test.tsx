@@ -6,8 +6,13 @@ import type {
   ContentApprovalItem,
   ParentApprovalItem,
 } from '../../../../modules/admin/shared/types/types'
+import { buildApprovalQueueQuery } from '../../../../modules/admin/content/services/content/mapper'
 import { mapContentApprovalQueueResponse } from '../../../../modules/admin/content/services/content/service'
-import { mapParentApprovalUserToParentApprovalItem } from '../../../../modules/admin/parent/services/parent/service'
+import {
+  buildParentApprovalQuery,
+  mapParentApprovalUserToParentApprovalItem,
+  mapParentStatusToParentApprovalUserStatus,
+} from '../../../../modules/admin/parent/services/parent/service'
 import {
   filterApprovalItems,
   getParentApprovalEligibility,
@@ -60,6 +65,10 @@ const parentItems: ParentApprovalItem[] = [
       },
     ],
     childName: 'Luiza Souza',
+    name: {
+      firstName: 'Mariana',
+      lastName: 'Souza',
+    },
     validation: {
       hasDocument: false,
       relationshipConfirmed: true,
@@ -80,6 +89,10 @@ const parentItems: ParentApprovalItem[] = [
       },
     ],
     childName: 'Rafael Santos',
+    name: {
+      firstName: 'Carlos',
+      lastName: 'Santos',
+    },
     validation: {
       hasDocument: true,
       relationshipConfirmed: true,
@@ -217,15 +230,19 @@ test('admin user approvals normalize backend users into parent queue items', () 
   const item = mapParentApprovalUserToParentApprovalItem({
     created_at: '2026-04-08T10:15:00+00:00',
     email: 'responsavel@test.com',
-    id: 42,
+    id: '47f2a20f-77cb-4d0b-89ef-b64d160fce48',
     is_superadmin: false,
     name: 'Mariana Souza',
-    role: 'responsavel',
-    status: 'aguardando',
+    role: 'guardian',
+    status: 'waiting',
   })
 
-  assert.equal(item.id, 'responsavel@test.com')
+  assert.equal(item.id, '47f2a20f-77cb-4d0b-89ef-b64d160fce48')
   assert.equal(item.title, 'Mariana Souza')
+  assert.deepEqual(item.name, {
+    firstName: 'Mariana',
+    lastName: 'Souza',
+  })
   assert.equal(item.status, 'pendingValidation')
   assert.equal(item.requestedAt, '08/04/2026')
   assert.equal(item.roleLabel, 'Responsável')
@@ -234,6 +251,66 @@ test('admin user approvals normalize backend users into parent queue items', () 
     item.badges.some(badge => badge.label === 'responsavel@test.com'),
     true
   )
+})
+
+test('admin approval query builders translate UI filters to API parameters', () => {
+  const contentQuery = buildApprovalQueueQuery({
+    page: 3,
+    pageSize: 25,
+    query: ' matemática ',
+    status: 'inReview',
+  })
+  const parentPendingQuery = buildParentApprovalQuery({
+    page: 1,
+    pageSize: 10,
+    query: '',
+    status: 'pendingValidation',
+  })
+  const parentAllQuery = buildParentApprovalQuery({
+    page: 1,
+    pageSize: 10,
+    query: 'ignored locally',
+    status: 'all',
+  })
+
+  assert.deepEqual(contentQuery, {
+    page: 3,
+    page_size: 25,
+    query: 'matemática',
+    status: 'in_review',
+  })
+  assert.deepEqual(parentPendingQuery, {
+    role: 'guardian',
+    user_status: 'waiting',
+  })
+  assert.deepEqual(parentAllQuery, {
+    role: 'guardian',
+    user_status: undefined,
+  })
+})
+
+test('admin parent status updates only send final approval states to the backend', () => {
+  assert.equal(
+    mapParentStatusToParentApprovalUserStatus('approved'),
+    'approved'
+  )
+  assert.equal(
+    mapParentStatusToParentApprovalUserStatus('rejected'),
+    'rejected'
+  )
+  assert.doesNotThrow(() =>
+    mapParentStatusToParentApprovalUserStatus('approved')
+  )
+
+  try {
+    mapParentStatusToParentApprovalUserStatus('pendingValidation')
+    throw new Error('Expected pendingValidation to be rejected')
+  } catch (error) {
+    assert.match(
+      error instanceof Error ? error.message : String(error),
+      /aguardando/
+    )
+  }
 })
 
 test('parent approvals use only real admin user endpoints', () => {
@@ -251,10 +328,10 @@ test('parent approvals use only real admin user endpoints', () => {
   assert.match(repositorySource, /client\.patch<ParentApprovalUserDto>/)
   assert.match(
     repositorySource,
-    /admin\/users\/\$\{encodeURIComponent\(email\)\}\/status/
+    /admin\/users\/\$\{encodeURIComponent\(userId\)\}\/status/
   )
-  assert.match(repositorySource, /post<unknown>\(\s*'register'/)
-  assert.match(mapperSource, /role: 'responsavel'/)
+  assert.match(repositorySource, /post<unknown>\(\s*'register\/guardian'/)
+  assert.match(mapperSource, /role: 'guardian'/)
   assert.doesNotMatch(repositorySource, /mock/i)
   assert.doesNotMatch(repositorySource, /fallback/i)
   assert.doesNotMatch(repositorySource, /LocalParent/)
@@ -287,10 +364,10 @@ test('content correction sessions use a route-level workflow', async () => {
   assert.match(correctionPageSource, /height: correctionCardHeight/)
   assert.match(correctionPageSource, /'&:last-child': \{ pb: 0 \}/)
   assert.match(correctionPageSource, /flex: '1 1 auto'/)
-  assert.match(
-    correctionPageSource,
-    /gridTemplateColumns: 'repeat\(3, minmax\(0, 1fr\)\)'/
-  )
+  assert.match(correctionPageSource, /quickActions/)
+  assert.match(correctionPageSource, /Pedir mais detalhes/)
+  assert.match(correctionPageSource, /Explicar com exemplo/)
+  assert.match(correctionPageSource, /flexWrap: \{ md: 'nowrap', xs: 'wrap' \}/)
   assert.match(correctionPageSource, /alignSelf: 'end'/)
   assert.doesNotMatch(correctionPageSource, /overflowX: 'auto'/)
   assert.doesNotMatch(correctionPageSource, /marginTop: 'auto'/)
@@ -355,7 +432,7 @@ test('approval queue panel reuses shared toolbar and pagination components', () 
   assert.match(searchBarAndFilterSource, /displayLabel="Filtros"/)
   assert.match(
     searchBarAndFilterSource,
-    /onStatusChange: \(status: string\) => void/
+    /onStatusChange\?: \(status: string\) => void/
   )
   assert.doesNotMatch(searchBarAndFilterSource, /ChangeEvent/)
   assert.match(searchBarAndFilterSource, /height: 44/)
@@ -494,9 +571,12 @@ test('admin approvals page routes create edit and correction through a reusable 
   assert.match(adminContentPageSource, /label: 'Rejeitar conteúdo'/)
   assert.match(adminParentPageSource, /parentApprovalService/)
   assert.match(adminParentPageSource, /updateParentStatus/)
+  assert.match(adminParentPageSource, /updateParentRegistration/)
+  assert.match(adminParentPageSource, /removeParentRegistration/)
   assert.match(adminParentPageSource, /label: 'Validar cadastro'/)
   assert.match(adminParentPageSource, /label: 'Rejeitar cadastro'/)
-  assert.match(adminParentPageSource, /removeParentRegistration/)
+  assert.match(adminParentPageSource, /label: 'Editar responsável'/)
+  assert.match(adminParentPageSource, /label: 'Excluir responsável'/)
   assert.doesNotMatch(adminParentPageSource, /label: 'Limpar requisição'/)
   assert.match(adminParentPageSource, /createParentRegistration/)
   assert.match(adminParentPageSource, /action: 'create', type: 'parent'/)

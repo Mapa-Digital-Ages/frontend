@@ -3,18 +3,21 @@ import { Box, LinearProgress, Stack, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { getSubjectTheme } from '@/shared/utils/themes'
 import type { SubjectContext } from '@/shared/types/common'
+import type { ReactNode } from 'react'
 
 interface ProgressBarProps {
+  headerSlot?: ReactNode
   label?: string
   showValueLabel?: boolean
   subject?: SubjectContext
   thickness?: number
   valueLabel?: string
-  valueLabelVariant?: 'plain' | 'soft' | 'header'
+  valueLabelVariant?: 'plain' | 'soft' | 'header' | 'alternative' | 'subject'
   value: number
 }
 
 function ProgressBar({
+  headerSlot,
   label,
   showValueLabel = true,
   subject = { label: 'Geral' },
@@ -29,6 +32,50 @@ function ProgressBar({
   const resolvedValueLabel = valueLabel ?? `${Math.round(normalizedValue)}%`
   const isSoftValueLabel = valueLabelVariant === 'soft'
   const isHeaderValueLabel = valueLabelVariant === 'header'
+  const isSubjectVariant = valueLabelVariant === 'subject'
+
+  if (isSubjectVariant) {
+    return (
+      <Box>
+        <Box
+          sx={{
+            alignItems: 'center',
+            display: 'flex',
+            justifyContent: 'space-between',
+            mb: 1,
+          }}
+        >
+          {headerSlot ?? null}
+          {showValueLabel && (
+            <Typography
+              sx={{
+                color: subjectTheme.color,
+                fontSize: 14,
+                fontWeight: 700,
+              }}
+            >
+              {resolvedValueLabel}
+            </Typography>
+          )}
+        </Box>
+        <LinearProgress
+          sx={{
+            backgroundColor: subjectTheme.progressTrack,
+            borderRadius: 999,
+            height: thickness,
+            '& .MuiLinearProgress-bar': {
+              borderColor: subjectTheme.progressTrack,
+              backgroundColor: subjectTheme.progressFill,
+              borderRadius: 999,
+            },
+          }}
+          value={normalizedValue}
+          variant="determinate"
+        />
+      </Box>
+    )
+  }
+
   return (
     <Stack
       direction={{ sm: 'row', xs: isSoftValueLabel ? 'column' : 'row' }}
@@ -56,11 +103,15 @@ function ProgressBar({
         ) : null}
         <LinearProgress
           sx={{
-            backgroundColor: subjectTheme.progressTrack,
+            backgroundColor: isHeaderValueLabel
+              ? 'rgba(255,255,255,0.25)'
+              : subjectTheme.progressTrack,
             borderRadius: 999,
             height: thickness,
             '& .MuiLinearProgress-bar': {
-              backgroundColor: subjectTheme.progressFill,
+              backgroundColor: isHeaderValueLabel
+                ? 'rgba(255,255,255,0.85)'
+                : subjectTheme.progressFill,
               borderRadius: 999,
             },
           }}

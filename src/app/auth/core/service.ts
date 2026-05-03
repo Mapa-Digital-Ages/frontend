@@ -3,6 +3,7 @@ import { HttpRequestError, httpClient } from '@/shared/lib/http/client'
 import type {
   AuthCredentials,
   LoginApiResponse,
+  ParentStatus,
   RegisterCredentials,
 } from './types'
 import { ParentStatusError } from './types'
@@ -53,6 +54,51 @@ function persistAuthSession(
   setCookie(COOKIE_KEYS.authEmail, result.email)
 }
 
+const BACKEND_ROLE_MAP: Record<string, UserRole> = {
+  guardian: 'responsavel',
+  student: 'aluno',
+  admin: 'admin',
+  school: 'escola',
+  company: 'empresa',
+  school_company: 'escola_empresa',
+}
+
+function mapBackendRole(rawRole: string): UserRole {
+  return BACKEND_ROLE_MAP[rawRole.toLowerCase()] ?? (rawRole as UserRole)
+}
+
+function normalizeParentStatus(status?: string): ParentStatus | undefined {
+  if (!status) {
+    return undefined
+  }
+
+  const normalizedStatus = status.toUpperCase()
+
+  if (normalizedStatus === 'WAITING' || normalizedStatus === 'AGUARDANDO') {
+    return 'AGUARDANDO'
+  }
+
+  if (normalizedStatus === 'REJECTED' || normalizedStatus === 'NEGADO') {
+    return 'NEGADO'
+  }
+
+  if (normalizedStatus === 'APPROVED' || normalizedStatus === 'APROVADO') {
+    return 'APROVADO'
+  }
+
+  return undefined
+}
+
+function assertParentCanLogin(result: LoginApiResponse) {
+  if (result.role !== 'responsavel') {
+    return
+  }
+
+  if (result.status === 'AGUARDANDO' || result.status === 'NEGADO') {
+    throw new ParentStatusError(result.status)
+  }
+}
+
 function resolveLocalLogin(
   credentials: AuthCredentials
 ): LoginApiResponse | null {
@@ -90,19 +136,15 @@ export const authService = {
         password: credentials.password,
       })
 
-      const result = {
+      const result: LoginApiResponse = {
         token: response.data.token,
-        role: response.data.role as UserRole,
+        role: mapBackendRole(response.data.role),
         name: response.data.name,
         email: response.data.email,
-        status:
-          response.data.status?.toUpperCase() as LoginApiResponse['status'],
+        status: normalizeParentStatus(response.data.status),
       }
 
-      if (result.status === 'AGUARDANDO' || result.status === 'NEGADO') {
-        throw new ParentStatusError(result.status)
-      }
-
+      assertParentCanLogin(result)
       persistAuthSession(result)
 
       return result
@@ -112,13 +154,12 @@ export const authService = {
           detail?: string
           details?: string
         } | null
-        const detail = (body?.detail ?? body?.details ?? '').toLowerCase()
+        const detail = (body?.detail ?? body?.details ?? '').toUpperCase()
 
-        if (detail.includes('aguardando'))
+        if (detail.includes('WAITING') || detail.includes('AGUARDANDO'))
           throw new ParentStatusError('AGUARDANDO')
-        if (detail.includes('negado')) throw new ParentStatusError('NEGADO')
-
-        throw new ParentStatusError('NEGADO')
+        if (detail.includes('REJECTED') || detail.includes('NEGADO'))
+          throw new ParentStatusError('NEGADO')
       }
 
       throw error
@@ -127,7 +168,7 @@ export const authService = {
 
   async register(credentials: RegisterCredentials): Promise<void> {
     await httpClient.post(
-      'register/responsavel',
+      'register/guardian',
       {
         first_name: credentials.firstName,
         last_name: credentials.lastName,

@@ -32,7 +32,13 @@ interface UploadActivityModalProps {
   onAddTask: (task: UploadTaskPayload) => void
 }
 
-const MAX_FILE_SIZE_MB = Number(import.meta.env.VITE_MAX_FILE_SIZE_MB ?? 5)
+const env = (
+  import.meta as ImportMeta & {
+    env?: Record<string, string | undefined>
+  }
+).env
+
+const MAX_FILE_SIZE_MB = Number(env?.VITE_MAX_FILE_SIZE_MB ?? 5)
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
 
 const ALLOWED_TYPES = [
@@ -48,7 +54,14 @@ function UploadActivityModal({
   onAddTask,
 }: UploadActivityModalProps) {
   const [title, setTitle] = useState('')
-  type SubjectKey = 'matematica' | 'portugues' | 'ciencias' | 'historia'
+  type SubjectKey =
+    | 'matematica'
+    | 'portugues'
+    | 'biologia'
+    | 'historia'
+    | 'ingles'
+    | 'geografia'
+    | 'ciencias'
   const [subject, setSubject] = useState<SubjectKey>('matematica')
   const [type, setType] = useState('Exercício')
   const [file, setFile] = useState<File | null>(null)
