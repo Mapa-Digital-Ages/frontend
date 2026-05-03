@@ -55,10 +55,10 @@ function renderIconBox(icon: React.ReactNode, color: string, bg: string) {
   return (
     <Box
       sx={{
-        width: 36,
-        height: 36,
-        minWidth: 36,
-        minHeight: 36,
+        width: { xs: 30, sm: 36 },
+        height: { xs: 30, sm: 36 },
+        minWidth: { xs: 30, sm: 36 },
+        minHeight: { xs: 30, sm: 36 },
         flexShrink: 0,
         borderRadius: '50%',
         display: 'flex',
@@ -134,9 +134,10 @@ function Planner({ tasks, sx }: PlannerProps) {
       sx={{
         border: '1px solid',
         borderColor: 'divider',
-        borderRadius: '16px',
-        p: 2,
+        borderRadius: { xs: '12px', sm: '16px' },
+        p: { xs: 1, sm: 2 },
         backgroundColor: 'background.paper',
+        minWidth: 0,
         ...sx,
       }}
     >
@@ -152,7 +153,9 @@ function Planner({ tasks, sx }: PlannerProps) {
         }}
       >
         <CalendarMonthIcon sx={{ color: '#319BDD', fontSize: 25 }} />
-        <Typography variant="h5">Planner da Semana</Typography>
+        <Typography sx={{ fontSize: { xs: '1.1rem', sm: '1.5rem' } }}>
+          Planner da Semana
+        </Typography>
       </Box>
 
       {Object.entries(groupedTasks)
@@ -173,7 +176,7 @@ function Planner({ tasks, sx }: PlannerProps) {
                   ? alpha(dayTasks[0].subject.color || '#ccc', 0.25)
                   : 'divider',
               borderRadius: '12px',
-              p: 1.5,
+              p: { xs: 1.25, sm: 1.5 },
               cursor: dayTasks.length > 1 ? 'pointer' : 'default',
               transition: '0.2s',
               '&:hover': { backgroundColor: 'action.hover' },
@@ -193,22 +196,28 @@ function Planner({ tasks, sx }: PlannerProps) {
                 <Box
                   sx={{
                     display: 'flex',
-                    alignItems: 'center',
-                    gap: 1.5,
+                    alignItems: { xs: 'flex-start', sm: 'center' },
+                    gap: { xs: 1, sm: 1.5 },
                     minWidth: 0,
-                    flex: '1 1 200px',
+                    flex: { xs: '1 1 100%', sm: '1 1 200px' },
                   }}
                 >
                   {getTaskIcon(dayTasks[0].status)}
                   <Box sx={{ minWidth: 0, flex: '1 1 auto' }}>
-                    <Typography sx={{ fontWeight: 700, fontSize: '1rem' }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 700,
+                        fontSize: { xs: '0.95rem', sm: '1rem' },
+                      }}
+                    >
                       {day}
                     </Typography>
                     <Box
                       sx={{
                         display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
+                        alignItems: { xs: 'flex-start', sm: 'center' },
+                        flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                        gap: { xs: 0.75, sm: 1 },
                         minWidth: 0,
                       }}
                     >
@@ -218,11 +227,12 @@ function Planner({ tasks, sx }: PlannerProps) {
                       />
                       <Typography
                         sx={{
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
+                          overflow: { xs: 'visible', sm: 'hidden' },
+                          textOverflow: { xs: 'clip', sm: 'ellipsis' },
+                          whiteSpace: { xs: 'normal', sm: 'nowrap' },
                           minWidth: 0,
                           flex: 1,
+                          lineHeight: 1.3,
                         }}
                       >
                         {dayTasks[0].title}
@@ -235,15 +245,15 @@ function Planner({ tasks, sx }: PlannerProps) {
                   sx={{
                     color: 'text.secondary',
                     minWidth: 0,
-                    maxWidth: 100,
+                    maxWidth: { xs: 'none', sm: 100 },
                     flexShrink: 1,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    textAlign: 'right',
+                    overflow: { xs: 'visible', sm: 'hidden' },
+                    textOverflow: { xs: 'clip', sm: 'ellipsis' },
+                    whiteSpace: { xs: 'normal', sm: 'nowrap' },
+                    textAlign: { xs: 'left', sm: 'right' },
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'flex-end',
+                    justifyContent: { xs: 'flex-start', sm: 'flex-end' },
                     mt: { xs: 1, sm: 0 },
                     width: { xs: '100%', sm: 'auto' },
                   }}
@@ -269,15 +279,20 @@ function Planner({ tasks, sx }: PlannerProps) {
                 <Box
                   sx={{
                     display: 'flex',
-                    alignItems: 'center',
-                    gap: 2,
+                    alignItems: { xs: 'flex-start', sm: 'center' },
+                    gap: { xs: 1, sm: 2 },
                     minWidth: 0,
-                    flex: '1 1 200px',
+                    flex: { xs: '1 1 100%', sm: '1 1 200px' },
                   }}
                 >
                   {getMoreThanOneTaskDayIcon(dayTasks)}
                   <Box sx={{ minWidth: 0 }}>
-                    <Typography sx={{ fontWeight: 700, fontSize: '1rem' }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 700,
+                        fontSize: { xs: '0.95rem', sm: '1rem' },
+                      }}
+                    >
                       {day}
                     </Typography>
                     <Typography color="text.secondary">
@@ -290,16 +305,16 @@ function Planner({ tasks, sx }: PlannerProps) {
                   sx={{
                     color: 'text.secondary',
                     minWidth: 0,
-                    maxWidth: 110,
-                    textAlign: 'right',
+                    maxWidth: { xs: 'none', sm: 110 },
+                    textAlign: { xs: 'left', sm: 'right' },
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'flex-end',
+                    justifyContent: { xs: 'flex-start', sm: 'flex-end' },
                     flexShrink: 1,
                     fontWeight: 500,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
+                    overflow: { xs: 'visible', sm: 'hidden' },
+                    textOverflow: { xs: 'clip', sm: 'ellipsis' },
+                    whiteSpace: { xs: 'normal', sm: 'nowrap' },
                     width: { xs: '100%', sm: 'auto' },
                     mt: { xs: 1, sm: 0 },
                   }}

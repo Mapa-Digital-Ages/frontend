@@ -81,7 +81,7 @@ export default function Page() {
             border: '1px solid',
             borderColor: 'divider',
             borderRadius: { xs: '12px', sm: '16px' },
-            p: { xs: 1, sm: 2, md: 3 },
+            p: { xs: 0.75, sm: 2, md: 1.5 },
             backgroundColor: 'background.paper',
             overflow: 'hidden',
             minWidth: 0,
@@ -90,7 +90,7 @@ export default function Page() {
           <AppCalendar tasks={tasks} onTasksChange={setTasks} />
         </Box>
 
-        <Planner tasks={tasks} />
+        <Planner tasks={tasks} sx={{ p: { xs: 0.75, sm: 2 } }} />
       </Box>
     </AppPageContainer>
   )
