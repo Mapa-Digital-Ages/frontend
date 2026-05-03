@@ -3,6 +3,7 @@ import { ProtectedRoute, RoleRoute } from '@/app/router/guards'
 import { APP_ROUTES } from '@/app/router/paths'
 import DashboardLayout from '@/app/layout/DashboardLayout'
 import ParentDashboardPage from '@/modules/parent/dashboard/page/Page'
+import ParentSettingsPage from '@/modules/parent/settings/page/Page'
 
 export const parentRoutes: RouteObject[] = [
   {
@@ -17,6 +18,10 @@ export const parentRoutes: RouteObject[] = [
               {
                 path: APP_ROUTES.parent.dashboard,
                 element: <ParentDashboardPage />,
+              },
+              {
+                path: APP_ROUTES.parent.settings,
+                element: <ParentSettingsPage />,
               },
             ],
           },

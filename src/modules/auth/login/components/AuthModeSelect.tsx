@@ -1,4 +1,5 @@
-import { Box, Button } from '@mui/material'
+import { Tab, Tabs } from '@mui/material'
+import { alpha, useTheme } from '@mui/material/styles'
 
 export type AuthMode = 'login' | 'register'
 
@@ -13,55 +14,74 @@ const AUTH_MODE_OPTIONS: Array<{ label: string; value: AuthMode }> = [
 ]
 
 function AuthModeSelect({ value, onChange }: AuthModeSelectProps) {
+  const theme = useTheme()
+  const isDark = theme.palette.mode === 'dark'
+  const selectedBackground = isDark ? theme.palette.primary.dark : '#359CDF'
+  const selectedHoverBackground = isDark
+    ? theme.palette.primary.main
+    : '#218cc9'
+  const trackBackground = isDark
+    ? alpha(theme.palette.common.white, 0.06)
+    : '#e9edf2'
+  const unselectedHoverBackground = isDark
+    ? alpha(theme.palette.common.white, 0.08)
+    : 'rgba(255,255,255,0.4)'
+
   return (
-    <Box
-      className="grid grid-cols-2 p-1 gap-2"
-      role="tablist"
+    <Tabs
+      aria-label="Selecionar modo de autenticação"
+      onChange={(_, nextValue: AuthMode) => onChange(nextValue)}
+      value={value}
+      variant="fullWidth"
       sx={{
-        height: 44,
-        border: '1px solid #e2e8f0',
+        alignItems: 'center',
+        border: '1px solid',
+        borderColor: 'background.border',
         borderRadius: '8px',
-        backgroundColor: '#e9edf2',
+        backgroundColor: trackBackground,
+        minHeight: 44,
+        p: 0.5,
+        '& .MuiTabs-flexContainer': {
+          gap: 1,
+        },
+        '& .MuiTabs-indicator': {
+          display: 'none',
+        },
       }}
     >
-      {AUTH_MODE_OPTIONS.map(option => {
-        const isSelected = value === option.value
-
-        return (
-          <Button
-            aria-selected={isSelected}
-            disableRipple
-            key={option.value}
-            onClick={() => onChange(option.value)}
-            role="tab"
-            sx={{
-              minHeight: 34,
-              borderRadius: '8px',
-              color: isSelected ? '#FFFFFF' : '#64748b',
-              backgroundColor: isSelected ? '#359CDF' : 'transparent',
-              boxShadow: isSelected
-                ? '0 1px 2px rgba(16, 42, 67, 0.06)'
-                : 'none',
-              fontWeight: 700,
-              textTransform: 'none',
-              '&:hover': {
-                backgroundColor: isSelected
-                  ? '#218cc9'
-                  : 'rgba(255,255,255,0.4)',
-                color: isSelected ? '#ffffff' : '#475569',
-              },
-              '&.Mui-focusVisible': {
-                outline: '2px solid #359CDF',
-                outlineOffset: '2px',
-              },
-            }}
-            type="button"
-          >
-            {option.label}
-          </Button>
-        )
-      })}
-    </Box>
+      {AUTH_MODE_OPTIONS.map(option => (
+        <Tab
+          disableRipple
+          key={option.value}
+          label={option.label}
+          value={option.value}
+          sx={{
+            borderRadius: '8px',
+            color: 'text.secondary',
+            fontWeight: 700,
+            minHeight: 34,
+            py: 0,
+            textTransform: 'none',
+            '&.Mui-selected': {
+              backgroundColor: selectedBackground,
+              boxShadow: '0 1px 2px rgba(16, 42, 67, 0.06)',
+              color: '#ffffff',
+            },
+            '&:hover': {
+              backgroundColor:
+                value === option.value
+                  ? selectedHoverBackground
+                  : unselectedHoverBackground,
+              color: value === option.value ? '#ffffff' : 'text.primary',
+            },
+            '&.Mui-focusVisible': {
+              outline: `2px solid ${theme.palette.primary.main}`,
+              outlineOffset: '2px',
+            },
+          }}
+        />
+      ))}
+    </Tabs>
   )
 }
 

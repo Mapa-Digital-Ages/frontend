@@ -200,6 +200,7 @@ export type TagBadgeProps = {
 }
 
 export const SUBJECTS: Record<string, TagContext> = {
+  biologia: SUBJECT_CATALOG.biology,
   ciencias: SUBJECT_CATALOG.science,
   geografia: SUBJECT_CATALOG.geography,
   historia: SUBJECT_CATALOG.history,

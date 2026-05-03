@@ -1,4 +1,5 @@
-import { Alert, Box } from '@mui/material'
+import { Alert, Box, Paper } from '@mui/material'
+import { alpha, useTheme } from '@mui/material/styles'
 import { useEffect, useState } from 'react'
 import { useNavigate, useOutletContext } from 'react-router-dom'
 import { DEFAULT_ROUTE_BY_ROLE } from '@/app/router/paths'
@@ -15,6 +16,7 @@ import AuthModeSelect, { type AuthMode } from '../components/AuthModeSelect'
 import LoginForm from '../components/LoginForm'
 
 export default function Page() {
+  const theme = useTheme()
   const navigate = useNavigate()
   const { isAuthenticated, login, user } = useAuth()
   const { mode, setMode } = useOutletContext<{
@@ -30,6 +32,14 @@ export default function Page() {
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false)
 
   useEffect(() => {
+    if (mode !== 'login' && mode !== 'register') {
+      setMode('login')
+    }
+  }, [mode, setMode])
+
+  const activeMode = mode === 'login' || mode === 'register' ? mode : 'login'
+
+  useEffect(() => {
     if (isAuthenticated && user?.role) {
       navigate(DEFAULT_ROUTE_BY_ROLE[user.role], { replace: true })
     }
@@ -43,7 +53,7 @@ export default function Page() {
 
     try {
       if (mode === 'register') {
-        if (!('name' in values)) {
+        if (!('firstName' in values)) {
           throw new Error('Nome não informado para cadastro.')
         }
 
@@ -75,17 +85,23 @@ export default function Page() {
   }
 
   return (
-    <Box
-      className="flex flex-col bg-white p-7 md:p-8"
+    <Paper
+      className="flex flex-col p-7 md:p-8"
+      elevation={0}
       sx={{
+        backgroundColor: 'background.paper',
+        border: '1px solid',
+        borderColor:
+          theme.palette.mode === 'dark'
+            ? 'background.border'
+            : alpha(theme.palette.common.black, 0.1),
         width: '100%',
-        height: { xs: 600, md: 600 },
-        border: '1px solid rgba(16, 42, 67, 0.1)',
+        height: mode === 'register' ? 720 : 600,
         borderRadius: '16px',
       }}
     >
       <AuthModeSelect
-        value={mode}
+        value={activeMode}
         onChange={nextMode => {
           setMode(nextMode)
           setErrorMessage(null)
@@ -95,7 +111,8 @@ export default function Page() {
       <Box
         sx={{
           mt: 1,
-          height: 8,
+          height: errorMessage ? 52 : 8,
+          flexShrink: 0,
           position: 'relative',
           zIndex: 1,
         }}
@@ -105,14 +122,11 @@ export default function Page() {
             className="items-center py-0"
             severity="error"
             sx={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              left: 0,
               height: { xs: 40, md: 48 },
-              backgroundColor: '#fef2f2',
-              color: '#991b1b',
-              '& .MuiAlert-icon': { color: '#dc2626' },
+              left: 0,
+              position: 'absolute',
+              right: 0,
+              top: 0,
             }}
           >
             {errorMessage}
@@ -123,8 +137,8 @@ export default function Page() {
       <Box className="min-h-0 flex-1">
         <LoginForm
           isSubmitting={isSubmitting}
-          key={mode}
-          mode={mode}
+          key={activeMode}
+          mode={activeMode}
           onSubmit={handleSubmit}
         />
       </Box>
@@ -134,6 +148,6 @@ export default function Page() {
         status={parentStatus ?? ''}
         onClose={() => setIsStatusModalOpen(false)}
       />
-    </Box>
+    </Paper>
   )
 }

@@ -103,6 +103,8 @@ function getDefaultFormValues(): ApprovalActionFormValues {
   return {
     childName: '',
     email: '',
+    first_name: '',
+    last_name: '',
     password: '',
     requestedAt: getTodayRequestDate(),
     resourceType: 'task',
@@ -177,6 +179,8 @@ export default function Page() {
       setModalValues({
         childName: '',
         email: '',
+        first_name: '',
+        last_name: '',
         password: '',
         requestedAt: item.requestedAt ?? getTodayRequestDate(),
         resourceType: item.resourceType ?? 'task',
@@ -192,6 +196,8 @@ export default function Page() {
     setModalValues({
       childName: '',
       email: '',
+      first_name: '',
+      last_name: '',
       password: '',
       requestedAt:
         nextMode.action === 'create'

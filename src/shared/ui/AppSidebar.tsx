@@ -1,5 +1,6 @@
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded'
+import FirstPageIcon from '@mui/icons-material/FirstPage'
 import {
   Box,
   Divider,
@@ -73,32 +74,35 @@ function AppSidebar({
         style={{ background: getRoleGradient(theme, role, '150deg') }}
       >
         <Box className="flex items-center justify-between gap-3 min-w-[60px]">
-          {isCollapsed ? (
-            <IconButton
-              data-testid="toggle-sidebar"
-              onClick={onToggleCollapse}
-              size="small"
-              sx={{ color: 'white', p: 0.5 }}
-            >
-              <MenuRoundedIcon />
-            </IconButton>
-          ) : (
-            <>
-              <Box className="flex items-center gap-3 min-w-0">
-                <Box className="grid size-9 shrink-0 place-items-center rounded-xl bg-white/20 text-sm font-bold">
-                  M
-                </Box>
-                <Box className="min-w-0">
-                  <Typography className="truncate text-2xl font-bold uppercase leading-none">
-                    {APP_CONFIG.name}
-                  </Typography>
-                  <Typography className="truncate text-sm text-white/85">
-                    {ROLE_DASHBOARD_TITLE[role]}
-                  </Typography>
-                </Box>
+          {!isCollapsed && (
+            <Box className="flex items-center gap-3 min-w-0">
+              <Box className="grid size-9 shrink-0 place-items-center rounded-xl bg-white/20 text-sm font-bold">
+                M
               </Box>
-            </>
+              <Box className="min-w-0">
+                <Typography className="truncate text-2xl font-bold uppercase leading-none">
+                  {APP_CONFIG.name}
+                </Typography>
+                <Typography className="truncate text-sm text-white/85">
+                  {ROLE_DASHBOARD_TITLE[role]}
+                </Typography>
+              </Box>
+            </Box>
           )}
+          <IconButton
+            data-testid="toggle-sidebar"
+            onClick={() => {
+              if (isMobile) {
+                onClose()
+              } else {
+                onToggleCollapse()
+              }
+            }}
+            size="small"
+            sx={{ color: 'white', p: 0.5, flexShrink: 0 }}
+          >
+            {isCollapsed ? <MenuRoundedIcon /> : <FirstPageIcon />}
+          </IconButton>
         </Box>
       </Box>
 

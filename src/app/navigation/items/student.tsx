@@ -25,7 +25,7 @@ export const studentNavigation: SidebarItem[] = [
     icon: <PlayCircleFilledWhiteOutlinedIcon fontSize="medium" />,
   },
   {
-    label: 'Upload de Avaliações',
+    label: 'Upload de Tarefas',
     path: APP_ROUTES.student.uploads,
     icon: <UploadFileOutlinedIcon fontSize="medium" />,
   },

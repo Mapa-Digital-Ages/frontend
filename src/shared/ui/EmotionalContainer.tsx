@@ -6,28 +6,49 @@ import {
   DialogTitle,
   DialogContent,
   IconButton,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material'
-import SentimentSatisfiedAltIcon from '@mui/icons-material/SentimentSatisfiedAlt'
+import SentimentVerySatisfiedIcon from '@mui/icons-material/SentimentVerySatisfied'
 import SentimentNeutralIcon from '@mui/icons-material/SentimentNeutral'
+import SentimentSatisfiedIcon from '@mui/icons-material/SentimentSatisfied'
 import SentimentVeryDissatisfiedIcon from '@mui/icons-material/SentimentVeryDissatisfied'
 import CloseIcon from '@mui/icons-material/Close'
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useTheme } from '@mui/material/styles'
+import { alpha } from '@mui/material/styles'
 import dayjs from 'dayjs'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import 'dayjs/locale/pt-br'
+import { authService } from '@/app/auth/core/service'
+import {
+  wellBeingService,
+  type WellBeingHumor,
+} from '@/shared/services/wellBeingService'
+
+const HUMOR_TO_LABEL: Record<WellBeingHumor, string> = {
+  good: 'Bem',
+  regular: 'Regular',
+  bad: 'Mal',
+}
+
+const LABEL_TO_HUMOR: Record<string, WellBeingHumor> = {
+  Bem: 'good',
+  Regular: 'regular',
+  Mal: 'bad',
+}
 
 dayjs.locale('pt-br')
 dayjs.extend(isoWeek)
 
 type EmotionButtonColor = 'success' | 'warning' | 'error'
-
 interface EmotionButtonProps {
   icon: ReactNode
   label: string
   color: EmotionButtonColor
   onClick: () => void
   testId: string
+  value: string
   width?: string
   height?: string
 }
@@ -38,6 +59,7 @@ function EmotionButton({
   color,
   onClick,
   testId,
+  value,
   width,
   height,
 }: EmotionButtonProps) {
@@ -45,47 +67,55 @@ function EmotionButton({
   const hoverBackgrounds: Record<EmotionButtonColor, string> = {
     success:
       theme.palette.mode === 'dark'
-        ? 'rgba(184, 246, 181, 0.4)'
-        : 'rgba(184, 246, 181, 0.8)',
+        ? alpha('rgba(184, 246, 181, 1)', 0.4)
+        : alpha('rgba(184, 246, 181, 1)', 0.8),
     warning:
       theme.palette.mode === 'dark'
-        ? 'rgba(244, 253, 177, 0.4)'
-        : 'rgba(244, 253, 177, 0.8)',
+        ? alpha('rgba(244, 253, 177, 1)', 0.4)
+        : alpha('rgba(244, 253, 177, 1)', 0.8),
     error:
       theme.palette.mode === 'dark'
-        ? 'rgba(253, 194, 200, 0.4)'
-        : 'rgba(253, 194, 200, 0.8)',
+        ? alpha('rgba(253, 194, 200, 1)', 0.4)
+        : alpha('rgba(253, 194, 200, 1)', 0.8),
   }
 
   return (
-    <Box
-      component="button"
-      onClick={onClick}
+    <ToggleButton
       data-testid={testId}
+      onClick={onClick}
+      value={value}
       sx={{
-        justifyContent: 'center',
-        width: width || '163.33px',
-        height: height || '92px',
-        flexDirection: 'column',
-        cursor: 'pointer',
-        borderRadius: '12px',
+        alignItems: 'center',
+        backgroundColor: 'transparent',
         border: '1px solid',
         borderColor: `${color}.main`,
-        backgroundColor: 'transparent',
+        borderRadius: '12px !important',
         color: `${color}.main`,
+        cursor: 'pointer',
         display: 'flex',
-        alignItems: 'center',
+        flexDirection: 'column',
         gap: 1,
+        height: height || '92px',
+        justifyContent: 'center',
+        textTransform: 'none',
         transition: 'all 0.2s ease-in-out',
+        width: width || '163.33px',
         '&:hover': {
           backgroundColor: hoverBackgrounds[color],
           opacity: 0.9,
+        },
+        '&.Mui-selected': {
+          backgroundColor: hoverBackgrounds[color],
+          color: `${color}.main`,
+        },
+        '&.Mui-selected:hover': {
+          backgroundColor: hoverBackgrounds[color],
         },
       }}
     >
       {icon}
       <Typography fontWeight="bold">{label}</Typography>
-    </Box>
+    </ToggleButton>
   )
 }
 
@@ -95,36 +125,72 @@ export default function EmotionalContainer() {
   const startOfWeek = dayjs().startOf('isoWeek')
   const initialWeek = Array.from({ length: 7 }).map((_, index) => {
     const date = startOfWeek.add(index, 'day')
-
     return { date, mood: null as string | null }
   })
-
   const [weeklyMood, setWeeklyMood] = useState(initialWeek)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const studentUserId = authService.getUserId()
 
-  function handleEmotionSelect(emotionLabel: string) {
-    const moodMap: Record<string, string> = {
-      Bem: 'good',
-      Regular: 'regular',
-      Mal: 'bad',
+  useEffect(() => {
+    if (!studentUserId) return
+    let active = true
+    const today = dayjs().format('YYYY-MM-DD')
+    void wellBeingService
+      .getStudentDay(studentUserId, today)
+      .then(record => {
+        if (!active || !record?.humor) return
+        setWeeklyMood(prev =>
+          prev.map(day =>
+            day.date.format('YYYY-MM-DD') === today
+              ? { ...day, mood: record.humor }
+              : day
+          )
+        )
+        setSelectedEmotion(HUMOR_TO_LABEL[record.humor])
+      })
+      .catch(() => undefined)
+    return () => {
+      active = false
     }
+  }, [studentUserId])
+
+  async function handleEmotionSelect(emotionLabel: string) {
+    const humor = LABEL_TO_HUMOR[emotionLabel]
+    if (!humor) return
 
     const today = dayjs().format('YYYY-MM-DD')
 
     setWeeklyMood(prev =>
       prev.map(day =>
-        day.date.format('YYYY-MM-DD') === today
-          ? { ...day, mood: moodMap[emotionLabel] }
-          : day
+        day.date.format('YYYY-MM-DD') === today ? { ...day, mood: humor } : day
       )
     )
-
     setSelectedEmotion(emotionLabel)
-    setModalOpen(true)
+    setErrorMessage(null)
+
+    if (!studentUserId) {
+      setModalOpen(true)
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      await wellBeingService.upsertToday(studentUserId, humor)
+      setModalOpen(true)
+    } catch {
+      setErrorMessage(
+        'Não foi possível registrar seu humor agora. Tente novamente.'
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   function handleModalClose() {
     setModalOpen(false)
   }
+
   return (
     <Box
       data-testid="card-checkin-emocional"
@@ -146,31 +212,51 @@ export default function EmotionalContainer() {
         Check-in emocional
       </Typography>
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 4 }}>
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{
+          mb: errorMessage ? 1 : 4,
+          width: '100%',
+          opacity: isSubmitting ? 0.6 : 1,
+          pointerEvents: isSubmitting ? 'none' : 'auto',
+          transition: 'opacity 120ms ease',
+        }}
+      >
         <EmotionButton
           testId="emotion-button-good"
           label="Bem"
           color="success"
-          icon={<SentimentSatisfiedAltIcon sx={{ fontSize: 28 }} />}
-          onClick={() => handleEmotionSelect('Bem')}
+          icon={<SentimentVerySatisfiedIcon sx={{ fontSize: 28 }} />}
+          onClick={() => void handleEmotionSelect('Bem')}
+          value="Bem"
         />
-
         <EmotionButton
           testId="emotion-button-regular"
           label="Regular"
           color="warning"
           icon={<SentimentNeutralIcon sx={{ fontSize: 28 }} />}
-          onClick={() => handleEmotionSelect('Regular')}
+          onClick={() => void handleEmotionSelect('Regular')}
+          value="Regular"
         />
-
         <EmotionButton
           testId="emotion-button-bad"
           label="Mal"
           color="error"
           icon={<SentimentVeryDissatisfiedIcon sx={{ fontSize: 28 }} />}
-          onClick={() => handleEmotionSelect('Mal')}
+          onClick={() => void handleEmotionSelect('Mal')}
+          value="Mal"
         />
       </Stack>
+      {errorMessage && (
+        <Typography
+          role="alert"
+          variant="body2"
+          sx={{ color: 'error.main', mb: 2 }}
+        >
+          {errorMessage}
+        </Typography>
+      )}
 
       <Typography
         variant="h6"
@@ -188,10 +274,10 @@ export default function EmotionalContainer() {
           let color = 'text.secondary'
 
           if (mood === 'good') {
-            icon = <SentimentSatisfiedAltIcon sx={{ fontSize: 24 }} />
+            icon = <SentimentVerySatisfiedIcon sx={{ fontSize: 24 }} />
             color = 'success.main'
           } else if (mood === 'regular') {
-            icon = <SentimentNeutralIcon sx={{ fontSize: 24 }} />
+            icon = <SentimentSatisfiedIcon sx={{ fontSize: 24 }} />
             color = 'warning.main'
           } else if (mood === 'bad') {
             icon = <SentimentVeryDissatisfiedIcon sx={{ fontSize: 24 }} />
@@ -205,12 +291,7 @@ export default function EmotionalContainer() {
           return (
             <Box
               key={date.toString()}
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.8,
-                color,
-              }}
+              sx={{ display: 'flex', alignItems: 'center', gap: 0.8, color }}
             >
               {icon && icon}
               <Typography
@@ -227,12 +308,11 @@ export default function EmotionalContainer() {
           )
         })}
       </Stack>
+
       <Dialog
         open={modalOpen}
         onClose={handleModalClose}
-        PaperProps={{
-          sx: { borderRadius: '16px', padding: '16px' },
-        }}
+        PaperProps={{ sx: { borderRadius: '16px', padding: '16px' } }}
       >
         <DialogTitle
           sx={{
@@ -247,7 +327,6 @@ export default function EmotionalContainer() {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-
         <DialogContent>
           <Typography>
             Você registrou seu humor hoje como: {selectedEmotion}

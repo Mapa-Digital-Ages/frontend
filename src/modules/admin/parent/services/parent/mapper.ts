@@ -4,17 +4,19 @@ import type {
   ParentApprovalItem,
   ParentApprovalStatus,
 } from '@/modules/admin/shared/types/types'
-import type { UserRole } from '@/shared/types/user'
 
-export type ParentApprovalUserStatusDto = 'aguardando' | 'aprovado' | 'negado'
+export type ParentApprovalUserStatusDto = 'waiting' | 'approved' | 'rejected'
+export type ParentApprovalUserRoleDto = 'admin' | 'guardian' | 'student'
 
 export interface ParentApprovalUserDto {
   created_at: string
   email: string
-  id: number
+  first_name?: string
+  id: string
   is_superadmin: boolean
+  last_name?: string
   name: string
-  role: UserRole
+  role: ParentApprovalUserRoleDto
   status: ParentApprovalUserStatusDto
 }
 
@@ -22,34 +24,31 @@ const parentStatusMap: Record<
   ParentApprovalUserStatusDto,
   ParentApprovalStatus
 > = {
-  aguardando: 'pendingValidation',
-  aprovado: 'approved',
-  negado: 'rejected',
+  approved: 'approved',
+  rejected: 'rejected',
+  waiting: 'pendingValidation',
 }
 
 const parentStatusDtoMap: Record<
   Exclude<ParentApprovalStatus, 'pendingValidation'>,
   ParentApprovalUserStatusDto
 > = {
-  approved: 'aprovado',
-  rejected: 'negado',
+  approved: 'approved',
+  rejected: 'rejected',
 }
 
 const statusQueryMap: Partial<
   Record<ParentApprovalStatus, ParentApprovalUserStatusDto>
 > = {
-  approved: 'aprovado',
-  pendingValidation: 'aguardando',
-  rejected: 'negado',
+  approved: 'approved',
+  pendingValidation: 'waiting',
+  rejected: 'rejected',
 }
 
-const roleLabelMap: Record<UserRole, string> = {
+const roleLabelMap: Record<ParentApprovalUserRoleDto, string> = {
   admin: 'Administrador',
-  aluno: 'Aluno',
-  empresa: 'Empresa',
-  escola: 'Escola',
-  escola_empresa: 'Escola & Empresa',
-  responsavel: 'Responsável',
+  guardian: 'Responsável',
+  student: 'Aluno',
 }
 
 function formatBrazilianDate(value: string) {
@@ -63,6 +62,24 @@ function formatBrazilianDate(value: string) {
   return `${day}/${month}/${year}`
 }
 
+function splitDisplayName(name: string) {
+  const [firstName = '', ...lastNameParts] = name.trim().split(/\s+/)
+
+  return {
+    firstName,
+    lastName: lastNameParts.join(' '),
+  }
+}
+
+function getParentNames(user: ParentApprovalUserDto) {
+  const fallback = splitDisplayName(user.name)
+
+  return {
+    firstName: user.first_name?.trim() || fallback.firstName,
+    lastName: user.last_name?.trim() || fallback.lastName,
+  }
+}
+
 export function buildParentApprovalQuery(query: ApprovalQueueQuery) {
   const userStatus =
     query.status === 'approved' ||
@@ -72,7 +89,7 @@ export function buildParentApprovalQuery(query: ApprovalQueueQuery) {
       : undefined
 
   return {
-    role: 'responsavel',
+    role: 'guardian',
     user_status: userStatus,
   } satisfies HttpRequestOptions['query']
 }
@@ -94,6 +111,7 @@ export function mapParentApprovalUserToParentApprovalItem(
 ): ParentApprovalItem {
   const requestedAt = formatBrazilianDate(user.created_at)
   const roleLabel = roleLabelMap[user.role]
+  const name = getParentNames(user)
 
   return {
     badges: [
@@ -109,8 +127,9 @@ export function mapParentApprovalUserToParentApprovalItem(
       },
     ],
     childName: 'Aluno a confirmar',
-    id: user.email,
+    id: user.id,
     kind: 'parent',
+    name,
     requestedAt,
     roleLabel,
     status: parentStatusMap[user.status],

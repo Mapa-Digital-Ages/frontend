@@ -14,15 +14,12 @@ interface AppTopbarProps extends AppBarProps {
   leading?: ReactNode
   onMenuClick?: () => void
   showMenuButton?: boolean
-  isMobile?: boolean
 }
 
 function AppTopbar({
   actions,
-  leading,
   onMenuClick,
   showMenuButton = false,
-  isMobile = false,
   ...appBarProps
 }: AppTopbarProps) {
   const theme = useTheme()
@@ -43,19 +40,12 @@ function AppTopbar({
     >
       <Toolbar className="min-h-18 items-center justify-between gap-2 md:gap-4">
         <Box className="flex items-center gap-2">
-          {showMenuButton && isMobile && (
-            <IconButton
-              aria-label="Abrir menu lateral"
-              onClick={onMenuClick}
-              size="small"
-            >
+          {showMenuButton && (
+            <IconButton onClick={onMenuClick}>
               <MenuRoundedIcon />
             </IconButton>
           )}
-
-          {leading && !isMobile && <Box>{leading}</Box>}
         </Box>
-
         {actions && (
           <Box className="ml-auto flex items-center justify-end">{actions}</Box>
         )}

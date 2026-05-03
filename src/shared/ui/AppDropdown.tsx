@@ -75,6 +75,8 @@ function AppDropdown({
     error,
     MenuProps,
     sx,
+    inputProps,
+    ['aria-label']: ariaLabel,
     ...selectProps
   } = props
   const isGhostTrigger = triggerVariant === 'ghost'
@@ -318,6 +320,10 @@ function AppDropdown({
         error={error}
         value={value}
         onChange={onChange}
+        inputProps={{
+          ...inputProps,
+          ...(ariaLabel ? { 'aria-label': ariaLabel } : {}),
+        }}
         displayEmpty
         renderValue={renderValue}
         IconComponent={hideIndicator || hideLabel ? () => null : ExpandMoreIcon}

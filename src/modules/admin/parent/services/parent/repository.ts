@@ -34,8 +34,21 @@ export interface CreateParentApprovalRepositoryOptions {
   client: ParentApprovalApiClient
 }
 
-function buildUserStatusPath(email: string) {
-  return `admin/users/${encodeURIComponent(email)}/status`
+function buildGuardianRegistrationPayload(input: ParentApprovalDraftInput) {
+  return {
+    email: input.email,
+    first_name: input.first_name.trim(),
+    last_name: input.last_name.trim(),
+    password: input.password,
+  }
+}
+
+function buildUserStatusPath(userId: string) {
+  return `admin/users/${encodeURIComponent(userId)}/status`
+}
+
+function buildGuardianPath(guardianId: string) {
+  return `guardian/${encodeURIComponent(guardianId)}`
 }
 
 export function createParentApprovalRepository({
@@ -58,37 +71,29 @@ export function createParentApprovalRepository({
       input: ParentApprovalDraftInput
     ): Promise<void> {
       await client.post<unknown>(
-        'register',
-        {
-          email: input.email,
-          name: input.title,
-          password: input.password,
-        },
+        'register/guardian',
+        buildGuardianRegistrationPayload(input),
         { skipAuth: true }
       )
     },
     async updateParentRegistration(
-      id: string,
+      guardianId: string,
       input: ParentApprovalDraftInput
-    ): Promise<ParentApprovalItem> {
-      const response = await client.patch<ParentApprovalUserDto>(
-        `admin/users/${encodeURIComponent(id)}`,
-        {
-          name: input.title,
-        }
-      )
-
-      return mapParentApprovalUserToParentApprovalItem(response.data)
+    ): Promise<void> {
+      await client.patch<unknown>(buildGuardianPath(guardianId), {
+        first_name: input.first_name.trim(),
+        last_name: input.last_name.trim(),
+      })
     },
-    async removeParentRegistration(id: string): Promise<void> {
-      await client.delete<unknown>(`admin/users/${encodeURIComponent(id)}`)
+    async removeParentRegistration(guardianId: string): Promise<void> {
+      await client.delete<unknown>(buildGuardianPath(guardianId))
     },
     async updateParentStatus(
-      email: string,
+      userId: string,
       status: ParentApprovalStatus
     ): Promise<ParentApprovalItem> {
       const response = await client.patch<ParentApprovalUserDto>(
-        buildUserStatusPath(email),
+        buildUserStatusPath(userId),
         {
           status: mapParentStatusToParentApprovalUserStatus(status),
         }

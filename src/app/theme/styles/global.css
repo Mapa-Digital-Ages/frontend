@@ -145,7 +145,7 @@
   --app-secondary-dark: rgba(77, 168, 158, 1);
   --app-success: rgba(107, 211, 139, 1);
   --app-warning: rgba(240, 179, 90, 1);
-  --app-error: rgba(240, 139, 148, 1);
+  --app-error: rgb(205, 7, 24);
   --app-info: rgba(128, 183, 240, 1);
   --app-background: rgba(13, 22, 38, 1);
   --app-surface: rgba(19, 34, 56, 1);

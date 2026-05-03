@@ -1,4 +1,3 @@
-import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded'
 import { Box, IconButton, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { useEffect, useMemo, useState, type CSSProperties } from 'react'
@@ -27,7 +26,11 @@ function DashboardLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [desktopCollapsed, setDesktopCollapsed] = useState(false)
   const [tabletCollapsed, setTabletCollapsed] = useState(true)
-  const collapsed = isTablet ? tabletCollapsed : desktopCollapsed
+  const collapsed = isMobile
+    ? false
+    : isTablet
+      ? tabletCollapsed
+      : desktopCollapsed
   const currentRole = role ?? APP_CONFIG.defaultRole
   const sidebarItems = NAVIGATION_BY_ROLE[currentRole]
   const userInitial = user?.name?.charAt(0).toUpperCase() ?? 'M'
@@ -155,29 +158,8 @@ function DashboardLayout() {
               </Typography>
             </Box>
           }
-          leading={
-            !isTablet && !desktopCollapsed ? (
-              <IconButton
-                aria-label="Recolher menu"
-                onClick={() => setDesktopCollapsed(true)}
-                size="small"
-                data-testid="toggle-sidebar"
-                sx={{ color: theme.palette.text.secondary }}
-              >
-                <ChevronLeftRoundedIcon />
-              </IconButton>
-            ) : null
-          }
-          onMenuClick={() => {
-            if (isTablet) {
-              setTabletCollapsed(false)
-              setMobileOpen(true)
-            } else {
-              setMobileOpen(true)
-            }
-          }}
-          showMenuButton
-          isMobile={isMobile}
+          onMenuClick={() => setMobileOpen(true)}
+          showMenuButton={isMobile}
         />
 
         <Box

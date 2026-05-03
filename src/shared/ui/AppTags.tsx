@@ -71,8 +71,8 @@ export function AppTag({ size = 'md', tag }: TagChipProps) {
 export default function AppTags({ size = 'md', tags }: AppTagsProps) {
   return (
     <Box className="flex flex-wrap gap-2">
-      {tags.map(tag => (
-        <AppTag key={tag.id} size={size} tag={tag} />
+      {tags.map((tag, index) => (
+        <AppTag key={tag.id ?? `${tag.label}-${index}`} size={size} tag={tag} />
       ))}
     </Box>
   )

@@ -24,12 +24,14 @@ export type ApprovalActionModalMode = {
 type ApprovalActionModalUsage = 'confirm' | 'content-form' | 'parent-form'
 
 export interface ApprovalActionFormValues {
-  childName: string
+  childName?: string
   email: string
   password: string
   requestedAt: string
   resourceType: ContentApprovalResourceType
   subjectId: string
+  first_name: string
+  last_name: string
   title: string
 }
 
@@ -185,14 +187,24 @@ function ApprovalActionModal({
 
       {usage === 'parent-form' ? (
         <Box className="grid gap-3">
-          <AppInput
-            label="Nome do responsável"
-            labelSx={fieldLabelSx}
-            onChange={event => onChange('title', event.target.value)}
-            placeholder="Ex.: Mariana Souza"
-            sx={inputSx}
-            value={values.title}
-          />
+          <Box className="grid grid-cols-2 gap-3">
+            <AppInput
+              label="Nome"
+              labelSx={fieldLabelSx}
+              onChange={event => onChange('first_name', event.target.value)}
+              placeholder="Ex.: Mariana"
+              sx={inputSx}
+              value={values.first_name}
+            />
+            <AppInput
+              label="Sobrenome"
+              labelSx={fieldLabelSx}
+              onChange={event => onChange('last_name', event.target.value)}
+              placeholder="Ex.: Souza"
+              sx={inputSx}
+              value={values.last_name}
+            />
+          </Box>
           {mode.action === 'create' ? (
             <>
               <AppInput
@@ -215,14 +227,6 @@ function ApprovalActionModal({
               />
             </>
           ) : null}
-          <AppInput
-            disabled
-            label="Data da solicitação"
-            labelSx={fieldLabelSx}
-            placeholder="DD/MM/AAAA"
-            sx={inputSx}
-            value={values.requestedAt}
-          />
         </Box>
       ) : null}
 

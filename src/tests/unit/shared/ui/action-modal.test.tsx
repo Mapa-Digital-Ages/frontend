@@ -16,8 +16,15 @@ test('app action modal exists as a reusable common component', () => {
   assert.match(modalSource, /children/)
   assert.match(modalSource, /Dialog/)
   assert.match(modalSource, /DialogActions/)
+  assert.match(modalSource, /aria-labelledby=\{titleId\}/)
+  assert.match(
+    modalSource,
+    /aria-describedby=\{description \? descriptionId : undefined\}/
+  )
+  assert.match(modalSource, /disableConfirm \|\| loading/)
+  assert.match(modalSource, /CircularProgress/)
   assert.match(modalSource, /confirmTextColor = '#ffffff'/)
-  assert.match(modalSource, /accentSoftColor \?\?/)
+  assert.match(modalSource, /mode \?\? variant/)
   assert.doesNotMatch(modalSource, /AppColors/)
   assert.doesNotMatch(modalSource, /role: UserRole/)
 })

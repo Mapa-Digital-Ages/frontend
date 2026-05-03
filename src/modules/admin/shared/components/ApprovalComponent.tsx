@@ -1,7 +1,14 @@
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import ModeEditOutlineOutlinedIcon from '@mui/icons-material/ModeEditOutlineOutlined'
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined'
-import { Box, Button, IconButton, Typography } from '@mui/material'
+import {
+  Box,
+  Button,
+  IconButton,
+  List,
+  ListItem,
+  Typography,
+} from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import type { ReactNode } from 'react'
 import EmptyState from '@/shared/ui/EmptyState'
@@ -12,7 +19,6 @@ import AppCard from '@/shared/ui/AppCard'
 import {
   getRoleAccentColor,
   getHoverStyle,
-  getSelectedStyle,
   getSelectionOutlineStyle,
 } from '@/app/theme/core/roles'
 import type {
@@ -78,11 +84,8 @@ function ApprovalComponent<TItem extends { id: string }>({
   const accentColor = getRoleAccentColor(theme, role)
   const errorColor = theme.palette.error.main
   const isSelecting = selectionMode != null
-
   const accentHover = getHoverStyle(theme, accentColor)
   const errorHover = getHoverStyle(theme, errorColor)
-  const editSelected = getSelectedStyle(theme, accentColor)
-  const deleteSelected = getSelectedStyle(theme, errorColor)
 
   const selectionColor = selectionMode === 'delete' ? errorColor : accentColor
   const selectionOutline = isSelecting
@@ -174,64 +177,6 @@ function ApprovalComponent<TItem extends { id: string }>({
                 <AddRoundedIcon fontSize="small" />
               </IconButton>
             ) : null}
-            {onEdit ? (
-              <IconButton
-                aria-label="Editar"
-                onClick={onEdit}
-                sx={{
-                  backgroundColor:
-                    selectionMode === 'edit'
-                      ? editSelected.backgroundColor
-                      : 'background.paper',
-                  border: '1px solid',
-                  borderColor:
-                    selectionMode === 'edit'
-                      ? editSelected.borderColor
-                      : 'background.border',
-                  borderRadius: 'var(--app-radius-control)',
-                  color:
-                    selectionMode === 'edit' ? accentColor : 'text.primary',
-                  flexShrink: 0,
-                  height: 32,
-                  width: 32,
-                  '&:hover': {
-                    backgroundColor: accentHover.backgroundColor,
-                    borderColor: accentHover.borderColor,
-                  },
-                }}
-              >
-                <ModeEditOutlineOutlinedIcon fontSize="small" />
-              </IconButton>
-            ) : null}
-            {onDelete ? (
-              <IconButton
-                aria-label="Excluir"
-                onClick={onDelete}
-                sx={{
-                  backgroundColor:
-                    selectionMode === 'delete'
-                      ? deleteSelected.backgroundColor
-                      : 'background.paper',
-                  border: '1px solid',
-                  borderColor:
-                    selectionMode === 'delete'
-                      ? deleteSelected.borderColor
-                      : 'background.border',
-                  borderRadius: 'var(--app-radius-control)',
-                  color:
-                    selectionMode === 'delete' ? errorColor : 'text.primary',
-                  flexShrink: 0,
-                  height: 32,
-                  width: 32,
-                  '&:hover': {
-                    backgroundColor: errorHover.backgroundColor,
-                    borderColor: errorHover.borderColor,
-                  },
-                }}
-              >
-                <DeleteOutlineOutlinedIcon fontSize="small" />
-              </IconButton>
-            ) : null}
           </Box>
         </Box>
       </Box>
@@ -307,10 +252,14 @@ function ApprovalComponent<TItem extends { id: string }>({
         }}
       >
         {items.length > 0 ? (
-          <Box
-            className="grid gap-4"
+          <List
+            disablePadding
             sx={{
+              display: 'flex',
               flex: 1,
+              flexDirection: 'column',
+              gap: 2,
+              width: '100%',
               maxHeight: { md: 360, xs: 'none' },
               minHeight: 0,
               overflowX: 'hidden',
@@ -321,7 +270,8 @@ function ApprovalComponent<TItem extends { id: string }>({
             }}
           >
             {items.map(item => (
-              <Box
+              <ListItem
+                disablePadding
                 key={item.id}
                 onClick={
                   isSelecting && onItemSelect
@@ -329,7 +279,10 @@ function ApprovalComponent<TItem extends { id: string }>({
                     : undefined
                 }
                 sx={{
+                  display: 'block',
                   flexShrink: 0,
+                  minWidth: 0,
+                  width: '100%',
                   ...(isSelecting && selectionOutline
                     ? {
                         borderRadius: 'var(--app-radius-card, 16px)',
@@ -345,23 +298,33 @@ function ApprovalComponent<TItem extends { id: string }>({
                 }}
               >
                 {renderItem(item)}
-              </Box>
+              </ListItem>
             ))}
-          </Box>
+          </List>
         ) : (
           <Box
             sx={{
               alignItems: 'center',
               display: 'flex',
-              flex: 1,
+              flex: '1 1 auto',
               justifyContent: 'center',
-              minHeight: 'fit-content',
+              minHeight: 0,
+              overflow: 'hidden',
+              px: { md: 2, xs: 1 },
+              py: 2,
             }}
           >
-            <EmptyState
-              description={emptyStateDescription}
-              title={emptyStateTitle}
-            />
+            <Box
+              sx={{
+                maxWidth: 720,
+                width: '100%',
+              }}
+            >
+              <EmptyState
+                description={emptyStateDescription}
+                title={emptyStateTitle}
+              />
+            </Box>
           </Box>
         )}
       </Box>

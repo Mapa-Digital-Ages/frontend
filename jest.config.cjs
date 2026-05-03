@@ -5,7 +5,12 @@ module.exports = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
-  testEnvironment: 'node',
+  setupFiles: ['<rootDir>/src/tests/setup/polyfills.ts'],
+  setupFilesAfterEnv: ['<rootDir>/src/tests/setup/jest.ts'],
+  testEnvironment: 'jsdom',
+  testEnvironmentOptions: {
+    url: 'http://localhost/',
+  },
   testMatch: ['<rootDir>/src/tests/**/*.test.tsx'],
   transform: {
     '^.+\\.tsx?$': [

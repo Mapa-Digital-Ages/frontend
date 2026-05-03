@@ -1,5 +1,7 @@
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded'
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import { Box } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import {
@@ -84,6 +86,8 @@ function getDefaultFormValues(): ApprovalActionFormValues {
   return {
     childName: '',
     email: '',
+    first_name: '',
+    last_name: '',
     password: '',
     requestedAt: getTodayRequestDate(),
     resourceType: 'task',
@@ -111,10 +115,9 @@ export default function Page() {
     getDefaultFormValues()
   )
   const [isModalSubmitting, setIsModalSubmitting] = useState(false)
-  const [selectionMode, setSelectionMode] = useState<{
-    action: 'edit' | 'delete'
-    type: 'parent'
-  } | null>(null)
+  const [selectionMode, setSelectionMode] = useState<'edit' | 'delete' | null>(
+    null
+  )
 
   const deferredParentSearch = useDeferredValue(parentQuery.query)
 
@@ -134,37 +137,17 @@ export default function Page() {
     setSelectionMode(null)
   }, [])
 
-  const toggleSelectionMode = useCallback((action: 'edit' | 'delete') => {
-    setSelectionMode(current =>
-      current?.action === action ? null : { action, type: 'parent' }
-    )
-  }, [])
-
-  const handleParentItemSelect = useCallback(
-    (item: ParentApprovalItem) => {
-      if (!selectionMode || selectionMode.type !== 'parent') return
-
-      setSelectionMode(null)
-      setModalState({ action: selectionMode.action, item, type: 'parent' })
-      setModalValues({
-        childName: item.childName ?? '',
-        email: '',
-        password: '',
-        requestedAt: item.requestedAt ?? getTodayRequestDate(),
-        resourceType: 'task',
-        subjectId: 'default',
-        title: item.title ?? '',
-      })
-    },
-    [selectionMode]
-  )
-
   const openModal = useCallback((nextMode: ApprovalActionModalMode) => {
+    setSelectionMode(null)
     setModalState(nextMode)
     setModalValues({
       childName:
         nextMode.item?.kind === 'parent' ? (nextMode.item.childName ?? '') : '',
       email: '',
+      first_name:
+        nextMode.item?.kind === 'parent' ? nextMode.item.name.firstName : '',
+      last_name:
+        nextMode.item?.kind === 'parent' ? nextMode.item.name.lastName : '',
       password: '',
       requestedAt:
         nextMode.action === 'create'
@@ -175,6 +158,19 @@ export default function Page() {
       title: nextMode.item?.title ?? '',
     })
   }, [])
+
+  const toggleSelectionMode = useCallback((action: 'edit' | 'delete') => {
+    setSelectionMode(current => (current === action ? null : action))
+  }, [])
+
+  const handleParentItemSelect = useCallback(
+    (item: ParentApprovalItem) => {
+      if (!selectionMode) return
+
+      openModal({ action: selectionMode, item, type: 'parent' })
+    },
+    [openModal, selectionMode]
+  )
 
   const handleParentStatusUpdate = useCallback(
     async (id: string, status: ParentApprovalStatus) => {
@@ -191,6 +187,28 @@ export default function Page() {
       const eligibility = getParentApprovalEligibility(item)
 
       return [
+        {
+          accentColor: theme.palette.warning.main,
+          icon: <EditOutlinedIcon />,
+          id: `${item.id}-edit`,
+          label: 'Editar responsável',
+          onClick: () => {
+            openModal({ action: 'edit', item, type: 'parent' })
+          },
+          priority: 'secondary',
+          tooltip: 'Editar responsável',
+        },
+        {
+          accentColor: error,
+          icon: <DeleteOutlineRoundedIcon />,
+          id: `${item.id}-delete`,
+          label: 'Excluir responsável',
+          onClick: () => {
+            openModal({ action: 'delete', item, type: 'parent' })
+          },
+          priority: 'secondary',
+          tooltip: 'Excluir responsável',
+        },
         {
           accentColor: success,
           disabled: item.status === 'approved' || !eligibility.canApprove,
@@ -218,8 +236,10 @@ export default function Page() {
     },
     [
       handleParentStatusUpdate,
+      openModal,
       theme.palette.error.main,
       theme.palette.success.main,
+      theme.palette.warning.main,
     ]
   )
 
@@ -241,11 +261,19 @@ export default function Page() {
     setIsModalSubmitting(true)
 
     try {
+      if (modalState.action === 'delete' && modalState.item) {
+        await parentApprovalService.removeParentRegistration(modalState.item.id)
+        setParentRefreshKey(current => current + 1)
+        resetModal()
+        return
+      }
+
       if (modalState.action === 'create') {
         const payload: ParentApprovalDraftInput = {
           email: modalValues.email.trim(),
+          first_name: modalValues.first_name.trim(),
+          last_name: modalValues.last_name.trim(),
           password: modalValues.password,
-          title: modalValues.title.trim(),
         }
 
         await parentApprovalService.createParentRegistration(payload)
@@ -255,19 +283,15 @@ export default function Page() {
       }
 
       if (modalState.action === 'edit' && modalState.item) {
+        const payload: ParentApprovalDraftInput = {
+          first_name: modalValues.first_name.trim(),
+          last_name: modalValues.last_name.trim(),
+        }
+
         await parentApprovalService.updateParentRegistration(
           modalState.item.id,
-          {
-            title: modalValues.title.trim(),
-          }
+          payload
         )
-        setParentRefreshKey(current => current + 1)
-        resetModal()
-        return
-      }
-
-      if (modalState.action === 'delete' && modalState.item) {
-        await parentApprovalService.removeParentRegistration(modalState.item.id)
         setParentRefreshKey(current => current + 1)
         resetModal()
         return
@@ -284,7 +308,7 @@ export default function Page() {
       return false
     }
 
-    if (!modalValues.title.trim()) {
+    if (!modalValues.first_name.trim() || !modalValues.last_name.trim()) {
       return true
     }
 
@@ -293,7 +317,13 @@ export default function Page() {
     }
 
     return false
-  }, [modalState, modalValues.email, modalValues.password, modalValues.title])
+  }, [
+    modalState,
+    modalValues.email,
+    modalValues.first_name,
+    modalValues.last_name,
+    modalValues.password,
+  ])
 
   useEffect(() => {
     let isActive = true
@@ -368,7 +398,7 @@ export default function Page() {
           onEdit={() => toggleSelectionMode('edit')}
           onDelete={() => toggleSelectionMode('delete')}
           onItemSelect={handleParentItemSelect}
-          selectionMode={selectionMode?.action ?? null}
+          selectionMode={selectionMode}
           onPageChange={page => {
             startTransition(() => {
               setParentQuery(currentQuery => ({

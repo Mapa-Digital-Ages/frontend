@@ -43,13 +43,13 @@ function getResultsLabel(resultsSummary: ApprovalResultsSummary) {
 }
 
 interface SearchBarAndFilterProps {
-  filterOptions: DropdownOption[]
+  filterOptions?: DropdownOption[]
   onQueryChange: (query: string) => void
-  onStatusChange: (status: string) => void
+  onStatusChange?: (status: string) => void
   query: string
   resultsSummary: ApprovalResultsSummary
   searchPlaceholder: string
-  selectedStatus: string
+  selectedStatus?: string
 }
 
 export function SearchBarAndFilter({
@@ -64,6 +64,11 @@ export function SearchBarAndFilter({
   const theme = useTheme()
   const isMobileLayout = useMediaQuery(theme.breakpoints.down('md'))
   const resultLabel = getResultsLabel(resultsSummary)
+  const showFilter =
+    filterOptions != null &&
+    filterOptions.length > 0 &&
+    selectedStatus != null &&
+    onStatusChange != null
 
   return (
     <Box
@@ -71,7 +76,7 @@ export function SearchBarAndFilter({
         alignItems: 'stretch',
         display: 'grid',
         gap: 1.5,
-        gridTemplateColumns: 'minmax(0, 1fr) auto',
+        gridTemplateColumns: showFilter ? 'minmax(0, 1fr) auto' : '1fr',
       }}
     >
       <AppInput
@@ -113,79 +118,81 @@ export function SearchBarAndFilter({
         }}
       />
 
-      <AppDropdown
-        borderRadius="12px"
-        displayLabel="Filtros"
-        fullWidth={false}
-        hideLabel={isMobileLayout}
-        inputProps={
-          isMobileLayout ? { 'aria-label': 'Filtrar resultados' } : undefined
-        }
-        leadingIcon={
-          <FilterAltOutlinedIcon
-            sx={{
+      {showFilter ? (
+        <AppDropdown
+          borderRadius="12px"
+          displayLabel="Filtros"
+          fullWidth={false}
+          hideLabel={isMobileLayout}
+          inputProps={
+            isMobileLayout ? { 'aria-label': 'Filtrar resultados' } : undefined
+          }
+          leadingIcon={
+            <FilterAltOutlinedIcon
+              sx={{
+                color: 'text.secondary',
+                fontSize: 20,
+              }}
+            />
+          }
+          MenuProps={{
+            PaperProps: {
+              sx: {
+                marginTop: '10px',
+              },
+            },
+          }}
+          neutralOutline
+          onChange={event => onStatusChange(String(event.target.value))}
+          options={filterOptions}
+          sx={{
+            ...(isMobileLayout && {
+              '& .MuiInputBase-input': {
+                padding: '0 !important',
+              },
+              '& .MuiOutlinedInput-input': {
+                padding: '0 !important',
+              },
+            }),
+            '& .MuiOutlinedInput-root': {
+              alignItems: 'center',
+              display: 'flex',
+              height: 44,
+              minHeight: 44,
+              ...(isMobileLayout && {
+                justifyContent: 'center',
+                padding: 0,
+              }),
+            },
+            '& .MuiSelect-icon': {
               color: 'text.secondary',
               fontSize: 20,
-            }}
-          />
-        }
-        MenuProps={{
-          PaperProps: {
-            sx: {
-              marginTop: '10px',
             },
-          },
-        }}
-        neutralOutline
-        onChange={event => onStatusChange(String(event.target.value))}
-        options={filterOptions}
-        sx={{
-          ...(isMobileLayout && {
-            '& .MuiInputBase-input': {
-              padding: '0 !important',
+            '& .MuiSelect-select': {
+              alignItems: 'center',
+              ...(isMobileLayout
+                ? {
+                    gap: 0,
+                    justifyContent: 'center',
+                    padding: '0 !important',
+                    paddingRight: '0 !important',
+                  }
+                : {
+                    gap: 1,
+                    paddingBlock: '10px',
+                    paddingInline: '14px',
+                  }),
             },
-            '& .MuiOutlinedInput-input': {
-              padding: '0 !important',
-            },
-          }),
-          '& .MuiOutlinedInput-root': {
-            alignItems: 'center',
-            display: 'flex',
-            height: 44,
+            alignSelf: 'stretch',
+            backgroundColor: 'background.paper',
             minHeight: 44,
-            ...(isMobileLayout && {
-              justifyContent: 'center',
-              padding: 0,
-            }),
-          },
-          '& .MuiSelect-icon': {
-            color: 'text.secondary',
-            fontSize: 20,
-          },
-          '& .MuiSelect-select': {
-            alignItems: 'center',
-            ...(isMobileLayout
-              ? {
-                  gap: 0,
-                  justifyContent: 'center',
-                  padding: '0 !important',
-                  paddingRight: '0 !important',
-                }
-              : {
-                  gap: 1,
-                  paddingBlock: '10px',
-                  paddingInline: '14px',
-                }),
-          },
-          alignSelf: 'stretch',
-          backgroundColor: 'background.paper',
-          minHeight: 44,
-          ...outlineFieldBorderSx,
-        }}
-        triggerVariant="ghost"
-        value={selectedStatus}
-        width={isMobileLayout ? 44 : 'auto'}
-      />
+            ...outlineFieldBorderSx,
+          }}
+          triggerVariant="ghost"
+          value={selectedStatus}
+          width={isMobileLayout ? 44 : 'auto'}
+        />
+      ) : null}
     </Box>
   )
 }

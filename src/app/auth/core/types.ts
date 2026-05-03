@@ -8,7 +8,8 @@ export interface AuthCredentials {
 }
 
 export interface RegisterCredentials extends AuthCredentials {
-  name: string
+  firstName: string
+  lastName: string
 }
 
 export interface LoginApiResponse {
