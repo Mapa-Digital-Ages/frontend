@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useState } from 'react'
+import dayjs from 'dayjs'
 import { parentService } from '../services/service'
 import type {
   ParentDashboardChild,
   StudentDisciplineProgress,
 } from '../types/types'
-import type { SummaryMetric } from '@/shared/types/common'
+import type { SummaryMetric, WeeklyMoodEntry } from '@/shared/types/common'
 import type { Task } from '@/modules/student/shared/components/Planner'
+
+const WELL_BEING_HISTORY_DAYS = 28
+const WELL_BEING_POLL_INTERVAL_MS = 15_000
 
 interface UseParentDashboardResult {
   child: ParentDashboardChild | null
@@ -15,6 +19,7 @@ interface UseParentDashboardResult {
   isLoading: boolean
   metrics: SummaryMetric[]
   tasks: Task[]
+  wellBeing: WeeklyMoodEntry[]
   selectedChildId: string | null
   selectChild: (id: string) => void
 }
@@ -27,6 +32,7 @@ interface DashboardState {
   isLoading: boolean
   metrics: SummaryMetric[]
   tasks: Task[]
+  wellBeing: WeeklyMoodEntry[]
   selectedChildId: string | null
 }
 
@@ -38,6 +44,7 @@ const LOADING_STATE: DashboardState = {
   isLoading: true,
   metrics: [],
   tasks: [],
+  wellBeing: [],
   selectedChildId: null,
 }
 
@@ -62,13 +69,44 @@ export function useParentDashboard(): UseParentDashboardResult {
     })
   }, [])
 
+  const wellBeingDateRange = useCallback(() => {
+    const today = dayjs()
+    return {
+      from: today
+        .subtract(WELL_BEING_HISTORY_DAYS - 1, 'day')
+        .format('YYYY-MM-DD'),
+      to: today.format('YYYY-MM-DD'),
+    }
+  }, [])
+
+  const refetchWellBeing = useCallback(
+    async (childId: string) => {
+      const { from, to } = wellBeingDateRange()
+      try {
+        const wellBeing = await parentService.getStudentWellBeing(
+          childId,
+          from,
+          to
+        )
+        setState(prev =>
+          prev.selectedChildId === childId ? { ...prev, wellBeing } : prev
+        )
+      } catch {
+        // keep previous wellBeing on transient errors
+      }
+    },
+    [wellBeingDateRange]
+  )
+
   const loadStudentData = useCallback(
     async (childId: string, children: ParentDashboardChild[]) => {
+      const { from, to } = wellBeingDateRange()
       try {
-        const [metrics, disciplines, tasks] = await Promise.all([
+        const [metrics, disciplines, tasks, wellBeing] = await Promise.all([
           parentService.getStudentSummary(childId),
           parentService.getStudentDisciplines(childId),
           parentService.getStudentTasks(childId),
+          parentService.getStudentWellBeing(childId, from, to),
         ])
         setState(prev => ({
           ...prev,
@@ -78,12 +116,13 @@ export function useParentDashboard(): UseParentDashboardResult {
           isLoading: false,
           metrics,
           tasks,
+          wellBeing,
         }))
       } catch {
         setState(prev => ({ ...prev, isLoading: false, error: true }))
       }
     },
-    []
+    [wellBeingDateRange]
   )
 
   useEffect(() => {
@@ -131,6 +170,29 @@ export function useParentDashboard(): UseParentDashboardResult {
     void loadStudentData(selectedChildId, children)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChildId])
+
+  useEffect(() => {
+    if (!selectedChildId) return
+    const childId = selectedChildId
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        void refetchWellBeing(childId)
+      }
+    }, WELL_BEING_POLL_INTERVAL_MS)
+
+    const onFocus = () => {
+      void refetchWellBeing(childId)
+    }
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onFocus)
+
+    return () => {
+      window.clearInterval(intervalId)
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onFocus)
+    }
+  }, [selectedChildId, refetchWellBeing])
 
   return { ...state, selectChild }
 }

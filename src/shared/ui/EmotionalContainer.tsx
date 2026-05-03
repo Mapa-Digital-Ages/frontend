@@ -14,12 +14,29 @@ import SentimentNeutralIcon from '@mui/icons-material/SentimentNeutral'
 import SentimentSatisfiedIcon from '@mui/icons-material/SentimentSatisfied'
 import SentimentVeryDissatisfiedIcon from '@mui/icons-material/SentimentVeryDissatisfied'
 import CloseIcon from '@mui/icons-material/Close'
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useTheme } from '@mui/material/styles'
 import { alpha } from '@mui/material/styles'
 import dayjs from 'dayjs'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import 'dayjs/locale/pt-br'
+import { authService } from '@/app/auth/core/service'
+import {
+  wellBeingService,
+  type WellBeingHumor,
+} from '@/shared/services/wellBeingService'
+
+const HUMOR_TO_LABEL: Record<WellBeingHumor, string> = {
+  good: 'Bem',
+  regular: 'Regular',
+  bad: 'Mal',
+}
+
+const LABEL_TO_HUMOR: Record<string, WellBeingHumor> = {
+  Bem: 'good',
+  Regular: 'regular',
+  Mal: 'bad',
+}
 
 dayjs.locale('pt-br')
 dayjs.extend(isoWeek)
@@ -111,26 +128,63 @@ export default function EmotionalContainer() {
     return { date, mood: null as string | null }
   })
   const [weeklyMood, setWeeklyMood] = useState(initialWeek)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const studentUserId = authService.getUserId()
 
-  function handleEmotionSelect(emotionLabel: string) {
-    const moodMap: Record<string, string> = {
-      Bem: 'good',
-      Regular: 'regular',
-      Mal: 'bad',
+  useEffect(() => {
+    if (!studentUserId) return
+    let active = true
+    const today = dayjs().format('YYYY-MM-DD')
+    void wellBeingService
+      .getStudentDay(studentUserId, today)
+      .then(record => {
+        if (!active || !record?.humor) return
+        setWeeklyMood(prev =>
+          prev.map(day =>
+            day.date.format('YYYY-MM-DD') === today
+              ? { ...day, mood: record.humor }
+              : day
+          )
+        )
+        setSelectedEmotion(HUMOR_TO_LABEL[record.humor])
+      })
+      .catch(() => undefined)
+    return () => {
+      active = false
     }
+  }, [studentUserId])
+
+  async function handleEmotionSelect(emotionLabel: string) {
+    const humor = LABEL_TO_HUMOR[emotionLabel]
+    if (!humor) return
 
     const today = dayjs().format('YYYY-MM-DD')
 
     setWeeklyMood(prev =>
       prev.map(day =>
-        day.date.format('YYYY-MM-DD') === today
-          ? { ...day, mood: moodMap[emotionLabel] }
-          : day
+        day.date.format('YYYY-MM-DD') === today ? { ...day, mood: humor } : day
       )
     )
-
     setSelectedEmotion(emotionLabel)
-    setModalOpen(true)
+    setErrorMessage(null)
+
+    if (!studentUserId) {
+      setModalOpen(true)
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      await wellBeingService.upsertToday(studentUserId, humor)
+      setModalOpen(true)
+    } catch {
+      setErrorMessage(
+        'Não foi possível registrar seu humor agora. Tente novamente.'
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   function handleModalClose() {
@@ -162,8 +216,11 @@ export default function EmotionalContainer() {
         direction="row"
         spacing={1}
         sx={{
-          mb: 4,
+          mb: errorMessage ? 1 : 4,
           width: '100%',
+          opacity: isSubmitting ? 0.6 : 1,
+          pointerEvents: isSubmitting ? 'none' : 'auto',
+          transition: 'opacity 120ms ease',
         }}
       >
         <EmotionButton
@@ -171,7 +228,7 @@ export default function EmotionalContainer() {
           label="Bem"
           color="success"
           icon={<SentimentVerySatisfiedIcon sx={{ fontSize: 28 }} />}
-          onClick={() => handleEmotionSelect('Bem')}
+          onClick={() => void handleEmotionSelect('Bem')}
           value="Bem"
         />
         <EmotionButton
@@ -179,7 +236,7 @@ export default function EmotionalContainer() {
           label="Regular"
           color="warning"
           icon={<SentimentNeutralIcon sx={{ fontSize: 28 }} />}
-          onClick={() => handleEmotionSelect('Regular')}
+          onClick={() => void handleEmotionSelect('Regular')}
           value="Regular"
         />
         <EmotionButton
@@ -187,10 +244,19 @@ export default function EmotionalContainer() {
           label="Mal"
           color="error"
           icon={<SentimentVeryDissatisfiedIcon sx={{ fontSize: 28 }} />}
-          onClick={() => handleEmotionSelect('Mal')}
+          onClick={() => void handleEmotionSelect('Mal')}
           value="Mal"
         />
       </Stack>
+      {errorMessage && (
+        <Typography
+          role="alert"
+          variant="body2"
+          sx={{ color: 'error.main', mb: 2 }}
+        >
+          {errorMessage}
+        </Typography>
+      )}
 
       <Typography
         variant="h6"

@@ -57,9 +57,11 @@ test('parent settings uses real student endpoints and no local mock fallback', (
   )
 
   assert.match(serviceSource, /post<RegisterStudentApiResponse>\(\s*'student'/)
+  assert.match(serviceSource, /put<StudentApiResponse>\(/)
   assert.match(serviceSource, /`student\/\$\{studentId\}\/summary`/)
   assert.match(serviceSource, /`student\/\$\{studentId\}\/disciplines`/)
   assert.match(serviceSource, /`student\/\$\{studentId\}\/tasks`/)
+  assert.doesNotMatch(serviceSource, /patch<StudentApiResponse>\(/)
   assert.doesNotMatch(serviceSource, /register\/student/)
   assert.doesNotMatch(serviceSource, /parent\/student/)
   assert.doesNotMatch(hookSource, /mockState/)

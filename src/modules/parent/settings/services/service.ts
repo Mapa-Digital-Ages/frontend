@@ -202,10 +202,6 @@ export const parentService = {
     return nextSettings
   },
 
-  async disableAccount(): Promise<void> {
-    await httpClient.patch('guardian/me/disable')
-  },
-
   async deleteAccount(): Promise<void> {
     await httpClient.delete('guardian/me')
   },
@@ -256,7 +252,7 @@ export const parentService = {
     childId: string,
     data: UpdateChildRequest
   ): Promise<ParentDashboardChild> {
-    const response = await httpClient.patch<StudentApiResponse>(
+    const response = await httpClient.put<StudentApiResponse>(
       `student/${childId}`,
       {
         first_name: data.first_name,

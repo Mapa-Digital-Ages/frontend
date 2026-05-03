@@ -10,7 +10,6 @@ import { AppSubjectTag } from '@/shared/ui/AppSubjectsTags'
 import Planner from '@/modules/student/shared/components/Planner'
 import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded'
 import TrackChangesRoundedIcon from '@mui/icons-material/TrackChangesRounded'
-import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import { useParentDashboard } from '../hooks/useParentDashboard'
 import { SUBJECTS, getSubjectTagContextByLabel } from '@/shared/utils/themes'
 import { useCallback, useState } from 'react'
@@ -38,6 +37,7 @@ export default function Page() {
     metrics,
     disciplines,
     tasks,
+    wellBeing,
     isLoading,
     selectedChildId,
     selectChild,
@@ -111,16 +111,6 @@ export default function Page() {
         selectedChildId={selectedChildId}
         onSelect={selectChild}
       />
-      <Tooltip title="Cadastrar filho">
-        <IconButton
-          aria-label="Cadastrar filho"
-          color="inherit"
-          onClick={() => setModalOpen(true)}
-          size="small"
-        >
-          <AddRoundedIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
     </Box>
   )
 
@@ -207,7 +197,7 @@ export default function Page() {
         </AppCard>
 
         <Box className="flex flex-col gap-4">
-          <ParentEmotionalSummary />
+          <ParentEmotionalSummary wellBeing={wellBeing} />
           <Planner tasks={tasks} hideStatus />
         </Box>
       </Box>

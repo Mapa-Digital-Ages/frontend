@@ -235,10 +235,6 @@ export default function Page() {
               await parentService.deleteAccount()
               logout()
             }}
-            onDisableAccount={async () => {
-              await parentService.disableAccount()
-              logout()
-            }}
             onSave={async settings => {
               const updatedSettings =
                 await parentService.updateAccountSettings(settings)

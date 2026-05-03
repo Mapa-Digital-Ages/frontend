@@ -1,6 +1,10 @@
 import { COOKIE_KEYS } from '@/shared/constants/storage'
 import { httpClient } from '@/shared/lib/http/client'
-import type { ParentChild, SummaryMetric } from '@/shared/types/common'
+import type {
+  ParentChild,
+  SummaryMetric,
+  WeeklyMoodEntry,
+} from '@/shared/types/common'
 import { getCookie } from '@/shared/lib/storage/cookies'
 import {
   addLinkedChildId,
@@ -9,6 +13,7 @@ import {
 import type { ApiResponse } from '@/shared/types/api'
 import type { StudentDisciplineProgress } from '../types/types'
 import type { Task } from '@/modules/student/shared/components/Planner'
+import { wellBeingService } from '@/shared/services/wellBeingService'
 
 export interface RegisterChildRequest {
   first_name: string
@@ -161,6 +166,14 @@ export const parentService = {
   async getStudentTasks(studentId: string) {
     const response = await httpClient.get<Task[]>(`student/${studentId}/tasks`)
     return response.data
+  },
+
+  async getStudentWellBeing(
+    studentId: string,
+    fromIso: string,
+    toIso: string
+  ): Promise<WeeklyMoodEntry[]> {
+    return wellBeingService.getStudentHistory(studentId, fromIso, toIso)
   },
 
   async registerChild(

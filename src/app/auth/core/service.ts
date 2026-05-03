@@ -187,6 +187,21 @@ export const authService = {
     return getCookie(COOKIE_KEYS.authRole) as UserRole | null
   },
 
+  getUserId(): string | null {
+    const token = getCookie(COOKIE_KEYS.authToken)
+    if (!token || token.startsWith('local-token-')) return null
+    const parts = token.split('.')
+    if (parts.length !== 3) return null
+    try {
+      const padded = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+      const json = atob(padded + '='.repeat((4 - (padded.length % 4)) % 4))
+      const payload = JSON.parse(json) as { user_id?: unknown }
+      return typeof payload.user_id === 'string' ? payload.user_id : null
+    } catch {
+      return null
+    }
+  },
+
   getUser(): User | null {
     const token = getCookie(COOKIE_KEYS.authToken)
     const role = getCookie(COOKIE_KEYS.authRole) as UserRole | null

@@ -1,5 +1,3 @@
-import BlockRoundedIcon from '@mui/icons-material/BlockRounded'
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded'
 import {
   Box,
@@ -21,11 +19,10 @@ import { HowToVoteRounded } from '@mui/icons-material'
 interface AccountSettingsProps {
   initialValues: ParentAccountSettings
   onSave?: (settings: ParentAccountSettings) => void | Promise<void>
-  onDisableAccount?: () => void | Promise<void>
   onDeleteAccount?: () => void | Promise<void>
 }
 
-type PendingAccountAction = 'password' | 'disable' | 'delete' | null
+type PendingAccountAction = 'password' | 'delete' | null
 
 const EMPTY_ACCOUNT_SETTINGS: ParentAccountSettings = {
   email: '',
@@ -62,7 +59,6 @@ function hasFormChanged(
 function AccountSettings({
   initialValues,
   onSave,
-  onDisableAccount,
   onDeleteAccount,
 }: AccountSettingsProps) {
   const [form, setForm] = useState<ParentAccountSettings>({
@@ -134,18 +130,10 @@ function AccountSettings({
     setIsSubmittingAction(true)
     setFeedbackMessage(null)
     try {
-      if (pendingAction === 'disable') {
-        await onDisableAccount?.()
-      } else {
-        await onDeleteAccount?.()
-      }
+      await onDeleteAccount?.()
       setPendingAction(null)
     } catch {
-      setFeedbackMessage(
-        pendingAction === 'disable'
-          ? 'Não foi possível desativar a conta.'
-          : 'Não foi possível excluir a conta.'
-      )
+      setFeedbackMessage('Não foi possível excluir a conta.')
     } finally {
       setIsSubmittingAction(false)
     }
@@ -158,15 +146,6 @@ function AccountSettings({
         description:
           'Para alterar a senha, use o fluxo de recuperação na tela de login ou solicite uma redefinição ao suporte.',
         title: 'Alterar senha',
-      }
-    }
-
-    if (pendingAction === 'disable') {
-      return {
-        confirmLabel: 'Desativar',
-        description:
-          'Sua conta será desativada e o acesso ficará bloqueado até reativação administrativa.',
-        title: 'Desativar conta?',
       }
     }
 
@@ -362,60 +341,6 @@ function AccountSettings({
             }}
           >
             <ListItemText
-              primary="Desativar conta"
-              secondary="Bloqueie temporariamente o acesso ao painel."
-              sx={{
-                minWidth: 0,
-                pr: { sm: 2, xs: 0 },
-                '& .MuiListItemText-primary': {
-                  fontSize: { md: 18, xs: 16 },
-                  fontWeight: 700,
-                  color: 'text.primary',
-                },
-                '& .MuiListItemText-secondary': {
-                  color: 'text.secondary',
-                  fontSize: 14,
-                },
-              }}
-            />
-            <AppButton
-              backgroundColor={'transparent'}
-              hasBorder
-              textColor="var(--app-error)"
-              hoverBackgroundColor={neutralHoverBackground}
-              onClick={() => setPendingAction('disable')}
-              sx={{
-                borderColor: 'var(--app-error)',
-                transition:
-                  'background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease',
-                '&:hover': {
-                  backgroundColor: neutralHoverBackground,
-                  borderColor: 'var(--app-error)',
-                },
-                '&:active': {
-                  transform: 'translateY(1px)',
-                },
-                '&:disabled': {
-                  color: alpha(theme.palette.common.white, 0.72),
-                  boxShadow: 'none',
-                },
-              }}
-            >
-              Desativar conta
-            </AppButton>
-          </ListItem>
-          <ListItem
-            disablePadding
-            sx={{
-              alignItems: { sm: 'center', xs: 'stretch' },
-              display: 'flex',
-              flexDirection: { sm: 'row', xs: 'column' },
-              gap: { sm: 2, xs: 1 },
-              justifyContent: 'space-between',
-              minWidth: 0,
-            }}
-          >
-            <ListItemText
               primary="Excluir conta"
               secondary="Remova permanentemente o acesso desta conta."
               sx={{
@@ -463,13 +388,7 @@ function AccountSettings({
 
       <AppActionModal
         confirmLabel={actionCopy.confirmLabel}
-        confirmTone={
-          pendingAction === 'delete'
-            ? 'error.main'
-            : pendingAction === 'disable'
-              ? 'error.main'
-              : 'primary.main'
-        }
+        confirmTone={pendingAction === 'delete' ? 'error.main' : 'primary.main'}
         description={actionCopy.description}
         loading={isSubmittingAction}
         mode="confirm"

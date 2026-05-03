@@ -88,35 +88,6 @@ test('AccountSettings disables save when email is invalid', async () => {
   expect(screen.getByText(/informe um e-mail válido/i)).toBeInTheDocument()
 })
 
-test('AccountSettings opens disable confirmation modal', async () => {
-  const user = userEvent.setup()
-
-  renderWithProviders(<AccountSettings initialValues={DEFAULT_VALUES} />)
-
-  await user.click(screen.getByRole('button', { name: /desativar conta/i }))
-
-  expect(screen.getByText('Desativar conta?')).toBeInTheDocument()
-})
-
-test('AccountSettings calls onDisableAccount after confirming disable', async () => {
-  const user = userEvent.setup()
-  const onDisableAccount = jest
-    .fn<() => Promise<void>>()
-    .mockResolvedValue(undefined)
-
-  renderWithProviders(
-    <AccountSettings
-      initialValues={DEFAULT_VALUES}
-      onDisableAccount={onDisableAccount}
-    />
-  )
-
-  await user.click(screen.getByRole('button', { name: /desativar conta/i }))
-  await user.click(screen.getByRole('button', { name: /^desativar$/i }))
-
-  expect(onDisableAccount).toHaveBeenCalledTimes(1)
-})
-
 test('AccountSettings opens delete confirmation modal', async () => {
   const user = userEvent.setup()
 
