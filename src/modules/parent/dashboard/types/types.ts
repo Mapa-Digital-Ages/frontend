@@ -1,9 +1,5 @@
-export type {
-  ParentChild,
-  SummaryMetric,
-  WeeklyMoodEntry,
-} from '@/shared/types/common'
-import type { SummaryMetric, WeeklyMoodEntry } from '@/shared/types/common'
+export type { ParentChild, SummaryMetric } from '@/shared/types/common'
+import type { SummaryMetric } from '@/shared/types/common'
 import type { Task } from '@/modules/student/shared/components/Planner'
 
 export interface ParentDashboardChild {
@@ -24,5 +20,4 @@ export interface ParentDashboardData {
   metrics: SummaryMetric[]
   disciplines: StudentDisciplineProgress[]
   tasks: Task[]
-  wellBeing: WeeklyMoodEntry[]
 }

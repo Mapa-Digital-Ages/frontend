@@ -8,7 +8,7 @@ import type {
   ParentDashboardChild,
   StudentDisciplineProgress,
 } from '../types/types'
-import type { SummaryMetric, WeeklyMoodEntry } from '@/shared/types/common'
+import type { SummaryMetric } from '@/shared/types/common'
 import type { Task } from '@/modules/student/shared/components/Planner'
 
 interface UseParentSettingsResult {
@@ -19,7 +19,6 @@ interface UseParentSettingsResult {
   isLoading: boolean
   metrics: SummaryMetric[]
   tasks: Task[]
-  wellBeing: WeeklyMoodEntry[]
   selectedChildId: string | null
   createChild: (data: RegisterChildRequest) => Promise<void>
   updateChild: (childId: string, data: UpdateChildRequest) => Promise<void>
@@ -35,7 +34,6 @@ interface DashboardState {
   isLoading: boolean
   metrics: SummaryMetric[]
   tasks: Task[]
-  wellBeing: WeeklyMoodEntry[]
   selectedChildId: string | null
 }
 
@@ -47,7 +45,6 @@ const LOADING_STATE: DashboardState = {
   isLoading: true,
   metrics: [],
   tasks: [],
-  wellBeing: [],
   selectedChildId: null,
 }
 
@@ -82,11 +79,10 @@ export function useParentSettings(): UseParentSettingsResult {
   const loadStudentData = useCallback(
     async (childId: string, children: ParentDashboardChild[]) => {
       try {
-        const [metrics, disciplines, tasks, wellBeing] = await Promise.all([
+        const [metrics, disciplines, tasks] = await Promise.all([
           parentService.getStudentSummary(childId),
           parentService.getStudentDisciplines(childId),
           parentService.getStudentTasks(childId),
-          parentService.getStudentWellBeing(childId),
         ])
 
         setState(prev => ({
@@ -97,7 +93,6 @@ export function useParentSettings(): UseParentSettingsResult {
           isLoading: false,
           metrics,
           tasks,
-          wellBeing,
         }))
       } catch {
         setState(prev => ({ ...prev, error: true, isLoading: false }))
@@ -119,7 +114,6 @@ export function useParentSettings(): UseParentSettingsResult {
       metrics: [],
       selectedChildId: child.id,
       tasks: [],
-      wellBeing: [],
     }))
   }, [])
 
@@ -162,7 +156,6 @@ export function useParentSettings(): UseParentSettingsResult {
         metrics: child ? prev.metrics : [],
         selectedChildId: nextSelectedChildId,
         tasks: child ? prev.tasks : [],
-        wellBeing: child ? prev.wellBeing : [],
       }
     })
   }, [])

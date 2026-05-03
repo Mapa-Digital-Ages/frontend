@@ -38,7 +38,6 @@ export default function Page() {
     metrics,
     disciplines,
     tasks,
-    wellBeing,
     isLoading,
     selectedChildId,
     selectChild,
@@ -198,7 +197,7 @@ export default function Page() {
         </AppCard>
 
         <Box className="flex flex-col gap-4">
-          <ParentEmotionalSummary wellBeing={wellBeing} />
+          <ParentEmotionalSummary />
           <Planner tasks={tasks} hideStatus />
         </Box>
       </Box>

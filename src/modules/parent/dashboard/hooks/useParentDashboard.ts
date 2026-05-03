@@ -4,7 +4,7 @@ import type {
   ParentDashboardChild,
   StudentDisciplineProgress,
 } from '../types/types'
-import type { SummaryMetric, WeeklyMoodEntry } from '@/shared/types/common'
+import type { SummaryMetric } from '@/shared/types/common'
 import type { Task } from '@/modules/student/shared/components/Planner'
 
 interface UseParentDashboardResult {
@@ -15,7 +15,6 @@ interface UseParentDashboardResult {
   isLoading: boolean
   metrics: SummaryMetric[]
   tasks: Task[]
-  wellBeing: WeeklyMoodEntry[]
   selectedChildId: string | null
   selectChild: (id: string) => void
 }
@@ -28,7 +27,6 @@ interface DashboardState {
   isLoading: boolean
   metrics: SummaryMetric[]
   tasks: Task[]
-  wellBeing: WeeklyMoodEntry[]
   selectedChildId: string | null
 }
 
@@ -40,7 +38,6 @@ const LOADING_STATE: DashboardState = {
   isLoading: true,
   metrics: [],
   tasks: [],
-  wellBeing: [],
   selectedChildId: null,
 }
 
@@ -68,11 +65,10 @@ export function useParentDashboard(): UseParentDashboardResult {
   const loadStudentData = useCallback(
     async (childId: string, children: ParentDashboardChild[]) => {
       try {
-        const [metrics, disciplines, tasks, wellBeing] = await Promise.all([
+        const [metrics, disciplines, tasks] = await Promise.all([
           parentService.getStudentSummary(childId),
           parentService.getStudentDisciplines(childId),
           parentService.getStudentTasks(childId),
-          parentService.getStudentWellBeing(childId),
         ])
         setState(prev => ({
           ...prev,
@@ -82,7 +78,6 @@ export function useParentDashboard(): UseParentDashboardResult {
           isLoading: false,
           metrics,
           tasks,
-          wellBeing,
         }))
       } catch {
         setState(prev => ({ ...prev, isLoading: false, error: true }))

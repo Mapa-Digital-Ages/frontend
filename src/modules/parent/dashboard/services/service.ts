@@ -1,10 +1,6 @@
 import { COOKIE_KEYS } from '@/shared/constants/storage'
 import { httpClient } from '@/shared/lib/http/client'
-import type {
-  ParentChild,
-  SummaryMetric,
-  WeeklyMoodEntry,
-} from '@/shared/types/common'
+import type { ParentChild, SummaryMetric } from '@/shared/types/common'
 import { getCookie } from '@/shared/lib/storage/cookies'
 import {
   addLinkedChildId,
@@ -164,13 +160,6 @@ export const parentService = {
 
   async getStudentTasks(studentId: string) {
     const response = await httpClient.get<Task[]>(`student/${studentId}/tasks`)
-    return response.data
-  },
-
-  async getStudentWellBeing(studentId: string) {
-    const response = await httpClient.get<WeeklyMoodEntry[]>(
-      `student/${studentId}/well-being`
-    )
     return response.data
   },
 

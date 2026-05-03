@@ -1,14 +1,16 @@
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
 import FilterListRoundedIcon from '@mui/icons-material/FilterListRounded'
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded'
-import { Box, Button, Typography } from '@mui/material'
-import { useState } from 'react'
+import { Box, Typography } from '@mui/material'
+import { useMemo, useState } from 'react'
 import UploadActivityModal from '@/modules/student/shared/components/UploadActivityModal'
 import AppButton from '@/shared/ui/AppButton'
 import AppCard from '@/shared/ui/AppCard'
+import AppDropdown, { type DropdownOption } from '@/shared/ui/AppDropdown'
 import AppInput from '@/shared/ui/AppInput'
 import AppPageContainer from '@/shared/ui/AppPageContainer'
 import { AppSubjectTag } from '@/shared/ui/AppSubjectsTags'
+import EmptyState from '@/shared/ui/EmptyState'
 import PageHeader from '@/shared/ui/PageHeader'
 import { SUBJECTS } from '@/shared/utils/themes'
 
@@ -21,6 +23,8 @@ type SubjectKey =
   | 'ingles'
   | 'geografia'
 
+type SubjectFilterValue = SubjectKey | 'all'
+
 type UploadedTask = {
   id: string
   title: string
@@ -29,6 +33,17 @@ type UploadedTask = {
 }
 
 type UploadTaskPayload = Omit<UploadedTask, 'id'>
+
+const SUBJECT_FILTER_OPTIONS: DropdownOption[] = [
+  { label: 'Todas as disciplinas', value: 'all' },
+  { label: 'Matemática', value: 'matematica' },
+  { label: 'Português', value: 'portugues' },
+  { label: 'Ciências', value: 'ciencias' },
+  { label: 'História', value: 'historia' },
+  { label: 'Biologia', value: 'biologia' },
+  { label: 'Inglês', value: 'ingles' },
+  { label: 'Geografia', value: 'geografia' },
+]
 
 const INITIAL_TASKS: UploadedTask[] = [
   {
@@ -60,6 +75,7 @@ const INITIAL_TASKS: UploadedTask[] = [
 export default function Page() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
   const [tasks, setTasks] = useState<UploadedTask[]>(INITIAL_TASKS)
+  const [subjectFilter, setSubjectFilter] = useState<SubjectFilterValue>('all')
 
   function handleAddTask(task: UploadTaskPayload) {
     const newTask: UploadedTask = {
@@ -70,6 +86,14 @@ export default function Page() {
     setTasks(currentTasks => [newTask, ...currentTasks])
     setIsUploadModalOpen(false)
   }
+
+  const filteredTasks = useMemo(
+    () =>
+      subjectFilter === 'all'
+        ? tasks
+        : tasks.filter(task => task.subject === subjectFilter),
+    [tasks, subjectFilter]
+  )
 
   return (
     <AppPageContainer className="gap-4 md:gap-5">
@@ -95,13 +119,29 @@ export default function Page() {
             }}
           />
 
-          <Button
-            className="rounded-2xl border border-slate-200 px-4 py-3 text-slate-500"
-            variant="outlined"
-            startIcon={<FilterListRoundedIcon />}
-          >
-            Filtros
-          </Button>
+          <AppDropdown
+            aria-label="Filtrar tarefas por disciplina"
+            borderRadius="16px"
+            displayLabel={
+              subjectFilter === 'all'
+                ? 'Filtros'
+                : (SUBJECT_FILTER_OPTIONS.find(o => o.value === subjectFilter)
+                    ?.label ?? 'Filtros')
+            }
+            fullWidth
+            leadingIcon={
+              <FilterListRoundedIcon
+                sx={{ color: 'text.secondary', fontSize: 20 }}
+              />
+            }
+            neutralOutline
+            onChange={event =>
+              setSubjectFilter(event.target.value as SubjectFilterValue)
+            }
+            options={SUBJECT_FILTER_OPTIONS}
+            triggerVariant="ghost"
+            value={subjectFilter}
+          />
 
           <AppButton
             label="Upload de Atividade"
@@ -111,8 +151,15 @@ export default function Page() {
           />
         </Box>
 
+        {filteredTasks.length === 0 ? (
+          <EmptyState
+            description="Nenhuma tarefa para a disciplina selecionada."
+            title="Sem resultados"
+          />
+        ) : null}
+
         <Box className="grid gap-3">
-          {tasks.map(task => (
+          {filteredTasks.map(task => (
             <Box
               key={task.id}
               className="flex flex-col gap-4 rounded-2xl border border-slate-200 p-4 sm:flex-row sm:items-center"

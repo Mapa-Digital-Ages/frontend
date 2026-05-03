@@ -14,6 +14,7 @@ import {
 import CheckIcon from '@mui/icons-material/Check'
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter'
 import AppSubjectsTags from '@/shared/ui/AppSubjectsTags'
+import EmptyState from '@/shared/ui/EmptyState'
 import type { SubjectContext } from '@/shared/types/common'
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 import { alpha } from '@mui/material/styles'
@@ -160,6 +161,13 @@ function Planner({ tasks, sx, hideStatus = false }: PlannerProps) {
         <CalendarMonthIcon sx={{ color: '#319BDD', fontSize: 25 }} />
         <Typography variant="h5">Planner da Semana</Typography>
       </Box>
+
+      {Object.keys(groupedTasks).length === 0 ? (
+        <EmptyState
+          title="Sem tarefas nesta semana"
+          description="Nenhuma tarefa agendada para os próximos dias."
+        />
+      ) : null}
 
       <List disablePadding sx={{ display: 'grid', gap: 1 }}>
         {Object.entries(groupedTasks)
