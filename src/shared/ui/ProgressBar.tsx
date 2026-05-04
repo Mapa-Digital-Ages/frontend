@@ -33,6 +33,8 @@ function ProgressBar({
   const isSoftValueLabel = valueLabelVariant === 'soft'
   const isHeaderValueLabel = valueLabelVariant === 'header'
   const isSubjectVariant = valueLabelVariant === 'subject'
+  const isAlternativeVariant = valueLabelVariant === 'alternative'
+  const shouldShowValueLabel = showValueLabel && !isAlternativeVariant
 
   if (isSubjectVariant) {
     return (
@@ -119,7 +121,7 @@ function ProgressBar({
           variant="determinate"
         />
       </Box>
-      {showValueLabel ? (
+      {shouldShowValueLabel ? (
         <Typography
           sx={{
             alignSelf: {

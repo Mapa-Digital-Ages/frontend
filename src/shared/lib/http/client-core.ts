@@ -18,6 +18,10 @@ export class HttpRequestError extends Error {
   }
 }
 
+function normalizeBaseUrl(baseUrl: string) {
+  return baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
+}
+
 function buildUrl(
   baseUrl: string,
   path: string,
@@ -37,7 +41,11 @@ function buildUrl(
 }
 
 export class HttpClient {
-  constructor(private readonly baseUrl: string) {}
+  private readonly baseUrl: string
+
+  constructor(baseUrl: string) {
+    this.baseUrl = normalizeBaseUrl(baseUrl)
+  }
 
   async request<T>(path: string, options: HttpRequestOptions = {}) {
     const { body, method = 'GET', query, skipAuth = false, ...rest } = options

@@ -45,7 +45,7 @@ export interface ParentChild {
   status: string
 }
 
-export interface AdminStat {
+export interface Stat {
   id: string
   label: string
   value: string

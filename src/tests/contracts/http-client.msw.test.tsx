@@ -49,6 +49,22 @@ test('httpClient sends auth headers, query params and JSON body through fetch', 
   expect(response.message).toBe('created')
 })
 
+test('httpClient preserves path prefixes when base URL has no trailing slash', async () => {
+  const apiClient = new HttpClient('http://localhost:8000/api')
+
+  server.use(
+    rest.get('http://localhost:8000/api/login', (_req, res, ctx) =>
+      res(ctx.json({ ok: true }))
+    )
+  )
+
+  const response = await apiClient.get<{ ok: boolean }>('login', {
+    skipAuth: true,
+  })
+
+  expect(response.data.ok).toBe(true)
+})
+
 test('httpClient can skip auth and normalizes non-envelope JSON responses', async () => {
   setCookie(COOKIE_KEYS.authToken, 'token-123')
 

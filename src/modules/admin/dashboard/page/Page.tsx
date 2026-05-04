@@ -12,7 +12,7 @@ import AppCard from '@/shared/ui/AppCard'
 import AppPageContainer from '@/shared/ui/AppPageContainer'
 import { adminService } from '../services/service'
 import type { IconVariantName } from '@/app/theme/core/palette'
-import type { AdminStat } from '@/shared/types/common'
+import type { Stat } from '@/shared/types/common'
 import PageHeader from '@/shared/ui/PageHeader'
 import MetricsCard from '@/shared/ui/MetricsCard'
 
@@ -52,7 +52,7 @@ const QUICK_ACTIONS = [
 
 export default function Page() {
   const theme = useTheme()
-  const [stats, setStats] = useState<AdminStat[]>([])
+  const [stats, setStats] = useState<Stat[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -80,8 +80,7 @@ export default function Page() {
     return <LoadingScreen />
   }
 
-  const getStatById = (id: AdminStat['id']) =>
-    stats.find(stat => stat.id === id)
+  const getStatById = (id: Stat['id']) => stats.find(stat => stat.id === id)
 
   const usersActiveStat = getStatById('users-active')
   const criticalAlertsStat = getStatById('critical-alerts')

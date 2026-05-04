@@ -35,6 +35,7 @@ function MetricsCard({
   ...cardProps
 }: MetricsCardProps) {
   const theme = useTheme()
+
   const iconToken = iconVariant
     ? theme.palette.iconVariants[iconVariant]
     : undefined
@@ -47,67 +48,104 @@ function MetricsCard({
         backgroundColor: 'background.paper',
         border: '1px solid',
         borderColor: 'background.border',
-        borderRadius: '12px',
+        borderRadius: '18px',
         boxShadow: 'none',
+        minHeight: 104,
+        overflow: 'hidden',
         ...cardProps.sx,
       }}
     >
       <CardContent
-        className={['h-full p-8 md:p-8', contentClassName]
-          .filter(Boolean)
-          .join(' ')}
-        sx={[{}, ...(Array.isArray(contentSx) ? contentSx : [contentSx])]}
+        className={contentClassName}
+        sx={[
+          {
+            height: '100%',
+            p: { xs: 2, md: 2.25 },
+            '&:last-child': {
+              pb: { xs: 2, md: 2.25 },
+            },
+          },
+          ...(Array.isArray(contentSx) ? contentSx : [contentSx]),
+        ]}
       >
-        <Box className="flex h-full items-start justify-between gap-6 min-h-[92px]">
-          <Box className="flex min-h-full flex-1 flex-col justify-start">
+        <Box
+          sx={{
+            alignItems: 'flex-start',
+            display: 'flex',
+            gap: 2,
+            height: '100%',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              flex: 1,
+              flexDirection: 'column',
+              justifyContent: 'center',
+              minWidth: 0,
+            }}
+          >
+            {title ? (
+              <Typography
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: { xs: 11, md: 12 },
+                  fontWeight: 700,
+                  letterSpacing: '0.04em',
+                  lineHeight: 1.2,
+                  mb: 1.25,
+                  textTransform: 'uppercase',
+                }}
+              >
+                {title}
+              </Typography>
+            ) : null}
+
             <Typography
-              className="text-lg md:text-[22px]"
-              sx={{
-                color: 'text.secondary',
-                fontWeight: 500,
-                lineHeight: 1.25,
-                mb: 2,
-              }}
-            >
-              {title}
-            </Typography>
-            <Typography
-              className="text-3xl font-bold md:text-[2.5rem]"
               sx={{
                 color: 'text.primary',
-                fontSize: 24,
+                fontSize: { xs: 26, md: 28 },
                 fontWeight: 700,
-                letterSpacing: '-0.03em',
+                letterSpacing: '-0.04em',
                 lineHeight: 1,
-                mb: 1.5,
               }}
             >
               {value}
             </Typography>
+
             {warningText ? (
               <Typography
-                className="text-sm md:text-base"
                 sx={{
                   color: warningColor ?? 'success.main',
+                  fontSize: 13,
                   fontWeight: 500,
-                  lineHeight: 1.25,
-                  fontSize: 14,
+                  lineHeight: 1.3,
+                  mt: 1,
                 }}
               >
                 {warningText}
               </Typography>
             ) : null}
           </Box>
-          <Box
-            className="grid size-11 place-items-center"
-            style={{ borderRadius: '12px' }}
-            sx={{
-              backgroundColor: iconToken?.background,
-              color: iconToken?.color,
-            }}
-          >
-            {icon}
-          </Box>
+
+          {icon ? (
+            <Box
+              sx={{
+                alignItems: 'center',
+                backgroundColor: iconToken?.background,
+                borderRadius: '12px',
+                color: iconToken?.color,
+                display: 'flex',
+                flexShrink: 0,
+                height: 40,
+                justifyContent: 'center',
+                width: 40,
+              }}
+            >
+              {icon}
+            </Box>
+          ) : null}
         </Box>
       </CardContent>
     </Card>

@@ -149,6 +149,9 @@ export default function Page() {
                 sx={{ color: 'text.secondary', fontSize: 20 }}
               />
             }
+            sx={{
+              height: '100%',
+            }}
             neutralOutline
             onChange={event =>
               setSubjectFilter(event.target.value as SubjectFilterValue)
