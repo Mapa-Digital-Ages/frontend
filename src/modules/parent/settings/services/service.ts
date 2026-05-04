@@ -53,6 +53,21 @@ interface StudentApiResponse {
   first_name: string
   last_name: string
   student_class: string
+  phone_number?: string | null
+  birth_date?: string | null
+  school_id?: string | null
+  email?: string
+}
+
+export interface StudentDetail {
+  id: string
+  first_name: string
+  last_name: string
+  student_class: string
+  phone_number?: string | null
+  birth_date?: string | null
+  school_id?: string | null
+  email?: string
 }
 
 interface RegisterStudentApiResponse {
@@ -106,6 +121,25 @@ function formatClassLabel(studentClass: string) {
   if (!studentClass) return 'Ano não informado'
   const match = studentClass.match(/(\d+)/)
   return match ? `${match[1]}º Ano` : `${studentClass}º Ano`
+}
+
+const CLASS_NUM_TO_API: Record<string, string> = {
+  '1': '1st class',
+  '2': '2nd class',
+  '3': '3rd class',
+  '4': '4th class',
+  '5': '5th class',
+  '6': '6th class',
+  '7': '7th class',
+  '8': '8th class',
+  '9': '9th class',
+  '10': '10th class',
+  '11': '11th class',
+  '12': '12th class',
+}
+
+function toApiClass(value: string): string {
+  return CLASS_NUM_TO_API[value] ?? value
 }
 
 function mapStudentResponseToChild(
@@ -229,7 +263,7 @@ export const parentService = {
         password: data.password,
         phone_number: data.phone_number || undefined,
         birth_date: data.birth_date,
-        student_class: data.student_class,
+        student_class: toApiClass(data.student_class),
         school_id: data.school_id || undefined,
       }
     )
@@ -259,7 +293,7 @@ export const parentService = {
         last_name: data.last_name,
         phone_number: data.phone_number || undefined,
         birth_date: data.birth_date || undefined,
-        student_class: data.student_class,
+        student_class: toApiClass(data.student_class),
         school_id: data.school_id || undefined,
       }
     )
@@ -270,6 +304,23 @@ export const parentService = {
     const guardianEmail = getCookie(COOKIE_KEYS.authEmail)
     await httpClient.delete(`student/${childId}`)
     removeLinkedChildId(guardianEmail, childId)
+  },
+
+  async getStudentById(studentId: string): Promise<StudentDetail> {
+    const response = await httpClient.get<StudentApiResponse>(
+      `student/${studentId}`
+    )
+    const data = response.data
+    return {
+      id: data.id ?? data.user_id ?? '',
+      first_name: data.first_name,
+      last_name: data.last_name,
+      student_class: data.student_class,
+      phone_number: data.phone_number,
+      birth_date: data.birth_date,
+      school_id: data.school_id,
+      email: data.email,
+    }
   },
 
   async getStudentSummary(studentId: string) {
@@ -305,7 +356,7 @@ export const parentService = {
           password: data.password,
           phone_number: data.phone_number || undefined,
           birth_date: data.birth_date,
-          student_class: data.student_class,
+          student_class: toApiClass(data.student_class),
           school_id: data.school_id || undefined,
         }
       )

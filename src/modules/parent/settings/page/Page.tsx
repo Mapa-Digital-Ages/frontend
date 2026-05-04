@@ -2,7 +2,11 @@ import AppPageContainer from '@/shared/ui/AppPageContainer'
 import PageHeader from '@/shared/ui/PageHeader'
 import { useMemo, useState } from 'react'
 import { useAuth } from '@/app/auth/hook'
-import { parentService, parentSettingsService } from '../services/service'
+import {
+  parentService,
+  parentSettingsService,
+  type StudentDetail,
+} from '../services/service'
 import AccountSettings from '../components/AccountSettings'
 import ChildSettingsModal, {
   type ChildSettingsForm,
@@ -60,6 +64,19 @@ function childFormFromChild(child: ParentDashboardChild): ChildSettingsForm {
   }
 }
 
+function childFormFromStudentDetail(student: StudentDetail): ChildSettingsForm {
+  return {
+    birth_date: student.birth_date ?? '',
+    email: student.email ?? '',
+    first_name: student.first_name,
+    last_name: student.last_name,
+    password: '',
+    phone_number: student.phone_number ?? '',
+    school_id: student.school_id ?? '',
+    student_class: student.student_class?.match(/\d+/)?.[0] ?? '',
+  }
+}
+
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
@@ -109,6 +126,7 @@ export default function Page() {
     useState<ChildSettingsForm>(EMPTY_CHILD_FORM)
   const [childFeedback, setChildFeedback] = useState<string | null>(null)
   const [isSubmittingChild, setIsSubmittingChild] = useState(false)
+  const [isLoadingChildDetails, setIsLoadingChildDetails] = useState(false)
 
   const filteredChildren = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
@@ -140,10 +158,19 @@ export default function Page() {
     setChildFeedback(null)
   }
 
-  function openEditModal(child: ParentDashboardChild) {
+  async function openEditModal(child: ParentDashboardChild) {
     setChildAction({ child, mode: 'edit' })
     setChildForm(childFormFromChild(child))
     setChildFeedback(null)
+    setIsLoadingChildDetails(true)
+    try {
+      const details = await parentService.getStudentById(child.id)
+      setChildForm(childFormFromStudentDetail(details))
+    } catch {
+      // keep partial form data if fetch fails
+    } finally {
+      setIsLoadingChildDetails(false)
+    }
   }
 
   function openDeleteModal(child: ParentDashboardChild) {
@@ -244,7 +271,7 @@ export default function Page() {
         </Box>
         <ChildSettingsModal
           child={childAction?.child}
-          disableConfirm={isModalConfirmDisabled}
+          disableConfirm={isModalConfirmDisabled || isLoadingChildDetails}
           feedbackMessage={childFeedback}
           form={childForm}
           mode={childAction?.mode ?? null}
@@ -252,7 +279,7 @@ export default function Page() {
           onClose={closeChildModal}
           onConfirm={handleChildActionConfirm}
           open={childAction != null}
-          submitting={isSubmittingChild}
+          submitting={isSubmittingChild || isLoadingChildDetails}
         />
       </Box>
     </AppPageContainer>

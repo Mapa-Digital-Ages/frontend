@@ -73,6 +73,25 @@ function formatClassLabel(studentClass: string) {
   return match ? `${match[1]}º Ano` : `${studentClass}º Ano`
 }
 
+const CLASS_NUM_TO_API: Record<string, string> = {
+  '1': '1st class',
+  '2': '2nd class',
+  '3': '3rd class',
+  '4': '4th class',
+  '5': '5th class',
+  '6': '6th class',
+  '7': '7th class',
+  '8': '8th class',
+  '9': '9th class',
+  '10': '10th class',
+  '11': '11th class',
+  '12': '12th class',
+}
+
+function toApiClass(value: string): string {
+  return CLASS_NUM_TO_API[value] ?? value
+}
+
 function mapStudentToParentChild(student: StudentApiResponse): ParentChild {
   return {
     id: student.id ?? student.user_id ?? '',
@@ -191,7 +210,7 @@ export const parentService = {
           password: data.password,
           phone_number: data.phone_number || undefined,
           birth_date: data.birth_date,
-          student_class: data.student_class,
+          student_class: toApiClass(data.student_class),
           school_id: data.school_id || undefined,
         }
       )

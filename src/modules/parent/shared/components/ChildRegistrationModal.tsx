@@ -7,18 +7,11 @@ import type { RegisterChildRequest } from '@/modules/parent/dashboard/services/s
 import { useSchoolOptions } from '@/modules/parent/shared/hooks/useSchoolOptions'
 
 const CLASS_OPTIONS: DropdownOption[] = [
-  { value: '1', label: '1º Ano (Fund.)' },
-  { value: '2', label: '2º Ano (Fund.)' },
-  { value: '3', label: '3º Ano (Fund.)' },
-  { value: '4', label: '4º Ano (Fund.)' },
   { value: '5', label: '5º Ano (Fund.)' },
   { value: '6', label: '6º Ano (Fund.)' },
   { value: '7', label: '7º Ano (Fund.)' },
   { value: '8', label: '8º Ano (Fund.)' },
   { value: '9', label: '9º Ano (Fund.)' },
-  { value: '10', label: '1º Ano (Médio)' },
-  { value: '11', label: '2º Ano (Médio)' },
-  { value: '12', label: '3º Ano (Médio)' },
 ]
 
 type FeedbackTone = 'warning' | 'error'
@@ -124,7 +117,7 @@ function ChildRegistrationModal({
         <AppInput
           label="Data de nascimento"
           onChange={e => onUpdateField('birth_date', e.target.value)}
-          placeholder="AAAA-MM-DD"
+          placeholder="DD/MM/AAAA"
           value={form.birth_date}
         />
         <AppDropdown
