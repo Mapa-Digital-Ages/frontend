@@ -90,6 +90,10 @@ export interface ParentApprovalItem extends BaseApprovalItem {
   status: ParentApprovalStatus
   guardian?: GuardianItem
   childName?: string
+  name?: {
+    firstName: string
+    lastName: string
+  }
   validation: ParentApprovalValidation
 }
 
@@ -135,7 +139,12 @@ export interface GuardianItem {
 
 export interface ParentApprovalDraftInput {
   student?: string
-  guardian: GuardianItem
+  email?: string
+  first_name?: string
+  last_name?: string
+  password?: string
+  phone_number?: string
+  guardian?: GuardianItem
   requestedAt?: string
   title?: string
 }

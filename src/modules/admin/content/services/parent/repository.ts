@@ -35,11 +35,12 @@ export interface CreateParentApprovalRepositoryOptions {
 }
 
 function buildGuardianRegistrationPayload(input: ParentApprovalDraftInput) {
+  const guardian = input.guardian
   return {
-    email: input.email,
-    first_name: input.first_name.trim(),
-    last_name: input.last_name.trim(),
-    password: input.password,
+    email: guardian?.email ?? input.email,
+    first_name: (guardian?.first_name ?? input.first_name ?? '').trim(),
+    last_name: (guardian?.last_name ?? input.last_name ?? '').trim(),
+    password: guardian?.password ?? input.password,
   }
 }
 
@@ -81,8 +82,12 @@ export function createParentApprovalRepository({
       input: ParentApprovalDraftInput
     ): Promise<void> {
       await client.patch<unknown>(buildGuardianPath(guardianId), {
-        first_name: input.first_name.trim(),
-        last_name: input.last_name.trim(),
+        first_name: (
+          input.guardian?.first_name ??
+          input.first_name ??
+          ''
+        ).trim(),
+        last_name: (input.guardian?.last_name ?? input.last_name ?? '').trim(),
       })
     },
     async removeParentRegistration(guardianId: string): Promise<void> {

@@ -1,9 +1,14 @@
 import FilterListRoundedIcon from '@mui/icons-material/FilterListRounded'
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded'
-import { Box } from '@mui/material'
-import { useMemo, useState } from 'react'
+import { Box, CircularProgress, Typography } from '@mui/material'
+import { useEffect, useMemo, useState } from 'react'
 import TaskList from '@/modules/student/shared/components/TaskList'
-import UploadActivityModal from '@/modules/student/shared/components/UploadActivityModal'
+import UploadActivityModal, {
+  type UploadTaskPayload,
+} from '@/modules/student/shared/components/UploadActivityModal'
+import { uploadService } from '@/modules/student/upload/services/uploadService'
+import type { UploadItem } from '@/modules/student/upload/types/types'
+import { authService } from '@/app/auth/core/service'
 import AppButton from '@/shared/ui/AppButton'
 import AppCard from '@/shared/ui/AppCard'
 import AppDropdown, { type DropdownOption } from '@/shared/ui/AppDropdown'
@@ -31,8 +36,6 @@ type UploadedTask = {
   subject: SubjectKey
 }
 
-type UploadTaskPayload = Omit<UploadedTask, 'id'>
-
 const SUBJECT_FILTER_OPTIONS: DropdownOption[] = [
   { label: 'Todas as disciplinas', value: 'all' },
   { label: 'Matemática', value: 'matematica' },
@@ -44,47 +47,76 @@ const SUBJECT_FILTER_OPTIONS: DropdownOption[] = [
   { label: 'Geografia', value: 'geografia' },
 ]
 
-const UPLOAD_TASKS: UploadedTask[] = [
-  {
-    id: '1',
-    title: 'Lista de Exercícios - Equações',
+function mapUploadToTask(upload: UploadItem): UploadedTask {
+  return {
+    id: upload.id,
+    title: upload.file_name,
+    type: upload.file_type.startsWith('image/')
+      ? 'Imagem'
+      : upload.file_type === 'application/pdf'
+        ? 'PDF'
+        : upload.file_type ===
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          ? 'Documento'
+          : 'Arquivo',
     subject: 'matematica',
-    type: 'Exercício',
-  },
-  {
-    id: '2',
-    title: 'Redação Dissertativa',
-    subject: 'portugues',
-    type: 'Revisão',
-  },
-  {
-    id: '3',
-    title: 'Relatório de Experiência',
-    subject: 'ciencias',
-    type: 'Trabalho',
-  },
-  {
-    id: '4',
-    title: 'Redação',
-    subject: 'portugues',
-    type: 'Pré-prova',
-  },
-]
+  }
+}
 
 export default function Page() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
-  const [tasks, setTasks] = useState<UploadedTask[]>(UPLOAD_TASKS)
+  const [tasks, setTasks] = useState<UploadedTask[]>([])
   const [subjectFilter, setSubjectFilter] = useState<SubjectFilterValue>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
-  function handleAddTask(task: UploadTaskPayload) {
-    const newTask: UploadedTask = {
-      id: crypto.randomUUID(),
-      ...task,
+  const studentId = authService.getUserId()
+
+  useEffect(() => {
+    if (!studentId) {
+      setIsLoading(false)
+      return
     }
 
-    setTasks(currentTasks => [newTask, ...currentTasks])
-    setIsUploadModalOpen(false)
+    async function fetchUploads() {
+      setIsLoading(true)
+      setFetchError(null)
+      try {
+        const result = await uploadService.listStudentUploads(studentId!)
+        setTasks(result.map(mapUploadToTask))
+      } catch {
+        setFetchError('Não foi possível carregar as tarefas. Tente novamente.')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    void fetchUploads()
+  }, [studentId])
+
+  async function handleAddTask(task: UploadTaskPayload) {
+    if (!studentId) return
+
+    setIsSubmitting(true)
+    setSubmitError(null)
+    try {
+      const uploaded = await uploadService.uploadStudentFile(
+        studentId,
+        task.file
+      )
+      const newTask = mapUploadToTask(uploaded)
+      newTask.subject = task.subject
+      setTasks(currentTasks => [newTask, ...currentTasks])
+      setIsUploadModalOpen(false)
+    } catch {
+      setSubmitError('Não foi possível enviar o arquivo. Tente novamente.')
+      throw new Error('Upload failed')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const filteredTaskListItems = useMemo(() => {
@@ -169,7 +201,17 @@ export default function Page() {
           />
         </Box>
 
-        {filteredTaskListItems.length === 0 ? (
+        {isLoading ? (
+          <Box className="flex items-center justify-center py-10">
+            <CircularProgress size={32} />
+          </Box>
+        ) : fetchError ? (
+          <Box className="flex items-center justify-center py-10">
+            <Typography sx={{ color: 'text.secondary' }}>
+              {fetchError}
+            </Typography>
+          </Box>
+        ) : filteredTaskListItems.length === 0 ? (
           <EmptyState
             description="Nenhuma tarefa para a disciplina selecionada."
             title="Sem resultados"
@@ -181,8 +223,13 @@ export default function Page() {
 
       <UploadActivityModal
         open={isUploadModalOpen}
-        onClose={() => setIsUploadModalOpen(false)}
+        onClose={() => {
+          setIsUploadModalOpen(false)
+          setSubmitError(null)
+        }}
         onAddTask={handleAddTask}
+        isSubmitting={isSubmitting}
+        submitError={submitError}
       />
     </AppPageContainer>
   )
