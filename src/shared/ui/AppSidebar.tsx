@@ -17,6 +17,7 @@ import {
   getRoleAccentColor,
   getRoleGradient,
   getRoleHoverStyle,
+  getRoleSelectedStyle,
 } from '@/app/theme/core/roles'
 import type { SidebarItem } from '@/shared/types/common'
 import type { UserRole } from '@/shared/types/user'
@@ -49,6 +50,7 @@ function AppSidebar({
   const theme = useTheme()
   const accentColor = getRoleAccentColor(theme, role)
   const roleHover = getRoleHoverStyle(theme, role)
+  const roleSelected = getRoleSelectedStyle(theme, role)
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -128,6 +130,7 @@ function AppSidebar({
               selected={selected}
               sx={{
                 borderRadius: '18px',
+                border: '1px solid transparent',
                 justifyContent: isCollapsed ? 'center' : 'flex-start',
                 '& .MuiListItemText-primary': {
                   backgroundColor: 'transparent',
@@ -138,7 +141,12 @@ function AppSidebar({
                   color: theme.palette.text.secondary,
                 },
                 '&.Mui-selected': {
-                  backgroundColor: roleHover.backgroundColor,
+                  backgroundColor: roleSelected.backgroundColor,
+                  borderColor: roleSelected.borderColor,
+                },
+                '&.Mui-selected:hover': {
+                  backgroundColor: roleSelected.backgroundColor,
+                  borderColor: roleSelected.borderColor,
                 },
                 '&.Mui-selected .MuiListItemIcon-root, &.Mui-selected .MuiListItemText-primary':
                   {
@@ -147,6 +155,7 @@ function AppSidebar({
                   },
                 '&:hover': {
                   backgroundColor: roleHover.backgroundColor,
+                  borderColor: roleHover.borderColor,
                 },
                 '&:hover .MuiListItemIcon-root, &:hover .MuiListItemText-primary':
                   {
@@ -174,6 +183,7 @@ function AppSidebar({
             onClick={onLogout}
             sx={{
               borderRadius: '18px',
+              border: '1px solid transparent',
               justifyContent: isCollapsed ? 'center' : 'flex-start',
               transition: 'all 0.2s ease',
               '& .MuiListItemText-primary': {
@@ -186,6 +196,7 @@ function AppSidebar({
               '&:hover': {
                 borderRadius: 'var(--app-radius-control)',
                 bgcolor: roleHover.backgroundColor,
+                borderColor: roleHover.borderColor,
                 color: accentColor,
               },
               '&:hover .MuiListItemIcon-root, &:hover .MuiListItemText-primary':

@@ -4,7 +4,7 @@ import type { UserRole } from '@/shared/types/user'
 import type { RoleColorPalette } from './colors'
 
 const INTERACTION_TOKENS = {
-  hover: { bgDark: 0.14, bgLight: 0.08, borderDark: 0.28, borderLight: 0.18 },
+  hover: { bgDark: 0.17, bgLight: 0.08, borderDark: 0.4, borderLight: 0.18 },
   solidHover: { bgDark: 0.86, bgLight: 0.9 },
   selected: {
     bgDark: 0.18,
