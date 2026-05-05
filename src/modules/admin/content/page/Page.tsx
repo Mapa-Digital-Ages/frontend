@@ -34,9 +34,12 @@ import {
   CONTENT_APPROVAL_CARD_STATUS,
 } from '@/shared/utils/themes'
 import ApprovalActionModal, {
-  type ApprovalActionFormValues,
   type ApprovalActionModalMode,
 } from '@/modules/admin/shared/components/ApprovalActionModal'
+import type {
+  ContentApprovalActionFormValues,
+  GuardianApprovalActionFormValues,
+} from '@/modules/admin/shared/types/types'
 import ApprovalCard from '@/modules/admin/shared/components/ApprovalCard'
 import ApprovalComponent, {
   type ApprovalStatusOption,
@@ -100,13 +103,9 @@ function getTodayRequestDate() {
   return new Intl.DateTimeFormat('pt-BR').format(new Date())
 }
 
-function getDefaultFormValues(): ApprovalActionFormValues {
+function getDefaultFormValues(): ContentApprovalActionFormValues {
   return {
-    childName: '',
-    email: '',
-    first_name: '',
-    last_name: '',
-    password: '',
+    type: 'content',
     requestedAt: getTodayRequestDate(),
     resourceType: 'task',
     subjectId: String(DEFAULT_SUBJECT_ID),
@@ -130,9 +129,8 @@ export default function Page() {
   const [modalState, setModalState] = useState<ApprovalActionModalMode | null>(
     null
   )
-  const [modalValues, setModalValues] = useState<ApprovalActionFormValues>(
-    getDefaultFormValues()
-  )
+  const [modalValues, setModalValues] =
+    useState<ContentApprovalActionFormValues>(getDefaultFormValues())
   const [isModalSubmitting, setIsModalSubmitting] = useState(false)
   const [selectionMode, setSelectionMode] = useState<'edit' | 'delete' | null>(
     null
@@ -178,11 +176,7 @@ export default function Page() {
       setSelectionMode(null)
       setModalState({ action: selectionMode, item, type: 'content' })
       setModalValues({
-        childName: '',
-        email: '',
-        first_name: '',
-        last_name: '',
-        password: '',
+        type: 'content',
         requestedAt: item.requestedAt ?? getTodayRequestDate(),
         resourceType: item.resourceType ?? 'task',
         subjectId: String(item.subject?.id ?? DEFAULT_SUBJECT_ID),
@@ -195,11 +189,7 @@ export default function Page() {
   const openModal = useCallback((nextMode: ApprovalActionModalMode) => {
     setModalState(nextMode)
     setModalValues({
-      childName: '',
-      email: '',
-      first_name: '',
-      last_name: '',
-      password: '',
+      type: 'content',
       requestedAt:
         nextMode.action === 'create'
           ? getTodayRequestDate()
@@ -293,7 +283,9 @@ export default function Page() {
 
   const handleModalChange = useCallback(
     (
-      field: keyof ApprovalActionFormValues,
+      field:
+        | keyof ContentApprovalActionFormValues
+        | keyof GuardianApprovalActionFormValues,
       value: string | ContentApprovalDraftInput['resourceType']
     ) => {
       setModalValues(current => ({

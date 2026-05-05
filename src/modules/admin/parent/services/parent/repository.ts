@@ -35,22 +35,24 @@ export interface CreateParentApprovalRepositoryOptions {
 }
 
 function buildGuardianRegistrationPayload(input: ParentApprovalDraftInput) {
+  const guardian = input.guardian!
   return {
-    email: input.guardian.email,
-    first_name: input.guardian.first_name.trim(),
-    last_name: input.guardian.last_name.trim(),
-    password: input.guardian.password,
-    phone_number: input.guardian.phone_number.trim(),
+    email: guardian.email,
+    first_name: guardian.first_name.trim(),
+    last_name: guardian.last_name.trim(),
+    password: guardian.password,
+    phone_number: guardian.phone_number.trim(),
     student: input.student,
   }
 }
 
 function buildGuardianUpdatePayload(input: ParentApprovalDraftInput) {
+  const guardian = input.guardian!
   return {
-    email: input.guardian.email,
-    first_name: input.guardian.first_name.trim(),
-    last_name: input.guardian.last_name.trim(),
-    phone_number: input.guardian.phone_number.trim(),
+    email: guardian.email,
+    first_name: guardian.first_name.trim(),
+    last_name: guardian.last_name.trim(),
+    phone_number: guardian.phone_number.trim(),
     student: input.student,
   }
 }
