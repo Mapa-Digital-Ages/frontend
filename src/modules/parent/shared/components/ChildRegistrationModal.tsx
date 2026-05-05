@@ -1,10 +1,8 @@
 import { Alert, Box } from '@mui/material'
-import { useMemo } from 'react'
 import AppActionModal from '@/shared/ui/AppActionModal'
 import AppDropdown, { type DropdownOption } from '@/shared/ui/AppDropdown'
 import AppInput from '@/shared/ui/AppInput'
 import type { RegisterChildRequest } from '@/modules/parent/dashboard/services/service'
-import { useSchoolOptions } from '@/modules/parent/shared/hooks/useSchoolOptions'
 
 const CLASS_OPTIONS: DropdownOption[] = [
   { value: '5', label: '5º Ano (Fund.)' },
@@ -60,13 +58,6 @@ function ChildRegistrationModal({
   const feedbackTone = feedbackMessage
     ? resolveFeedbackTone(feedbackMessage)
     : null
-
-  const { schools, isLoading: loadingSchools } = useSchoolOptions(open)
-
-  const schoolOptions = useMemo<DropdownOption[]>(
-    () => schools.map(school => ({ value: school.id, label: school.name })),
-    [schools]
-  )
 
   return (
     <AppActionModal
@@ -127,17 +118,6 @@ function ChildRegistrationModal({
           onChange={e => onUpdateField('student_class', String(e.target.value))}
           placeholder="Selecione o ano"
           value={form.student_class}
-          neutralOutline
-        />
-        <AppDropdown
-          fullWidth
-          label="Escola (opcional)"
-          options={schoolOptions}
-          onChange={e => onUpdateField('school_id', String(e.target.value))}
-          placeholder={
-            loadingSchools ? 'Carregando escolas...' : 'Selecione a escola'
-          }
-          value={form.school_id ?? ''}
           neutralOutline
         />
 
