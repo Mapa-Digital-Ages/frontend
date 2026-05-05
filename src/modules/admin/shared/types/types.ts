@@ -83,17 +83,12 @@ export interface ParentApprovalValidation {
   studentLinked: boolean
 }
 
-export interface ParentNames {
-  firstName: string
-  lastName: string
-}
-
 export interface ParentApprovalItem extends BaseApprovalItem {
   id: string
   kind: 'parent'
   roleLabel?: string
   status: ParentApprovalStatus
-  name: ParentNames
+  guardian?: GuardianItem
   childName?: string
   validation: ParentApprovalValidation
 }
@@ -130,12 +125,17 @@ export interface ContentApprovalDraftInput {
   title: string
 }
 
-export interface ParentApprovalDraftInput {
-  childName?: string
-  email?: string
+export interface GuardianItem {
+  email: string
   first_name: string
   last_name: string
   password?: string
+  phone_number: string
+}
+
+export interface ParentApprovalDraftInput {
+  student?: string
+  guardian: GuardianItem
   requestedAt?: string
   title?: string
 }
@@ -172,3 +172,31 @@ export interface ContentCorrectionSession {
 export interface ContentCorrectionMessageInput {
   body: string
 }
+
+export type ApprovalActionModalMode = {
+  action: Exclude<ApprovalModalAction, 'correct'>
+  item?: ApprovalItem
+  type: ApprovalType
+}
+
+export interface ContentApprovalActionFormValues {
+  type: 'content'
+  requestedAt: string
+  resourceType: ContentApprovalResourceType
+  subjectId: string
+  title: string
+}
+
+export interface GuardianApprovalActionFormValues {
+  type: 'parent'
+  childName?: string
+  email: string
+  first_name: string
+  last_name: string
+  password: string
+  phone_number: string
+}
+
+export type ApprovalActionFormValues =
+  | ContentApprovalActionFormValues
+  | GuardianApprovalActionFormValues

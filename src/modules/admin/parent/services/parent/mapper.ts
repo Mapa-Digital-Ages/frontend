@@ -1,6 +1,7 @@
 import type { HttpRequestOptions } from '@/shared/types/api'
 import type {
   ApprovalQueueQuery,
+  GuardianItem,
   ParentApprovalItem,
   ParentApprovalStatus,
 } from '@/modules/admin/shared/types/types'
@@ -16,6 +17,7 @@ export interface ParentApprovalUserDto {
   is_superadmin: boolean
   last_name?: string
   name: string
+  phone_number?: string
   role: ParentApprovalUserRoleDto
   status: ParentApprovalUserStatusDto
 }
@@ -80,6 +82,23 @@ function getParentNames(user: ParentApprovalUserDto) {
   }
 }
 
+function getGuardian(user: ParentApprovalUserDto): GuardianItem {
+  const name = getParentNames(user)
+
+  return {
+    email: user.email,
+    first_name: name.firstName,
+    last_name: name.lastName,
+    phone_number: user.phone_number ?? '',
+  }
+}
+
+function getParentTitle(guardian: GuardianItem, fallbackName: string) {
+  const fullName = `${guardian.first_name} ${guardian.last_name}`.trim()
+
+  return fullName || fallbackName || 'Responsável sem nome'
+}
+
 export function buildParentApprovalQuery(query: ApprovalQueueQuery) {
   const userStatus =
     query.status === 'approved' ||
@@ -111,7 +130,8 @@ export function mapParentApprovalUserToParentApprovalItem(
 ): ParentApprovalItem {
   const requestedAt = formatBrazilianDate(user.created_at)
   const roleLabel = roleLabelMap[user.role]
-  const name = getParentNames(user)
+  const guardian = getGuardian(user)
+  const title = getParentTitle(guardian, user.name)
 
   return {
     badges: [
@@ -127,14 +147,14 @@ export function mapParentApprovalUserToParentApprovalItem(
       },
     ],
     childName: 'Aluno a confirmar',
+    guardian,
     id: user.id,
     kind: 'parent',
-    name,
     requestedAt,
     roleLabel,
     status: parentStatusMap[user.status],
     subtitle: `${roleLabel} · Solicitação em ${requestedAt}`,
-    title: user.name,
+    title,
     validation: {
       hasDocument: true,
       relationshipConfirmed: true,

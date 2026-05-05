@@ -1,10 +1,8 @@
 import { Alert, Box, Typography } from '@mui/material'
-import { useMemo } from 'react'
 import AppActionModal from '@/shared/ui/AppActionModal'
 import AppDropdown, { type DropdownOption } from '@/shared/ui/AppDropdown'
 import AppInput from '@/shared/ui/AppInput'
 import type { ParentDashboardChild } from '@/modules/parent/settings/types/types'
-import { useSchoolOptions } from '@/modules/parent/shared/hooks/useSchoolOptions'
 
 export type ChildSettingsModalMode = 'create' | 'edit' | 'delete'
 
@@ -102,15 +100,6 @@ function ChildSettingsModal({
   const isDelete = mode === 'delete'
   const isCreate = mode === 'create'
 
-  const shouldFetchSchools = open && !isDelete
-  const { schools, isLoading: loadingSchools } =
-    useSchoolOptions(shouldFetchSchools)
-
-  const schoolOptions = useMemo<DropdownOption[]>(
-    () => schools.map(school => ({ value: school.id, label: school.name })),
-    [schools]
-  )
-
   return (
     <AppActionModal
       confirmLabel={copy.confirmLabel}
@@ -193,20 +182,6 @@ function ChildSettingsModal({
             placeholder="Selecione o ano"
             sx={selectSx}
             value={form.student_class}
-          />
-          <AppDropdown
-            fullWidth
-            label="Escola (opcional)"
-            neutralOutline
-            onChange={event =>
-              onChange('school_id', String(event.target.value))
-            }
-            options={schoolOptions}
-            placeholder={
-              loadingSchools ? 'Carregando escolas...' : 'Selecione a escola'
-            }
-            sx={selectSx}
-            value={form.school_id}
           />
           {feedbackMessage ? (
             <Alert
