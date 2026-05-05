@@ -8,7 +8,7 @@ export default function Page() {
       <PageHeader
         variant="enterpriseSchool"
         title="Dashboard Escola & Empresa"
-        subtitle="Gerencie turmas, parceiros e escolas adotadas em um só lugar."
+        subtitle="Gerencie turmas, parceiros e escolas apadrinhadas em um só lugar."
       />
       <Box
         sx={{

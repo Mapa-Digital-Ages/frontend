@@ -236,9 +236,9 @@ export default function Page() {
         <ListChildren
           children={visibleChildren}
           currentPage={safeCurrentPage}
-          description="Gerencie os filhos vinculados a este responsável."
-          emptyStateDescription="Nenhum filho corresponde à busca atual."
-          emptyStateTitle="Nenhum filho encontrado"
+          description="Gerencie os alunos vinculados a este responsável."
+          emptyStateDescription="Nenhum aluno corresponde à busca atual."
+          emptyStateTitle="Nenhum aluno encontrado"
           onCreate={openCreateModal}
           onDelete={openDeleteModal}
           onEdit={openEditModal}
@@ -250,9 +250,9 @@ export default function Page() {
           onSelect={selectChild}
           query={query}
           resultsSummary={childrenResultsSummary}
-          searchPlaceholder="Pesquisar filhos..."
+          searchPlaceholder="Pesquisar alunos..."
           selectedChildId={selectedChildId}
-          title="Filhos"
+          title="Alunos"
           totalPages={totalPages}
         />
         <Box className="flex flex-col gap-4">

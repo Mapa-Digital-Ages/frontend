@@ -11,7 +11,6 @@ import {
 } from '@mui/material'
 import SentimentVerySatisfiedIcon from '@mui/icons-material/SentimentVerySatisfied'
 import SentimentNeutralIcon from '@mui/icons-material/SentimentNeutral'
-import SentimentSatisfiedIcon from '@mui/icons-material/SentimentSatisfied'
 import SentimentVeryDissatisfiedIcon from '@mui/icons-material/SentimentVeryDissatisfied'
 import CloseIcon from '@mui/icons-material/Close'
 import { useEffect, useState, type ReactNode } from 'react'
@@ -277,7 +276,7 @@ export default function EmotionalContainer() {
             icon = <SentimentVerySatisfiedIcon sx={{ fontSize: 24 }} />
             color = 'success.main'
           } else if (mood === 'regular') {
-            icon = <SentimentSatisfiedIcon sx={{ fontSize: 24 }} />
+            icon = <SentimentNeutralIcon sx={{ fontSize: 24 }} />
             color = 'warning.main'
           } else if (mood === 'bad') {
             icon = <SentimentVeryDissatisfiedIcon sx={{ fontSize: 24 }} />

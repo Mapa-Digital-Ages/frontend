@@ -118,7 +118,7 @@ export default function Page() {
     return (
       <AppPageContainer className="gap-4 md:gap-5">
         <PageHeader
-          subtitle="Acompanhe o progresso dos seus filhos."
+          subtitle="Acompanhe o progresso dos alunos vinculados a você."
           title="Dashboard do Responsável"
           variant="responsavel"
           actions={childActions}
@@ -146,7 +146,7 @@ export default function Page() {
       <PageHeader
         eyebrow="Relatório Geral"
         subtitle="Resumo consolidado do progresso do aluno"
-        title={`Filho(a): ${child.name} - ${child.grade}`}
+        title={`Aluno(a): ${child.name} - ${child.grade}`}
         variant="responsavel"
         actions={childActions}
       />
