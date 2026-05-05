@@ -16,18 +16,20 @@ import { useUserRole } from '@/app/access/hook'
 import { parentApprovalService } from '@/modules/admin/parent/services/runtime'
 import { getParentApprovalEligibility } from '@/modules/admin/parent/utils/utils'
 import type {
+  ApprovalActionFormValues,
+  ApprovalActionModalMode,
   ApprovalCardAction,
   ApprovalQueueQuery,
   ApprovalQueueResult,
   ApprovalResultsSummary,
+  ContentApprovalActionFormValues,
+  ContentApprovalResourceType,
+  GuardianApprovalActionFormValues,
   ParentApprovalDraftInput,
   ParentApprovalItem,
   ParentApprovalStatus,
 } from '@/modules/admin/shared/types/types'
-import ApprovalActionModal, {
-  type ApprovalActionFormValues,
-  type ApprovalActionModalMode,
-} from '../../shared/components/ApprovalActionModal'
+import ApprovalActionModal from '../../shared/components/ApprovalActionModal'
 import ApprovalCard from '../../shared/components/ApprovalCard'
 import ApprovalComponent, {
   type ApprovalStatusOption,
@@ -84,15 +86,13 @@ function getTodayRequestDate() {
 
 function getDefaultFormValues(): ApprovalActionFormValues {
   return {
+    type: 'parent',
     childName: '',
     email: '',
     first_name: '',
     last_name: '',
     password: '',
-    requestedAt: getTodayRequestDate(),
-    resourceType: 'task',
-    subjectId: 'default',
-    title: '',
+    phone_number: '',
   }
 }
 
@@ -140,22 +140,39 @@ export default function Page() {
   const openModal = useCallback((nextMode: ApprovalActionModalMode) => {
     setSelectionMode(null)
     setModalState(nextMode)
+
+    if (nextMode.type === 'parent') {
+      const guardian =
+        nextMode.item?.kind === 'parent' ? nextMode.item.guardian : undefined
+
+      setModalValues({
+        type: 'parent',
+        childName:
+          nextMode.item?.kind === 'parent'
+            ? (nextMode.item.childName ?? '')
+            : '',
+        email: guardian?.email ?? '',
+        first_name: guardian?.first_name ?? '',
+        last_name: guardian?.last_name ?? '',
+        password: '',
+        phone_number: guardian?.phone_number ?? '',
+      })
+
+      return
+    }
+
     setModalValues({
-      childName:
-        nextMode.item?.kind === 'parent' ? (nextMode.item.childName ?? '') : '',
-      email: '',
-      first_name:
-        nextMode.item?.kind === 'parent' ? nextMode.item.name.firstName : '',
-      last_name:
-        nextMode.item?.kind === 'parent' ? nextMode.item.name.lastName : '',
-      password: '',
+      type: 'content',
       requestedAt:
         nextMode.action === 'create'
           ? getTodayRequestDate()
           : (nextMode.item?.requestedAt ?? getTodayRequestDate()),
-      resourceType: 'task',
+      resourceType:
+        nextMode.item?.kind === 'content'
+          ? (nextMode.item.resourceType ?? 'task')
+          : 'task',
       subjectId: 'default',
-      title: nextMode.item?.title ?? '',
+      title: nextMode.item?.kind === 'content' ? nextMode.item.title : '',
     })
   }, [])
 
@@ -244,8 +261,13 @@ export default function Page() {
   )
 
   const handleModalChange = useCallback(
-    (field: keyof ApprovalActionFormValues, value: string) => {
-      setModalValues(current => ({
+    (
+      field:
+        | keyof ContentApprovalActionFormValues
+        | keyof GuardianApprovalActionFormValues,
+      value: string | ContentApprovalResourceType
+    ) => {
+      setModalValues((current: ApprovalActionFormValues) => ({
         ...current,
         [field]: value,
       }))
@@ -269,11 +291,18 @@ export default function Page() {
       }
 
       if (modalState.action === 'create') {
+        if (modalValues.type !== 'parent') {
+          return
+        }
+
         const payload: ParentApprovalDraftInput = {
-          email: modalValues.email.trim(),
-          first_name: modalValues.first_name.trim(),
-          last_name: modalValues.last_name.trim(),
-          password: modalValues.password,
+          guardian: {
+            email: modalValues.email.trim(),
+            first_name: modalValues.first_name.trim(),
+            last_name: modalValues.last_name.trim(),
+            password: modalValues.password,
+            phone_number: modalValues.phone_number.trim(),
+          },
         }
 
         await parentApprovalService.createParentRegistration(payload)
@@ -283,9 +312,17 @@ export default function Page() {
       }
 
       if (modalState.action === 'edit' && modalState.item) {
+        if (modalValues.type !== 'parent') {
+          return
+        }
+
         const payload: ParentApprovalDraftInput = {
-          first_name: modalValues.first_name.trim(),
-          last_name: modalValues.last_name.trim(),
+          guardian: {
+            email: modalValues.email.trim(),
+            first_name: modalValues.first_name.trim(),
+            last_name: modalValues.last_name.trim(),
+            phone_number: modalValues.phone_number.trim(),
+          },
         }
 
         await parentApprovalService.updateParentRegistration(
@@ -308,22 +345,25 @@ export default function Page() {
       return false
     }
 
-    if (!modalValues.first_name.trim() || !modalValues.last_name.trim()) {
+    if (modalValues.type !== 'parent') {
+      return true
+    }
+
+    if (
+      !modalValues.first_name.trim() ||
+      !modalValues.last_name.trim() ||
+      !modalValues.email.trim() ||
+      !modalValues.phone_number.trim()
+    ) {
       return true
     }
 
     if (modalState.action === 'create') {
-      return !modalValues.email.trim() || !modalValues.password.trim()
+      return !modalValues.password.trim()
     }
 
     return false
-  }, [
-    modalState,
-    modalValues.email,
-    modalValues.first_name,
-    modalValues.last_name,
-    modalValues.password,
-  ])
+  }, [modalState, modalValues])
 
   useEffect(() => {
     let isActive = true

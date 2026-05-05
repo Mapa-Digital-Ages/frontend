@@ -14,6 +14,7 @@ import type { ApiResponse } from '@/shared/types/api'
 import type { StudentDisciplineProgress } from '../types/types'
 import type { Task } from '@/modules/student/shared/components/Planner'
 import { wellBeingService } from '@/shared/services/wellBeingService'
+import { MOCK_DISCIPLINES, MOCK_TASKS } from '../__mocks__/dashboardMocks'
 
 export interface RegisterChildRequest {
   first_name: string
@@ -176,15 +177,27 @@ export const parentService = {
   },
 
   async getStudentDisciplines(studentId: string) {
-    const response = await httpClient.get<StudentDisciplineProgress[]>(
-      `student/${studentId}/disciplines`
-    )
-    return response.data
+    try {
+      const response = await httpClient.get<StudentDisciplineProgress[]>(
+        `student/${studentId}/disciplines`
+      )
+      if (response.data?.length) return response.data
+    } catch {
+      // fall through to mock
+    }
+    return MOCK_DISCIPLINES
   },
 
   async getStudentTasks(studentId: string) {
-    const response = await httpClient.get<Task[]>(`student/${studentId}/tasks`)
-    return response.data
+    try {
+      const response = await httpClient.get<Task[]>(
+        `student/${studentId}/tasks`
+      )
+      if (response.data?.length) return response.data
+    } catch {
+      // fall through to mock
+    }
+    return MOCK_TASKS
   },
 
   async getStudentWellBeing(

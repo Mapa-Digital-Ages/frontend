@@ -8,10 +8,13 @@ import AppActionModal, {
 import AppDropdown from '@/shared/ui/AppDropdown'
 import AppInput from '@/shared/ui/AppInput'
 import type {
+  ApprovalActionFormValues,
   ApprovalItem,
   ApprovalModalAction,
   ApprovalType,
+  ContentApprovalActionFormValues,
   ContentApprovalResourceType,
+  GuardianApprovalActionFormValues,
 } from '@/modules/admin/shared/types/types'
 import type { UserRole } from '@/shared/types/user'
 
@@ -23,22 +26,12 @@ export type ApprovalActionModalMode = {
 
 type ApprovalActionModalUsage = 'confirm' | 'content-form' | 'parent-form'
 
-export interface ApprovalActionFormValues {
-  childName?: string
-  email: string
-  password: string
-  requestedAt: string
-  resourceType: ContentApprovalResourceType
-  subjectId: string
-  first_name: string
-  last_name: string
-  title: string
-}
-
 interface ApprovalActionModalProps {
   mode: ApprovalActionModalMode | null
   onChange: (
-    field: keyof ApprovalActionFormValues,
+    field:
+      | keyof ContentApprovalActionFormValues
+      | keyof GuardianApprovalActionFormValues,
     value: string | ContentApprovalResourceType
   ) => void
   onClose: () => void
@@ -80,20 +73,42 @@ const selectSx = {
   },
 }
 
+function isGuardianFormValues(
+  values: ApprovalActionFormValues
+): values is GuardianApprovalActionFormValues {
+  return values.type === 'parent'
+}
+
+function isContentFormValues(
+  values: ApprovalActionFormValues
+): values is ContentApprovalActionFormValues {
+  return values.type === 'content'
+}
+
+function resolveItemTitle(item?: ApprovalItem) {
+  if (!item) {
+    return ''
+  }
+
+  if (item.kind === 'content') {
+    return item.title
+  }
+
+  const firstName = item.guardian?.first_name ?? ''
+  const lastName = item.guardian?.last_name ?? ''
+  const fullName = `${firstName} ${lastName}`.trim()
+
+  return fullName || item.title || ''
+}
+
 function resolveUsageMode(
   mode: ApprovalActionModalMode
 ): ApprovalActionModalUsage {
-  const isContentMode = mode.type === 'content'
-
   if (mode.action === 'delete') {
     return 'confirm'
   }
 
-  return mode.type === 'parent'
-    ? 'parent-form'
-    : isContentMode
-      ? 'content-form'
-      : 'parent-form'
+  return mode.type === 'content' ? 'content-form' : 'parent-form'
 }
 
 function resolveDialogMode(
@@ -161,7 +176,9 @@ function ApprovalActionModal({
   const usage = resolveUsageMode(mode)
   const dialogMode = resolveDialogMode(usage)
   const copy = resolveModalCopy(mode)
-  const currentItem = mode.item
+  const currentItemTitle = resolveItemTitle(mode.item)
+  const isParentForm = usage === 'parent-form' && isGuardianFormValues(values)
+  const isContentForm = usage === 'content-form' && isContentFormValues(values)
 
   return (
     <AppActionModal
@@ -179,13 +196,13 @@ function ApprovalActionModal({
     >
       {usage === 'confirm' ? (
         <Typography color="text.secondary">
-          {currentItem
-            ? `Deseja remover "${currentItem.title}" desta fila?`
+          {currentItemTitle
+            ? `Deseja remover "${currentItemTitle}" desta fila?`
             : 'Deseja remover este item desta fila?'}
         </Typography>
       ) : null}
 
-      {usage === 'parent-form' ? (
+      {isParentForm ? (
         <Box className="grid gap-3">
           <Box className="grid grid-cols-2 gap-3">
             <AppInput
@@ -204,33 +221,38 @@ function ApprovalActionModal({
               sx={inputSx}
               value={values.last_name}
             />
+            <AppInput
+              label="Email"
+              labelSx={fieldLabelSx}
+              onChange={event => onChange('email', event.target.value)}
+              placeholder="Ex.: m.souza@email.com"
+              sx={inputSx}
+              value={values.email}
+            />
+            <AppInput
+              label="Telefone"
+              labelSx={fieldLabelSx}
+              onChange={event => onChange('phone_number', event.target.value)}
+              placeholder="Ex.: +55 51 98765-4321"
+              sx={inputSx}
+              value={values.phone_number}
+            />
           </Box>
           {mode.action === 'create' ? (
-            <>
-              <AppInput
-                label="E-mail do responsável"
-                labelSx={fieldLabelSx}
-                onChange={event => onChange('email', event.target.value)}
-                placeholder="responsavel@exemplo.com"
-                sx={inputSx}
-                type="email"
-                value={values.email}
-              />
-              <AppInput
-                label="Senha provisória"
-                labelSx={fieldLabelSx}
-                onChange={event => onChange('password', event.target.value)}
-                placeholder="Defina uma senha inicial"
-                sx={inputSx}
-                type="password"
-                value={values.password}
-              />
-            </>
+            <AppInput
+              label="Senha provisória"
+              labelSx={fieldLabelSx}
+              onChange={event => onChange('password', event.target.value)}
+              placeholder="Defina uma senha inicial"
+              sx={inputSx}
+              type="password"
+              value={values.password}
+            />
           ) : null}
         </Box>
       ) : null}
 
-      {usage === 'content-form' ? (
+      {isContentForm ? (
         <Box className="grid gap-3">
           <AppInput
             label="Título"

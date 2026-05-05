@@ -12,23 +12,8 @@ import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded'
 import TrackChangesRoundedIcon from '@mui/icons-material/TrackChangesRounded'
 import { useParentDashboard } from '../hooks/useParentDashboard'
 import { SUBJECTS, getSubjectTagContextByLabel } from '@/shared/utils/themes'
-import { useCallback, useState } from 'react'
-import { parentService } from '../services/service'
-import type { RegisterChildRequest } from '@/modules/parent/dashboard/services/service'
-import ChildRegistrationModal from '@/modules/parent/shared/components/ChildRegistrationModal'
 import ChildSwitcher from '@/modules/parent/shared/components/ChildSwitcher'
 import ParentEmotionalSummary from '@/modules/parent/shared/components/ParentEmotionalSummary'
-
-const emptyForm: RegisterChildRequest = {
-  first_name: '',
-  last_name: '',
-  email: '',
-  password: '',
-  phone_number: '',
-  birth_date: '',
-  student_class: '7',
-  school_id: '',
-}
 
 export default function Page() {
   const {
@@ -42,44 +27,6 @@ export default function Page() {
     selectedChildId,
     selectChild,
   } = useParentDashboard()
-  const [modalOpen, setModalOpen] = useState(false)
-  const [form, setForm] = useState<RegisterChildRequest>(emptyForm)
-  const [submitting, setSubmitting] = useState(false)
-  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null)
-
-  const updateField = useCallback(
-    (field: keyof RegisterChildRequest, value: string) => {
-      setForm(prev => ({ ...prev, [field]: value }))
-      setFeedbackMessage(null)
-    },
-    []
-  )
-
-  function closeModal() {
-    setModalOpen(false)
-    setForm(emptyForm)
-    setFeedbackMessage(null)
-  }
-
-  async function handleRegisterChild() {
-    setSubmitting(true)
-    const result = await parentService.registerChild(form)
-    setSubmitting(false)
-
-    if (result.success) {
-      closeModal()
-    } else {
-      setFeedbackMessage(result.message ?? 'Erro ao cadastrar.')
-    }
-  }
-
-  const isFormValid =
-    form.first_name.trim() !== '' &&
-    form.last_name.trim() !== '' &&
-    form.email.trim() !== '' &&
-    form.password.length >= 8 &&
-    form.birth_date !== '' &&
-    form.student_class !== ''
 
   if (isLoading) {
     return <LoadingScreen />
@@ -126,16 +73,6 @@ export default function Page() {
         <EmptyState
           title="Nenhum aluno vinculado"
           description="Você ainda não possui alunos vinculados ao seu perfil."
-        />
-        <ChildRegistrationModal
-          feedbackMessage={feedbackMessage}
-          form={form}
-          isFormValid={isFormValid}
-          onClose={closeModal}
-          onConfirm={handleRegisterChild}
-          onUpdateField={updateField}
-          open={modalOpen}
-          submitting={submitting}
         />
       </AppPageContainer>
     )
@@ -201,17 +138,6 @@ export default function Page() {
           <Planner tasks={tasks} hideStatus />
         </Box>
       </Box>
-
-      <ChildRegistrationModal
-        feedbackMessage={feedbackMessage}
-        form={form}
-        isFormValid={isFormValid}
-        onClose={closeModal}
-        onConfirm={handleRegisterChild}
-        onUpdateField={updateField}
-        open={modalOpen}
-        submitting={submitting}
-      />
     </AppPageContainer>
   )
 }
