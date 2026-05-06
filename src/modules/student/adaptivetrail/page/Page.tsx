@@ -17,6 +17,9 @@ const filterOptions: FilterOption[] = [
   { label: 'Português', value: 'portuguese', subject: SUBJECTS.portugues },
   { label: 'Ciências', value: 'science', subject: SUBJECTS.ciencias },
   { label: 'História', value: 'history', subject: SUBJECTS.historia },
+  { label: 'Biologia', value: 'biology', subject: SUBJECTS.biologia },
+  { label: 'Geografia', value: 'geography', subject: SUBJECTS.geografia },
+  { label: 'Inglês', value: 'english', subject: SUBJECTS.ingles },
 ]
 
 const TRAILS_PER_PAGE = 10
@@ -101,13 +104,10 @@ export default function Page() {
       >
         <Stack spacing={2}>
           <SearchBarAndFilter
-            filterOptions={filterOptions}
             onQueryChange={handleQueryChange}
-            onStatusChange={handleSubjectChange}
             query={query}
             resultsSummary={resultsSummary}
             searchPlaceholder="Pesquisar conteúdos..."
-            selectedStatus={selectedSubject}
           />
 
           <TrailFilterBar
