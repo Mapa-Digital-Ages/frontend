@@ -115,8 +115,12 @@ function AuthLayout() {
       <Box
         className="flex items-center justify-center px-4 py-6"
         sx={{
-          backgroundColor: 'background.default',
-          backgroundImage: 'var(--app-body-gradient)',
+          '--app-background': 'rgba(244, 247, 251, 1)',
+          '--app-body-gradient':
+            'radial-gradient(circle at top left, rgba(31, 75, 153, 0.1), transparent 28%), linear-gradient(180deg, rgba(244, 247, 251, 1) 0%, rgba(238, 243, 250, 1) 100%)',
+          backgroundColor: 'rgba(244, 247, 251, 1)',
+          backgroundImage:
+            'radial-gradient(circle at top left, rgba(31, 75, 153, 0.1), transparent 28%), linear-gradient(180deg, rgba(244, 247, 251, 1) 0%, rgba(238, 243, 250, 1) 100%)',
           minHeight: '100dvh',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',

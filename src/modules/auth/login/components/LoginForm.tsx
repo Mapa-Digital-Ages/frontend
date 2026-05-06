@@ -114,6 +114,8 @@ function LoginForm({ isSubmitting = false, mode, onSubmit }: LoginFormProps) {
   const [lastName, setLastName] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [errors, setErrors] = useState<LoginFormErrors>({})
+  const isDark = theme.palette.mode === 'dark'
+  const submitButton = isDark ? theme.palette.primary.main : '#218cc9'
 
   function updateField<K extends keyof AuthCredentials>(
     field: K,
@@ -290,7 +292,7 @@ function LoginForm({ isSubmitting = false, mode, onSubmit }: LoginFormProps) {
                   fontSize: '0.875rem',
                   textDecorationColor: theme.palette.primary.main,
                   '&:hover': {
-                    color: 'primary.dark',
+                    color: submitButton,
                     textDecorationColor: theme.palette.primary.dark,
                   },
                   '&:active': {
@@ -352,7 +354,7 @@ function LoginForm({ isSubmitting = false, mode, onSubmit }: LoginFormProps) {
             color: alpha(theme.palette.common.white, 0.72),
           },
           '&:hover': {
-            backgroundColor: 'primary.dark',
+            background: submitButton,
             filter: 'none',
           },
         }}
