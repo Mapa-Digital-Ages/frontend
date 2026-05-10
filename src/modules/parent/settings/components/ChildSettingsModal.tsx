@@ -63,24 +63,24 @@ function resolveModalCopy(mode: ChildSettingsModalMode | null) {
   if (mode === 'edit') {
     return {
       confirmLabel: 'Salvar alterações',
-      description: 'Atualize os dados usados no cadastro do filho.',
-      title: 'Editar filho',
+      description: 'Atualize os dados usados no cadastro do aluno.',
+      title: 'Editar aluno',
     }
   }
 
   if (mode === 'delete') {
     return {
-      confirmLabel: 'Excluir filho',
-      description: 'Essa ação remove o vínculo deste filho da sua conta.',
-      title: 'Excluir filho',
+      confirmLabel: 'Excluir aluno',
+      description: 'Essa ação remove o vínculo deste aluno da sua conta.',
+      title: 'Excluir aluno',
     }
   }
 
   return {
-    confirmLabel: 'Cadastrar filho',
+    confirmLabel: 'Cadastrar aluno',
     description:
       'Preencha os dados do aluno. O acesso será criado e vinculado ao responsável.',
-    title: 'Cadastrar filho',
+    title: 'Cadastrar aluno',
   }
 }
 
@@ -116,7 +116,7 @@ function ChildSettingsModal({
     >
       {isDelete ? (
         <Typography color="text.secondary">
-          Deseja excluir o vínculo de {child?.name ?? 'este filho'}?
+          Deseja excluir o vínculo de {child?.name ?? 'este aluno'}?
         </Typography>
       ) : (
         <Box className="grid gap-3">

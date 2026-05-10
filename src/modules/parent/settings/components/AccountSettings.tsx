@@ -152,7 +152,7 @@ function AccountSettings({
     return {
       confirmLabel: 'Excluir',
       description:
-        'Essa ação remove o acesso da conta e pode afetar vínculos existentes com os filhos.',
+        'Essa ação remove o acesso da conta e pode afetar vínculos existentes com os alunos.',
       title: 'Excluir conta?',
     }
   })()
