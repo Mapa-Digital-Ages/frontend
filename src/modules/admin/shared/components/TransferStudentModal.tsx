@@ -3,6 +3,7 @@ import AppDropdown from '@/shared/ui/AppDropdown'
 import { Box, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { useState } from 'react'
+import type { BoxProps } from '@mui/material'
 import {
   schoolOptions,
   classOptions,
@@ -26,7 +27,7 @@ const selectSx = {
   },
 }
 
-interface TransferStudentModalProps {
+interface TransferStudentModalProps extends BoxProps {
   open: boolean
   onClose: () => void
   onConfirm: (values: TransferFormValues) => void
@@ -59,6 +60,7 @@ export default function TransferStudentModal({
   onConfirm,
   defaultStudentId,
   studentOptions,
+  ...props
 }: TransferStudentModalProps) {
   const theme = useTheme()
   const [values, setValues] = useState<TransferFormValues>(() =>
@@ -86,6 +88,7 @@ export default function TransferStudentModal({
 
   return (
     <AppActionModal
+      {...props}
       confirmLabel="Transferir aluno"
       description="Selecione um aluno já cadastrado e defina a escola e a turma de destino para concluir a transferência."
       maxWidth="sm"

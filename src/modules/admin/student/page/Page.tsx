@@ -162,7 +162,8 @@ export default function Page() {
       id: String(Date.now()),
       name: values.name,
       parent: values.guardian,
-      class: values.class === 'none' ? 'Sem turma' : values.class,
+      class:
+        classOptions.find(c => c.value === values.class)?.label ?? values.class,
       school:
         schoolOptions.find(s => s.value === values.school)?.label ??
         values.school,

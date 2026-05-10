@@ -1,6 +1,7 @@
 import { Box } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { useState } from 'react'
+import type { BoxProps } from '@mui/material'
 import AppActionModal from '@/shared/ui/AppActionModal'
 import AppDropdown from '@/shared/ui/AppDropdown'
 import AppInput from '@/shared/ui/AppInput'
@@ -49,7 +50,7 @@ const statusOptions = [
   { label: 'Inativo', value: 'inativo' },
 ]
 
-interface CreateStudentModalProps {
+interface CreateStudentModalProps extends BoxProps {
   open: boolean
   onClose: () => void
   onConfirm: (values: StudentFormValues) => void
@@ -83,6 +84,7 @@ export default function CreateStudentModal({
   open,
   onClose,
   onConfirm,
+  ...props
 }: CreateStudentModalProps) {
   const theme = useTheme()
   const [values, setValues] = useState<StudentFormValues>(getDefaultValues())
@@ -103,6 +105,7 @@ export default function CreateStudentModal({
 
   return (
     <AppActionModal
+      {...props}
       confirmLabel="Criar aluno"
       description="Cadastre um novo aluno e vincule a uma turma, se desejar."
       disableConfirm={!values.name.trim()}
