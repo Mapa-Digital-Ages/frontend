@@ -201,7 +201,6 @@ export default function EmotionalContainer() {
         boxShadow: 'none',
         p: 3,
         width: '100%',
-        maxWidth: '556px',
       }}
     >
       <Typography
