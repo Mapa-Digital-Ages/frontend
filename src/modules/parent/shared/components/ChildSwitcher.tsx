@@ -59,6 +59,9 @@ function ChildSwitcher({
           color: '#fff !important',
         },
         '& .MuiSelect-icon': { color: '#fff !important' },
+        backgroundColor: 'transparent !important',
+        '&:hover': { backgroundColor: 'transparent !important' },
+        '&.Mui-focused': { backgroundColor: 'transparent !important' },
       }}
     />
   )
