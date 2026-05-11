@@ -216,6 +216,7 @@ export default function EmotionalContainer() {
         sx={{
           mb: errorMessage ? 1 : 4,
           width: '100%',
+          justifyContent: 'center',
           opacity: isSubmitting ? 0.6 : 1,
           pointerEvents: isSubmitting ? 'none' : 'auto',
           transition: 'opacity 120ms ease',
