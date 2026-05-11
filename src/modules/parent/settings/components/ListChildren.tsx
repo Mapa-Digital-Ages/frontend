@@ -36,7 +36,7 @@ interface ListChildrenProps {
 export default function ListChildren({
   children,
   currentPage,
-  description = 'Gerencie os filhos vinculados ao responsável.',
+  description = 'Gerencie os alunos vinculados ao responsável.',
   emptyStateDescription,
   emptyStateTitle,
   onCreate,
@@ -49,7 +49,7 @@ export default function ListChildren({
   resultsSummary,
   searchPlaceholder,
   selectedChildId,
-  title = 'Filhos',
+  title = 'Alunos',
   totalPages,
 }: ListChildrenProps) {
   const theme = useTheme()
@@ -101,7 +101,7 @@ export default function ListChildren({
             </Typography>
           </Box>
           <IconButton
-            aria-label="Adicionar filho"
+            aria-label="Adicionar aluno"
             onClick={onCreate}
             sx={{
               backgroundColor: 'background.paper',
