@@ -8,6 +8,8 @@ import PersonAddAltRoundedIcon from '@mui/icons-material/PersonAddAltRounded'
 import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded'
 import { alpha, useTheme } from '@mui/material/styles'
 import { Box, Button, Typography } from '@mui/material'
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
+import CancelRoundedIcon from '@mui/icons-material/CancelRounded'
 import { useState } from 'react'
 
 interface School {
@@ -74,6 +76,88 @@ const CLASSES: ClassItem[] = [
   { id: 'c5', name: '8º A', schoolId: '3', students: 2, avgProgress: 40 },
 ]
 
+type Company = {
+  id: string
+  name: string
+  type: string
+  focus: string
+  status: 'ativa' | 'pendente' | 'inativa'
+  description: string
+  supportedSchools: {
+    name: string
+    location: string
+    status: 'ativa' | 'pendente' | 'inativa'
+  }[]
+}
+
+const COMPANIES: Company[] = [
+  {
+    id: '1',
+    name: 'Tech Corp',
+    type: 'Patrocínio',
+    focus: 'Bolsas e conectividade',
+    status: 'pendente',
+    description:
+      'Apoia escolas com patrocínio recorrente e cobertura de conectividade para turmas prioritárias.',
+    supportedSchools: [
+      {
+        name: 'Escola São Paulo',
+        location: 'São Paulo, SP • Pública',
+        status: 'ativa',
+      },
+      {
+        name: 'Escola Rio Branco',
+        location: 'Rio de Janeiro, RJ • Privada',
+        status: 'ativa',
+      },
+      {
+        name: 'Escola Horizonte',
+        location: 'Belo Horizonte, MG • Pública',
+        status: 'ativa',
+      },
+    ],
+  },
+
+  {
+    id: '2',
+    name: 'Futuro S/A',
+    type: 'Investimento social',
+    focus: 'Expansão regional',
+    status: 'ativa',
+    description:
+      'Empresa parceira focada na ampliação do acesso à plataforma em regiões com menor cobertura educacional.',
+    supportedSchools: [
+      {
+        name: 'Escola Monte Azul',
+        location: 'Porto Alegre, RS • Pública',
+        status: 'ativa',
+      },
+      {
+        name: 'Escola Boa Vista',
+        location: 'Curitiba, PR • Pública',
+        status: 'ativa',
+      },
+    ],
+  },
+
+  {
+    id: '3',
+    name: 'Educa Mais',
+    type: 'Apoio educacional',
+    focus: 'Materiais digitais',
+    status: 'inativa',
+    description:
+      'Parceria voltada ao fornecimento de recursos digitais e apoio pedagógico para escolas cadastradas.',
+    supportedSchools: [
+      {
+        name: 'Escola Caminhos',
+        location: 'Florianópolis, SC • Privada',
+        status: 'inativa',
+      },
+    ],
+  },
+]
+
 const STATUS_COLORS: Record<School['status'], string> = {
   ativa: '#22c55e',
   pendente: '#f59e0b',
@@ -85,6 +169,7 @@ export default function Page() {
   const [view, setView] = useState<'escola' | 'empresa'>('escola')
   const [selectedSchoolId, setSelectedSchoolId] = useState<string>('1')
   const [query, setQuery] = useState('')
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>('1')
 
   const filteredSchools = SCHOOLS.filter(s =>
     s.name.toLowerCase().includes(query.toLowerCase())
@@ -92,6 +177,13 @@ export default function Page() {
 
   const selectedSchool = SCHOOLS.find(s => s.id === selectedSchoolId)
   const schoolClasses = CLASSES.filter(c => c.schoolId === selectedSchoolId)
+  const filteredCompanies = COMPANIES.filter(company =>
+  company.name.toLowerCase().includes(query.toLowerCase())
+)
+
+const selectedCompany = COMPANIES.find(
+  company => company.id === selectedCompanyId
+)
 
   return (
     <AppPageContainer className="gap-4 md:gap-5">
@@ -487,14 +579,378 @@ export default function Page() {
         </Box>
       )}
 
-      {/* ---- EMPRESA VIEW ---- */}
-      {view === 'empresa' && (
-        <Box data-testid="empresa-view" sx={{ py: 6, textAlign: 'center' }}>
-          <Typography sx={{ color: 'text.secondary', fontWeight: 600 }}>
-            Visão de Empresas em desenvolvimento...
+    {/* ---- EMPRESA  ---- */}
+{view === 'empresa' && selectedCompany && (
+  <Box data-testid="empresa-view" sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+      <Box>
+        <Typography sx={{ fontWeight: 700, fontSize: 18 }}>
+          Empresas parceiras
+        </Typography>
+        <Typography sx={{ color: 'text.secondary', fontSize: 13, mt: 0.25 }}>
+          Gerencie a operação das empresas em blocos separados: lista, cobertura e escolas apoiadas.
+        </Typography>
+      </Box>
+
+      <Button
+        startIcon={<AddRoundedIcon />}
+        variant="contained"
+        disableElevation
+        sx={{
+          backgroundColor: theme.palette.error.main,
+          borderRadius: '10px',
+          fontWeight: 700,
+          px: 2.5,
+          py: 1,
+          textTransform: 'none',
+          flexShrink: 0,
+          '&:hover': { backgroundColor: theme.palette.error.dark },
+        }}
+      >
+        Nova parceria
+      </Button>
+    </Box>
+
+    <Box
+      sx={{
+        backgroundColor: 'background.paper',
+        borderRadius: '14px',
+        border: '1px solid',
+        borderColor: 'background.border',
+        p: 1.5,
+      }}
+    >
+      <SearchBarAndFilter
+        query={query}
+        onQueryChange={setQuery}
+        resultsSummary={{
+          count: filteredCompanies.length,
+          singularLabel: 'resultado',
+          pluralLabel: 'resultado(s)',
+        }}
+        searchPlaceholder="Pesquisar empresas..."
+      />
+    </Box>
+
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
+        gap: 2,
+      }}
+    >
+     
+      <Box
+        sx={{
+          backgroundColor: 'background.paper',
+          border: '1px solid',
+          borderColor: 'background.border',
+          borderRadius: '18px',
+          p: 2,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+        }}
+      >
+        <Box
+          sx={{
+            border: '1px solid',
+            borderColor: 'background.border',
+            borderRadius: '14px',
+            p: 2,
+          }}
+        >
+          <Typography sx={{ fontWeight: 700, fontSize: 16 }}>
+            Lista de empresas
+          </Typography>
+          <Typography sx={{ color: 'text.secondary', fontSize: 13, mt: 0.5 }}>
+            Selecione uma empresa para visualizar o detalhamento do apoio e das escolas cobertas.
           </Typography>
         </Box>
-      )}
+
+        {filteredCompanies.map(company => {
+          const isSelected = company.id === selectedCompanyId
+
+          return (
+            <Box
+              key={company.id}
+              onClick={() => setSelectedCompanyId(company.id)}
+              sx={{
+                backgroundColor: isSelected
+                  ? alpha(theme.palette.error.main, 0.06)
+                  : 'background.paper',
+                border: '1px solid',
+                borderColor: isSelected
+                  ? alpha(theme.palette.error.main, 0.25)
+                  : 'background.border',
+                borderRadius: '16px',
+                cursor: 'pointer',
+                p: 2,
+                transition: 'all 0.18s',
+                '&:hover': {
+                  borderColor: alpha(theme.palette.error.main, 0.3),
+                  backgroundColor: alpha(theme.palette.error.main, 0.04),
+                },
+              }}
+            >
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Box
+                    sx={{
+                      width: 42,
+                      height: 42,
+                      borderRadius: '12px',
+                      backgroundColor: '#F3E8FF',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <SchoolRoundedIcon sx={{ color: '#9333EA', fontSize: 22 }} />
+                  </Box>
+
+                  <Typography sx={{ fontWeight: 700, fontSize: 16 }}>
+                    {company.name}
+                  </Typography>
+                </Box>
+
+                <Box
+                  sx={{
+                    backgroundColor:
+                      company.status === 'ativa'
+                        ? alpha('#22C55E', 0.12)
+                        : company.status === 'pendente'
+                          ? alpha('#F59E0B', 0.12)
+                          : alpha('#EF4444', 0.12),
+                    color:
+                      company.status === 'ativa'
+                        ? '#22C55E'
+                        : company.status === 'pendente'
+                          ? '#F59E0B'
+                          : '#EF4444',
+                    borderRadius: '999px',
+                    px: 1.5,
+                    py: 0.5,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    height: 'fit-content',
+                  }}
+                >
+                  {company.status}
+                </Box>
+              </Box>
+
+              <Box
+                sx={{
+                  border: '1px solid',
+                  borderColor: 'background.border',
+                  borderRadius: '12px',
+                  p: 1.5,
+                  backgroundColor: 'background.default',
+                  mb: 1.5,
+                }}
+              >
+                <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
+                  {company.type}
+                </Typography>
+              </Box>
+
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
+                <Box sx={{ border: '1px solid', borderColor: 'background.border', borderRadius: '12px', p: 1.5, backgroundColor: 'background.default' }}>
+                  <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
+                    Foco
+                  </Typography>
+                  <Typography sx={{ fontWeight: 600, mt: 0.5 }}>
+                    {company.focus}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ border: '1px solid', borderColor: 'background.border', borderRadius: '12px', p: 1.5, backgroundColor: 'background.default' }}>
+                  <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
+                    Escolas apoiadas
+                  </Typography>
+                  <Typography sx={{ fontWeight: 600, mt: 0.5 }}>
+                    {company.supportedSchools.length}
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          )
+        })}
+      </Box>
+
+      <Box
+  sx={{
+    backgroundColor: 'background.paper',
+    border: '1px solid',
+    borderColor: 'background.border',
+    borderRadius: '18px',
+    p: 2.5,
+  }}
+>
+  <Box
+    sx={{
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      gap: 2,
+    }}
+  >
+ 
+    <Box>
+      <Typography
+        sx={{
+          color: theme.palette.error.main,
+          fontWeight: 700,
+          fontSize: 14,
+        }}
+      >
+        Empresa selecionada sob aprovação
+      </Typography>
+
+      <Typography
+        sx={{
+          fontWeight: 700,
+          fontSize: 24,
+          mt: 1,
+        }}
+      >
+        {selectedCompany.name}
+      </Typography>
+
+      <Typography
+        sx={{
+          color: 'text.secondary',
+          mt: 1,
+          lineHeight: 1.5,
+        }}
+      >
+        {selectedCompany.description}
+      </Typography>
+    </Box>
+
+  
+    <Box
+      sx={{
+        display: 'flex',
+        gap: 1,
+      }}
+    >
+    
+      <Box
+        sx={{
+          width: 36,
+          height: 36,
+          borderRadius: '12px',
+          border: '1px solid',
+          borderColor: alpha('#22C55E', 0.25),
+          backgroundColor: alpha('#22C55E', 0.08),
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          transition: '0.18s',
+          '&:hover': {
+            backgroundColor: alpha('#22C55E', 0.16),
+          },
+        }}
+      >
+        <CheckCircleRoundedIcon
+          sx={{
+            color: '#22C55E',
+            fontSize: 20,
+          }}
+        />
+      </Box>
+
+      
+      <Box
+        sx={{
+          width: 36,
+          height: 36,
+          borderRadius: '12px',
+          border: '1px solid',
+          borderColor: alpha('#EF4444', 0.25),
+          backgroundColor: alpha('#EF4444', 0.08),
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          transition: '0.18s',
+          '&:hover': {
+            backgroundColor: alpha('#EF4444', 0.16),
+          },
+        }}
+      >
+        <CancelRoundedIcon
+          sx={{
+            color: '#EF4444',
+            fontSize: 20,
+          }}
+        />
+      </Box>
+    </Box>
+  </Box>
+
+
+        <Box
+          sx={{
+            backgroundColor: 'background.paper',
+            border: '1px solid',
+            borderColor: 'background.border',
+            borderRadius: '18px',
+            p: 2.5,
+          }}
+        >
+          <Typography sx={{ fontWeight: 700, fontSize: 16 }}>
+            Escolas apoiadas
+          </Typography>
+
+          <Typography sx={{ color: 'text.secondary', fontSize: 13, mt: 0.5, mb: 2 }}>
+            Visualização por lista das escolas vinculadas a esta parceria.
+          </Typography>
+
+          {selectedCompany.supportedSchools.map(school => (
+            <Box
+              key={school.name}
+              sx={{
+                border: '1px solid',
+                borderColor: 'background.border',
+                borderRadius: '14px',
+                p: 2,
+                mb: 1.5,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <Box>
+                <Typography sx={{ fontWeight: 600 }}>{school.name}</Typography>
+                <Typography sx={{ color: 'text.secondary', fontSize: 13, mt: 0.25 }}>
+                  {school.location}
+                </Typography>
+              </Box>
+
+              <Box
+                sx={{
+                  backgroundColor: alpha('#22C55E', 0.12),
+                  color: '#22C55E',
+                  borderRadius: '999px',
+                  px: 1.5,
+                  py: 0.5,
+                  fontSize: 12,
+                  fontWeight: 700,
+                }}
+              >
+                {school.status}
+              </Box>
+            </Box>
+          ))}
+        </Box>
+      </Box>
+    </Box>
+  </Box>
+)}
     </AppPageContainer>
   )
 }
