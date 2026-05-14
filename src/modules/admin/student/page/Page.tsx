@@ -6,6 +6,7 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded'
 import SwapHorizRoundedIcon from '@mui/icons-material/SwapHorizRounded'
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
+import { AppColors } from '@/app/theme/core/colors'
 import { IconButton, Menu, MenuItem } from '@mui/material'
 import { Box, Button, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
@@ -143,7 +144,7 @@ export default function Page() {
       variant="contained"
       disableElevation
       sx={{
-        backgroundColor: theme.palette.error.main,
+        backgroundColor: AppColors.role.admin.secondary,
         borderRadius: '10px',
         fontWeight: '700',
         px: 2.5,
