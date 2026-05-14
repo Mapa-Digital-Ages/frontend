@@ -7,10 +7,13 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import PersonAddAltRoundedIcon from '@mui/icons-material/PersonAddAltRounded'
 import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded'
 import { alpha, useTheme } from '@mui/material/styles'
-import { Box, Button, Typography } from '@mui/material'
+import { Box, Button, colors, Typography } from '@mui/material'
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 import CancelRoundedIcon from '@mui/icons-material/CancelRounded'
 import { useState } from 'react'
+import { AppColors } from '@/app/theme/core/colors'
+import { BusinessCenterRounded } from '@mui/icons-material'
+import BusinessTwoToneIcon from '@mui/icons-material/BusinessTwoTone';
 
 interface School {
   id: string
@@ -268,7 +271,7 @@ const selectedCompany = COMPANIES.find(
               variant="contained"
               disableElevation
               sx={{
-                backgroundColor: theme.palette.error.main,
+                backgroundColor: AppColors.role.admin.secondary,
                 borderRadius: '10px',
                 fontWeight: 700,
                 px: 2.5,
@@ -323,19 +326,19 @@ const selectedCompany = COMPANIES.find(
                   onClick={() => setSelectedSchoolId(school.id)}
                   sx={{
                     backgroundColor: isSelected
-                      ? alpha(theme.palette.error.main, 0.07)
+                      ? alpha(AppColors.role.admin.secondary, 0.07)
                       : 'background.paper',
                     border: '1px solid',
                     borderColor: isSelected
-                      ? alpha(theme.palette.error.main, 0.3)
+                      ? alpha(AppColors.role.admin.secondary, 0.3)
                       : 'background.border',
                     borderRadius: '16px',
                     cursor: 'pointer',
                     p: 2.5,
                     transition: 'all 0.18s',
                     '&:hover': {
-                      borderColor: alpha(theme.palette.error.main, 0.4),
-                      backgroundColor: alpha(theme.palette.error.main, 0.05),
+                      borderColor: alpha(AppColors.role.admin.secondary, 0.4),
+                      backgroundColor: alpha(AppColors.role.admin.secondary, 0.05),
                     },
                   }}
                 >
@@ -353,7 +356,7 @@ const selectedCompany = COMPANIES.find(
                         width: 36,
                         height: 36,
                         borderRadius: '10px',
-                        backgroundColor: alpha(theme.palette.error.main, 0.12),
+                        backgroundColor: alpha(AppColors.role.admin.secondary, 0.12),
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -361,7 +364,7 @@ const selectedCompany = COMPANIES.find(
                       }}
                     >
                       <SchoolRoundedIcon
-                        sx={{ color: theme.palette.error.main, fontSize: 20 }}
+                        sx={{ color: AppColors.role.admin.secondary, fontSize: 20 }}
                       />
                     </Box>
                     <Box>
@@ -433,7 +436,7 @@ const selectedCompany = COMPANIES.find(
                 warningText={`${selectedSchool.atRisk} em risco alto`}
                 warningColor={
                   selectedSchool.atRisk > 0
-                    ? theme.palette.error.main
+                    ? AppColors.role.admin.secondary
                     : theme.palette.success.main
                 }
               />
@@ -478,10 +481,11 @@ const selectedCompany = COMPANIES.find(
                   variant="contained"
                   disableElevation
                   sx={{
-                    backgroundColor: theme.palette.error.main,
+                    backgroundColor:  AppColors.role.admin.secondary,
                     borderRadius: '10px',
                     fontWeight: 700,
                     px: 2.5,
+                    py: 1,
                     textTransform: 'none',
                     '&:hover': { backgroundColor: theme.palette.error.dark },
                   }}
@@ -582,7 +586,14 @@ const selectedCompany = COMPANIES.find(
     {/* ---- EMPRESA  ---- */}
 {view === 'empresa' && selectedCompany && (
   <Box data-testid="empresa-view" sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+    <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              justifyContent: 'space-between',
+              gap: 2,
+            }}
+          >
       <Box>
         <Typography sx={{ fontWeight: 700, fontSize: 18 }}>
           Empresas parceiras
@@ -597,7 +608,7 @@ const selectedCompany = COMPANIES.find(
         variant="contained"
         disableElevation
         sx={{
-          backgroundColor: theme.palette.error.main,
+          backgroundColor: AppColors.role.admin.secondary,
           borderRadius: '10px',
           fontWeight: 700,
           px: 2.5,
@@ -677,19 +688,19 @@ const selectedCompany = COMPANIES.find(
               onClick={() => setSelectedCompanyId(company.id)}
               sx={{
                 backgroundColor: isSelected
-                  ? alpha(theme.palette.error.main, 0.06)
+                  ? alpha(AppColors.role.admin.secondary, 0.08)
                   : 'background.paper',
                 border: '1px solid',
                 borderColor: isSelected
-                  ? alpha(theme.palette.error.main, 0.25)
+                  ? alpha(AppColors.role.admin.secondary, 0.25)
                   : 'background.border',
                 borderRadius: '16px',
                 cursor: 'pointer',
                 p: 2,
                 transition: 'all 0.18s',
                 '&:hover': {
-                  borderColor: alpha(theme.palette.error.main, 0.3),
-                  backgroundColor: alpha(theme.palette.error.main, 0.04),
+                  borderColor: alpha(AppColors.role.admin.secondary, 0.3),
+                  backgroundColor: alpha(AppColors.role.admin.secondary, 0.04),
                 },
               }}
             >
@@ -700,13 +711,13 @@ const selectedCompany = COMPANIES.find(
                       width: 42,
                       height: 42,
                       borderRadius: '12px',
-                      backgroundColor: '#F3E8FF',
+                      backgroundColor: alpha(AppColors.role.admin.secondary, 0.1),
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    <SchoolRoundedIcon sx={{ color: '#9333EA', fontSize: 22 }} />
+                    <BusinessTwoToneIcon sx={{ color: AppColors.role.admin.secondary, fontSize: 22 }} />
                   </Box>
 
                   <Typography sx={{ fontWeight: 700, fontSize: 16 }}>
@@ -800,7 +811,7 @@ const selectedCompany = COMPANIES.find(
     <Box>
       <Typography
         sx={{
-          color: theme.palette.error.main,
+          color: AppColors.role.admin.secondary,
           fontWeight: 700,
           fontSize: 14,
         }}
