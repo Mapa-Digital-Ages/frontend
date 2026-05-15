@@ -165,11 +165,10 @@ function UploadApprovalCard({
       <Box
         sx={{
           display: 'flex',
-          flexDirection: { sm: 'row', xs: 'column' },
+          flexDirection: { sm: 'row' },
           justifyContent: 'space-between',
         }}
       >
-        <Box sx={{ display: { sm: 'block', xs: 'none' } }}>{statusRow}</Box>
         <Box
           sx={{
             alignItems: 'center',
@@ -177,8 +176,18 @@ function UploadApprovalCard({
             flexShrink: 0,
             flexWrap: 'wrap',
             gap: 1,
-            gridColumn: 2,
-            gridRow: 1,
+            justifyContent: 'flex-start',
+          }}
+        >
+          {statusRow}
+        </Box>
+        <Box
+          sx={{
+            alignItems: 'center',
+            display: 'flex',
+            flexShrink: 0,
+            flexWrap: 'wrap',
+            gap: 1,
             justifyContent: 'flex-end',
           }}
         >

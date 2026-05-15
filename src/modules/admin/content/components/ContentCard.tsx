@@ -64,29 +64,12 @@ function ContentCard({ actions, item, type }: ApprovalCardProps) {
       <Box
         sx={{
           alignItems: { sm: 'flex-start', xs: 'center' },
-          columnGap: 2,
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) auto',
+          display: 'flex',
           gridTemplateRows: { sm: 'auto', xs: 'auto auto' },
           justifyContent: 'space-between',
           rowGap: { sm: 0, xs: 1.5 },
         }}
       >
-        <Box
-          sx={{
-            alignItems: 'center',
-            display: 'flex',
-            flexShrink: 0,
-            flexWrap: 'wrap',
-            gap: 1,
-            gridColumn: 2,
-            gridRow: 1,
-            justifyContent: 'flex-end',
-          }}
-        >
-          {primaryActionButtons}
-        </Box>
-
         <Typography
           sx={{
             color: 'text.primary',
@@ -103,6 +86,20 @@ function ContentCard({ actions, item, type }: ApprovalCardProps) {
         >
           {item.title}
         </Typography>
+        <Box
+          sx={{
+            alignItems: 'center',
+            display: 'flex',
+            flexShrink: 0,
+            flexWrap: 'wrap',
+            gap: 1,
+            gridColumn: 2,
+            gridRow: 1,
+            justifyContent: 'flex-end',
+          }}
+        >
+          {primaryActionButtons}
+        </Box>
       </Box>
 
       <Box

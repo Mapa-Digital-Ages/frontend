@@ -1,10 +1,10 @@
-import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded'
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import RuleFolderOutlinedIcon from '@mui/icons-material/RuleFolderOutlined'
 import { Box } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
+import { useNavigate } from 'react-router-dom'
 import {
   startTransition,
   useCallback,
@@ -16,6 +16,7 @@ import {
 import LoadingScreen from '@/shared/ui/LoadingScreen'
 import PageHeader from '@/shared/ui/PageHeader'
 import AppPageContainer from '@/shared/ui/AppPageContainer'
+import { buildAdminCorrectionRoute } from '@/app/router/paths'
 import { useUserRole } from '@/app/access/hook'
 import { contentApprovalService } from '@/modules/admin/content/services/runtime'
 import { uploadApprovalService } from '@/modules/admin/content/services/upload/runtime'
@@ -36,7 +37,6 @@ import type {
 } from '../types/upload'
 import {
   ALL_SUBJECT_TAG_CONTEXTS,
-  CONTENT_APPROVAL_CARD_STATUS,
   UPLOAD_APPROVAL_CARD_STATUS,
 } from '@/shared/utils/themes'
 import ApprovalActionModal, {
@@ -62,6 +62,10 @@ import type { AdminStat } from '@/shared/types/common'
 import { adminService } from '../../dashboard/services/service'
 import SubjectComponent from '../components/SubjectComponent'
 import SubjectCard from '../components/SubjectCard'
+import SubjectActionModal, {
+  type SubjectActionModalMode,
+  type SubjectFormValues,
+} from '../components/SubjectActionModal'
 
 const DEFAULT_PAGE_INDEX = 1
 
@@ -162,6 +166,7 @@ function getDefaultUploadEditValues(
 
 export default function Page() {
   const theme = useTheme()
+  const navigate = useNavigate()
   const [stats, setStats] = useState<AdminStat[]>([])
   const { role, isAdmin } = useUserRole()
   const [contentQuery, setContentQuery] = useState<ApprovalQueueQuery>(
@@ -252,6 +257,35 @@ export default function Page() {
       ALL_SUBJECT_TAG_CONTEXTS[0]
     )
   }, [])
+
+  const [subjectModalMode, setSubjectModalMode] =
+    useState<SubjectActionModalMode | null>(null)
+  const [subjectModalValues, setSubjectModalValues] =
+    useState<SubjectFormValues>({ name: '', color: 'rgba(32, 109, 197, 1)' })
+  const [isSubjectModalSubmitting, setIsSubjectModalSubmitting] =
+    useState(false)
+
+  const resetSubjectModal = useCallback(() => {
+    setSubjectModalMode(null)
+    setSubjectModalValues({ name: '', color: 'rgba(32, 109, 197, 1)' })
+  }, [])
+
+  const handleSubjectModalChange = useCallback(
+    (field: keyof SubjectFormValues, value: string) => {
+      setSubjectModalValues(current => ({ ...current, [field]: value }))
+    },
+    []
+  )
+
+  const handleSubjectModalConfirm = useCallback(async () => {
+    if (!subjectModalMode || isSubjectModalSubmitting) return
+    setIsSubjectModalSubmitting(true)
+    try {
+      resetSubjectModal()
+    } finally {
+      setIsSubjectModalSubmitting(false)
+    }
+  }, [subjectModalMode, isSubjectModalSubmitting, resetSubjectModal])
 
   const resetContentModal = useCallback(() => {
     setContentModalState(null)
@@ -510,12 +544,11 @@ export default function Page() {
         },
         {
           accentColor: warning,
-          disabled: item.status === 'correctionInProgress',
           icon: <RuleFolderOutlinedIcon />,
           id: `${item.id}-review`,
           label: 'Iniciar correção',
           onClick: () => {
-            void handleUploadStatusUpdate(item.id, 'correctionInProgress')
+            navigate(buildAdminCorrectionRoute(item.id))
           },
           tooltip: 'Iniciar correção',
         },
@@ -531,7 +564,13 @@ export default function Page() {
         },
       ]
     },
-    [handleUploadStatusUpdate, theme.palette]
+    [
+      handleUploadStatusUpdate,
+      navigate,
+      theme.palette.error.main,
+      theme.palette.success.main,
+      theme.palette.warning.main,
+    ]
   )
 
   useEffect(() => {
@@ -609,15 +648,25 @@ export default function Page() {
           }
           emptyStateTitle="Nenhuma disciplina encontrada"
           items={contentQueue.items}
-          onCreate={() =>
-            openContentModal({ action: 'create', type: 'content' })
-          }
+          onCreate={() => {
+            setSubjectModalValues({ name: '', color: 'rgba(32, 109, 197, 1)' })
+            setSubjectModalMode({ action: 'create' })
+          }}
           onEdit={() => toggleContentSelectionMode('edit')}
           onDelete={() => toggleContentSelectionMode('delete')}
-          onItemSelect={handleContentItemSelect}
+          onItemSelect={item => {
+            setSubjectModalValues({
+              name: item.title,
+              color:
+                item.kind === 'content'
+                  ? (item.subject?.color ?? 'rgba(32, 109, 197, 1)')
+                  : 'rgba(32, 109, 197, 1)',
+            })
+            setSubjectModalMode({ action: 'edit', subjectName: item.title })
+          }}
           selectionMode={contentSelectionMode}
           renderItem={item => (
-            <SubjectCard actions={buildSubjectActions(item)} item={item} />
+            <SubjectCard actions={[...buildSubjectActions(item)]} item={item} />
           )}
           role={role}
           title="Cadastro de disciplinas"
@@ -747,6 +796,17 @@ export default function Page() {
         open={uploadModalState !== null}
         role={role}
         values={uploadModalValues}
+      />
+
+      <SubjectActionModal
+        mode={subjectModalMode}
+        isSubmitting={isSubjectModalSubmitting}
+        onChange={handleSubjectModalChange}
+        onClose={resetSubjectModal}
+        onConfirm={handleSubjectModalConfirm}
+        open={subjectModalMode !== null}
+        role={role}
+        values={subjectModalValues}
       />
     </AppPageContainer>
   )

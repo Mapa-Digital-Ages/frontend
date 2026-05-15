@@ -1,6 +1,7 @@
 import type { ApiResponse, HttpRequestOptions } from '@/shared/types/api'
 import type {
   ApprovalCorrectionInput,
+  ContentApprovalStatus,
   ContentCorrectionMessageInput,
   ContentCorrectionSession,
   ApprovalQueueQuery,
@@ -15,6 +16,7 @@ import {
 import { getSubjectTagContextByLabel } from '@/shared/utils/themes'
 import {
   buildApprovalQueueQuery,
+  mapContentApprovalItem,
   mapContentApprovalQueueResponse,
   type ApprovalQueueResponseDto,
   type ContentApprovalDto,
@@ -60,9 +62,10 @@ let mockContentApprovalItems: ContentApprovalItem[] = [
     kind: 'content',
     requestedAt: '22/03/2026',
     resourceType: 'task',
+    status: 'inReview',
     subject: getSubjectTagContextByLabel('Matemática'),
     title: 'Lista de Equações do 7º ano',
-    subtitle: 'Matemática · 22/03/2026',
+    subtitle: 'Tarefa · Matemática · 22/03/2026',
     badges: [
       {
         id: 'content-1-origin',
@@ -76,9 +79,10 @@ let mockContentApprovalItems: ContentApprovalItem[] = [
     kind: 'content',
     requestedAt: '28/03/2026',
     resourceType: 'exam',
+    status: 'sent',
     subject: getSubjectTagContextByLabel('Português'),
     title: 'Prova mensal de interpretação',
-    subtitle: 'Português · 28/03/2026',
+    subtitle: 'Prova · Português · 28/03/2026',
     badges: [
       {
         id: 'content-2-group',
@@ -102,9 +106,10 @@ let mockContentApprovalItems: ContentApprovalItem[] = [
     kind: 'content',
     requestedAt: '01/04/2026',
     resourceType: 'task',
+    status: 'approved',
     subject: getSubjectTagContextByLabel('Português'),
     title: 'Produção textual argumentativa',
-    subtitle: 'Português · 01/04/2026',
+    subtitle: 'Tarefa · Português · 01/04/2026',
     badges: [
       {
         id: 'content-3-school',
@@ -118,9 +123,10 @@ let mockContentApprovalItems: ContentApprovalItem[] = [
     kind: 'content',
     requestedAt: '04/04/2026',
     resourceType: 'exam',
+    status: 'rejected',
     subject: getSubjectTagContextByLabel('Ciências'),
     title: 'Simulado de Ciências naturais',
-    subtitle: 'Ciências · 04/04/2026',
+    subtitle: 'Prova · Ciências · 04/04/2026',
     badges: [
       {
         id: 'content-4-note',
@@ -177,7 +183,10 @@ function queryMockContentApprovals(
   return paginateApprovalItems(filteredItems, query)
 }
 
-function updateMockContentStatus(id: string): ContentApprovalItem {
+function updateMockContentStatus(
+  id: string,
+  status: ContentApprovalStatus
+): ContentApprovalItem {
   let nextItem: ContentApprovalItem | undefined
 
   mockContentApprovalItems = mockContentApprovalItems.map(item => {
@@ -185,9 +194,7 @@ function updateMockContentStatus(id: string): ContentApprovalItem {
       return item
     }
 
-    nextItem = {
-      ...item,
-    }
+    nextItem = { ...item, status }
 
     return nextItem
   })
@@ -208,6 +215,13 @@ function getMockContentCorrectionSession(id: string): ContentCorrectionSession {
     throw new Error(`Content approval ${id} not found`)
   }
 
+  const correctionStatus =
+    item.status === 'correctionInProgress'
+      ? 'inProgress'
+      : item.status === 'approved'
+        ? 'completed'
+        : 'pending'
+
   return {
     contentId: item.id,
     messages: mockContentCorrectionMessages[item.id] ?? [
@@ -220,6 +234,7 @@ function getMockContentCorrectionSession(id: string): ContentCorrectionSession {
     ],
     requestedAt: item.requestedAt,
     resourceType: item.resourceType,
+    status: correctionStatus,
     subject: item.subject,
     subtitle: item.subtitle,
     title: item.title,
@@ -230,7 +245,7 @@ function getMockContentCorrectionSession(id: string): ContentCorrectionSession {
 function markMockContentCorrectionInProgress(
   id: string
 ): ContentCorrectionSession {
-  updateMockContentStatus(id)
+  updateMockContentStatus(id, 'correctionInProgress')
 
   const currentMessages = mockContentCorrectionMessages[id] ?? []
 
@@ -286,6 +301,7 @@ function createMockContentDraft(input?: ContentApprovalDraftInput) {
     kind: 'content',
     requestedAt,
     resourceType,
+    status: 'sent',
     subject,
     title: input?.title ?? 'Nova avaliação em preparação',
     subtitle: buildContentSubtitle({
@@ -440,6 +456,29 @@ export function createContentApprovalRepository({
         }
 
         return queryMockContentApprovals(query)
+      }
+    },
+    async updateContentStatus(id: string, status: ContentApprovalStatus) {
+      const remoteStatus =
+        status === 'inReview'
+          ? 'in_review'
+          : status === 'correctionInProgress'
+            ? 'correction_in_progress'
+            : status
+
+      try {
+        const response = await client.patch<ContentApprovalDto>(
+          `admin/approvals/content/${id}/status`,
+          { status: remoteStatus }
+        )
+
+        return mapContentApprovalItem(response.data)
+      } catch (error) {
+        if (!shouldUseFallback(error, allowFallback)) {
+          throw error
+        }
+
+        return updateMockContentStatus(id, status)
       }
     },
     async createLocalContentDraft(input?: ContentApprovalDraftInput) {

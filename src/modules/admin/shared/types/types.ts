@@ -71,6 +71,7 @@ export interface ContentApprovalItem extends BaseApprovalItem {
   id: string
   kind: 'content'
   resourceType?: ContentApprovalResourceType
+  status: ContentApprovalStatus
   subject?: SubjectContext
 }
 
@@ -169,6 +170,7 @@ export interface ContentCorrectionSession {
   messages: ContentCorrectionMessage[]
   requestedAt?: string
   resourceType?: ContentApprovalResourceType
+  status: ContentCorrectionStatus
   subject?: SubjectContext
   subtitle?: string
   title: string

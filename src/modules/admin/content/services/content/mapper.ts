@@ -71,6 +71,17 @@ export function buildApprovalQueueQuery(query: ApprovalQueueQuery) {
   } satisfies HttpRequestOptions['query']
 }
 
+const contentStatusMap: Record<
+  ContentApprovalStatusDto,
+  ContentApprovalStatus
+> = {
+  approved: 'approved',
+  correction_in_progress: 'correctionInProgress',
+  in_review: 'inReview',
+  rejected: 'rejected',
+  sent: 'sent',
+}
+
 function mapApprovalQueue<TSource, TTarget>(
   response: ApiResponse<ApprovalQueueResponseDto<TSource>>,
   mapItem: (item: TSource) => TTarget
@@ -92,6 +103,7 @@ export function mapContentApprovalItem(
     kind: 'content',
     requestedAt: formatBrazilianDate(item.requested_at),
     resourceType: item.resource_type,
+    status: contentStatusMap[item.status],
     subject: getSubjectTagContextByLabel(item.stage_label),
     title: item.title,
     subtitle: `${contentResourceLabelMap[item.resource_type]} · ${
