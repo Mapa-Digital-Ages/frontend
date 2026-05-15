@@ -1,68 +1,72 @@
-import AddRoundedIcon from '@mui/icons-material/AddRounded'
-import ModeEditOutlineOutlinedIcon from '@mui/icons-material/ModeEditOutlineOutlined'
-import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined'
-import {
-  Box,
-  Button,
-  IconButton,
-  List,
-  ListItem,
-  Typography,
-} from '@mui/material'
+import { Box, Button, List, ListItem, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import type { ReactNode } from 'react'
 import EmptyState from '@/shared/ui/EmptyState'
 import Pagination from '@/shared/ui/Pagination'
 import { SearchBarAndFilter } from '@/shared/ui/SearchBarAndFilter'
-import type { DropdownOption } from '@/shared/ui/AppDropdown'
 import AppCard from '@/shared/ui/AppCard'
 import {
   getRoleAccentColor,
-  getHoverStyle,
   getSelectionOutlineStyle,
 } from '@/app/theme/core/roles'
-import type {
-  ApprovalResultsSummary,
-  ApprovalStatus,
-} from '@/modules/admin/shared/types/types'
+import type { ApprovalResultsSummary } from '@/modules/admin/shared/types/types'
 import type { UserRole } from '@/shared/types/user'
+import type { UploadApprovalItem, UploadApprovalStatus } from '../types/upload'
+import type { DropdownOption } from '@/shared/ui/AppDropdown'
 
-export interface ApprovalStatusOption extends DropdownOption {
-  value: ApprovalStatus
+export interface UploadStatusOption extends DropdownOption {
+  value: UploadApprovalStatus | 'all'
 }
 
-interface ApprovalComponentProps<TItem extends { id: string }> {
+interface UploadApprovalComponentProps {
+  currentPage: number
   description: string
   emptyStateDescription: string
   emptyStateTitle: string
-  items: TItem[]
-  onCreate?: () => void | Promise<void>
+  filterOptions: UploadStatusOption[]
+  items: UploadApprovalItem[]
   onDelete?: () => void | Promise<void>
   onEdit?: () => void | Promise<void>
-  onItemSelect?: (item: TItem) => void
-  renderItem: (item: TItem) => ReactNode
+  onItemSelect?: (item: UploadApprovalItem) => void
+  onPageChange: (page: number) => void
+  onQueryChange: (query: string) => void
+  onStatusChange: (status: UploadApprovalStatus | 'all') => void
+  query: string
+  renderItem: (item: UploadApprovalItem) => ReactNode
+  resultsSummary: ApprovalResultsSummary
   role: UserRole
+  searchPlaceholder: string
+  selectedStatus: UploadApprovalStatus | 'all'
   selectionMode?: 'edit' | 'delete' | null
   title: string
+  totalPages: number
 }
 
-function SubjectComponent<TItem extends { id: string }>({
+function UploadApprovalComponent({
+  currentPage,
   description,
   emptyStateDescription,
   emptyStateTitle,
+  filterOptions,
   items,
-  onCreate,
   onItemSelect,
+  onPageChange,
+  onQueryChange,
+  onStatusChange,
+  query,
   renderItem,
+  resultsSummary,
   role,
+  searchPlaceholder,
+  selectedStatus,
   selectionMode,
   title,
-}: ApprovalComponentProps<TItem>) {
+  totalPages,
+}: UploadApprovalComponentProps) {
   const theme = useTheme()
   const accentColor = getRoleAccentColor(theme, role)
   const errorColor = theme.palette.error.main
   const isSelecting = selectionMode != null
-  const accentHover = getHoverStyle(theme, accentColor)
   const selectionColor = selectionMode === 'delete' ? errorColor : accentColor
   const selectionOutline = isSelecting
     ? getSelectionOutlineStyle(theme, selectionColor)
@@ -116,59 +120,48 @@ function SubjectComponent<TItem extends { id: string }>({
               {description}
             </Typography>
           </Box>
-          <Box
-            sx={{
-              alignItems: 'flex-start',
-              display: 'flex',
-              gap: 1.5,
-              justifyContent: 'space-between',
-              minWidth: 0,
-            }}
-          >
-            {onCreate ? (
-              <IconButton
-                aria-label="Adicionar"
-                onClick={onCreate}
-                sx={{
-                  backgroundColor: 'background.paper',
-                  border: '1px solid',
-                  borderColor: 'background.border',
-                  borderRadius: 'var(--app-radius-control)',
-                  color: 'text.primary',
-                  flexShrink: 0,
-                  height: 32,
-                  width: 32,
-                  '&:hover': {
-                    backgroundColor: accentHover.backgroundColor,
-                    borderColor: accentHover.borderColor,
-                  },
-                }}
-              >
-                <AddRoundedIcon fontSize="small" />
-              </IconButton>
-            ) : null}
-          </Box>
         </Box>
+      </Box>
+
+      <Box sx={{ flexShrink: 0 }}>
+        <SearchBarAndFilter
+          filterOptions={filterOptions}
+          onQueryChange={onQueryChange}
+          onStatusChange={status =>
+            onStatusChange(status as UploadApprovalStatus | 'all')
+          }
+          query={query}
+          resultsSummary={resultsSummary}
+          searchPlaceholder={searchPlaceholder}
+          selectedStatus={selectedStatus}
+        />
       </Box>
       <Box
         sx={{
+          borderTop: `1px solid ${theme.palette.divider}`,
+          display: 'flex',
+          flex: 1,
+          flexDirection: 'column',
           minHeight: 0,
+          paddingTop: 2,
         }}
       >
         {items.length > 0 ? (
           <List
             disablePadding
             sx={{
-              display: 'grid',
-              gridTemplateColumns: { md: 'repeat(4, 1fr)', xs: '1fr' },
+              display: 'flex',
+              flex: 1,
+              flexDirection: 'column',
               gap: 2,
-              maxHeight: { md: 160, xs: 'none' },
+              maxHeight: { md: 360, xs: 'none' },
               minHeight: 0,
               overflowX: 'hidden',
               overflowY: 'auto',
-              pr: { md: 1, xs: 0.75 },
               pl: { md: 0.5, xs: 0.75 },
+              pr: { md: 1, xs: 0.75 },
               pt: { md: 0.5, xs: 0.75 },
+              width: '100%',
             }}
           >
             {items.map(item => (
@@ -216,12 +209,7 @@ function SubjectComponent<TItem extends { id: string }>({
               py: 2,
             }}
           >
-            <Box
-              sx={{
-                maxWidth: 720,
-                width: '100%',
-              }}
-            >
+            <Box sx={{ maxWidth: 720, width: '100%' }}>
               <EmptyState
                 description={emptyStateDescription}
                 title={emptyStateTitle}
@@ -230,8 +218,17 @@ function SubjectComponent<TItem extends { id: string }>({
           </Box>
         )}
       </Box>
+
+      <Box sx={{ flexShrink: 0, marginTop: 'auto', width: '100%' }}>
+        <Pagination
+          currentPage={currentPage}
+          onPageChange={onPageChange}
+          role={role}
+          totalPages={totalPages}
+        />
+      </Box>
     </AppCard>
   )
 }
 
-export default SubjectComponent
+export default UploadApprovalComponent

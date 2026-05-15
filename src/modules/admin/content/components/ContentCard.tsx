@@ -9,18 +9,15 @@ import type {
   ApprovalItem,
   ApprovalType,
 } from '@/modules/admin/shared/types/types'
-import { approvalCardStatusToTagContext } from '@/shared/utils/themes'
 
 export interface ApprovalCardProps {
   actions: ApprovalCardAction[]
   item: ApprovalItem
-  status: ApprovalCardStatus
   type: ApprovalType
 }
 
-function ContentCard({ actions, item, status, type }: ApprovalCardProps) {
+function ContentCard({ actions, item, type }: ApprovalCardProps) {
   const theme = useTheme()
-  const statusChip = approvalCardStatusToTagContext(status, theme.palette)
   const subjectTag =
     type === 'content' && item.kind === 'content' ? item.subject : null
   const primaryActions = actions.filter(
@@ -62,8 +59,6 @@ function ContentCard({ actions, item, status, type }: ApprovalCardProps) {
     )
   })
 
-  const statusRow = <AppTags size="sm" tags={[statusChip]} />
-
   return (
     <AppCard>
       <Box
@@ -79,18 +74,6 @@ function ContentCard({ actions, item, status, type }: ApprovalCardProps) {
       >
         <Box
           sx={{
-            display: { sm: 'none', xs: 'block' },
-            gridColumn: 1,
-            gridRow: 1,
-            minWidth: 0,
-            overflow: 'hidden',
-          }}
-        >
-          {statusRow}
-        </Box>
-
-        <Box
-          sx={{
             alignItems: 'center',
             display: 'flex',
             flexShrink: 0,
@@ -101,7 +84,6 @@ function ContentCard({ actions, item, status, type }: ApprovalCardProps) {
             justifyContent: 'flex-end',
           }}
         >
-          <Box sx={{ display: { sm: 'block', xs: 'none' } }}>{statusRow}</Box>
           {primaryActionButtons}
         </Box>
 

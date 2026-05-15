@@ -45,17 +45,6 @@ const contentResourceLabelMap = {
   task: 'Tarefa',
 } as const satisfies Record<ContentApprovalResourceType, string>
 
-const contentStatusMap: Record<
-  ContentApprovalStatusDto,
-  ContentApprovalStatus
-> = {
-  approved: 'approved',
-  correction_in_progress: 'correctionInProgress',
-  in_review: 'inReview',
-  rejected: 'rejected',
-  sent: 'sent',
-}
-
 function formatBrazilianDate(value: string) {
   const [year, month, day] = value.split('-')
 
@@ -108,7 +97,6 @@ export function mapContentApprovalItem(
     subtitle: `${contentResourceLabelMap[item.resource_type]} · ${
       item.stage_label
     } · ${formatBrazilianDate(item.requested_at)}`,
-    status: contentStatusMap[item.status],
     badges: item.tags.map(tag => ({
       id: tag.id,
       label: tag.label,

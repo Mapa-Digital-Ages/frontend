@@ -5,9 +5,7 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import RuleFolderOutlinedIcon from '@mui/icons-material/RuleFolderOutlined'
 import { Box } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { useNavigate } from 'react-router-dom'
 import {
-  ReactNode,
   startTransition,
   useCallback,
   useDeferredValue,
@@ -18,22 +16,28 @@ import {
 import LoadingScreen from '@/shared/ui/LoadingScreen'
 import PageHeader from '@/shared/ui/PageHeader'
 import AppPageContainer from '@/shared/ui/AppPageContainer'
-import { buildAdminCorrectionRoute } from '@/app/router/paths'
 import { useUserRole } from '@/app/access/hook'
 import { contentApprovalService } from '@/modules/admin/content/services/runtime'
+import { uploadApprovalService } from '@/modules/admin/content/services/upload/runtime'
 import type {
   ApprovalCardAction,
   ApprovalQueueQuery,
   ApprovalQueueResult,
   ApprovalResultsSummary,
-  ApprovalStatus,
   ContentApprovalDraftInput,
   ContentApprovalItem,
-  ContentApprovalStatus,
 } from '@/modules/admin/shared/types/types'
+import type {
+  UploadApprovalItem,
+  UploadApprovalQuery,
+  UploadApprovalResult,
+  UploadApprovalStatus,
+  UploadEditFormValues,
+} from '../types/upload'
 import {
   ALL_SUBJECT_TAG_CONTEXTS,
   CONTENT_APPROVAL_CARD_STATUS,
+  UPLOAD_APPROVAL_CARD_STATUS,
 } from '@/shared/utils/themes'
 import ApprovalActionModal, {
   type ApprovalActionModalMode,
@@ -42,23 +46,33 @@ import type {
   ContentApprovalActionFormValues,
   GuardianApprovalActionFormValues,
 } from '@/modules/admin/shared/types/types'
-import ApprovalCard from '@/modules/admin/shared/components/ApprovalCard'
 import ApprovalComponent, {
   type ApprovalStatusOption,
 } from '@/modules/admin/shared/components/ApprovalComponent'
-import OrdinaryHeader from '@/shared/ui/OrdinaryHeader'
+import UploadApprovalComponent, {
+  type UploadStatusOption,
+} from '../components/UploadApprovalComponent'
+import UploadApprovalCard from '../components/UploadApprovalCard'
+import UploadActionModal, {
+  type UploadActionModalMode,
+} from '../components/UploadActionModal'
 import ContentCard from '../components/ContentCard'
 import MetricsCard from '@/shared/ui/MetricsCard'
-import { IconVariantName } from '@/app/theme/core/palette'
-import type { Stat } from '@/shared/types/common'
+import type { AdminStat } from '@/shared/types/common'
 import { adminService } from '../../dashboard/services/service'
-import { Subject } from '@mui/icons-material'
 import SubjectComponent from '../components/SubjectComponent'
 import SubjectCard from '../components/SubjectCard'
 
 const DEFAULT_PAGE_INDEX = 1
 
-const DEFAULT_QUERY: ApprovalQueueQuery = {
+const DEFAULT_CONTENT_QUERY: ApprovalQueueQuery = {
+  page: DEFAULT_PAGE_INDEX,
+  pageSize: 10,
+  query: '',
+  status: 'all',
+}
+
+const DEFAULT_UPLOAD_QUERY: UploadApprovalQuery = {
   page: DEFAULT_PAGE_INDEX,
   pageSize: 10,
   query: '',
@@ -74,6 +88,15 @@ const contentFilterOptions: ApprovalStatusOption[] = [
   { label: 'Recusado', value: 'rejected' },
 ]
 
+const uploadFilterOptions: UploadStatusOption[] = [
+  { label: 'Todos', value: 'all' },
+  { label: 'Aguardando revisão', value: 'pending' },
+  { label: 'Em revisão', value: 'inReview' },
+  { label: 'Correção em andamento', value: 'correctionInProgress' },
+  { label: 'Corrigido', value: 'corrected' },
+  { label: 'Rejeitado', value: 'rejected' },
+]
+
 const resourceTypeOptions = [
   { label: 'Tarefa', value: 'task' },
   { label: 'Prova', value: 'exam' },
@@ -87,11 +110,23 @@ const subjectOptions = ALL_SUBJECT_TAG_CONTEXTS.filter(
 }))
 
 const DEFAULT_SUBJECT_ID =
-  subjectOptions.find(subject => subject.value === 'mathematics')?.value ??
+  subjectOptions.find(s => s.value === 'mathematics')?.value ??
   subjectOptions[0]?.value ??
   'default'
 
-function emptyQueueResult<TItem>(pageSize: number): ApprovalQueueResult<TItem> {
+function emptyContentQueue(
+  pageSize: number
+): ApprovalQueueResult<ContentApprovalItem> {
+  return {
+    currentPage: DEFAULT_PAGE_INDEX,
+    items: [],
+    pageSize,
+    totalItems: 0,
+    totalPages: 1,
+  }
+}
+
+function emptyUploadQueue(pageSize: number): UploadApprovalResult {
   return {
     currentPage: DEFAULT_PAGE_INDEX,
     items: [],
@@ -102,18 +137,14 @@ function emptyQueueResult<TItem>(pageSize: number): ApprovalQueueResult<TItem> {
 }
 
 function buildResultsSummary(count: number): ApprovalResultsSummary {
-  return {
-    count,
-    pluralLabel: 'resultados',
-    singularLabel: 'resultado',
-  }
+  return { count, pluralLabel: 'resultados', singularLabel: 'resultado' }
 }
 
 function getTodayRequestDate() {
   return new Intl.DateTimeFormat('pt-BR').format(new Date())
 }
 
-function getDefaultFormValues(): ContentApprovalActionFormValues {
+function getDefaultContentFormValues(): ContentApprovalActionFormValues {
   return {
     type: 'content',
     requestedAt: getTodayRequestDate(),
@@ -123,84 +154,77 @@ function getDefaultFormValues(): ContentApprovalActionFormValues {
   }
 }
 
+function getDefaultUploadEditValues(
+  item?: UploadApprovalItem
+): UploadEditFormValues {
+  return { activityType: item?.activityType ?? 'exercise' }
+}
+
 export default function Page() {
   const theme = useTheme()
-  const [stats, setStats] = useState<Stat[]>([])
-  const navigate = useNavigate()
+  const [stats, setStats] = useState<AdminStat[]>([])
   const { role, isAdmin } = useUserRole()
-
-  const [contentQuery, setContentQuery] =
-    useState<ApprovalQueueQuery>(DEFAULT_QUERY)
+  const [contentQuery, setContentQuery] = useState<ApprovalQueueQuery>(
+    DEFAULT_CONTENT_QUERY
+  )
   const [contentQueue, setContentQueue] = useState<
     ApprovalQueueResult<ContentApprovalItem>
-  >(emptyQueueResult(DEFAULT_QUERY.pageSize))
+  >(emptyContentQueue(DEFAULT_CONTENT_QUERY.pageSize))
   const [contentError, setContentError] = useState<string | null>(null)
   const [hasLoadedContent, setHasLoadedContent] = useState(false)
   const [contentRefreshKey, setContentRefreshKey] = useState(0)
-  const [modalState, setModalState] = useState<ApprovalActionModalMode | null>(
-    null
-  )
-  const [modalValues, setModalValues] =
-    useState<ContentApprovalActionFormValues>(getDefaultFormValues())
-  const [isModalSubmitting, setIsModalSubmitting] = useState(false)
-  const [selectionMode, setSelectionMode] = useState<'edit' | 'delete' | null>(
-    null
-  )
+  const [contentModalState, setContentModalState] =
+    useState<ApprovalActionModalMode | null>(null)
+  const [contentModalValues, setContentModalValues] =
+    useState<ContentApprovalActionFormValues>(getDefaultContentFormValues())
+  const [isContentModalSubmitting, setIsContentModalSubmitting] =
+    useState(false)
+  const [contentSelectionMode, setContentSelectionMode] = useState<
+    'edit' | 'delete' | null
+  >(null)
 
   const deferredContentSearch = useDeferredValue(contentQuery.query)
-
   const resolvedContentQuery = useMemo(
-    () => ({
-      ...contentQuery,
-      query: deferredContentSearch,
-    }),
+    () => ({ ...contentQuery, query: deferredContentSearch }),
     [contentQuery, deferredContentSearch]
+  )
+
+  const [uploadQuery, setUploadQuery] =
+    useState<UploadApprovalQuery>(DEFAULT_UPLOAD_QUERY)
+  const [uploadQueue, setUploadQueue] = useState<UploadApprovalResult>(
+    emptyUploadQueue(DEFAULT_UPLOAD_QUERY.pageSize)
+  )
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [hasLoadedUploads, setHasLoadedUploads] = useState(false)
+  const [uploadRefreshKey, setUploadRefreshKey] = useState(0)
+  const [uploadModalState, setUploadModalState] =
+    useState<UploadActionModalMode | null>(null)
+  const [uploadModalValues, setUploadModalValues] =
+    useState<UploadEditFormValues>(getDefaultUploadEditValues())
+  const [isUploadModalSubmitting, setIsUploadModalSubmitting] = useState(false)
+  const [uploadSelectionMode, setUploadSelectionMode] = useState<
+    'edit' | 'delete' | null
+  >(null)
+
+  const deferredUploadSearch = useDeferredValue(uploadQuery.query)
+  const resolvedUploadQuery = useMemo(
+    () => ({ ...uploadQuery, query: deferredUploadSearch }),
+    [uploadQuery, deferredUploadSearch]
   )
 
   const contentResultsSummary = useMemo(
     () => buildResultsSummary(contentQueue.totalItems),
     [contentQueue.totalItems]
   )
-
-  const getSubjectById = useCallback((subjectId: string) => {
-    return (
-      ALL_SUBJECT_TAG_CONTEXTS.find(
-        subject => (subject.id ?? subject.label) === subjectId
-      ) ?? ALL_SUBJECT_TAG_CONTEXTS[0]
-    )
-  }, [])
-
-  const resetModal = useCallback(() => {
-    setModalState(null)
-    setModalValues(getDefaultFormValues())
-    setSelectionMode(null)
-  }, [])
-
-  const toggleSelectionMode = useCallback((action: 'edit' | 'delete') => {
-    setSelectionMode(current => (current === action ? null : action))
-  }, [])
-
-  const handleContentItemSelect = useCallback(
-    (item: ContentApprovalItem) => {
-      if (!selectionMode) return
-
-      setSelectionMode(null)
-      setModalState({ action: selectionMode, item, type: 'content' })
-      setModalValues({
-        type: 'content',
-        requestedAt: item.requestedAt ?? getTodayRequestDate(),
-        resourceType: item.resourceType ?? 'task',
-        subjectId: String(item.subject?.id ?? DEFAULT_SUBJECT_ID),
-        title: item.title ?? '',
-      })
-    },
-    [selectionMode]
+  const uploadResultsSummary = useMemo(
+    () => buildResultsSummary(uploadQueue.totalItems),
+    [uploadQueue.totalItems]
   )
-  const getStatById = (id: Stat['id']) => stats.find(stat => stat.id === id)
+
+  const getStatById = (id: AdminStat['id']) => stats.find(s => s.id === id)
   const contents = getStatById('contents')
   const task = getStatById('task')
   const subjects = getStatById('subjects')
-
   const cards = [
     {
       helperColor: theme.palette.text.secondary,
@@ -222,9 +246,29 @@ export default function Page() {
     },
   ]
 
-  const openModal = useCallback((nextMode: ApprovalActionModalMode) => {
-    setModalState(nextMode)
-    setModalValues({
+  const getSubjectById = useCallback((subjectId: string) => {
+    return (
+      ALL_SUBJECT_TAG_CONTEXTS.find(s => (s.id ?? s.label) === subjectId) ??
+      ALL_SUBJECT_TAG_CONTEXTS[0]
+    )
+  }, [])
+
+  const resetContentModal = useCallback(() => {
+    setContentModalState(null)
+    setContentModalValues(getDefaultContentFormValues())
+    setContentSelectionMode(null)
+  }, [])
+
+  const toggleContentSelectionMode = useCallback(
+    (action: 'edit' | 'delete') => {
+      setContentSelectionMode(current => (current === action ? null : action))
+    },
+    []
+  )
+
+  const openContentModal = useCallback((nextMode: ApprovalActionModalMode) => {
+    setContentModalState(nextMode)
+    setContentModalValues({
       type: 'content',
       requestedAt:
         nextMode.action === 'create'
@@ -242,241 +286,303 @@ export default function Page() {
     })
   }, [])
 
-  const handleContentStatusUpdate = useCallback(
-    async (id: string, status: ContentApprovalStatus) => {
-      await contentApprovalService.updateContentStatus(id, status)
-      setContentRefreshKey(current => current + 1)
+  const handleContentItemSelect = useCallback(
+    (item: ContentApprovalItem) => {
+      if (!contentSelectionMode) return
+      setContentSelectionMode(null)
+      setContentModalState({
+        action: contentSelectionMode,
+        item,
+        type: 'content',
+      })
+      setContentModalValues({
+        type: 'content',
+        requestedAt: item.requestedAt ?? getTodayRequestDate(),
+        resourceType: item.resourceType ?? 'task',
+        subjectId: String(item.subject?.id ?? DEFAULT_SUBJECT_ID),
+        title: item.title ?? '',
+      })
     },
-    []
+    [contentSelectionMode]
   )
 
-  const buildActivityActions = useCallback(
-    (item: ContentApprovalItem): ApprovalCardAction[] => {
-      const success = theme.palette.success.main
-      const error = theme.palette.error.main
-      const warning = theme.palette.warning.main
-      const correctionRoute = buildAdminCorrectionRoute(item.id)
-
-      return [
-        {
-          accentColor: warning,
-          icon:
-            item.status === 'approved' ? (
-              <EditOutlinedIcon />
-            ) : (
-              <RuleFolderOutlinedIcon />
-            ),
-          id: `${item.id}-review`,
-          label: 'Revisar atividade',
-          onClick: () => {
-            if (item.status === 'approved') {
-              openModal({ action: 'edit', item, type: 'content' })
-              return
-            }
-            navigate(correctionRoute)
-          },
-          priority: 'secondary',
-          tooltip:
-            item.status === 'approved'
-              ? 'Editar atividade'
-              : 'Corrigir atividade',
-        },
-        {
-          accentColor: error,
-          icon: <DeleteOutlineRoundedIcon />,
-          id: `${item.id}-delete`,
-          label: 'Excluir atividade',
-          onClick: () => {
-            openModal({ action: 'delete', item, type: 'content' })
-          },
-          priority: 'secondary',
-          tooltip: 'Excluir atividade',
-        },
-        {
-          accentColor: success,
-          disabled: item.status === 'approved',
-          icon: <CheckRoundedIcon />,
-          id: `${item.id}-approve`,
-          label: 'Validar atividade',
-          onClick: () => {
-            void handleContentStatusUpdate(item.id, 'approved')
-          },
-        },
-        {
-          accentColor: error,
-          disabled: item.status === 'rejected',
-          icon: <CancelOutlinedIcon />,
-          id: `${item.id}-reject`,
-          label: 'Rejeitar atividade',
-          onClick: () => {
-            void handleContentStatusUpdate(item.id, 'rejected')
-          },
-        },
-      ]
-    },
-    [handleContentStatusUpdate, navigate, openModal, theme.palette]
-  )
-
-  const buildContentActions = useCallback(
-    (item: ContentApprovalItem): ApprovalCardAction[] => {
-      const error = theme.palette.error.main
-      const warning = theme.palette.warning.main
-
-      return [
-        {
-          accentColor: warning,
-          icon: <EditOutlinedIcon />,
-          id: `${item.id}-review`,
-          label: 'Editar Conteúdo',
-          onClick: () => {
-            openModal({ action: 'edit', item, type: 'content' })
-          },
-        },
-        {
-          accentColor: error,
-          disabled: item.status === 'rejected',
-          icon: <DeleteOutlineRoundedIcon />,
-          id: `${item.id}-reject`,
-          label: 'Excluir Conteúdo',
-          onClick: () => {
-            openModal({ action: 'delete', item, type: 'content' })
-          },
-        },
-      ]
-    },
-    [openModal, theme.palette]
-  )
-
-  const buildSubjectActions = useCallback(
-    (item: ContentApprovalItem): ApprovalCardAction[] => {
-      const error = theme.palette.error.main
-      const warning = theme.palette.warning.main
-
-      return [
-        {
-          accentColor: warning,
-          icon: <EditOutlinedIcon />,
-          id: `${item.id}-review`,
-          label: 'Editar Disciplina',
-          onClick: () => {
-            openModal({ action: 'edit', item, type: 'content' })
-          },
-        },
-        {
-          accentColor: error,
-          disabled: item.status === 'rejected',
-          icon: <DeleteOutlineRoundedIcon />,
-          id: `${item.id}-reject`,
-          label: 'Excluir Disciplina',
-          onClick: () => {
-            openModal({ action: 'delete', item, type: 'content' })
-          },
-        },
-      ]
-    },
-    [openModal, theme.palette]
-  )
-
-  const handleModalChange = useCallback(
+  const handleContentModalChange = useCallback(
     (
       field:
         | keyof ContentApprovalActionFormValues
         | keyof GuardianApprovalActionFormValues,
       value: string | ContentApprovalDraftInput['resourceType']
     ) => {
-      setModalValues(current => ({
-        ...current,
-        [field]: value,
-      }))
+      setContentModalValues(current => ({ ...current, [field]: value }))
     },
     []
   )
 
-  const handleModalConfirm = useCallback(async () => {
-    if (!modalState || isModalSubmitting) {
-      return
-    }
-
-    setIsModalSubmitting(true)
-
+  const handleContentModalConfirm = useCallback(async () => {
+    if (!contentModalState || isContentModalSubmitting) return
+    setIsContentModalSubmitting(true)
     try {
-      if (modalState.action === 'delete' && modalState.item) {
-        await contentApprovalService.removeLocalContentItem(modalState.item.id)
-        setContentRefreshKey(current => current + 1)
-        resetModal()
+      if (contentModalState.action === 'delete' && contentModalState.item) {
+        await contentApprovalService.removeLocalContentItem(
+          contentModalState.item.id
+        )
+        setContentRefreshKey(k => k + 1)
+        resetContentModal()
         return
       }
-
       const payload: ContentApprovalDraftInput = {
-        requestedAt: modalValues.requestedAt,
-        resourceType: modalValues.resourceType,
-        subject: getSubjectById(modalValues.subjectId),
-        title: modalValues.title || 'Novo conteúdo',
+        requestedAt: contentModalValues.requestedAt,
+        resourceType: contentModalValues.resourceType,
+        subject: getSubjectById(contentModalValues.subjectId),
+        title: contentModalValues.title || 'Novo conteúdo',
       }
-
-      if (modalState.action === 'create') {
+      if (contentModalState.action === 'create') {
         await contentApprovalService.createLocalContentDraft(payload)
-      } else if (modalState.item) {
+      } else if (contentModalState.item) {
         await contentApprovalService.updateLocalContentItem(
-          modalState.item.id,
+          contentModalState.item.id,
           payload
         )
       }
-
-      setContentRefreshKey(current => current + 1)
-      resetModal()
+      setContentRefreshKey(k => k + 1)
+      resetContentModal()
     } finally {
-      setIsModalSubmitting(false)
+      setIsContentModalSubmitting(false)
     }
-  }, [getSubjectById, isModalSubmitting, modalState, modalValues, resetModal])
+  }, [
+    contentModalState,
+    contentModalValues,
+    getSubjectById,
+    isContentModalSubmitting,
+    resetContentModal,
+  ])
 
-  const isModalConfirmDisabled = useMemo(() => {
-    if (!modalState || modalState.action === 'delete') {
+  const isContentModalConfirmDisabled = useMemo(() => {
+    if (!contentModalState || contentModalState.action === 'delete')
       return false
-    }
+    return !contentModalValues.title.trim()
+  }, [contentModalState, contentModalValues.title])
 
-    return !modalValues.title.trim()
-  }, [modalState, modalValues.title])
+  const resetUploadModal = useCallback(() => {
+    setUploadModalState(null)
+    setUploadModalValues(getDefaultUploadEditValues())
+    setUploadSelectionMode(null)
+  }, [])
+
+  const toggleUploadSelectionMode = useCallback((action: 'edit' | 'delete') => {
+    setUploadSelectionMode(current => (current === action ? null : action))
+  }, [])
+
+  const handleUploadItemSelect = useCallback(
+    (item: UploadApprovalItem) => {
+      if (!uploadSelectionMode) return
+      setUploadSelectionMode(null)
+      setUploadModalState({ action: uploadSelectionMode, item })
+      setUploadModalValues(getDefaultUploadEditValues(item))
+    },
+    [uploadSelectionMode]
+  )
+
+  const handleUploadModalChange = useCallback(
+    (
+      field: keyof UploadEditFormValues,
+      value: UploadEditFormValues[typeof field]
+    ) => {
+      setUploadModalValues(current => ({ ...current, [field]: value }))
+    },
+    []
+  )
+
+  const handleUploadModalConfirm = useCallback(async () => {
+    if (!uploadModalState || isUploadModalSubmitting) return
+    setIsUploadModalSubmitting(true)
+    try {
+      if (uploadModalState.action === 'delete') {
+        await uploadApprovalService.removeUpload(uploadModalState.item.id)
+        setUploadRefreshKey(k => k + 1)
+        resetUploadModal()
+        return
+      }
+      await uploadApprovalService.updateUploadActivityType(
+        uploadModalState.item.id,
+        uploadModalValues
+      )
+      setUploadRefreshKey(k => k + 1)
+      resetUploadModal()
+    } finally {
+      setIsUploadModalSubmitting(false)
+    }
+  }, [
+    uploadModalState,
+    uploadModalValues,
+    isUploadModalSubmitting,
+    resetUploadModal,
+  ])
+
+  const handleUploadStatusUpdate = useCallback(
+    async (id: string, status: UploadApprovalStatus) => {
+      await uploadApprovalService.updateUploadStatus(id, status)
+      setUploadRefreshKey(k => k + 1)
+    },
+    []
+  )
+
+  const buildContentActions = useCallback(
+    (item: ContentApprovalItem): ApprovalCardAction[] => {
+      const error = theme.palette.error.main
+      const warning = theme.palette.warning.main
+      return [
+        {
+          accentColor: warning,
+          icon: <EditOutlinedIcon />,
+          id: `${item.id}-edit`,
+          label: 'Editar Conteúdo',
+          onClick: () =>
+            openContentModal({ action: 'edit', item, type: 'content' }),
+        },
+        {
+          accentColor: error,
+          icon: <DeleteOutlineRoundedIcon />,
+          id: `${item.id}-delete`,
+          label: 'Excluir Conteúdo',
+          onClick: () =>
+            openContentModal({ action: 'delete', item, type: 'content' }),
+        },
+      ]
+    },
+    [openContentModal, theme.palette]
+  )
+
+  const buildSubjectActions = useCallback(
+    (item: ContentApprovalItem): ApprovalCardAction[] => {
+      const error = theme.palette.error.main
+      const warning = theme.palette.warning.main
+      return [
+        {
+          accentColor: warning,
+          icon: <EditOutlinedIcon />,
+          id: `${item.id}-edit`,
+          label: 'Editar Disciplina',
+          onClick: () =>
+            openContentModal({ action: 'edit', item, type: 'content' }),
+        },
+        {
+          accentColor: error,
+          icon: <DeleteOutlineRoundedIcon />,
+          id: `${item.id}-delete`,
+          label: 'Excluir Disciplina',
+          onClick: () =>
+            openContentModal({ action: 'delete', item, type: 'content' }),
+        },
+      ]
+    },
+    [openContentModal, theme.palette]
+  )
+
+  const buildUploadActions = useCallback(
+    (item: UploadApprovalItem): ApprovalCardAction[] => {
+      const success = theme.palette.success.main
+      const error = theme.palette.error.main
+      const warning = theme.palette.warning.main
+      return [
+        {
+          accentColor: warning,
+          icon: <EditOutlinedIcon />,
+          id: `${item.id}-edit`,
+          label: 'Editar tipo de atividade',
+          onClick: () => {
+            setUploadModalState({ action: 'edit', item })
+            setUploadModalValues(getDefaultUploadEditValues(item))
+          },
+          priority: 'secondary',
+          tooltip: 'Editar tipo de atividade',
+        },
+        {
+          accentColor: success,
+          disabled: item.status === 'corrected',
+          icon: <CheckRoundedIcon />,
+          id: `${item.id}-correct`,
+          label: 'Marcar como corrigido',
+          onClick: () => {
+            void handleUploadStatusUpdate(item.id, 'corrected')
+          },
+          tooltip: 'Marcar como corrigido',
+        },
+        {
+          accentColor: warning,
+          disabled: item.status === 'correctionInProgress',
+          icon: <RuleFolderOutlinedIcon />,
+          id: `${item.id}-review`,
+          label: 'Iniciar correção',
+          onClick: () => {
+            void handleUploadStatusUpdate(item.id, 'correctionInProgress')
+          },
+          tooltip: 'Iniciar correção',
+        },
+        {
+          accentColor: error,
+          icon: <DeleteOutlineRoundedIcon />,
+          id: `${item.id}-delete`,
+          label: 'Excluir upload',
+          onClick: () => {
+            setUploadModalState({ action: 'delete', item })
+          },
+          tooltip: 'Excluir upload',
+        },
+      ]
+    },
+    [handleUploadStatusUpdate, theme.palette]
+  )
 
   useEffect(() => {
     let isActive = true
-
     async function loadContentQueue() {
       try {
         const nextStats = await adminService.getStats()
         const nextContentQueue =
           await contentApprovalService.getContentQueue(resolvedContentQuery)
-
-        if (!isActive) {
-          return
-        }
+        if (!isActive) return
         setStats(nextStats)
         setContentError(null)
         setContentQueue(nextContentQueue)
       } catch {
-        if (!isActive) {
-          return
-        }
-
+        if (!isActive) return
         setContentError(
           'Nenhum conteúdo cadastrado. Cadastre um novo conteúdo para revisão.'
         )
-        setContentQueue(emptyQueueResult(DEFAULT_QUERY.pageSize))
+        setContentQueue(emptyContentQueue(DEFAULT_CONTENT_QUERY.pageSize))
       }
-
-      if (isActive) {
-        setHasLoadedContent(true)
-      }
+      if (isActive) setHasLoadedContent(true)
     }
-
     void loadContentQueue()
-
     return () => {
       isActive = false
     }
   }, [resolvedContentQuery, contentRefreshKey])
 
-  if (!isAdmin || role !== 'admin' || !hasLoadedContent) {
+  useEffect(() => {
+    let isActive = true
+    async function loadUploadQueue() {
+      try {
+        const nextUploadQueue =
+          await uploadApprovalService.getUploadQueue(resolvedUploadQuery)
+        if (!isActive) return
+        setUploadError(null)
+        setUploadQueue(nextUploadQueue)
+      } catch {
+        if (!isActive) return
+        setUploadError('Nenhum upload encontrado.')
+        setUploadQueue(emptyUploadQueue(DEFAULT_UPLOAD_QUERY.pageSize))
+      }
+      if (isActive) setHasLoadedUploads(true)
+    }
+    void loadUploadQueue()
+    return () => {
+      isActive = false
+    }
+  }, [resolvedUploadQuery, uploadRefreshKey])
+
+  if (!isAdmin || role !== 'admin' || !hasLoadedContent || !hasLoadedUploads) {
     return <LoadingScreen />
   }
 
@@ -499,17 +605,17 @@ export default function Page() {
           description="As disciplinas cadastradas passam a aparecer nos formulários de conteúdo, trilha, avaliação e nivelamento."
           emptyStateDescription={
             contentError ??
-            'Tente outro filtro ou cadastre um novo conteúdo para iniciar a revisão.'
+            'Tente outro filtro ou cadastre uma nova disciplina.'
           }
-          emptyStateTitle="Nenhum conteúdo encontrado"
+          emptyStateTitle="Nenhuma disciplina encontrada"
           items={contentQueue.items}
-          onCreate={() => {
-            openModal({ action: 'create', type: 'content' })
-          }}
-          onEdit={() => toggleSelectionMode('edit')}
-          onDelete={() => toggleSelectionMode('delete')}
+          onCreate={() =>
+            openContentModal({ action: 'create', type: 'content' })
+          }
+          onEdit={() => toggleContentSelectionMode('edit')}
+          onDelete={() => toggleContentSelectionMode('delete')}
           onItemSelect={handleContentItemSelect}
-          selectionMode={selectionMode}
+          selectionMode={contentSelectionMode}
           renderItem={item => (
             <SubjectCard actions={buildSubjectActions(item)} item={item} />
           )}
@@ -539,128 +645,108 @@ export default function Page() {
           emptyStateTitle="Nenhum conteúdo encontrado"
           filterOptions={contentFilterOptions}
           items={contentQueue.items}
-          onCreate={() => {
-            openModal({ action: 'create', type: 'content' })
-          }}
-          onEdit={() => toggleSelectionMode('edit')}
-          onDelete={() => toggleSelectionMode('delete')}
+          onCreate={() =>
+            openContentModal({ action: 'create', type: 'content' })
+          }
+          onEdit={() => toggleContentSelectionMode('edit')}
+          onDelete={() => toggleContentSelectionMode('delete')}
           onItemSelect={handleContentItemSelect}
-          selectionMode={selectionMode}
+          selectionMode={contentSelectionMode}
           onPageChange={page => {
-            startTransition(() => {
-              setContentQuery(currentQuery => ({
-                ...currentQuery,
-                page,
-              }))
-            })
+            startTransition(() => setContentQuery(q => ({ ...q, page })))
           }}
           onQueryChange={query => {
-            startTransition(() => {
-              setContentQuery(currentQuery => ({
-                ...currentQuery,
-                page: DEFAULT_PAGE_INDEX,
-                query,
-              }))
-            })
+            startTransition(() =>
+              setContentQuery(q => ({ ...q, page: DEFAULT_PAGE_INDEX, query }))
+            )
           }}
           onStatusChange={status => {
-            startTransition(() => {
-              setContentQuery(currentQuery => ({
-                ...currentQuery,
-                page: DEFAULT_PAGE_INDEX,
-                status,
-              }))
-            })
+            startTransition(() =>
+              setContentQuery(q => ({ ...q, page: DEFAULT_PAGE_INDEX, status }))
+            )
           }}
           query={contentQuery.query}
           renderItem={item => (
             <ContentCard
               actions={buildContentActions(item)}
               item={item}
-              status={CONTENT_APPROVAL_CARD_STATUS[item.status]}
               type="content"
             />
           )}
           resultsSummary={contentResultsSummary}
           role={role}
-          searchPlaceholder="Pesquisar tarefas e provas..."
+          searchPlaceholder="Pesquisar conteúdos..."
           selectedStatus={contentQuery.status}
           title="Lista e Cadastro de Conteúdos"
           totalPages={contentQueue.totalPages}
         />
-        <ApprovalComponent
-          currentPage={contentQueue.currentPage}
-          description="Cadastre uma nova tarefa ou prova para revisão."
+
+        <UploadApprovalComponent
+          currentPage={uploadQueue.currentPage}
+          description="Revise e corrija os uploads enviados pelos alunos."
           emptyStateDescription={
-            contentError ??
-            'Tente outro filtro ou cadastre um novo conteúdo para iniciar a revisão.'
+            uploadError ?? 'Nenhum upload encontrado. Tente outro filtro.'
           }
-          emptyStateTitle="Nenhum conteúdo encontrado"
-          filterOptions={contentFilterOptions}
-          items={contentQueue.items}
-          onCreate={() => {
-            openModal({ action: 'create', type: 'content' })
-          }}
-          onEdit={() => toggleSelectionMode('edit')}
-          onDelete={() => toggleSelectionMode('delete')}
-          onItemSelect={handleContentItemSelect}
-          selectionMode={selectionMode}
+          emptyStateTitle="Nenhum upload encontrado"
+          filterOptions={uploadFilterOptions}
+          items={uploadQueue.items}
+          onEdit={() => toggleUploadSelectionMode('edit')}
+          onDelete={() => toggleUploadSelectionMode('delete')}
+          onItemSelect={handleUploadItemSelect}
+          selectionMode={uploadSelectionMode}
           onPageChange={page => {
-            startTransition(() => {
-              setContentQuery(currentQuery => ({
-                ...currentQuery,
-                page,
-              }))
-            })
+            startTransition(() => setUploadQuery(q => ({ ...q, page })))
           }}
           onQueryChange={query => {
-            startTransition(() => {
-              setContentQuery(currentQuery => ({
-                ...currentQuery,
-                page: DEFAULT_PAGE_INDEX,
-                query,
-              }))
-            })
+            startTransition(() =>
+              setUploadQuery(q => ({ ...q, page: DEFAULT_PAGE_INDEX, query }))
+            )
           }}
           onStatusChange={status => {
-            startTransition(() => {
-              setContentQuery(currentQuery => ({
-                ...currentQuery,
-                page: DEFAULT_PAGE_INDEX,
-                status,
-              }))
-            })
+            startTransition(() =>
+              setUploadQuery(q => ({ ...q, page: DEFAULT_PAGE_INDEX, status }))
+            )
           }}
-          query={contentQuery.query}
+          query={uploadQuery.query}
           renderItem={item => (
-            <ApprovalCard
-              actions={buildActivityActions(item)}
+            <UploadApprovalCard
+              actions={buildUploadActions(item)}
               item={item}
-              status={CONTENT_APPROVAL_CARD_STATUS[item.status]}
-              type="content"
+              status={UPLOAD_APPROVAL_CARD_STATUS[item.status]}
             />
           )}
-          resultsSummary={contentResultsSummary}
+          resultsSummary={uploadResultsSummary}
           role={role}
-          searchPlaceholder="Pesquisar tarefas e provas..."
-          selectedStatus={contentQuery.status}
-          title="Cadastro e Aprovação de atividades"
-          totalPages={contentQueue.totalPages}
+          searchPlaceholder="Pesquisar uploads..."
+          selectedStatus={uploadQuery.status}
+          title="Uploads de Alunos"
+          totalPages={uploadQueue.totalPages}
         />
       </Box>
 
       <ApprovalActionModal
-        mode={modalState}
-        disableConfirm={isModalConfirmDisabled}
-        isSubmitting={isModalSubmitting}
-        onChange={handleModalChange}
-        onClose={resetModal}
-        onConfirm={handleModalConfirm}
-        open={modalState !== null}
+        mode={contentModalState}
+        disableConfirm={isContentModalConfirmDisabled}
+        isSubmitting={isContentModalSubmitting}
+        onChange={handleContentModalChange}
+        onClose={resetContentModal}
+        onConfirm={handleContentModalConfirm}
+        open={contentModalState !== null}
         resourceTypeOptions={[...resourceTypeOptions]}
         role={role}
         subjectOptions={subjectOptions}
-        values={modalValues}
+        values={contentModalValues}
+      />
+
+      <UploadActionModal
+        mode={uploadModalState}
+        isSubmitting={isUploadModalSubmitting}
+        onChange={handleUploadModalChange}
+        onClose={resetUploadModal}
+        onConfirm={handleUploadModalConfirm}
+        open={uploadModalState !== null}
+        role={role}
+        values={uploadModalValues}
       />
     </AppPageContainer>
   )
