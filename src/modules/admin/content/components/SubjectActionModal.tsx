@@ -37,6 +37,28 @@ const PRESET_COLORS = [
   { label: 'Geral', value: 'rgba(32, 109, 197, 1)' },
 ]
 
+function rgbaToHex(rgba: string): string {
+  const match = rgba
+    .trim()
+    .match(/^rgba?\(\s*(\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\s*\)$/i)
+  if (match) {
+    const r = Number.parseInt(match[1]).toString(16).padStart(2, '0')
+    const g = Number.parseInt(match[2]).toString(16).padStart(2, '0')
+    const b = Number.parseInt(match[3]).toString(16).padStart(2, '0')
+    return `#${r}${g}${b}`
+  }
+  if (rgba.startsWith('#')) return rgba
+  return '#206dc5'
+}
+
+function hexToRgba(hex: string): string {
+  const clean = hex.replace('#', '')
+  const r = Number.parseInt(clean.slice(0, 2), 16)
+  const g = Number.parseInt(clean.slice(2, 4), 16)
+  const b = Number.parseInt(clean.slice(4, 6), 16)
+  return `rgba(${r}, ${g}, ${b}, 1)`
+}
+
 const fieldLabelSx = {
   color: 'text.secondary',
   fontSize: { md: 13, xs: 12 },
@@ -90,6 +112,8 @@ function SubjectActionModal({
       ? 'Salvar disciplina'
       : 'Salvar alterações'
 
+  const currentHex = rgbaToHex(values.color)
+
   return (
     <AppActionModal
       confirmLabel={confirmLabel}
@@ -123,7 +147,7 @@ function SubjectActionModal({
           <Box className="grid gap-2">
             <Typography sx={fieldLabelSx}>Cor de identificação</Typography>
 
-            {/* Color swatches */}
+            {/* Preset swatches */}
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
               {PRESET_COLORS.map(preset => {
                 const isSelected = values.color === preset.value
@@ -136,21 +160,22 @@ function SubjectActionModal({
                     type="button"
                     sx={{
                       backgroundColor: preset.value,
-                      border: '2px solid',
-                      borderColor: isSelected ? 'text.primary' : 'transparent',
+                      border: '3px solid',
+                      borderColor: isSelected
+                        ? theme.palette.background.paper
+                        : 'transparent',
                       borderRadius: '50%',
-                      cursor: 'pointer',
-                      height: 28,
-                      outline: isSelected
-                        ? `3px solid ${theme.palette.background.paper}`
+                      boxShadow: isSelected
+                        ? `0 0 0 2px ${preset.value}`
                         : 'none',
-                      outlineOffset: '-1px',
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                      height: 32,
                       padding: 0,
-                      transition:
-                        'transform 120ms ease, border-color 120ms ease',
-                      width: 28,
+                      transition: 'transform 120ms ease, box-shadow 120ms ease',
+                      width: 32,
                       '&:hover': {
-                        transform: 'scale(1.15)',
+                        transform: 'scale(1.12)',
                       },
                     }}
                   />
@@ -158,30 +183,69 @@ function SubjectActionModal({
               })}
             </Box>
 
-            {/* Custom hex input */}
+            {/* Native color picker + value display */}
             <Box
-              sx={{ alignItems: 'center', display: 'flex', gap: 1.5, mt: 0.5 }}
+              sx={{
+                alignItems: 'center',
+                display: 'flex',
+                gap: 1.5,
+                mt: 0.5,
+              }}
             >
               <Box
                 sx={{
-                  backgroundColor: values.color || theme.palette.primary.main,
+                  alignItems: 'center',
+                  backgroundColor: 'background.default',
                   border: '1px solid',
                   borderColor: 'background.border',
-                  borderRadius: '8px',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  display: 'flex',
                   flexShrink: 0,
-                  height: 36,
-                  width: 36,
+                  height: 42,
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                  position: 'relative',
+                  width: 42,
                 }}
-              />
+              >
+                <Box
+                  sx={{
+                    backgroundColor: values.color || theme.palette.primary.main,
+                    borderRadius: '6px',
+                    height: 26,
+                    width: 26,
+                  }}
+                />
+                <Box
+                  component="input"
+                  type="color"
+                  value={currentHex}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    onChange('color', hexToRgba(e.target.value))
+                  }
+                  sx={{
+                    cursor: 'pointer',
+                    height: '100%',
+                    left: 0,
+                    opacity: 0,
+                    position: 'absolute',
+                    top: 0,
+                    width: '100%',
+                  }}
+                />
+              </Box>
+
               <AppInput
                 label=""
                 onChange={event => onChange('color', event.target.value)}
                 placeholder="#5B21B6 ou rgba(91,33,182,1)"
                 sx={{
                   ...inputSx,
+                  flex: 1,
                   '& .MuiOutlinedInput-root': {
                     borderRadius: '14px',
-                    height: { md: 38, xs: 36 },
+                    height: { md: 42, xs: 40 },
                   },
                 }}
                 value={values.color}

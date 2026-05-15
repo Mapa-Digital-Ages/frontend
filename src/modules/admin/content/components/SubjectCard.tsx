@@ -1,123 +1,123 @@
-import { Box, IconButton, Tooltip, Typography } from '@mui/material'
-import { useTheme } from '@mui/material/styles'
+import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined'
+import { Box, Chip, IconButton, Tooltip, Typography } from '@mui/material'
+import { alpha, useTheme } from '@mui/material/styles'
 import AppCard from '@/shared/ui/AppCard'
-import AppTags, { AppTag } from '@/shared/ui/AppTags'
 import { getHoverStyle } from '@/app/theme/core/roles'
-import type {
-  ApprovalCardAction,
-  ApprovalCardStatus,
-  ApprovalItem,
-  ApprovalType,
-} from '@/modules/admin/shared/types/types'
+import type { SubjectItem } from '@/modules/admin/shared/types/types'
 
-export interface ApprovalCardProps {
-  actions: ApprovalCardAction[]
-  item: ApprovalItem
+export interface SubjectCardProps {
+  item: SubjectItem
+  onDelete: (item: SubjectItem) => void
 }
 
-function SubjectCard({ actions, item }: ApprovalCardProps) {
+function SubjectCard({ item, onDelete }: SubjectCardProps) {
   const theme = useTheme()
-  const primaryActions = actions.filter(
-    action => action.priority !== 'secondary'
-  )
+  const errorColor = theme.palette.error.main
+  const errorHover = getHoverStyle(theme, errorColor)
 
-  const primaryActionButtons = primaryActions.map(action => {
-    const actionColor = action.accentColor ?? theme.palette.primary.main
-    const hover = getHoverStyle(theme, actionColor)
-
-    return (
-      <Tooltip key={action.id} title={action.tooltip ?? action.label}>
-        <span>
-          <IconButton
-            aria-label={action.label}
-            disabled={action.disabled}
-            onClick={action.onClick}
-            size="small"
-            sx={{
-              border: '1px solid',
-              borderColor: 'background.border',
-              borderRadius: 'var(--app-radius-control)',
-              color: action.accentColor ?? 'text.primary',
-              height: 32,
-              width: 32,
-              '& .MuiSvgIcon-root': {
-                fontSize: 16,
-              },
-              '&:hover': {
-                backgroundColor: hover.backgroundColor,
-                borderColor: hover.borderColor,
-              },
-            }}
-          >
-            {action.icon}
-          </IconButton>
-        </span>
-      </Tooltip>
-    )
-  })
+  const tags = [
+    {
+      id: 'contents',
+      label: `${item.contentCount} conteúdo(s)`,
+      accent: true,
+    },
+    { id: 'trails', label: `${item.trailsCount} trilha(s)`, accent: false },
+  ]
 
   return (
     <AppCard>
       <Box
         sx={{
-          alignItems: { sm: 'flex-start', xs: 'center' },
+          alignItems: 'flex-start',
           columnGap: 2,
           display: 'grid',
           gridTemplateColumns: 'minmax(0, 1fr) auto',
-          gridTemplateRows: { sm: 'auto', xs: 'auto auto' },
-          justifyContent: 'space-between',
-          rowGap: { sm: 0, xs: 1.5 },
+          rowGap: 0.5,
         }}
       >
-        <Box
-          sx={{
-            alignItems: 'center',
-            display: 'flex',
-            flexShrink: 0,
-            flexWrap: 'wrap',
-            gap: 1,
-            gridColumn: 2,
-            gridRow: 1,
-            justifyContent: 'flex-end',
-          }}
-        >
-          {primaryActionButtons}
-        </Box>
-
         <Typography
           sx={{
             color: 'text.primary',
-            fontSize: { md: 20, xs: 16 },
+            fontSize: { md: 18, xs: 16 },
             fontWeight: 700,
-            gridColumn: { sm: 1, xs: '1 / -1' },
-            gridRow: { sm: 1, xs: 2 },
+            gridColumn: 1,
+            gridRow: 1,
             minWidth: 0,
-            overflow: { sm: 'visible', xs: 'hidden' },
-            textOverflow: { sm: 'clip', xs: 'ellipsis' },
-            whiteSpace: { sm: 'normal', xs: 'nowrap' },
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
           }}
-          title={item.title}
+          title={item.name}
         >
-          {item.title}
+          {item.name}
         </Typography>
+
+        <Tooltip title="Excluir disciplina">
+          <span>
+            <IconButton
+              aria-label="Excluir disciplina"
+              onClick={() => onDelete(item)}
+              size="small"
+              sx={{
+                border: '1px solid',
+                borderColor: 'background.border',
+                borderRadius: 'var(--app-radius-control)',
+                color: 'text.secondary',
+                gridColumn: 2,
+                gridRow: 1,
+                height: 32,
+                width: 32,
+                '& .MuiSvgIcon-root': { fontSize: 16 },
+                '&:hover': {
+                  backgroundColor: errorHover.backgroundColor,
+                  borderColor: errorHover.borderColor,
+                  color: errorColor,
+                },
+              }}
+            >
+              <DeleteOutlineOutlinedIcon />
+            </IconButton>
+          </span>
+        </Tooltip>
       </Box>
 
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 1,
-          paddingTop: 0,
-        }}
-      >
-        <Typography
-          sx={{
-            color: 'text.secondary',
-            fontSize: { md: 14, xs: 13 },
-          }}
-        >
-          {item.subtitle}
-        </Typography>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mt: 1.5 }}>
+        {tags.map(tag => (
+          <Chip
+            key={tag.id}
+            label={tag.label}
+            size="small"
+            sx={
+              tag.accent
+                ? {
+                    backgroundColor: alpha(errorColor, 0.12),
+                    borderColor: alpha(errorColor, 0.25),
+                    borderStyle: 'solid',
+                    borderWidth: 1,
+                    color: errorColor,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    height: 26,
+                    '& .MuiChip-label': { px: 1.25 },
+                  }
+                : {
+                    backgroundColor: alpha(
+                      theme.palette.text.primary,
+                      theme.palette.mode === 'dark' ? 0.06 : 0.04
+                    ),
+                    borderColor: alpha(theme.palette.text.primary, 0.12),
+                    borderStyle: 'solid',
+                    borderWidth: 1,
+                    color: 'text.secondary',
+                    fontSize: 12,
+                    fontWeight: 400,
+                    height: 26,
+                    '& .MuiChip-label': { px: 1.25 },
+                  }
+            }
+            variant="outlined"
+          />
+        ))}
       </Box>
     </AppCard>
   )

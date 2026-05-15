@@ -58,14 +58,13 @@ import UploadActionModal, {
 } from '../components/UploadActionModal'
 import ContentCard from '../components/ContentCard'
 import MetricsCard from '@/shared/ui/MetricsCard'
-import type { AdminStat } from '@/shared/types/common'
-import { adminService } from '../../dashboard/services/service'
 import SubjectComponent from '../components/SubjectComponent'
 import SubjectCard from '../components/SubjectCard'
 import SubjectActionModal, {
   type SubjectActionModalMode,
   type SubjectFormValues,
 } from '../components/SubjectActionModal'
+import type { SubjectItem } from '@/modules/admin/shared/types/types'
 
 const DEFAULT_PAGE_INDEX = 1
 
@@ -118,6 +117,41 @@ const DEFAULT_SUBJECT_ID =
   subjectOptions[0]?.value ??
   'default'
 
+const MOCK_SUBJECTS: SubjectItem[] = [
+  {
+    id: 'mathematics',
+    name: 'Matemática',
+    contentCount: 2,
+    tasksCount: 1,
+    trailsCount: 4,
+    questionnaireCount: 2,
+  },
+  {
+    id: 'portuguese',
+    name: 'Português',
+    contentCount: 2,
+    tasksCount: 1,
+    trailsCount: 1,
+    questionnaireCount: 2,
+  },
+  {
+    id: 'science',
+    name: 'Ciências',
+    contentCount: 2,
+    tasksCount: 1,
+    trailsCount: 2,
+    questionnaireCount: 2,
+  },
+  {
+    id: 'history',
+    name: 'História',
+    contentCount: 2,
+    tasksCount: 1,
+    trailsCount: 1,
+    questionnaireCount: 2,
+  },
+]
+
 function emptyContentQueue(
   pageSize: number
 ): ApprovalQueueResult<ContentApprovalItem> {
@@ -167,7 +201,6 @@ function getDefaultUploadEditValues(
 export default function Page() {
   const theme = useTheme()
   const navigate = useNavigate()
-  const [stats, setStats] = useState<AdminStat[]>([])
   const { role, isAdmin } = useUserRole()
   const [contentQuery, setContentQuery] = useState<ApprovalQueueQuery>(
     DEFAULT_CONTENT_QUERY
@@ -226,28 +259,21 @@ export default function Page() {
     [uploadQueue.totalItems]
   )
 
-  const getStatById = (id: AdminStat['id']) => stats.find(s => s.id === id)
-  const contents = getStatById('contents')
-  const task = getStatById('task')
-  const subjects = getStatById('subjects')
   const cards = [
     {
-      helperColor: theme.palette.text.secondary,
-      id: 'contents',
-      title: 'Conteúdos',
-      value: contents?.value,
-    },
-    {
-      helperColor: theme.palette.error.main,
-      id: 'task',
-      title: 'Tarefas e provas em Revisão',
-      value: task?.value,
-    },
-    {
-      helperColor: theme.palette.text.secondary,
       id: 'subjects',
       title: 'Disciplinas',
-      value: subjects?.value,
+      value: MOCK_SUBJECTS.length,
+    },
+    {
+      id: 'contents',
+      title: 'Conteúdos',
+      value: MOCK_SUBJECTS.reduce((sum, s) => sum + s.contentCount, 0),
+    },
+    {
+      id: 'tasks',
+      title: 'Tarefas e provas',
+      value: MOCK_SUBJECTS.reduce((sum, s) => sum + s.tasksCount, 0),
     },
   ]
 
@@ -487,32 +513,6 @@ export default function Page() {
     [openContentModal, theme.palette]
   )
 
-  const buildSubjectActions = useCallback(
-    (item: ContentApprovalItem): ApprovalCardAction[] => {
-      const error = theme.palette.error.main
-      const warning = theme.palette.warning.main
-      return [
-        {
-          accentColor: warning,
-          icon: <EditOutlinedIcon />,
-          id: `${item.id}-edit`,
-          label: 'Editar Disciplina',
-          onClick: () =>
-            openContentModal({ action: 'edit', item, type: 'content' }),
-        },
-        {
-          accentColor: error,
-          icon: <DeleteOutlineRoundedIcon />,
-          id: `${item.id}-delete`,
-          label: 'Excluir Disciplina',
-          onClick: () =>
-            openContentModal({ action: 'delete', item, type: 'content' }),
-        },
-      ]
-    },
-    [openContentModal, theme.palette]
-  )
-
   const buildUploadActions = useCallback(
     (item: UploadApprovalItem): ApprovalCardAction[] => {
       const success = theme.palette.success.main
@@ -577,11 +577,9 @@ export default function Page() {
     let isActive = true
     async function loadContentQueue() {
       try {
-        const nextStats = await adminService.getStats()
         const nextContentQueue =
           await contentApprovalService.getContentQueue(resolvedContentQuery)
         if (!isActive) return
-        setStats(nextStats)
         setContentError(null)
         setContentQueue(nextContentQueue)
       } catch {
@@ -633,7 +631,7 @@ export default function Page() {
         variant="admin"
       />
 
-      <Box className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-3">
+      <Box className="grid grid-cols-1 xs:grid-cols-1 lg:grid-cols-3 md:grid-cols-3 gap-3 md:gap-4 xl:grid-cols-3">
         {cards.map(card => (
           <MetricsCard contentClassName="p-5" key={card.id} {...card} />
         ))}
@@ -641,32 +639,24 @@ export default function Page() {
 
       <Box>
         <SubjectComponent
-          description="As disciplinas cadastradas passam a aparecer nos formulários de conteúdo, trilha, avaliação e nivelamento."
-          emptyStateDescription={
-            contentError ??
-            'Tente outro filtro ou cadastre uma nova disciplina.'
-          }
+          description="Gerencie e cadastre novas disciplinas para todo o sistema"
+          emptyStateDescription="Tente outro filtro ou cadastre uma nova disciplina."
           emptyStateTitle="Nenhuma disciplina encontrada"
-          items={contentQueue.items}
+          items={MOCK_SUBJECTS}
           onCreate={() => {
             setSubjectModalValues({ name: '', color: 'rgba(32, 109, 197, 1)' })
             setSubjectModalMode({ action: 'create' })
           }}
-          onEdit={() => toggleContentSelectionMode('edit')}
-          onDelete={() => toggleContentSelectionMode('delete')}
-          onItemSelect={item => {
-            setSubjectModalValues({
-              name: item.title,
-              color:
-                item.kind === 'content'
-                  ? (item.subject?.color ?? 'rgba(32, 109, 197, 1)')
-                  : 'rgba(32, 109, 197, 1)',
-            })
-            setSubjectModalMode({ action: 'edit', subjectName: item.title })
-          }}
-          selectionMode={contentSelectionMode}
           renderItem={item => (
-            <SubjectCard actions={[...buildSubjectActions(item)]} item={item} />
+            <SubjectCard
+              item={item}
+              onDelete={subject => {
+                setSubjectModalMode({
+                  action: 'delete',
+                  subjectName: subject.name,
+                })
+              }}
+            />
           )}
           role={role}
           title="Cadastro de disciplinas"

@@ -209,3 +209,12 @@ export interface GuardianApprovalActionFormValues {
 export type ApprovalActionFormValues =
   | ContentApprovalActionFormValues
   | GuardianApprovalActionFormValues
+
+export interface SubjectItem {
+  id: string
+  name: string
+  contentCount: number
+  tasksCount: number
+  trailsCount: number
+  questionnaireCount: number
+}
