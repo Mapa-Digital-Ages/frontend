@@ -1,5 +1,6 @@
 import { Box, Typography } from '@mui/material'
-import { useTheme } from '@mui/material/styles'
+import { alpha, useTheme } from '@mui/material/styles'
+import { HexColorPicker } from 'react-colorful'
 import { getRoleActionTone } from '@/app/theme/core/roles'
 import AppActionModal from '@/shared/ui/AppActionModal'
 import AppInput from '@/shared/ui/AppInput'
@@ -27,18 +28,32 @@ interface SubjectActionModalProps {
 }
 
 const PRESET_COLORS = [
-  { label: 'Matemática', value: 'rgba(173, 68, 248, 1)' },
-  { label: 'Português', value: 'rgba(5, 113, 247, 1)' },
-  { label: 'Ciências', value: 'rgba(0, 210, 237, 1)' },
-  { label: 'História', value: 'rgba(255, 186, 0, 1)' },
-  { label: 'Geografia', value: 'rgba(0, 212, 106, 1)' },
-  { label: 'Biologia', value: 'rgba(20, 184, 166, 1)' },
-  { label: 'Inglês', value: 'rgba(254, 51, 163, 1)' },
-  { label: 'Geral', value: 'rgba(32, 109, 197, 1)' },
+  { label: 'Matemática', value: '#ad44f8' },
+  { label: 'Português', value: '#0571f7' },
+  { label: 'Ciências', value: '#00d2ed' },
+  { label: 'História', value: '#ffba00' },
+  { label: 'Geografia', value: '#00d46a' },
+  { label: 'Biologia', value: '#14b8a6' },
+  { label: 'Inglês', value: '#fe33a3' },
+  { label: 'Geral', value: '#206dc5' },
 ]
 
-function rgbaToHex(rgba: string): string {
-  const match = rgba
+function normalizeToHex(color: string): string {
+  if (color.startsWith('#')) {
+    const hex = color.replace('#', '')
+    if (hex.length === 3) {
+      return (
+        '#' +
+        hex
+          .split('')
+          .map(c => c + c)
+          .join('')
+      )
+    }
+    if (hex.length === 6) return color.toLowerCase()
+    return '#206dc5'
+  }
+  const match = color
     .trim()
     .match(/^rgba?\(\s*(\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\s*\)$/i)
   if (match) {
@@ -47,23 +62,15 @@ function rgbaToHex(rgba: string): string {
     const b = Number.parseInt(match[3]).toString(16).padStart(2, '0')
     return `#${r}${g}${b}`
   }
-  if (rgba.startsWith('#')) return rgba
   return '#206dc5'
-}
-
-function hexToRgba(hex: string): string {
-  const clean = hex.replace('#', '')
-  const r = Number.parseInt(clean.slice(0, 2), 16)
-  const g = Number.parseInt(clean.slice(2, 4), 16)
-  const b = Number.parseInt(clean.slice(4, 6), 16)
-  return `rgba(${r}, ${g}, ${b}, 1)`
 }
 
 const fieldLabelSx = {
   color: 'text.secondary',
   fontSize: { md: 13, xs: 12 },
   fontWeight: 700,
-  letterSpacing: '0.02em',
+  letterSpacing: '0.04em',
+  textTransform: 'uppercase' as const,
 }
 
 const inputSx = {
@@ -87,6 +94,7 @@ function SubjectActionModal({
   isSubmitting = false,
 }: SubjectActionModalProps) {
   const theme = useTheme()
+  const isDark = theme.palette.mode === 'dark'
 
   if (!mode) return null
 
@@ -112,7 +120,15 @@ function SubjectActionModal({
       ? 'Salvar disciplina'
       : 'Salvar alterações'
 
-  const currentHex = rgbaToHex(values.color)
+  const currentHex = normalizeToHex(values.color)
+  const activeColor = currentHex
+
+  const surfaceBg = isDark
+    ? alpha(theme.palette.common.white, 0.04)
+    : alpha(theme.palette.text.primary, 0.03)
+  const surfaceBorder = isDark
+    ? alpha(theme.palette.common.white, 0.1)
+    : alpha(theme.palette.text.primary, 0.1)
 
   return (
     <AppActionModal
@@ -134,7 +150,7 @@ function SubjectActionModal({
           pode ser desfeita.
         </Typography>
       ) : (
-        <Box className="grid gap-4">
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           <AppInput
             label="Nome da disciplina"
             labelSx={fieldLabelSx}
@@ -144,112 +160,145 @@ function SubjectActionModal({
             value={values.name}
           />
 
-          <Box className="grid gap-2">
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
             <Typography sx={fieldLabelSx}>Cor de identificação</Typography>
 
-            {/* Preset swatches */}
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {PRESET_COLORS.map(preset => {
-                const isSelected = values.color === preset.value
-                return (
-                  <Box
-                    component="button"
-                    key={preset.value}
-                    onClick={() => onChange('color', preset.value)}
-                    title={preset.label}
-                    type="button"
-                    sx={{
-                      backgroundColor: preset.value,
-                      border: '3px solid',
-                      borderColor: isSelected
-                        ? theme.palette.background.paper
-                        : 'transparent',
-                      borderRadius: '50%',
-                      boxShadow: isSelected
-                        ? `0 0 0 2px ${preset.value}`
-                        : 'none',
-                      cursor: 'pointer',
-                      flexShrink: 0,
-                      height: 32,
-                      padding: 0,
-                      transition: 'transform 120ms ease, box-shadow 120ms ease',
-                      width: 32,
-                      '&:hover': {
-                        transform: 'scale(1.12)',
-                      },
-                    }}
-                  />
-                )
-              })}
-            </Box>
-
-            {/* Native color picker + value display */}
             <Box
               sx={{
-                alignItems: 'center',
-                display: 'flex',
-                gap: 1.5,
-                mt: 0.5,
+                backgroundColor: surfaceBg,
+                border: '1px solid',
+                borderColor: surfaceBorder,
+                borderRadius: '16px',
+                overflow: 'hidden',
               }}
             >
+              {/* HexColorPicker — full-width, flat, sem border-radius próprio */}
               <Box
                 sx={{
-                  alignItems: 'center',
-                  backgroundColor: 'background.default',
-                  border: '1px solid',
-                  borderColor: 'background.border',
-                  borderRadius: '10px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexShrink: 0,
-                  height: 42,
-                  justifyContent: 'center',
-                  overflow: 'hidden',
-                  position: 'relative',
-                  width: 42,
+                  '& .react-colorful': {
+                    width: '100%',
+                    height: 200,
+                    borderRadius: 0,
+                    gap: 0,
+                  },
+                  '& .react-colorful__saturation': {
+                    borderRadius: 0,
+                    flex: 1,
+                  },
+                  '& .react-colorful__hue': {
+                    height: 14,
+                    borderRadius: 0,
+                    margin: 0,
+                  },
+                  '& .react-colorful__saturation-pointer': {
+                    width: 18,
+                    height: 18,
+                    borderWidth: 2,
+                  },
+                  '& .react-colorful__hue-pointer': {
+                    width: 18,
+                    height: 18,
+                    borderWidth: 2,
+                  },
                 }}
               >
-                <Box
-                  sx={{
-                    backgroundColor: values.color || theme.palette.primary.main,
-                    borderRadius: '6px',
-                    height: 26,
-                    width: 26,
-                  }}
-                />
-                <Box
-                  component="input"
-                  type="color"
-                  value={currentHex}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    onChange('color', hexToRgba(e.target.value))
-                  }
-                  sx={{
-                    cursor: 'pointer',
-                    height: '100%',
-                    left: 0,
-                    opacity: 0,
-                    position: 'absolute',
-                    top: 0,
-                    width: '100%',
-                  }}
+                <HexColorPicker
+                  color={currentHex}
+                  onChange={hex => onChange('color', hex)}
                 />
               </Box>
 
-              <AppInput
-                label=""
-                onChange={event => onChange('color', event.target.value)}
-                placeholder="#5B21B6 ou rgba(91,33,182,1)"
+              {/* Bottom row: swatch preview + hex input + presets */}
+              <Box
                 sx={{
-                  ...inputSx,
-                  flex: 1,
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '14px',
-                    height: { md: 42, xs: 40 },
-                  },
+                  borderTop: '1px solid',
+                  borderColor: surfaceBorder,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 2,
+                  p: 2,
                 }}
-                value={values.color}
-              />
+              >
+                {/* Preview + hex input */}
+                <Box sx={{ alignItems: 'center', display: 'flex', gap: 1.5 }}>
+                  <Box
+                    sx={{
+                      backgroundColor: activeColor,
+                      borderRadius: '8px',
+                      boxShadow: `0 2px 8px ${alpha(activeColor, 0.45)}`,
+                      flexShrink: 0,
+                      height: 38,
+                      transition: 'background-color 80ms, box-shadow 80ms',
+                      width: 38,
+                    }}
+                  />
+                  <AppInput
+                    label=""
+                    onChange={event => onChange('color', event.target.value)}
+                    placeholder="#206dc5"
+                    sx={{
+                      flex: 1,
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '10px',
+                        height: 38,
+                        backgroundColor: isDark
+                          ? alpha(theme.palette.common.white, 0.05)
+                          : alpha(theme.palette.common.black, 0.03),
+                      },
+                      '& .MuiInputBase-input': {
+                        fontSize: 13,
+                        fontFamily: 'monospace',
+                        letterSpacing: '0.04em',
+                      },
+                    }}
+                    value={values.color}
+                  />
+                </Box>
+
+                {/* Preset swatches */}
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gap: 1,
+                    gridTemplateColumns: 'repeat(8, 1fr)',
+                  }}
+                >
+                  {PRESET_COLORS.map(preset => {
+                    const isSelected =
+                      normalizeToHex(values.color) === preset.value
+                    return (
+                      <Box
+                        component="button"
+                        key={preset.value}
+                        onClick={() => onChange('color', preset.value)}
+                        title={preset.label}
+                        type="button"
+                        sx={{
+                          aspectRatio: '1',
+                          backgroundColor: preset.value,
+                          border: '2.5px solid',
+                          borderColor: isSelected
+                            ? theme.palette.background.paper
+                            : 'transparent',
+                          borderRadius: '50%',
+                          boxShadow: isSelected
+                            ? `0 0 0 2px ${preset.value}`
+                            : 'none',
+                          cursor: 'pointer',
+                          padding: 0,
+                          transition:
+                            'transform 120ms ease, box-shadow 120ms ease',
+                          width: '100%',
+                          '&:hover': {
+                            transform: 'scale(1.18)',
+                            boxShadow: `0 0 0 2px ${preset.value}`,
+                          },
+                        }}
+                      />
+                    )
+                  })}
+                </Box>
+              </Box>
             </Box>
           </Box>
         </Box>
