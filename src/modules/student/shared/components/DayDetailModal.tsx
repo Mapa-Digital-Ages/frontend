@@ -126,10 +126,13 @@ function DayDetailModalContent({
       dividers
       sx={{
         pt: 2,
-        pb: 3,
+        pb: 2,
+        px: { xs: 2, sm: 3 },
         display: 'flex',
-        justifyContent: 'center',
-        scrollbarGutter: 'stable',
+        flexDirection: 'column',
+        alignItems: 'center',
+        overflow: 'hidden',
+        maxHeight: { xs: '58vh', sm: '70vh' },
       }}
     >
       <Stack
@@ -138,87 +141,111 @@ function DayDetailModalContent({
           pt: 1,
           width: modalContentWidth,
           maxWidth: '100%',
-          flexShrink: 0,
+          minWidth: 0,
+          flexShrink: 1,
+          maxHeight: '100%',
         }}
       >
-        {localTasks.map((task, index) => {
-          const subjectError = showValidationErrors && task.subject == null
-          const titleError = showValidationErrors && task.title.trim() === ''
-
-          return (
-            <Stack key={task.id} spacing={1.5}>
-              {index > 0 && <Divider />}
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent="space-between"
-              >
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  fontWeight={500}
+        <Stack
+          spacing={2}
+          sx={{
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            pr: 0.5,
+            minHeight: 0,
+            maxHeight: { xs: '40vh', sm: '50vh' },
+            scrollbarGutter: 'stable',
+          }}
+        >
+          {localTasks.map((task, index) => {
+            const subjectError = showValidationErrors && task.subject == null
+            const titleError = showValidationErrors && task.title.trim() === ''
+            return (
+              <Stack key={task.id} spacing={1.5}>
+                {index > 0 && <Divider />}
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  justifyContent="space-between"
                 >
-                  Tarefa {index + 1}
-                </Typography>
-                <IconButton
-                  size="small"
-                  onClick={() => removeTask(task.id)}
-                  sx={{
-                    color: 'text.secondary',
-                    '&:hover': { color: 'error.main' },
-                  }}
-                >
-                  <DeleteOutlineIcon fontSize="small" />
-                </IconButton>
-              </Stack>
-              <Stack direction="row" spacing={1.5}>
-                <AppDropdown
-                  label="Matéria"
-                  options={subjectOptions}
-                  value={task.subject?.id ?? ''}
-                  onChange={e => {
-                    const id = e.target.value as string
-                    const subject =
-                      Object.values(SUBJECTS).find(s => s.id === id) ?? null
-                    updateTask(task.id, { subject })
-                  }}
-                  placeholder="Matéria"
-                  width={249}
-                  error={subjectError}
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    fontWeight={500}
+                  >
+                    Tarefa {index + 1}
+                  </Typography>
+                  <IconButton
+                    size="small"
+                    onClick={() => removeTask(task.id)}
+                    sx={{
+                      color: 'text.secondary',
+                      '&:hover': { color: 'error.main' },
+                    }}
+                  >
+                    <DeleteOutlineIcon fontSize="small" />
+                  </IconButton>
+                </Stack>
+                <Stack direction="column" spacing={1.5}>
+                  <AppDropdown
+                    label="Matéria"
+                    options={subjectOptions}
+                    value={task.subject?.id ?? ''}
+                    onChange={e => {
+                      const id = e.target.value as string
+                      const subject =
+                        Object.values(SUBJECTS).find(s => s.id === id) ?? null
+                      updateTask(task.id, { subject })
+                    }}
+                    placeholder="Matéria"
+                    width="100%"
+                    error={subjectError}
+                    helperText={
+                      subjectError ? 'Selecione uma matéria.' : undefined
+                    }
+                  />
+                  <AppDropdown
+                    label="Status"
+                    options={statusOptions}
+                    value={task.status}
+                    onChange={e =>
+                      updateTask(task.id, {
+                        status: e.target.value as Task['status'],
+                      })
+                    }
+                    placeholder="Status"
+                    width="100%"
+                  />
+                </Stack>
+                <AppInput
+                  placeholder="Descreva a tarefa..."
+                  value={task.title}
+                  onChange={e => updateTask(task.id, { title: e.target.value })}
+                  inputSize="large"
+                  label="Descrição"
+                  error={titleError}
                   helperText={
-                    subjectError ? 'Selecione uma matéria.' : undefined
+                    titleError
+                      ? 'Descreva a tarefa antes de salvar.'
+                      : undefined
                   }
-                />
-                <AppDropdown
-                  label="Status"
-                  options={statusOptions}
-                  value={task.status}
-                  onChange={e =>
-                    updateTask(task.id, {
-                      status: e.target.value as Task['status'],
-                    })
-                  }
-                  placeholder="Status"
-                  width={249}
+                  sx={{ maxWidth: modalContentWidth }}
                 />
               </Stack>
-              <AppInput
-                placeholder="Descreva a tarefa..."
-                value={task.title}
-                onChange={e => updateTask(task.id, { title: e.target.value })}
-                inputSize="large"
-                label="Descrição"
-                error={titleError}
-                helperText={
-                  titleError ? 'Descreva a tarefa antes de salvar.' : undefined
-                }
-                sx={{ maxWidth: modalContentWidth }}
-              />
-            </Stack>
-          )
-        })}
-
-        <Stack direction="row" justifyContent="space-between">
+            )
+          })}
+        </Stack>
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          spacing={2}
+          sx={{
+            pt: 1.5,
+            flexShrink: 0,
+            position: 'relative',
+            zIndex: 1,
+          }}
+        >
           <AppButton
             backgroundColor="primary.main"
             size="small"

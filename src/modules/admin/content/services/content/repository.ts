@@ -56,6 +56,87 @@ export interface CreateContentApprovalRepositoryOptions {
   client: ApprovalApiClient
 }
 
+let mockActivityApprovalItems: ContentApprovalItem[] = [
+  {
+    id: 'content-1',
+    kind: 'content',
+    requestedAt: '22/03/2026',
+    resourceType: 'task',
+    subject: getSubjectTagContextByLabel('Matemática'),
+    title: 'Lista de Equações do 7º ano',
+    subtitle: 'Tarefa · Matemática · 22/03/2026',
+    status: 'inReview',
+    badges: [
+      {
+        id: 'content-1-origin',
+        label: 'Upload de aluno',
+        tone: 'neutral',
+      },
+    ],
+  },
+  {
+    id: 'content-2',
+    kind: 'content',
+    requestedAt: '28/03/2026',
+    resourceType: 'exam',
+    subject: getSubjectTagContextByLabel('Português'),
+    title: 'Prova mensal de interpretação',
+    subtitle: 'Prova · Português · 28/03/2026',
+    status: 'sent',
+    badges: [
+      {
+        id: 'content-2-group',
+        label: 'Alunos',
+        tone: 'neutral',
+      },
+      {
+        id: 'content-2-school',
+        label: 'Escolas',
+        tone: 'neutral',
+      },
+      {
+        id: 'content-2-linked',
+        label: '2 questões vinculadas',
+        tone: 'danger',
+      },
+    ],
+  },
+  {
+    id: 'content-3',
+    kind: 'content',
+    requestedAt: '01/04/2026',
+    resourceType: 'task',
+    subject: getSubjectTagContextByLabel('Português'),
+    title: 'Produção textual argumentativa',
+    subtitle: 'Tarefa · Português · 01/04/2026',
+    status: 'approved',
+    badges: [
+      {
+        id: 'content-3-school',
+        label: 'Turma 7B',
+        tone: 'info',
+      },
+    ],
+  },
+  {
+    id: 'content-4',
+    kind: 'content',
+    requestedAt: '04/04/2026',
+    resourceType: 'exam',
+    subject: getSubjectTagContextByLabel('Ciências'),
+    title: 'Simulado de Ciências naturais',
+    subtitle: 'Prova · Ciências · 04/04/2026',
+    status: 'rejected',
+    badges: [
+      {
+        id: 'content-4-note',
+        label: 'Correção obrigatória',
+        tone: 'warning',
+      },
+    ],
+  },
+]
+
 let mockContentApprovalItems: ContentApprovalItem[] = [
   {
     id: 'content-1',
