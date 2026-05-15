@@ -150,7 +150,7 @@ function SubjectActionModal({
           pode ser desfeita.
         </Typography>
       ) : (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <AppInput
             label="Nome da disciplina"
             labelSx={fieldLabelSx}
@@ -160,7 +160,7 @@ function SubjectActionModal({
             value={values.name}
           />
 
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             <Typography sx={fieldLabelSx}>Cor de identificação</Typography>
 
             <Box
@@ -168,16 +168,15 @@ function SubjectActionModal({
                 backgroundColor: surfaceBg,
                 border: '1px solid',
                 borderColor: surfaceBorder,
-                borderRadius: '16px',
+                borderRadius: '14px',
                 overflow: 'hidden',
               }}
             >
-              {/* HexColorPicker — full-width, flat, sem border-radius próprio */}
               <Box
                 sx={{
                   '& .react-colorful': {
                     width: '100%',
-                    height: 200,
+                    height: 140,
                     borderRadius: 0,
                     gap: 0,
                   },
@@ -186,18 +185,18 @@ function SubjectActionModal({
                     flex: 1,
                   },
                   '& .react-colorful__hue': {
-                    height: 14,
+                    height: 10,
                     borderRadius: 0,
                     margin: 0,
                   },
                   '& .react-colorful__saturation-pointer': {
-                    width: 18,
-                    height: 18,
+                    width: 14,
+                    height: 14,
                     borderWidth: 2,
                   },
                   '& .react-colorful__hue-pointer': {
-                    width: 18,
-                    height: 18,
+                    width: 14,
+                    height: 14,
                     borderWidth: 2,
                   },
                 }}
@@ -208,28 +207,28 @@ function SubjectActionModal({
                 />
               </Box>
 
-              {/* Bottom row: swatch preview + hex input + presets */}
+              {/* Bottom: preview + hex input + presets */}
               <Box
                 sx={{
                   borderTop: '1px solid',
                   borderColor: surfaceBorder,
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: 2,
-                  p: 2,
+                  gap: 1.25,
+                  p: 1.5,
                 }}
               >
                 {/* Preview + hex input */}
-                <Box sx={{ alignItems: 'center', display: 'flex', gap: 1.5 }}>
+                <Box sx={{ alignItems: 'center', display: 'flex', gap: 1 }}>
                   <Box
                     sx={{
                       backgroundColor: activeColor,
-                      borderRadius: '8px',
-                      boxShadow: `0 2px 8px ${alpha(activeColor, 0.45)}`,
+                      borderRadius: '7px',
+                      boxShadow: `0 2px 6px ${alpha(activeColor, 0.4)}`,
                       flexShrink: 0,
-                      height: 38,
+                      height: 32,
                       transition: 'background-color 80ms, box-shadow 80ms',
-                      width: 38,
+                      width: 32,
                     }}
                   />
                   <AppInput
@@ -239,16 +238,17 @@ function SubjectActionModal({
                     sx={{
                       flex: 1,
                       '& .MuiOutlinedInput-root': {
-                        borderRadius: '10px',
-                        height: 38,
+                        borderRadius: '9px',
+                        height: 32,
                         backgroundColor: isDark
                           ? alpha(theme.palette.common.white, 0.05)
                           : alpha(theme.palette.common.black, 0.03),
                       },
                       '& .MuiInputBase-input': {
-                        fontSize: 13,
+                        fontSize: 12,
                         fontFamily: 'monospace',
                         letterSpacing: '0.04em',
+                        py: 0,
                       },
                     }}
                     value={values.color}
@@ -259,7 +259,7 @@ function SubjectActionModal({
                 <Box
                   sx={{
                     display: 'grid',
-                    gap: 1,
+                    gap: 0.75,
                     gridTemplateColumns: 'repeat(8, 1fr)',
                   }}
                 >
@@ -276,7 +276,7 @@ function SubjectActionModal({
                         sx={{
                           aspectRatio: '1',
                           backgroundColor: preset.value,
-                          border: '2.5px solid',
+                          border: '2px solid',
                           borderColor: isSelected
                             ? theme.palette.background.paper
                             : 'transparent',
