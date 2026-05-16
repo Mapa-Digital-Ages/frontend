@@ -1,4 +1,5 @@
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined'
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import { Box, Chip, IconButton, Tooltip, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import AppCard from '@/shared/ui/AppCard'
@@ -8,12 +9,14 @@ import type { SubjectItem } from '@/modules/admin/shared/types/types'
 export interface SubjectCardProps {
   item: SubjectItem
   onDelete: (item: SubjectItem) => void
+  onEdit: (item: SubjectItem) => void
 }
 
-function SubjectCard({ item, onDelete }: SubjectCardProps) {
+function SubjectCard({ item, onDelete, onEdit }: SubjectCardProps) {
   const theme = useTheme()
   const errorColor = theme.palette.error.main
   const errorHover = getHoverStyle(theme, errorColor)
+  const subjectColor = item.color ?? theme.palette.primary.main
 
   const tags = [
     {
@@ -21,7 +24,7 @@ function SubjectCard({ item, onDelete }: SubjectCardProps) {
       label: `${item.contentCount} conteúdo(s)`,
       accent: true,
     },
-    { id: 'trails', label: `${item.trailsCount} trilha(s)`, accent: false },
+    { id: 'uploads', label: `${item.uploadsCount} upload(s)`, accent: false },
   ]
 
   return (
@@ -51,34 +54,69 @@ function SubjectCard({ item, onDelete }: SubjectCardProps) {
         >
           {item.name}
         </Typography>
-
-        <Tooltip title="Excluir disciplina">
-          <span>
-            <IconButton
-              aria-label="Excluir disciplina"
-              onClick={() => onDelete(item)}
-              size="small"
-              sx={{
-                border: '1px solid',
-                borderColor: 'background.border',
-                borderRadius: 'var(--app-radius-control)',
-                color: 'text.secondary',
-                gridColumn: 2,
-                gridRow: 1,
-                height: 32,
-                width: 32,
-                '& .MuiSvgIcon-root': { fontSize: 16 },
-                '&:hover': {
-                  backgroundColor: errorHover.backgroundColor,
-                  borderColor: errorHover.borderColor,
-                  color: errorColor,
-                },
-              }}
-            >
-              <DeleteOutlineOutlinedIcon />
-            </IconButton>
-          </span>
-        </Tooltip>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 32px)',
+            justifyContent: 'end',
+            columnGap: 1,
+          }}
+        >
+          <Tooltip title="Editar disciplina">
+            <span>
+              <IconButton
+                aria-label="Editar disciplina"
+                onClick={() => onEdit(item)}
+                size="small"
+                sx={{
+                  border: '1px solid',
+                  borderColor: 'background.border',
+                  borderRadius: 'var(--app-radius-control)',
+                  color: 'text.secondary',
+                  gridColumn: 2,
+                  gridRow: 1,
+                  height: 32,
+                  width: 32,
+                  '& .MuiSvgIcon-root': { fontSize: 16 },
+                  '&:hover': {
+                    backgroundColor: errorHover.backgroundColor,
+                    borderColor: errorHover.borderColor,
+                    color: errorColor,
+                  },
+                }}
+              >
+                <EditOutlinedIcon />
+              </IconButton>
+            </span>
+          </Tooltip>
+          <Tooltip title="Excluir disciplina">
+            <span>
+              <IconButton
+                aria-label="Excluir disciplina"
+                onClick={() => onDelete(item)}
+                size="small"
+                sx={{
+                  border: '1px solid',
+                  borderColor: 'background.border',
+                  borderRadius: 'var(--app-radius-control)',
+                  color: 'text.secondary',
+                  gridColumn: 2,
+                  gridRow: 1,
+                  height: 32,
+                  width: 32,
+                  '& .MuiSvgIcon-root': { fontSize: 16 },
+                  '&:hover': {
+                    backgroundColor: errorHover.backgroundColor,
+                    borderColor: errorHover.borderColor,
+                    color: errorColor,
+                  },
+                }}
+              >
+                <DeleteOutlineOutlinedIcon />
+              </IconButton>
+            </span>
+          </Tooltip>
+        </Box>
       </Box>
 
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mt: 1.5 }}>
@@ -90,11 +128,11 @@ function SubjectCard({ item, onDelete }: SubjectCardProps) {
             sx={
               tag.accent
                 ? {
-                    backgroundColor: alpha(errorColor, 0.12),
-                    borderColor: alpha(errorColor, 0.25),
+                    backgroundColor: alpha(subjectColor, 0.12),
+                    borderColor: alpha(subjectColor, 0.25),
                     borderStyle: 'solid',
                     borderWidth: 1,
-                    color: errorColor,
+                    color: subjectColor,
                     fontSize: 12,
                     fontWeight: 600,
                     height: 26,

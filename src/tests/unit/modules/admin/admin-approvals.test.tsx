@@ -23,6 +23,7 @@ const contentItems: ContentApprovalItem[] = [
   {
     id: 'content-1',
     kind: 'content',
+    description: 'Conteúdo de matemática',
     title: 'Lista de Equações do 7º ano',
     subtitle: 'Tarefa · Matemática · 22/03/2026',
     status: 'inReview',
@@ -37,6 +38,7 @@ const contentItems: ContentApprovalItem[] = [
   {
     id: 'content-2',
     kind: 'content',
+    description: 'Conteúdo de português',
     title: 'Prova mensal de interpretação',
     subtitle: 'Prova · Português · 28/03/2026',
     status: 'sent',
@@ -105,7 +107,6 @@ const contentQueueResponse: ApiResponse<{
   items: Array<{
     id: string
     requested_at: string
-    resource_type: 'task' | 'exam'
     stage_label: string
     status:
       | 'in_review'
@@ -131,7 +132,6 @@ const contentQueueResponse: ApiResponse<{
       {
         id: 'content-10',
         requested_at: '2026-04-07',
-        resource_type: 'exam',
         stage_label: 'Português',
         status: 'in_review',
         subject_label: '7º ano',
@@ -221,7 +221,7 @@ test('mapContentApprovalQueueResponse normalizes python-style DTOs into UI items
   assert.equal(response.currentPage, 2)
   assert.equal(response.totalItems, 11)
   assert.equal(response.items[0]?.status, 'inReview')
-  assert.equal(response.items[0]?.subtitle, 'Prova · Português · 07/04/2026')
+  assert.equal(response.items[0]?.subtitle, 'Português · 07/04/2026')
   assert.equal(response.items[0]?.badges[0]?.label, '2 questões vinculadas')
   assert.equal(response.items[0]?.subject?.label, 'Português')
 })
@@ -522,7 +522,6 @@ test('admin approval service separates repository and mapper concerns for future
 
   assert.doesNotMatch(serviceSource, /runtime/)
   assert.match(runtimeSource, /from '\.\/content\/runtime'/)
-  assert.match(runtimeSource, /from '\.\/parent\/runtime'/)
   assert.match(contentServiceSource, /from '\.\/repository'/)
   assert.match(contentServiceSource, /from '\.\/mapper'/)
   assert.match(
@@ -556,13 +555,11 @@ test('admin approvals page routes create edit and correction through a reusable 
   assert.match(adminContentPageSource, /action: 'create'/)
   assert.match(adminContentPageSource, /action: 'edit'/)
   assert.match(adminContentPageSource, /action: 'delete'/)
-  assert.match(adminContentPageSource, /priority: 'secondary'/)
   assert.match(adminContentPageSource, /label: 'Editar Conteúdo'/)
   assert.match(adminContentPageSource, /label: 'Excluir Conteúdo'/)
   assert.match(adminContentPageSource, /UploadApprovalComponent/)
-  assert.match(adminContentPageSource, /label: 'Marcar como corrigido'/)
   assert.match(adminContentPageSource, /label: 'Iniciar correção'/)
-  assert.match(adminContentPageSource, /label: 'Rejeitar upload'/)
+  assert.match(adminContentPageSource, /buildAdminCorrectionRoute\(item\.id\)/)
   assert.doesNotMatch(adminContentPageSource, /applyContentCorrection/)
   assert.match(adminParentPageSource, /parentApprovalService/)
   assert.match(adminParentPageSource, /updateParentStatus/)

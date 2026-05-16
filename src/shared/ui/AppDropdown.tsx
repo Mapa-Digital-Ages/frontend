@@ -365,9 +365,10 @@ function AppDropdown({
                   ? '0 18px 45px rgba(8, 17, 31, 0.42)'
                   : '0 16px 40px rgba(16, 42, 67, 0.12)',
               color: theme.palette.text.primary,
-              maxHeight: menuMaxHeight,
-              minWidth: resolvedMenuWidth,
-              width: resolvedMenuWidth,
+              maxHeight: { sm: menuMaxHeight, xs: 'min(60vh, 360px)' },
+              maxWidth: { sm: 'unset', xs: 'calc(100vw - 32px)' },
+              minWidth: { sm: resolvedMenuWidth, xs: 'min(260px, 90vw)' },
+              width: { sm: resolvedMenuWidth, xs: 'min(280px, 92vw)' },
               overflowY: 'auto',
               '& .MuiListItemText-primary': {
                 overflow: 'hidden',

@@ -6,8 +6,6 @@ import type {
   ParentApprovalStatus,
 } from '@/modules/admin/shared/types/types'
 
-// ── DTOs do backend ────────────────────────────────────────────────────────
-
 export type GuardianStatusDto = 'waiting' | 'approved' | 'rejected'
 
 export interface GuardianStudentDto {
@@ -39,8 +37,6 @@ export interface GuardianListPaginatedDto {
   size: number
 }
 
-// ── Mapas de status ────────────────────────────────────────────────────────
-
 const guardianStatusMap: Record<GuardianStatusDto, ParentApprovalStatus> = {
   waiting: 'pendingValidation',
   approved: 'approved',
@@ -54,8 +50,6 @@ const guardianStatusDtoMap: Record<
   approved: 'approved',
   rejected: 'rejected',
 }
-
-// ── Query builder ──────────────────────────────────────────────────────────
 
 export function buildGuardianListQuery(
   query: ApprovalQueueQuery
@@ -76,8 +70,6 @@ export function buildGuardianListQuery(
     guardian_status: guardianStatus,
   }
 }
-
-// ── Helpers ────────────────────────────────────────────────────────────────
 
 function formatBrazilianDate(value: string | null): string {
   if (!value) return 'Data desconhecida'
@@ -101,8 +93,6 @@ function buildGuardianItem(dto: GuardianResponseDto): GuardianItem {
     phone_number: dto.phone_number ?? '',
   }
 }
-
-// ── Mapper principal ───────────────────────────────────────────────────────
 
 export function mapGuardianResponseToParentApprovalItem(
   dto: GuardianResponseDto

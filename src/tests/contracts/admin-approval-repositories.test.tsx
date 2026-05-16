@@ -8,6 +8,14 @@ import type {
   ContentApprovalDto,
 } from '@/modules/admin/content/services/content/mapper'
 import {
+  createUploadApprovalRepository,
+  type UploadApiClient,
+} from '@/modules/admin/content/services/upload/repository'
+import type {
+  StudentUploadDto,
+  UploadQueueResponseDto,
+} from '@/modules/admin/content/services/upload/mapper'
+import {
   createParentApprovalRepository,
   type ParentApprovalApiClient,
 } from '@/modules/admin/parent/services/parent/repository'
@@ -62,12 +70,29 @@ function contentApproval(
   return {
     id: 'content-10',
     requested_at: '2026-04-07',
-    resource_type: 'exam',
     stage_label: 'Português',
     status: 'in_review',
     subject_label: '7º ano',
     tags: [{ id: 'tag-1', label: '2 questões vinculadas', tone: 'danger' }],
     title: 'Avaliação bimestral',
+    ...overrides,
+  }
+}
+
+function studentUpload(
+  overrides: Partial<StudentUploadDto> = {}
+): StudentUploadDto {
+  return {
+    id: '2f188dbd-4398-44eb-8060-b60ef5b7d4df',
+    student_id: '6df602e0-9344-4ee4-ac97-b49ab79ebca0',
+    student_name: 'Ana Silva',
+    file_name: 'atividade.pdf',
+    download_url: '/uploads/2f188dbd-4398-44eb-8060-b60ef5b7d4df/content',
+    file_type: 'application/pdf',
+    file_size_bytes: 1280,
+    created_at: '2026-04-08T10:15:00+00:00',
+    status: 'correction_in_progress',
+    activity_type: 'exercise',
     ...overrides,
   }
 }
@@ -98,6 +123,9 @@ test('content approval repository sends queue filters and maps backend DTOs', as
     async post() {
       throw new Error('Unexpected post call')
     },
+    async delete() {
+      throw new Error('Unexpected delete call')
+    },
   }
 
   const repository = createContentApprovalRepository({ client })
@@ -110,7 +138,7 @@ test('content approval repository sends queue filters and maps backend DTOs', as
 
   expect(getCalls).toEqual([
     {
-      path: 'admin/approvals/content',
+      path: 'admin/content',
       options: {
         query: {
           page: 2,
@@ -130,42 +158,158 @@ test('content approval repository sends queue filters and maps backend DTOs', as
   expect(result.items[0]).toMatchObject({
     id: 'content-10',
     status: 'inReview',
-    subtitle: 'Prova · Português · 07/04/2026',
+    subtitle: 'Português · 07/04/2026',
     title: 'Avaliação bimestral',
   })
 })
 
-test('content approval repository translates UI status updates before patching', async () => {
+test('content approval repository creates and updates content without resource type', async () => {
+  const postCalls: Array<{ body?: unknown; path: string }> = []
   const patchCalls: Array<{ body?: unknown; path: string }> = []
   const client: ApprovalApiClient = {
     async get() {
       throw new Error('Unexpected get call')
     },
+    async post<T>(path: string, body?: unknown) {
+      postCalls.push({ path, body })
+
+      return apiResponse(contentApproval()) as ApiResponse<T>
+    },
     async patch<T>(path: string, body?: unknown) {
       patchCalls.push({ path, body })
 
       return apiResponse(
-        contentApproval({ status: 'correction_in_progress' })
+        contentApproval({ title: 'Conteúdo editado' })
       ) as ApiResponse<T>
     },
-    async post() {
-      throw new Error('Unexpected post call')
+    async delete() {
+      throw new Error('Unexpected delete call')
     },
   }
 
   const repository = createContentApprovalRepository({ client })
-  const item = await repository.updateContentStatus(
-    'content-10',
-    'correctionInProgress'
-  )
+  await repository.createLocalContentDraft({
+    description: '',
+    requestedAt: '07/04/2026',
+    subject: { id: 'portuguese', label: 'Português' },
+    title: 'Avaliação bimestral',
+  })
+  const item = await repository.updateLocalContentItem('content-10', {
+    description: '',
+    requestedAt: '08/04/2026',
+    subject: { id: 'portuguese', label: 'Português' },
+    title: 'Conteúdo editado',
+  })
 
-  expect(patchCalls).toEqual([
+  expect(postCalls).toEqual([
     {
-      path: 'admin/approvals/content/content-10/status',
-      body: { status: 'correction_in_progress' },
+      path: 'admin/content',
+      body: {
+        description: '',
+        subject_label: 'Português',
+        title: 'Avaliação bimestral',
+      },
     },
   ])
-  expect(item.status).toBe('correctionInProgress')
+  expect(patchCalls).toEqual([
+    {
+      path: 'admin/content/content-10',
+      body: {
+        description: '',
+        subject_label: 'Português',
+        title: 'Conteúdo editado',
+      },
+    },
+  ])
+  expect(item.title).toBe('Conteúdo editado')
+})
+
+test('upload approval repository uses admin upload list and delete endpoints', async () => {
+  const getCalls: Array<{
+    options?: { query?: HttpRequestOptions['query'] }
+    path: string
+  }> = []
+  const deleteCalls: string[] = []
+  const patchCalls: Array<{ body?: unknown; path: string }> = []
+
+  const client: UploadApiClient = {
+    async get<T>(
+      path: string,
+      options?: { query?: HttpRequestOptions['query'] }
+    ) {
+      getCalls.push({ path, options })
+      return apiResponse<UploadQueueResponseDto>({
+        items: [studentUpload()],
+        page: 1,
+        page_size: 10,
+        total_items: 1,
+        total_pages: 1,
+      }) as ApiResponse<T>
+    },
+    async patch<T>(path: string, body?: unknown) {
+      patchCalls.push({ path, body })
+      return apiResponse(
+        studentUpload({ activity_type: 'essay', status: 'corrected' })
+      ) as ApiResponse<T>
+    },
+    async delete<T>(path: string) {
+      deleteCalls.push(path)
+      return apiResponse(null) as ApiResponse<T>
+    },
+  }
+
+  const repository = createUploadApprovalRepository({ client })
+  const queue = await repository.getUploadQueue({
+    page: 1,
+    pageSize: 10,
+    query: ' atividade ',
+    activityType: 'essay',
+    status: 'correctionInProgress',
+  })
+  const updatedType = await repository.updateUploadActivityType(
+    '2f188dbd-4398-44eb-8060-b60ef5b7d4df',
+    'essay'
+  )
+  const updatedStatus = await repository.updateUploadStatus(
+    '2f188dbd-4398-44eb-8060-b60ef5b7d4df',
+    'corrected'
+  )
+  await repository.removeUpload('2f188dbd-4398-44eb-8060-b60ef5b7d4df')
+
+  expect(getCalls).toEqual([
+    {
+      path: 'admin/uploads',
+      options: {
+        query: {
+          page: 1,
+          page_size: 10,
+          query: 'atividade',
+          status: 'correction_in_progress',
+          activity_type: 'essay',
+        },
+      },
+    },
+  ])
+  expect(queue.items[0]).toMatchObject({
+    activityType: 'exercise',
+    status: 'correctionInProgress',
+    studentName: 'Ana Silva',
+  })
+  expect(patchCalls).toEqual([
+    {
+      path: 'admin/uploads/2f188dbd-4398-44eb-8060-b60ef5b7d4df',
+      body: { activity_type: 'essay' },
+    },
+    {
+      path: 'admin/uploads/2f188dbd-4398-44eb-8060-b60ef5b7d4df/status',
+      body: { status: 'corrected' },
+    },
+  ])
+  expect(updatedType.activityType).toBe('essay')
+  expect(updatedStatus.status).toBe('corrected')
+  expect(deleteCalls).toEqual([
+    'admin/uploads/2f188dbd-4398-44eb-8060-b60ef5b7d4df',
+  ])
 })
 
 test('parent approval repository calls guardian endpoints with pagination', async () => {

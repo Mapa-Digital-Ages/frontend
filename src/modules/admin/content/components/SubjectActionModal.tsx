@@ -13,8 +13,8 @@ export interface SubjectFormValues {
 
 export type SubjectActionModalMode =
   | { action: 'create' }
-  | { action: 'edit'; subjectName: string }
-  | { action: 'delete'; subjectName: string }
+  | { action: 'edit'; subjectId: string; subjectName: string }
+  | { action: 'delete'; subjectId: string; subjectName: string }
 
 interface SubjectActionModalProps {
   mode: SubjectActionModalMode | null
@@ -207,18 +207,17 @@ function SubjectActionModal({
                 />
               </Box>
 
-              {/* Bottom: preview + hex input + presets */}
               <Box
                 sx={{
                   borderTop: '1px solid',
                   borderColor: surfaceBorder,
                   display: 'flex',
-                  flexDirection: 'column',
+                  flexDirection: 'row',
                   gap: 1.25,
                   p: 1.5,
+                  justifyContent: 'space-between',
                 }}
               >
-                {/* Preview + hex input */}
                 <Box sx={{ alignItems: 'center', display: 'flex', gap: 1 }}>
                   <Box
                     sx={{
@@ -231,36 +230,12 @@ function SubjectActionModal({
                       width: 32,
                     }}
                   />
-                  <AppInput
-                    label=""
-                    onChange={event => onChange('color', event.target.value)}
-                    placeholder="#206dc5"
-                    sx={{
-                      flex: 1,
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: '9px',
-                        height: 32,
-                        backgroundColor: isDark
-                          ? alpha(theme.palette.common.white, 0.05)
-                          : alpha(theme.palette.common.black, 0.03),
-                      },
-                      '& .MuiInputBase-input': {
-                        fontSize: 12,
-                        fontFamily: 'monospace',
-                        letterSpacing: '0.04em',
-                        py: 0,
-                      },
-                    }}
-                    value={values.color}
-                  />
                 </Box>
-
-                {/* Preset swatches */}
                 <Box
                   sx={{
-                    display: 'grid',
-                    gap: 0.75,
-                    gridTemplateColumns: 'repeat(8, 1fr)',
+                    display: 'flex',
+                    flexDirection: 'row',
+                    gap: 1,
                   }}
                 >
                   {PRESET_COLORS.map(preset => {
@@ -274,6 +249,8 @@ function SubjectActionModal({
                         title={preset.label}
                         type="button"
                         sx={{
+                          height: 32,
+                          width: 32,
                           aspectRatio: '1',
                           backgroundColor: preset.value,
                           border: '2px solid',
@@ -288,7 +265,6 @@ function SubjectActionModal({
                           padding: 0,
                           transition:
                             'transform 120ms ease, box-shadow 120ms ease',
-                          width: '100%',
                           '&:hover': {
                             transform: 'scale(1.18)',
                             boxShadow: `0 0 0 2px ${preset.value}`,

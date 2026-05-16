@@ -108,13 +108,14 @@ export function createParentApprovalRepository({
       guardianId: string,
       status: ParentApprovalStatus
     ): Promise<ParentApprovalItem> {
-      const response = await client.patch<GuardianResponseDto>(
-        buildGuardianPath(guardianId),
-        {
-          guardian_status: mapParentStatusToGuardianStatusDto(status),
-        }
+      await client.patch<unknown>(
+        `admin/users/${encodeURIComponent(guardianId)}/status`,
+        { status: mapParentStatusToGuardianStatusDto(status) }
       )
-      return mapGuardianResponseToParentApprovalItem(response.data)
+      const refreshed = await client.get<GuardianResponseDto>(
+        buildGuardianPath(guardianId)
+      )
+      return mapGuardianResponseToParentApprovalItem(refreshed.data)
     },
   }
 }

@@ -6,6 +6,10 @@ export type UploadApprovalStatus =
   | 'rejected'
 
 export type UploadActivityType = 'exercise' | 'essay' | 'activity'
+export type UploadApprovalFilter =
+  | UploadApprovalStatus
+  | UploadActivityType
+  | 'all'
 
 export interface UploadApprovalItem {
   id: string
@@ -17,6 +21,12 @@ export interface UploadApprovalItem {
   activityType?: UploadActivityType
   status: UploadApprovalStatus
   uploadedAt: string
+  subject?: {
+    id: string
+    name: string
+    color?: string | null
+    slug?: string | null
+  } | null
   badges: Array<{
     id: string
     label: string
@@ -25,6 +35,7 @@ export interface UploadApprovalItem {
 }
 
 export interface UploadApprovalQuery {
+  activityType: UploadActivityType | 'all'
   page: number
   pageSize: number
   query: string

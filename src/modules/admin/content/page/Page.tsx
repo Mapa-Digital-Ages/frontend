@@ -19,6 +19,7 @@ import AppPageContainer from '@/shared/ui/AppPageContainer'
 import { buildAdminCorrectionRoute } from '@/app/router/paths'
 import { useUserRole } from '@/app/access/hook'
 import { contentApprovalService } from '@/modules/admin/content/services/runtime'
+import { subjectService } from '@/modules/admin/content/services/subject/service'
 import { uploadApprovalService } from '@/modules/admin/content/services/upload/runtime'
 import type {
   ApprovalCardAction,
@@ -29,16 +30,15 @@ import type {
   ContentApprovalItem,
 } from '@/modules/admin/shared/types/types'
 import type {
+  UploadActivityType,
+  UploadApprovalFilter,
   UploadApprovalItem,
   UploadApprovalQuery,
   UploadApprovalResult,
   UploadApprovalStatus,
   UploadEditFormValues,
 } from '../types/upload'
-import {
-  ALL_SUBJECT_TAG_CONTEXTS,
-  UPLOAD_APPROVAL_CARD_STATUS,
-} from '@/shared/utils/themes'
+import { UPLOAD_APPROVAL_CARD_STATUS } from '@/shared/utils/themes'
 import ApprovalActionModal, {
   type ApprovalActionModalMode,
 } from '@/modules/admin/shared/components/ApprovalActionModal'
@@ -76,6 +76,7 @@ const DEFAULT_CONTENT_QUERY: ApprovalQueueQuery = {
 }
 
 const DEFAULT_UPLOAD_QUERY: UploadApprovalQuery = {
+  activityType: 'all',
   page: DEFAULT_PAGE_INDEX,
   pageSize: 10,
   query: '',
@@ -84,11 +85,7 @@ const DEFAULT_UPLOAD_QUERY: UploadApprovalQuery = {
 
 const contentFilterOptions: ApprovalStatusOption[] = [
   { label: 'Todos', value: 'all' },
-  { label: 'Em revisão', value: 'inReview' },
-  { label: 'Correção em progresso', value: 'correctionInProgress' },
   { label: 'Enviado', value: 'sent' },
-  { label: 'Aprovado', value: 'approved' },
-  { label: 'Recusado', value: 'rejected' },
 ]
 
 const uploadFilterOptions: UploadStatusOption[] = [
@@ -98,59 +95,18 @@ const uploadFilterOptions: UploadStatusOption[] = [
   { label: 'Correção em andamento', value: 'correctionInProgress' },
   { label: 'Corrigido', value: 'corrected' },
   { label: 'Rejeitado', value: 'rejected' },
+  { label: 'Exercício', value: 'exercise' },
+  { label: 'Redação', value: 'essay' },
+  { label: 'Atividade', value: 'activity' },
 ]
 
-const resourceTypeOptions = [
-  { label: 'Tarefa', value: 'task' },
-  { label: 'Prova', value: 'exam' },
-] as const
+function isUploadActivityFilter(
+  filter: UploadApprovalFilter
+): filter is UploadActivityType {
+  return filter === 'activity' || filter === 'essay' || filter === 'exercise'
+}
 
-const subjectOptions = ALL_SUBJECT_TAG_CONTEXTS.filter(
-  subject => subject.id !== 'default'
-).map(subject => ({
-  label: subject.label,
-  value: subject.id ?? subject.label,
-}))
-
-const DEFAULT_SUBJECT_ID =
-  subjectOptions.find(s => s.value === 'mathematics')?.value ??
-  subjectOptions[0]?.value ??
-  'default'
-
-const MOCK_SUBJECTS: SubjectItem[] = [
-  {
-    id: 'mathematics',
-    name: 'Matemática',
-    contentCount: 2,
-    tasksCount: 1,
-    trailsCount: 4,
-    questionnaireCount: 2,
-  },
-  {
-    id: 'portuguese',
-    name: 'Português',
-    contentCount: 2,
-    tasksCount: 1,
-    trailsCount: 1,
-    questionnaireCount: 2,
-  },
-  {
-    id: 'science',
-    name: 'Ciências',
-    contentCount: 2,
-    tasksCount: 1,
-    trailsCount: 2,
-    questionnaireCount: 2,
-  },
-  {
-    id: 'history',
-    name: 'História',
-    contentCount: 2,
-    tasksCount: 1,
-    trailsCount: 1,
-    questionnaireCount: 2,
-  },
-]
+const DEFAULT_SUBJECT_ID = 'default'
 
 function emptyContentQueue(
   pageSize: number
@@ -182,13 +138,15 @@ function getTodayRequestDate() {
   return new Intl.DateTimeFormat('pt-BR').format(new Date())
 }
 
-function getDefaultContentFormValues(): ContentApprovalActionFormValues {
+function getDefaultContentFormValues(
+  subjectId: string = DEFAULT_SUBJECT_ID
+): ContentApprovalActionFormValues {
   return {
     type: 'content',
     requestedAt: getTodayRequestDate(),
-    resourceType: 'task',
-    subjectId: String(DEFAULT_SUBJECT_ID),
+    subjectId,
     title: '',
+    description: '',
   }
 }
 
@@ -202,6 +160,10 @@ export default function Page() {
   const theme = useTheme()
   const navigate = useNavigate()
   const { role, isAdmin } = useUserRole()
+  const [subjects, setSubjects] = useState<SubjectItem[]>([])
+  const [subjectError, setSubjectError] = useState<string | null>(null)
+  const [subjectRefreshKey, setSubjectRefreshKey] = useState(0)
+  const [hasLoadedSubjects, setHasLoadedSubjects] = useState(false)
   const [contentQuery, setContentQuery] = useState<ApprovalQueueQuery>(
     DEFAULT_CONTENT_QUERY
   )
@@ -258,31 +220,72 @@ export default function Page() {
     () => buildResultsSummary(uploadQueue.totalItems),
     [uploadQueue.totalItems]
   )
+  const subjectOptions = useMemo(
+    () =>
+      subjects.map(subject => ({
+        label: subject.name,
+        value: subject.id,
+      })),
+    [subjects]
+  )
+  const defaultSubjectId = subjectOptions[0]?.value ?? DEFAULT_SUBJECT_ID
+  const selectedUploadFilter: UploadApprovalFilter =
+    uploadQuery.activityType !== 'all'
+      ? uploadQuery.activityType
+      : uploadQuery.status
 
   const cards = [
     {
       id: 'subjects',
       title: 'Disciplinas',
-      value: MOCK_SUBJECTS.length,
+      value: subjects.length,
     },
     {
       id: 'contents',
       title: 'Conteúdos',
-      value: MOCK_SUBJECTS.reduce((sum, s) => sum + s.contentCount, 0),
+      value: subjects.reduce((sum, s) => sum + s.contentCount, 0),
     },
     {
       id: 'tasks',
-      title: 'Tarefas e provas',
-      value: MOCK_SUBJECTS.reduce((sum, s) => sum + s.tasksCount, 0),
+      title: 'Tarefas e Atividades',
+      value: subjects.reduce((sum, s) => sum + s.tasksCount, 0),
+    },
+    {
+      id: 'uploads',
+      title: 'Uploads',
+      value: subjects.reduce((sum, s) => sum + s.uploadsCount, 0),
     },
   ]
 
-  const getSubjectById = useCallback((subjectId: string) => {
-    return (
-      ALL_SUBJECT_TAG_CONTEXTS.find(s => (s.id ?? s.label) === subjectId) ??
-      ALL_SUBJECT_TAG_CONTEXTS[0]
-    )
-  }, [])
+  const getSubjectById = useCallback(
+    (subjectId: string) => {
+      const backendSubject = subjects.find(subject => subject.id === subjectId)
+      if (backendSubject) {
+        return {
+          color: backendSubject.color,
+          id: backendSubject.id,
+          label: backendSubject.name,
+        }
+      }
+      return { id: subjectId || DEFAULT_SUBJECT_ID, label: 'Geral' }
+    },
+    [subjects]
+  )
+  const getContentSubjectId = useCallback(
+    (item?: ContentApprovalItem) => {
+      const subjectId = item?.subject?.id ? String(item.subject.id) : ''
+      if (subjectId && subjects.some(subject => subject.id === subjectId)) {
+        return subjectId
+      }
+
+      const subjectLabel = item?.subject?.label
+      const matchedSubject = subjects.find(
+        subject => subject.name === subjectLabel
+      )
+      return matchedSubject?.id ?? subjectId ?? defaultSubjectId
+    },
+    [defaultSubjectId, subjects]
+  )
 
   const [subjectModalMode, setSubjectModalMode] =
     useState<SubjectActionModalMode | null>(null)
@@ -307,17 +310,37 @@ export default function Page() {
     if (!subjectModalMode || isSubjectModalSubmitting) return
     setIsSubjectModalSubmitting(true)
     try {
+      if (subjectModalMode.action === 'create') {
+        await subjectService.createSubject(
+          subjectModalValues.name,
+          subjectModalValues.color
+        )
+      } else if (subjectModalMode.action === 'edit') {
+        await subjectService.updateSubject(subjectModalMode.subjectId, {
+          name: subjectModalValues.name,
+          color: subjectModalValues.color,
+        })
+      } else if (subjectModalMode.action === 'delete') {
+        await subjectService.deleteSubject(subjectModalMode.subjectId)
+      }
+      setSubjectRefreshKey(key => key + 1)
       resetSubjectModal()
     } finally {
       setIsSubjectModalSubmitting(false)
     }
-  }, [subjectModalMode, isSubjectModalSubmitting, resetSubjectModal])
+  }, [
+    subjectModalMode,
+    subjectModalValues.color,
+    subjectModalValues.name,
+    isSubjectModalSubmitting,
+    resetSubjectModal,
+  ])
 
   const resetContentModal = useCallback(() => {
     setContentModalState(null)
-    setContentModalValues(getDefaultContentFormValues())
+    setContentModalValues(getDefaultContentFormValues(defaultSubjectId))
     setContentSelectionMode(null)
-  }, [])
+  }, [defaultSubjectId])
 
   const toggleContentSelectionMode = useCallback(
     (action: 'edit' | 'delete') => {
@@ -326,25 +349,25 @@ export default function Page() {
     []
   )
 
-  const openContentModal = useCallback((nextMode: ApprovalActionModalMode) => {
-    setContentModalState(nextMode)
-    setContentModalValues({
-      type: 'content',
-      requestedAt:
-        nextMode.action === 'create'
-          ? getTodayRequestDate()
-          : (nextMode.item?.requestedAt ?? getTodayRequestDate()),
-      resourceType:
-        nextMode.item?.kind === 'content'
-          ? (nextMode.item.resourceType ?? 'task')
-          : 'task',
-      subjectId:
-        nextMode.item?.kind === 'content'
-          ? String(nextMode.item.subject?.id ?? DEFAULT_SUBJECT_ID)
-          : String(DEFAULT_SUBJECT_ID),
-      title: nextMode.item?.title ?? '',
-    })
-  }, [])
+  const openContentModal = useCallback(
+    (nextMode: ApprovalActionModalMode) => {
+      setContentModalState(nextMode)
+      setContentModalValues({
+        type: 'content',
+        requestedAt:
+          nextMode.action === 'create'
+            ? getTodayRequestDate()
+            : (nextMode.item?.requestedAt ?? getTodayRequestDate()),
+        subjectId:
+          nextMode.item?.kind === 'content'
+            ? getContentSubjectId(nextMode.item)
+            : defaultSubjectId,
+        title: nextMode.item?.title ?? '',
+        description: nextMode.item?.description ?? '',
+      })
+    },
+    [defaultSubjectId, getContentSubjectId]
+  )
 
   const handleContentItemSelect = useCallback(
     (item: ContentApprovalItem) => {
@@ -358,12 +381,12 @@ export default function Page() {
       setContentModalValues({
         type: 'content',
         requestedAt: item.requestedAt ?? getTodayRequestDate(),
-        resourceType: item.resourceType ?? 'task',
-        subjectId: String(item.subject?.id ?? DEFAULT_SUBJECT_ID),
+        subjectId: getContentSubjectId(item),
         title: item.title ?? '',
+        description: item.description ?? '',
       })
     },
-    [contentSelectionMode]
+    [contentSelectionMode, getContentSubjectId]
   )
 
   const handleContentModalChange = useCallback(
@@ -371,7 +394,7 @@ export default function Page() {
       field:
         | keyof ContentApprovalActionFormValues
         | keyof GuardianApprovalActionFormValues,
-      value: string | ContentApprovalDraftInput['resourceType']
+      value: string
     ) => {
       setContentModalValues(current => ({ ...current, [field]: value }))
     },
@@ -392,9 +415,9 @@ export default function Page() {
       }
       const payload: ContentApprovalDraftInput = {
         requestedAt: contentModalValues.requestedAt,
-        resourceType: contentModalValues.resourceType,
         subject: getSubjectById(contentModalValues.subjectId),
         title: contentModalValues.title || 'Novo conteúdo',
+        description: contentModalValues.description || '',
       }
       if (contentModalState.action === 'create') {
         await contentApprovalService.createLocalContentDraft(payload)
@@ -453,6 +476,20 @@ export default function Page() {
     []
   )
 
+  const handleUploadFilterChange = useCallback(
+    (filter: UploadApprovalFilter) => {
+      startTransition(() =>
+        setUploadQuery(q => ({
+          ...q,
+          activityType: isUploadActivityFilter(filter) ? filter : 'all',
+          page: DEFAULT_PAGE_INDEX,
+          status: isUploadActivityFilter(filter) ? 'all' : filter,
+        }))
+      )
+    },
+    []
+  )
+
   const handleUploadModalConfirm = useCallback(async () => {
     if (!uploadModalState || isUploadModalSubmitting) return
     setIsUploadModalSubmitting(true)
@@ -465,7 +502,7 @@ export default function Page() {
       }
       await uploadApprovalService.updateUploadActivityType(
         uploadModalState.item.id,
-        uploadModalValues
+        uploadModalValues.activityType
       )
       setUploadRefreshKey(k => k + 1)
       resetUploadModal()
@@ -474,8 +511,8 @@ export default function Page() {
     }
   }, [
     uploadModalState,
-    uploadModalValues,
     isUploadModalSubmitting,
+    uploadModalValues.activityType,
     resetUploadModal,
   ])
 
@@ -575,6 +612,28 @@ export default function Page() {
 
   useEffect(() => {
     let isActive = true
+    async function loadSubjects() {
+      try {
+        const nextSubjects = await subjectService.listSubjects()
+        if (!isActive) return
+        setSubjectError(null)
+        setSubjects(nextSubjects)
+      } catch {
+        if (!isActive) return
+        setSubjectError('Não foi possível carregar as disciplinas do backend.')
+        setSubjects([])
+      } finally {
+        if (isActive) setHasLoadedSubjects(true)
+      }
+    }
+    void loadSubjects()
+    return () => {
+      isActive = false
+    }
+  }, [subjectRefreshKey])
+
+  useEffect(() => {
+    let isActive = true
     async function loadContentQueue() {
       try {
         const nextContentQueue =
@@ -619,7 +678,13 @@ export default function Page() {
     }
   }, [resolvedUploadQuery, uploadRefreshKey])
 
-  if (!isAdmin || role !== 'admin' || !hasLoadedContent || !hasLoadedUploads) {
+  if (
+    !isAdmin ||
+    role !== 'admin' ||
+    !hasLoadedSubjects ||
+    !hasLoadedContent ||
+    !hasLoadedUploads
+  ) {
     return <LoadingScreen />
   }
 
@@ -640,9 +705,11 @@ export default function Page() {
       <Box>
         <SubjectComponent
           description="Gerencie e cadastre novas disciplinas para todo o sistema"
-          emptyStateDescription="Tente outro filtro ou cadastre uma nova disciplina."
+          emptyStateDescription={
+            subjectError ?? 'Cadastre uma nova disciplina para iniciar.'
+          }
           emptyStateTitle="Nenhuma disciplina encontrada"
-          items={MOCK_SUBJECTS}
+          items={subjects}
           onCreate={() => {
             setSubjectModalValues({ name: '', color: 'rgba(32, 109, 197, 1)' })
             setSubjectModalMode({ action: 'create' })
@@ -653,6 +720,18 @@ export default function Page() {
               onDelete={subject => {
                 setSubjectModalMode({
                   action: 'delete',
+                  subjectId: subject.id,
+                  subjectName: subject.name,
+                })
+              }}
+              onEdit={subject => {
+                setSubjectModalValues({
+                  name: subject.name,
+                  color: subject.color ?? 'rgba(32, 109, 197, 1)',
+                })
+                setSubjectModalMode({
+                  action: 'edit',
+                  subjectId: subject.id,
                   subjectName: subject.name,
                 })
               }}
@@ -676,7 +755,7 @@ export default function Page() {
       >
         <ApprovalComponent
           currentPage={contentQueue.currentPage}
-          description="Cadastre uma nova tarefa ou prova para revisão."
+          description="Cadastre e mantenha conteúdos vinculados às disciplinas."
           emptyStateDescription={
             contentError ??
             'Tente outro filtro ou cadastre um novo conteúdo para iniciar a revisão.'
@@ -741,11 +820,7 @@ export default function Page() {
               setUploadQuery(q => ({ ...q, page: DEFAULT_PAGE_INDEX, query }))
             )
           }}
-          onStatusChange={status => {
-            startTransition(() =>
-              setUploadQuery(q => ({ ...q, page: DEFAULT_PAGE_INDEX, status }))
-            )
-          }}
+          onStatusChange={handleUploadFilterChange}
           query={uploadQuery.query}
           renderItem={item => (
             <UploadApprovalCard
@@ -757,7 +832,7 @@ export default function Page() {
           resultsSummary={uploadResultsSummary}
           role={role}
           searchPlaceholder="Pesquisar uploads..."
-          selectedStatus={uploadQuery.status}
+          selectedStatus={selectedUploadFilter}
           title="Uploads de Alunos"
           totalPages={uploadQueue.totalPages}
         />
@@ -771,7 +846,6 @@ export default function Page() {
         onClose={resetContentModal}
         onConfirm={handleContentModalConfirm}
         open={contentModalState !== null}
-        resourceTypeOptions={[...resourceTypeOptions]}
         role={role}
         subjectOptions={subjectOptions}
         values={contentModalValues}

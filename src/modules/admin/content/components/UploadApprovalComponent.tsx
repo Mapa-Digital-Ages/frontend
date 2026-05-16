@@ -11,11 +11,15 @@ import {
 } from '@/app/theme/core/roles'
 import type { ApprovalResultsSummary } from '@/modules/admin/shared/types/types'
 import type { UserRole } from '@/shared/types/user'
-import type { UploadApprovalItem, UploadApprovalStatus } from '../types/upload'
+import type {
+  UploadApprovalFilter,
+  UploadApprovalItem,
+  UploadApprovalStatus,
+} from '../types/upload'
 import type { DropdownOption } from '@/shared/ui/AppDropdown'
 
 export interface UploadStatusOption extends DropdownOption {
-  value: UploadApprovalStatus | 'all'
+  value: UploadApprovalFilter
 }
 
 interface UploadApprovalComponentProps {
@@ -30,13 +34,13 @@ interface UploadApprovalComponentProps {
   onItemSelect?: (item: UploadApprovalItem) => void
   onPageChange: (page: number) => void
   onQueryChange: (query: string) => void
-  onStatusChange: (status: UploadApprovalStatus | 'all') => void
+  onStatusChange: (status: UploadApprovalFilter) => void
   query: string
   renderItem: (item: UploadApprovalItem) => ReactNode
   resultsSummary: ApprovalResultsSummary
   role: UserRole
   searchPlaceholder: string
-  selectedStatus: UploadApprovalStatus | 'all'
+  selectedStatus: UploadApprovalFilter
   selectionMode?: 'edit' | 'delete' | null
   title: string
   totalPages: number
@@ -128,7 +132,7 @@ function UploadApprovalComponent({
           filterOptions={filterOptions}
           onQueryChange={onQueryChange}
           onStatusChange={status =>
-            onStatusChange(status as UploadApprovalStatus | 'all')
+            onStatusChange(status as UploadApprovalFilter)
           }
           query={query}
           resultsSummary={resultsSummary}

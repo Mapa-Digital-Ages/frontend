@@ -160,15 +160,20 @@ function SubjectComponent<TItem extends { id: string }>({
             disablePadding
             sx={{
               display: 'grid',
-              gridTemplateColumns: { md: 'repeat(4, 1fr)', xs: '1fr' },
+              gridTemplateColumns: {
+                md: 'repeat(4, minmax(0, 1fr))',
+                sm: 'repeat(2, minmax(0, 1fr))',
+                xs: '1fr',
+              },
               gap: 2,
-              maxHeight: { md: 160, xs: 'none' },
+              maxHeight: { md: 320, sm: 360, xs: 280 },
               minHeight: 0,
               overflowX: 'hidden',
               overflowY: 'auto',
               pr: { md: 1, xs: 0.75 },
               pl: { md: 0.5, xs: 0.75 },
               pt: { md: 0.5, xs: 0.75 },
+              pb: 0.5,
             }}
           >
             {items.map(item => (
