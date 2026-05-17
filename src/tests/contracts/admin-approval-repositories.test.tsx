@@ -69,12 +69,16 @@ function contentApproval(
 ): ContentApprovalDto {
   return {
     id: 'content-10',
-    requested_at: '2026-04-07',
-    stage_label: 'Português',
-    status: 'in_review',
-    subject_label: '7º ano',
-    tags: [{ id: 'tag-1', label: '2 questões vinculadas', tone: 'danger' }],
+    created_at: '2026-04-07T12:00:00+00:00',
+    description: 'Conteúdo inicial.',
+    subject: {
+      id: '1',
+      name: 'Português',
+      slug: 'portuguese',
+      color: 'rgba(5, 113, 247, 1)',
+    },
     title: 'Avaliação bimestral',
+    updated_at: null,
     ...overrides,
   }
 }
@@ -144,7 +148,6 @@ test('content approval repository sends queue filters and maps backend DTOs', as
           page: 2,
           page_size: 10,
           query: 'português',
-          status: 'in_review',
         },
       },
     },
@@ -157,8 +160,8 @@ test('content approval repository sends queue filters and maps backend DTOs', as
   })
   expect(result.items[0]).toMatchObject({
     id: 'content-10',
-    status: 'inReview',
-    subtitle: 'Português · 07/04/2026',
+    status: 'sent',
+    subtitle: 'Português · Criado em 07/04/2026',
     title: 'Avaliação bimestral',
   })
 })
@@ -191,13 +194,13 @@ test('content approval repository creates and updates content without resource t
   await repository.createLocalContentDraft({
     description: '',
     requestedAt: '07/04/2026',
-    subject: { id: 'portuguese', label: 'Português' },
+    subject: { id: '1', label: 'Português' },
     title: 'Avaliação bimestral',
   })
   const item = await repository.updateLocalContentItem('content-10', {
     description: '',
     requestedAt: '08/04/2026',
-    subject: { id: 'portuguese', label: 'Português' },
+    subject: { id: '1', label: 'Português' },
     title: 'Conteúdo editado',
   })
 
@@ -206,7 +209,7 @@ test('content approval repository creates and updates content without resource t
       path: 'admin/content',
       body: {
         description: '',
-        subject_label: 'Português',
+        subject_id: 1,
         title: 'Avaliação bimestral',
       },
     },
@@ -216,7 +219,7 @@ test('content approval repository creates and updates content without resource t
       path: 'admin/content/content-10',
       body: {
         description: '',
-        subject_label: 'Português',
+        subject_id: 1,
         title: 'Conteúdo editado',
       },
     },
@@ -284,7 +287,7 @@ test('upload approval repository uses admin upload list and delete endpoints', a
           page: 1,
           page_size: 10,
           query: 'atividade',
-          status: 'correction_in_progress',
+          status: 'in_review',
           activity_type: 'essay',
         },
       },
@@ -301,7 +304,7 @@ test('upload approval repository uses admin upload list and delete endpoints', a
       body: { activity_type: 'essay' },
     },
     {
-      path: 'admin/uploads/2f188dbd-4398-44eb-8060-b60ef5b7d4df/status',
+      path: 'admin/uploads/2f188dbd-4398-44eb-8060-b60ef5b7d4df',
       body: { status: 'corrected' },
     },
   ])
@@ -331,6 +334,11 @@ test('parent approval repository calls guardian endpoints with pagination', asyn
       options?: { query?: HttpRequestOptions['query'] }
     ) {
       getCalls.push({ path, options })
+      if (path.startsWith('guardian/')) {
+        return apiResponse(
+          guardianResponse({ guardian_status: 'approved' })
+        ) as ApiResponse<T>
+      }
       return apiResponse(
         guardianListResponse([guardianResponse()])
       ) as ApiResponse<T>
@@ -407,6 +415,10 @@ test('parent approval repository calls guardian endpoints with pagination', asyn
         },
       },
     },
+    {
+      path: 'guardian/47f2a20f-77cb-4d0b-89ef-b64d160fce48',
+      options: undefined,
+    },
   ])
 
   expect(queue.items[0]).toMatchObject({
@@ -423,8 +435,8 @@ test('parent approval repository calls guardian endpoints with pagination', asyn
 
   expect(patchCalls).toEqual([
     {
-      path: 'guardian/47f2a20f-77cb-4d0b-89ef-b64d160fce48',
-      body: { guardian_status: 'approved' },
+      path: 'admin/users/47f2a20f-77cb-4d0b-89ef-b64d160fce48/status',
+      body: { status: 'approved' },
     },
     {
       path: 'guardian/47f2a20f-77cb-4d0b-89ef-b64d160fce48',

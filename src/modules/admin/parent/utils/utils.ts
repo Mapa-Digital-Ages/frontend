@@ -3,7 +3,13 @@ import type {
   ApprovalItem,
   ApprovalQueueQuery,
   ApprovalQueueResult,
+  ParentApprovalItem,
 } from '@/modules/admin/shared/types/types'
+
+interface ParentApprovalEligibility {
+  canApprove: boolean
+  missingRequirements: string[]
+}
 
 function normalizeSearchValue(value: string) {
   return value
@@ -65,5 +71,20 @@ export function paginateApprovalItems<TItem>(
     pageSize: safePageSize,
     totalItems,
     totalPages,
+  }
+}
+
+export function getParentApprovalEligibility(
+  item: ParentApprovalItem
+): ParentApprovalEligibility {
+  const missingRequirements = [
+    item.validation.hasDocument ? null : 'documento',
+    item.validation.relationshipConfirmed ? null : 'vínculo',
+    item.validation.studentLinked ? null : 'aluno',
+  ].filter((value): value is string => value !== null)
+
+  return {
+    canApprove: missingRequirements.length === 0,
+    missingRequirements,
   }
 }

@@ -28,6 +28,7 @@ export interface CreateUploadApprovalRepositoryOptions {
 
 function toApiStatus(status: UploadApprovalStatus) {
   if (status === 'inReview') return 'in_review'
+  if (status === 'correctionInProgress') return 'in_review'
   return status
 }
 
