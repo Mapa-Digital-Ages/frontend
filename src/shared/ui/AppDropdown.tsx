@@ -43,6 +43,7 @@ export interface AppDropdownProps extends Omit<
   onChange: SelectProps['onChange']
   placeholder?: string
   dropdownPlacement?: 'bottom' | 'top'
+  menuAlign?: 'left' | 'right'
   width?: string | number
   borderRadius?: string | number
   backgroundColor?: string
@@ -66,6 +67,7 @@ function AppDropdown({
   onChange,
   placeholder = 'Selecione uma opção',
   dropdownPlacement = 'bottom',
+  menuAlign = 'left',
   width = 240,
   borderRadius = 'var(--dropdown-radius)',
   backgroundColor = 'background.paper',
@@ -348,12 +350,12 @@ function AppDropdown({
           },
           anchorOrigin:
             dropdownPlacement === 'top'
-              ? { vertical: 'top', horizontal: 'left' }
-              : { vertical: 'bottom', horizontal: 'left' },
+              ? { vertical: 'top', horizontal: menuAlign }
+              : { vertical: 'bottom', horizontal: menuAlign },
           transformOrigin:
             dropdownPlacement === 'top'
-              ? { vertical: 'bottom', horizontal: 'left' }
-              : { vertical: 'top', horizontal: 'left' },
+              ? { vertical: 'bottom', horizontal: menuAlign }
+              : { vertical: 'top', horizontal: menuAlign },
           PaperProps: {
             ...MenuProps?.PaperProps,
             sx: {

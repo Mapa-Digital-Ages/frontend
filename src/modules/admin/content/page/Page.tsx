@@ -194,6 +194,10 @@ export default function Page() {
   const [uploadQueue, setUploadQueue] = useState<UploadApprovalResult>(
     emptyUploadQueue(DEFAULT_UPLOAD_QUERY.pageSize)
   )
+  const [uploadTotals, setUploadTotals] = useState<{
+    total: number
+    bySubject: Record<string, number>
+  }>({ total: 0, bySubject: {} })
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [hasLoadedUploads, setHasLoadedUploads] = useState(false)
   const [uploadRefreshKey, setUploadRefreshKey] = useState(0)
@@ -246,14 +250,9 @@ export default function Page() {
       value: subjects.reduce((sum, s) => sum + s.contentCount, 0),
     },
     {
-      id: 'tasks',
-      title: 'Tarefas e Atividades',
-      value: subjects.reduce((sum, s) => sum + s.tasksCount, 0),
-    },
-    {
-      id: 'uploads',
-      title: 'Uploads',
-      value: subjects.reduce((sum, s) => sum + s.uploadsCount, 0),
+      id: 'activities',
+      title: 'Atividades',
+      value: uploadTotals.total,
     },
   ]
 
@@ -678,6 +677,37 @@ export default function Page() {
     }
   }, [resolvedUploadQuery, uploadRefreshKey])
 
+  useEffect(() => {
+    let isActive = true
+    async function loadUploadTotals() {
+      try {
+        const allUploads = await uploadApprovalService.getUploadQueue({
+          ...DEFAULT_UPLOAD_QUERY,
+          pageSize: 1000,
+        })
+        if (!isActive) return
+        const bySubject = allUploads.items.reduce<Record<string, number>>(
+          (acc, item) => {
+            const subjectId = item.subject?.id ? String(item.subject.id) : null
+            if (subjectId) {
+              acc[subjectId] = (acc[subjectId] ?? 0) + 1
+            }
+            return acc
+          },
+          {}
+        )
+        setUploadTotals({ total: allUploads.totalItems, bySubject })
+      } catch {
+        if (!isActive) return
+        setUploadTotals({ total: 0, bySubject: {} })
+      }
+    }
+    void loadUploadTotals()
+    return () => {
+      isActive = false
+    }
+  }, [uploadRefreshKey])
+
   if (
     !isAdmin ||
     role !== 'admin' ||
@@ -717,6 +747,7 @@ export default function Page() {
           renderItem={item => (
             <SubjectCard
               item={item}
+              activitiesCount={uploadTotals.bySubject[item.id] ?? 0}
               onDelete={subject => {
                 setSubjectModalMode({
                   action: 'delete',
@@ -801,9 +832,9 @@ export default function Page() {
 
         <UploadApprovalComponent
           currentPage={uploadQueue.currentPage}
-          description="Revise e corrija os uploads enviados pelos alunos."
+          description="Revise e corrija as atividades enviadas pelos alunos."
           emptyStateDescription={
-            uploadError ?? 'Nenhum upload encontrado. Tente outro filtro.'
+            uploadError ?? 'Nenhuma atividade encontrado. Tente outro filtro.'
           }
           emptyStateTitle="Nenhum upload encontrado"
           filterOptions={uploadFilterOptions}
@@ -833,7 +864,7 @@ export default function Page() {
           role={role}
           searchPlaceholder="Pesquisar uploads..."
           selectedStatus={selectedUploadFilter}
-          title="Uploads de Alunos"
+          title="Atividades de Alunos"
           totalPages={uploadQueue.totalPages}
         />
       </Box>

@@ -135,6 +135,9 @@ export function SearchBarAndFilter({
               }}
             />
           }
+          menuAlign={isMobileLayout ? 'right' : 'left'}
+          menuMaxHeight={240}
+          menuWidth={isMobileLayout ? 220 : 200}
           MenuProps={{
             PaperProps: {
               sx: {

@@ -8,15 +8,22 @@ import type { SubjectItem } from '@/modules/admin/shared/types/types'
 
 export interface SubjectCardProps {
   item: SubjectItem
+  activitiesCount?: number
   onDelete: (item: SubjectItem) => void
   onEdit: (item: SubjectItem) => void
 }
 
-function SubjectCard({ item, onDelete, onEdit }: SubjectCardProps) {
+function SubjectCard({
+  item,
+  activitiesCount,
+  onDelete,
+  onEdit,
+}: SubjectCardProps) {
   const theme = useTheme()
   const errorColor = theme.palette.error.main
   const errorHover = getHoverStyle(theme, errorColor)
   const subjectColor = item.color ?? theme.palette.primary.main
+  const resolvedActivitiesCount = activitiesCount ?? item.uploadsCount
 
   const tags = [
     {
@@ -24,7 +31,11 @@ function SubjectCard({ item, onDelete, onEdit }: SubjectCardProps) {
       label: `${item.contentCount} conteúdo(s)`,
       accent: true,
     },
-    { id: 'uploads', label: `${item.uploadsCount} upload(s)`, accent: false },
+    {
+      id: 'activities',
+      label: `${resolvedActivitiesCount} atividade(s)`,
+      accent: false,
+    },
   ]
 
   return (
