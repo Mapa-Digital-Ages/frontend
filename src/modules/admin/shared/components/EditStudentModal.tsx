@@ -1,13 +1,12 @@
-import { Box } from '@mui/material'
-import { useTheme } from '@mui/material/styles'
-import { useState } from 'react'
-import type { BoxProps } from '@mui/material'
 import AppActionModal from '@/shared/ui/AppActionModal'
 import AppDropdown from '@/shared/ui/AppDropdown'
 import AppInput from '@/shared/ui/AppInput'
+import { Box, Typography } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
+import { useState, useEffect } from 'react'
+import type { BoxProps } from '@mui/material'
 import {
   schoolOptions,
-  guardianOptions,
   yearOptions,
 } from '@/modules/admin/shared/constants/studentOptions'
 
@@ -43,45 +42,31 @@ const selectSx = {
   },
 }
 
-const statusOptions = [
-  { label: 'Ativo', value: 'ativo' },
-  { label: 'Inativo', value: 'inativo' },
-]
+export interface Student {
+  name: string
+  school: string
+  year: string
+}
 
-const NONE_VALUE = 'none'
-
-const NONE_OPTION = { label: 'Nenhum', value: NONE_VALUE }
-
-interface CreateStudentModalProps extends BoxProps {
+interface EditStudentModalProps extends BoxProps {
   open: boolean
   onClose: () => void
-  onConfirm: (values: StudentFormValues) => void
+  onConfirm: (values: EditFormValues) => void
+  student: Student
 }
 
-export interface StudentFormValues {
-  name: string
-  email: string
+export interface EditFormValues {
   password: string
   school: string
-  guardian: string
   year: string
-  status: string
 }
 
-function getDefaultValues(): StudentFormValues {
+function getDefaultValues(student: Student): EditFormValues {
   return {
-    name: '',
-    email: '',
     password: '',
-    school: NONE_VALUE,
-    guardian: NONE_VALUE,
-    year: NONE_VALUE,
-    status: 'ativo',
+    school: student.school,
+    year: student.year,
   }
-}
-
-function isValidEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
 function isValidPassword(password: string): boolean {
@@ -101,92 +86,116 @@ function getPasswordHelperText(password: string): string {
   return `Faltando: ${missing.join(', ')}.`
 }
 
-export default function CreateStudentModal({
+export default function EditStudentModal({
   open,
   onClose,
   onConfirm,
+  student,
   ...props
-}: CreateStudentModalProps) {
+}: EditStudentModalProps) {
   const theme = useTheme()
-  const [values, setValues] = useState<StudentFormValues>(getDefaultValues())
+  const [values, setValues] = useState<EditFormValues>(() =>
+    getDefaultValues(student)
+  )
   const [showPassword, setShowPassword] = useState(false)
 
-  function handleChange(field: keyof StudentFormValues, value: string) {
+  useEffect(() => {
+    if (open) {
+      setValues(getDefaultValues(student))
+      setShowPassword(false)
+    }
+  }, [open, student])
+
+  function handleChange(field: keyof EditFormValues, value: string) {
     setValues(current => ({ ...current, [field]: value }))
   }
 
   function handleConfirm() {
     onConfirm(values)
-    setValues(getDefaultValues())
   }
 
   function handleClose() {
-    setValues(getDefaultValues())
     onClose()
   }
 
-  const hasSchool = values.school !== NONE_VALUE
-  const hasGuardian = values.guardian !== NONE_VALUE
-  const isLinked = hasSchool || hasGuardian
-
-  const isDisabled =
-    !values.name.trim() ||
-    !isValidEmail(values.email) ||
-    !isValidPassword(values.password) ||
-    !isLinked
-
-  const passwordHelperText = getPasswordHelperText(values.password)
+  const passwordOk = !values.password || isValidPassword(values.password)
+  const isDisabled = !passwordOk
 
   return (
     <AppActionModal
       {...props}
-      confirmLabel="Criar aluno"
-      description="Cadastre um novo aluno. Vincule-o a uma escola e/ou a um responsável"
+      confirmLabel="Salvar alterações"
+      description="Edite os dados do aluno. A senha só será alterada se um novo valor for informado."
       disableConfirm={isDisabled}
       maxWidth="sm"
       mode="form"
       onClose={handleClose}
       onConfirm={handleConfirm}
       open={open}
-      title="Criar aluno"
+      title="Editar aluno"
       confirmColor={theme.palette.error.main}
     >
       <Box className="grid gap-3">
-        <AppInput
-          label="Nome do aluno"
-          labelSx={fieldLabelSx}
-          onChange={e => handleChange('name', e.target.value)}
-          placeholder="Ex.: Sofia Almeida"
-          sx={inputSx}
-          value={values.name}
-        />
+        <Box
+          sx={{
+            alignItems: 'center',
+            backgroundColor: 'action.hover',
+            borderRadius: '12px',
+            display: 'flex',
+            gap: 1.5,
+            px: 2,
+            py: 1.25,
+          }}
+        >
+          <Box
+            sx={{
+              alignItems: 'center',
+              backgroundColor: 'error.main',
+              borderRadius: '50%',
+              color: '#fff',
+              display: 'flex',
+              flexShrink: 0,
+              fontSize: 13,
+              fontWeight: 700,
+              height: 32,
+              justifyContent: 'center',
+              width: 32,
+            }}
+          >
+            {student.name.charAt(0).toUpperCase()}
+          </Box>
+          <Box>
+            <Typography
+              sx={{
+                fontSize: { md: 14, xs: 13 },
+                fontWeight: 700,
+                lineHeight: 1.3,
+              }}
+            >
+              {student.name}
+            </Typography>
+            <Typography
+              sx={{
+                color: 'text.secondary',
+                fontSize: { md: 12, xs: 11 },
+                lineHeight: 1.3,
+              }}
+            >
+              Editando dados do aluno
+            </Typography>
+          </Box>
+        </Box>
 
         <AppInput
-          label="E-mail"
-          labelSx={fieldLabelSx}
-          onChange={e => handleChange('email', e.target.value)}
-          placeholder="Ex.: sofia@escola.com"
-          sx={inputSx}
-          type="email"
-          value={values.email}
-          error={!!values.email && !isValidEmail(values.email)}
-          helperText={
-            values.email && !isValidEmail(values.email)
-              ? 'Insira um e-mail válido.'
-              : ''
-          }
-        />
-
-        <AppInput
-          label="Senha"
+          label="Nova senha"
           labelSx={fieldLabelSx}
           onChange={e => handleChange('password', e.target.value)}
-          placeholder="Mín. 8 caracteres, maiúscula, número e símbolo"
+          placeholder="Deixe em branco para não alterar"
           sx={inputSx}
           type={showPassword ? 'text' : 'password'}
           value={values.password}
           error={!!values.password && !isValidPassword(values.password)}
-          helperText={passwordHelperText}
+          helperText={getPasswordHelperText(values.password)}
           InputProps={{
             endAdornment: (
               <Box
@@ -219,7 +228,7 @@ export default function CreateStudentModal({
             fullWidth
             label="Escola"
             onChange={e => handleChange('school', String(e.target.value))}
-            options={[NONE_OPTION, ...schoolOptions]}
+            options={schoolOptions}
             sx={selectSx}
             value={values.school}
           />
@@ -227,49 +236,11 @@ export default function CreateStudentModal({
             fullWidth
             label="Ano"
             onChange={e => handleChange('year', String(e.target.value))}
-            options={[NONE_OPTION, ...yearOptions]}
+            options={yearOptions}
             sx={selectSx}
             value={values.year}
           />
         </Box>
-
-        <Box
-          sx={{
-            display: 'grid',
-            gap: 2,
-            gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
-          }}
-        >
-          <AppDropdown
-            fullWidth
-            label="Responsável"
-            onChange={e => handleChange('guardian', String(e.target.value))}
-            options={[NONE_OPTION, ...guardianOptions]}
-            sx={selectSx}
-            value={values.guardian}
-          />
-          <AppDropdown
-            fullWidth
-            label="Status"
-            onChange={e => handleChange('status', String(e.target.value))}
-            options={statusOptions}
-            sx={selectSx}
-            value={values.status}
-          />
-        </Box>
-
-        {!isLinked && (
-          <Box
-            sx={{
-              fontSize: { md: 12, xs: 11 },
-              color: 'warning.main',
-              fontWeight: 500,
-            }}
-          >
-            Selecione ao menos uma <strong>escola</strong> ou um{' '}
-            <strong>responsável</strong> para habilitar o cadastro.
-          </Box>
-        )}
       </Box>
     </AppActionModal>
   )

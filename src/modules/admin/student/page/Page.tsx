@@ -6,6 +6,8 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded'
 import SwapHorizRoundedIcon from '@mui/icons-material/SwapHorizRounded'
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
+import EditRoundedIcon from '@mui/icons-material/EditRounded'
+import { AppColors } from '@/app/theme/core/colors'
 import { IconButton, Menu, MenuItem } from '@mui/material'
 import { Box, Button, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
@@ -13,28 +15,26 @@ import { useState } from 'react'
 import { SearchBarAndFilter } from '@/shared/ui/SearchBarAndFilter'
 import { AppTag } from '@/shared/ui/AppTags'
 import type { TagContext } from '@/shared/types/common'
-import TransferStudentModal, {
-  type TransferFormValues,
-} from '@/modules/admin/shared/components/TransferStudentModal'
+import EditStudentModal, {
+  type EditFormValues,
+  type Student,
+} from '@/modules/admin/shared/components/EditStudentModal'
 import CreateStudentModal, {
   type StudentFormValues,
 } from '@/modules/admin/shared/components/CreateStudentModal'
 import AppActionModal from '@/shared/ui/AppActionModal'
 import {
   schoolOptions,
-  classOptions,
+  yearOptions,
 } from '@/modules/admin/shared/constants/studentOptions'
 
-interface Student {
+interface StudentRow {
   id: string
   name: string
   parent: string
-  class: string
+  year: string
   school: string
   status: string
-  risk: string
-  frequency: string
-  average: string
 }
 
 export default function Page() {
@@ -47,76 +47,60 @@ export default function Page() {
   const [query, setQuery] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('all')
   const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null)
-  const [selectedStudent, setSelectedStudent] = useState<string | null>(null)
-  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false)
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
+    null
+  )
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
 
-  const [students, setStudents] = useState<Student[]>([
+  const [students, setStudents] = useState<StudentRow[]>([
     {
       id: '1',
       name: 'Lucas Silva',
       parent: 'Maria Silva',
-      class: '7º A',
+      year: '7º Ano',
       school: 'Escola São Paulo',
       status: 'inativo',
-      risk: 'alto',
-      frequency: '75',
-      average: '5',
     },
     {
       id: '2',
       name: 'Carlos Nunes',
       parent: 'Roberta Nunes',
-      class: '7º A',
+      year: '7º Ano',
       school: 'Escola São Paulo',
       status: 'ativo',
-      risk: 'baixo',
-      frequency: '92',
-      average: '9',
     },
     {
       id: '3',
       name: 'Lívia Santos',
       parent: 'Paula Santos',
-      class: '6º A',
+      year: '6º Ano',
       school: 'Escola São Paulo',
       status: 'ativo',
-      risk: 'alto',
-      frequency: '86',
-      average: '6',
     },
     {
       id: '4',
       name: 'Marina Costa',
       parent: 'Pedro Costa',
-      class: '7º B',
+      year: '7º Ano',
       school: 'Escola Rio Branco',
       status: 'ativo',
-      risk: 'baixo',
-      frequency: '85',
-      average: '8',
     },
     {
       id: '5',
       name: 'Rafael Souza',
       parent: 'Ana Souza',
-      class: '8º A',
+      year: '8º Ano',
       school: 'Escola Horizonte',
       status: 'ativo',
-      risk: 'baixo',
-      frequency: '100',
-      average: '10',
     },
     {
       id: '6',
       name: 'Julia Oliveira',
       parent: 'Claudio Oliveira',
-      class: '8º A',
+      year: '8º Ano',
       school: 'Escola Rio Branco',
       status: 'ativo',
-      risk: 'medio',
-      frequency: '65',
-      average: '7',
     },
   ])
 
@@ -128,7 +112,7 @@ export default function Page() {
       normalize(student.name).includes(q) ||
       normalize(student.parent).includes(q) ||
       normalize(student.school).includes(q) ||
-      normalize(student.class).includes(q)
+      normalize(student.year).includes(q)
     const matchesStatus =
       selectedStatus === 'all' || student.status === selectedStatus
 
@@ -143,7 +127,7 @@ export default function Page() {
       variant="contained"
       disableElevation
       sx={{
-        backgroundColor: theme.palette.error.main,
+        backgroundColor: AppColors.role.admin.secondary,
         borderRadius: '10px',
         fontWeight: '700',
         px: 2.5,
@@ -158,19 +142,16 @@ export default function Page() {
   )
 
   function handleCreateStudent(values: StudentFormValues) {
-    const newStudent = {
+    const newStudent: StudentRow = {
       id: String(Date.now()),
       name: values.name,
       parent: values.guardian,
-      class:
-        classOptions.find(c => c.value === values.class)?.label ?? values.class,
+      year:
+        yearOptions.find(c => c.value === values.year)?.label ?? values.year,
       school:
         schoolOptions.find(s => s.value === values.school)?.label ??
         values.school,
       status: values.status,
-      risk: values.risk,
-      frequency: values.frequency,
-      average: values.average,
     }
     setStudents(current => [...current, newStudent])
     setIsModalOpen(false)
@@ -183,51 +164,38 @@ export default function Page() {
       value: String(filteredStudents.length),
     },
     {
-      id: 'no-class',
-      title: 'Sem Turma',
-      value: String(students.filter(s => s.class === 'Sem turma').length),
-    },
-    {
-      id: 'risk',
-      title: 'Risco Alto',
-      value: String(students.filter(s => s.risk === 'alto').length),
-    },
-    {
       id: 'schools',
       title: 'Escolas',
       value: String(new Set(students.map(s => s.school)).size),
     },
   ]
 
-  function handleTransferStudent(values: TransferFormValues) {
+  function handleEditStudent(values: EditFormValues) {
     const schoolLabel =
       schoolOptions.find(s => s.value === values.school)?.label ?? values.school
-    const classLabel =
-      classOptions
-        .find(c => c.value === values.class)
-        ?.label.split('·')[0]
-        .trim() ?? values.class
+    const yearLabel =
+      yearOptions.find(c => c.value === values.year)?.label ?? values.year
 
     setStudents(current =>
       current.map(s =>
-        s.id === values.studentId
-          ? { ...s, school: schoolLabel, class: classLabel }
+        s.id === selectedStudentId
+          ? { ...s, school: schoolLabel, year: yearLabel }
           : s
       )
     )
-    setIsTransferModalOpen(false)
+    setIsEditModalOpen(false)
   }
 
   function handleDeleteStudent() {
-    setStudents(current => current.filter(s => s.id !== selectedStudent))
+    setStudents(current => current.filter(s => s.id !== selectedStudentId))
     setIsDeleteModalOpen(false)
-    setSelectedStudent(null)
+    setSelectedStudentId(null)
   }
 
   function handleToggleStatus() {
     setStudents(current =>
       current.map(student =>
-        student.id === selectedStudent
+        student.id === selectedStudentId
           ? {
               ...student,
               status: student.status === 'ativo' ? 'inativo' : 'ativo',
@@ -238,6 +206,20 @@ export default function Page() {
 
     setMenuAnchorEl(null)
   }
+
+  const selectedStudentRow = students.find(s => s.id === selectedStudentId)
+
+  const editStudentData: Student | undefined = selectedStudentRow
+    ? {
+        name: selectedStudentRow.name,
+        school:
+          schoolOptions.find(o => o.label === selectedStudentRow.school)
+            ?.value ?? selectedStudentRow.school,
+        year:
+          yearOptions.find(o => o.label === selectedStudentRow.year)?.value ??
+          selectedStudentRow.year,
+      }
+    : undefined
 
   return (
     <AppPageContainer className="gap-4 md:gap-5">
@@ -261,10 +243,10 @@ export default function Page() {
         onConfirm={handleCreateStudent}
       />
 
-      <Box className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-4">
+      <Box className="grid grid-cols-2 gap-3 md:gap-4">
         {cards.map(card => (
           <Box key={card.id} data-testid={`metric-card-${card.id}`}>
-            <MetricsCard contentClassName="p-5" key={card.id} {...card} />
+            <MetricsCard contentClassName="p-5" {...card} />
           </Box>
         ))}
       </Box>
@@ -363,7 +345,7 @@ export default function Page() {
                   {student.school}
                 </Typography>
                 <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
-                  {student.class}
+                  {student.year}
                 </Typography>
                 <Box sx={{ display: 'flex' }}>
                   <AppTag
@@ -382,7 +364,7 @@ export default function Page() {
                     data-testid={`student-menu-${student.id}`}
                     size="small"
                     onClick={e => {
-                      setSelectedStudent(student.id)
+                      setSelectedStudentId(student.id)
                       setMenuAnchorEl(e.currentTarget)
                     }}
                     sx={{ color: 'text.secondary' }}
@@ -415,13 +397,13 @@ export default function Page() {
             data-testid="transfer-student-action"
             onClick={() => {
               setMenuAnchorEl(null)
-              setIsTransferModalOpen(true)
+              setIsEditModalOpen(true)
             }}
             sx={{ color: 'warning.main', gap: 1.25, py: 1.1 }}
           >
-            <SwapHorizRoundedIcon sx={{ fontSize: 18 }} />
+            <EditRoundedIcon sx={{ fontSize: 18 }} />
             <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
-              Transferir aluno
+              Editar aluno
             </Typography>
           </MenuItem>
           <MenuItem
@@ -431,7 +413,8 @@ export default function Page() {
           >
             <SwapHorizRoundedIcon sx={{ fontSize: 18 }} />
             <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
-              {students.find(s => s.id === selectedStudent)?.status === 'ativo'
+              {students.find(s => s.id === selectedStudentId)?.status ===
+              'ativo'
                 ? 'Tornar inativo'
                 : 'Tornar ativo'}
             </Typography>
@@ -451,20 +434,15 @@ export default function Page() {
           </MenuItem>
         </Menu>
 
-        <TransferStudentModal
-          data-testid="transfer-student-modal"
-          key={selectedStudent}
-          open={isTransferModalOpen}
-          onClose={() => setIsTransferModalOpen(false)}
-          defaultStudentId={selectedStudent ?? '1'}
-          onConfirm={handleTransferStudent}
-          studentOptions={students.map(s => ({
-            label: s.name,
-            value: s.id,
-            school: s.school,
-            class: s.class,
-          }))}
-        />
+        {editStudentData && (
+          <EditStudentModal
+            data-testid="edit-student-modal"
+            open={isEditModalOpen}
+            onClose={() => setIsEditModalOpen(false)}
+            onConfirm={handleEditStudent}
+            student={editStudentData}
+          />
+        )}
 
         <AppActionModal
           confirmLabel="Confirmar exclusão"
@@ -477,8 +455,8 @@ export default function Page() {
           confirmColor={theme.palette.error.main}
         >
           <Typography color="text.secondary">
-            Deseja remover "{students.find(s => s.id === selectedStudent)?.name}
-            " da lista?
+            Deseja remover "
+            {students.find(s => s.id === selectedStudentId)?.name}" da lista?
           </Typography>
         </AppActionModal>
       </Box>
