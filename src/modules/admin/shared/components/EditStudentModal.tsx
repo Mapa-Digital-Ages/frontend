@@ -3,15 +3,13 @@ import AppDropdown from '@/shared/ui/AppDropdown'
 import AppInput from '@/shared/ui/AppInput'
 import { Box, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import type { BoxProps } from '@mui/material'
+import { hasMinLength } from '@/shared/utils/validators'
 import {
   schoolOptions,
   yearOptions,
 } from '@/modules/admin/shared/constants/studentOptions'
-
-const PASSWORD_REGEX =
-  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/
 
 const fieldLabelSx = {
   color: 'text.primary',
@@ -69,23 +67,6 @@ function getDefaultValues(student: Student): EditFormValues {
   }
 }
 
-function isValidPassword(password: string): boolean {
-  return PASSWORD_REGEX.test(password)
-}
-
-function getPasswordHelperText(password: string): string {
-  if (!password) return ''
-  if (isValidPassword(password)) return ''
-  const missing: string[] = []
-  if (password.length < 8) missing.push('mínimo 8 caracteres')
-  if (!/[A-Z]/.test(password)) missing.push('uma letra maiúscula')
-  if (!/[a-z]/.test(password)) missing.push('uma letra minúscula')
-  if (!/\d/.test(password)) missing.push('um número')
-  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password))
-    missing.push('um caractere especial')
-  return `Faltando: ${missing.join(', ')}.`
-}
-
 export default function EditStudentModal({
   open,
   onClose,
@@ -97,20 +78,23 @@ export default function EditStudentModal({
   const [values, setValues] = useState<EditFormValues>(() =>
     getDefaultValues(student)
   )
-  const [showPassword, setShowPassword] = useState(false)
-
-  useEffect(() => {
-    if (open) {
-      setValues(getDefaultValues(student))
-      setShowPassword(false)
-    }
-  }, [open, student])
+  const [passwordError, setPasswordError] = useState('')
 
   function handleChange(field: keyof EditFormValues, value: string) {
     setValues(current => ({ ...current, [field]: value }))
+    if (field === 'password') setPasswordError('')
+  }
+
+  function validate(): boolean {
+    if (values.password && !hasMinLength(values.password, 8)) {
+      setPasswordError('A senha deve ter pelo menos 8 caracteres.')
+      return false
+    }
+    return true
   }
 
   function handleConfirm() {
+    if (!validate()) return
     onConfirm(values)
   }
 
@@ -118,15 +102,14 @@ export default function EditStudentModal({
     onClose()
   }
 
-  const passwordOk = !values.password || isValidPassword(values.password)
-  const isDisabled = !passwordOk
+  const hasPasswordError = Boolean(passwordError)
 
   return (
     <AppActionModal
       {...props}
       confirmLabel="Salvar alterações"
       description="Edite os dados do aluno. A senha só será alterada se um novo valor for informado."
-      disableConfirm={isDisabled}
+      disableConfirm={hasPasswordError}
       maxWidth="sm"
       mode="form"
       onClose={handleClose}
@@ -192,29 +175,10 @@ export default function EditStudentModal({
           onChange={e => handleChange('password', e.target.value)}
           placeholder="Deixe em branco para não alterar"
           sx={inputSx}
-          type={showPassword ? 'text' : 'password'}
+          type="password"
           value={values.password}
-          error={!!values.password && !isValidPassword(values.password)}
-          helperText={getPasswordHelperText(values.password)}
-          InputProps={{
-            endAdornment: (
-              <Box
-                component="span"
-                onClick={() => setShowPassword(v => !v)}
-                sx={{
-                  cursor: 'pointer',
-                  color: 'text.secondary',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  userSelect: 'none',
-                  pr: 0.5,
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {showPassword ? 'Ocultar' : 'Mostrar'}
-              </Box>
-            ),
-          }}
+          error={hasPasswordError}
+          helperText={passwordError || ' '}
         />
 
         <Box

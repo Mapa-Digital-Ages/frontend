@@ -5,14 +5,12 @@ import type { BoxProps } from '@mui/material'
 import AppActionModal from '@/shared/ui/AppActionModal'
 import AppDropdown from '@/shared/ui/AppDropdown'
 import AppInput from '@/shared/ui/AppInput'
+import { isValidEmail, hasMinLength } from '@/shared/utils/validators'
 import {
   schoolOptions,
   guardianOptions,
   yearOptions,
 } from '@/modules/admin/shared/constants/studentOptions'
-
-const PASSWORD_REGEX =
-  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/
 
 const fieldLabelSx = {
   color: 'text.primary',
@@ -49,7 +47,6 @@ const statusOptions = [
 ]
 
 const NONE_VALUE = 'none'
-
 const NONE_OPTION = { label: 'Nenhum', value: NONE_VALUE }
 
 interface CreateStudentModalProps extends BoxProps {
@@ -68,6 +65,8 @@ export interface StudentFormValues {
   status: string
 }
 
+type FormErrors = Partial<Record<keyof StudentFormValues, string>>
+
 function getDefaultValues(): StudentFormValues {
   return {
     name: '',
@@ -80,27 +79,6 @@ function getDefaultValues(): StudentFormValues {
   }
 }
 
-function isValidEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-}
-
-function isValidPassword(password: string): boolean {
-  return PASSWORD_REGEX.test(password)
-}
-
-function getPasswordHelperText(password: string): string {
-  if (!password) return ''
-  if (isValidPassword(password)) return ''
-  const missing: string[] = []
-  if (password.length < 8) missing.push('mínimo 8 caracteres')
-  if (!/[A-Z]/.test(password)) missing.push('uma letra maiúscula')
-  if (!/[a-z]/.test(password)) missing.push('uma letra minúscula')
-  if (!/\d/.test(password)) missing.push('um número')
-  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password))
-    missing.push('um caractere especial')
-  return `Faltando: ${missing.join(', ')}.`
-}
-
 export default function CreateStudentModal({
   open,
   onClose,
@@ -109,40 +87,57 @@ export default function CreateStudentModal({
 }: CreateStudentModalProps) {
   const theme = useTheme()
   const [values, setValues] = useState<StudentFormValues>(getDefaultValues())
-  const [showPassword, setShowPassword] = useState(false)
-
-  function handleChange(field: keyof StudentFormValues, value: string) {
-    setValues(current => ({ ...current, [field]: value }))
-  }
-
-  function handleConfirm() {
-    onConfirm(values)
-    setValues(getDefaultValues())
-  }
-
-  function handleClose() {
-    setValues(getDefaultValues())
-    onClose()
-  }
+  const [errors, setErrors] = useState<FormErrors>({})
 
   const hasSchool = values.school !== NONE_VALUE
   const hasGuardian = values.guardian !== NONE_VALUE
   const isLinked = hasSchool || hasGuardian
 
-  const isDisabled =
-    !values.name.trim() ||
-    !isValidEmail(values.email) ||
-    !isValidPassword(values.password) ||
-    !isLinked
+  function handleChange(field: keyof StudentFormValues, value: string) {
+    setValues(current => ({ ...current, [field]: value }))
+    setErrors(current => ({ ...current, [field]: undefined }))
+  }
 
-  const passwordHelperText = getPasswordHelperText(values.password)
+  function validate(): boolean {
+    const next: FormErrors = {}
+
+    if (!values.name.trim()) {
+      next.name = 'Informe o nome do aluno.'
+    }
+
+    if (!isValidEmail(values.email)) {
+      next.email = 'Informe um e-mail válido.'
+    }
+
+    if (!hasMinLength(values.password, 8)) {
+      next.password = 'A senha deve ter pelo menos 8 caracteres.'
+    }
+
+    setErrors(next)
+    return Object.keys(next).length === 0
+  }
+
+  function handleConfirm() {
+    if (!validate() || !isLinked) return
+    onConfirm(values)
+    setValues(getDefaultValues())
+    setErrors({})
+  }
+
+  function handleClose() {
+    setValues(getDefaultValues())
+    setErrors({})
+    onClose()
+  }
+
+  const canConfirm = isLinked
 
   return (
     <AppActionModal
       {...props}
       confirmLabel="Criar aluno"
       description="Cadastre um novo aluno. Vincule-o a uma escola e/ou a um responsável"
-      disableConfirm={isDisabled}
+      disableConfirm={!canConfirm}
       maxWidth="sm"
       mode="form"
       onClose={handleClose}
@@ -159,53 +154,32 @@ export default function CreateStudentModal({
           placeholder="Ex.: Sofia Almeida"
           sx={inputSx}
           value={values.name}
+          error={Boolean(errors.name)}
+          helperText={errors.name ?? ' '}
         />
 
         <AppInput
           label="E-mail"
           labelSx={fieldLabelSx}
           onChange={e => handleChange('email', e.target.value)}
-          placeholder="Ex.: sofia@escola.com"
+          placeholder="Ex.: voce@exemplo.com"
           sx={inputSx}
           type="email"
           value={values.email}
-          error={!!values.email && !isValidEmail(values.email)}
-          helperText={
-            values.email && !isValidEmail(values.email)
-              ? 'Insira um e-mail válido.'
-              : ''
-          }
+          error={Boolean(errors.email)}
+          helperText={errors.email ?? ' '}
         />
 
         <AppInput
           label="Senha"
           labelSx={fieldLabelSx}
           onChange={e => handleChange('password', e.target.value)}
-          placeholder="Mín. 8 caracteres, maiúscula, número e símbolo"
+          placeholder="Mínimo 8 caracteres"
           sx={inputSx}
-          type={showPassword ? 'text' : 'password'}
+          type="password"
           value={values.password}
-          error={!!values.password && !isValidPassword(values.password)}
-          helperText={passwordHelperText}
-          InputProps={{
-            endAdornment: (
-              <Box
-                component="span"
-                onClick={() => setShowPassword(v => !v)}
-                sx={{
-                  cursor: 'pointer',
-                  color: 'text.secondary',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  userSelect: 'none',
-                  pr: 0.5,
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {showPassword ? 'Ocultar' : 'Mostrar'}
-              </Box>
-            ),
-          }}
+          error={Boolean(errors.password)}
+          helperText={errors.password ?? ' '}
         />
 
         <Box
