@@ -8,10 +8,10 @@ import SwapHorizRoundedIcon from '@mui/icons-material/SwapHorizRounded'
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 import EditRoundedIcon from '@mui/icons-material/EditRounded'
 import { AppColors } from '@/app/theme/core/colors'
-import { IconButton, Menu, MenuItem } from '@mui/material'
+import { IconButton, Menu, MenuItem, CircularProgress } from '@mui/material'
 import { Box, Button, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
-import { useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { SearchBarAndFilter } from '@/shared/ui/SearchBarAndFilter'
 import { AppTag } from '@/shared/ui/AppTags'
 import type { TagContext } from '@/shared/types/common'
@@ -27,15 +27,11 @@ import {
   schoolOptions,
   yearOptions,
 } from '@/modules/admin/shared/constants/studentOptions'
-
-interface StudentRow {
-  id: string
-  name: string
-  parent: string
-  year: string
-  school: string
-  status: string
-}
+import { studentService } from '@/modules/admin/student/services/service'
+import type {
+  StudentItem,
+  StudentMetrics,
+} from '@/modules/admin/student/types/types'
 
 export default function Page() {
   const theme = useTheme()
@@ -43,86 +39,143 @@ export default function Page() {
     ativo: { label: 'Ativo', color: theme.palette.success.main },
     inativo: { label: 'Inativo', color: theme.palette.warning.main },
   }
-  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  const [students, setStudents] = useState<StudentItem[]>([])
+  const [metrics, setMetrics] = useState<StudentMetrics>({
+    total: 0,
+    active: 0,
+    inactive: 0,
+    schools: 0,
+  })
+  const [total, setTotal] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
+
   const [query, setQuery] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('all')
+
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null)
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
     null
   )
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
 
-  const [students, setStudents] = useState<StudentRow[]>([
-    {
-      id: '1',
-      name: 'Lucas Silva',
-      parent: 'Maria Silva',
-      year: '7º Ano',
-      school: 'Escola São Paulo',
-      status: 'inativo',
-    },
-    {
-      id: '2',
-      name: 'Carlos Nunes',
-      parent: 'Roberta Nunes',
-      year: '7º Ano',
-      school: 'Escola São Paulo',
-      status: 'ativo',
-    },
-    {
-      id: '3',
-      name: 'Lívia Santos',
-      parent: 'Paula Santos',
-      year: '6º Ano',
-      school: 'Escola São Paulo',
-      status: 'ativo',
-    },
-    {
-      id: '4',
-      name: 'Marina Costa',
-      parent: 'Pedro Costa',
-      year: '7º Ano',
-      school: 'Escola Rio Branco',
-      status: 'ativo',
-    },
-    {
-      id: '5',
-      name: 'Rafael Souza',
-      parent: 'Ana Souza',
-      year: '8º Ano',
-      school: 'Escola Horizonte',
-      status: 'ativo',
-    },
-    {
-      id: '6',
-      name: 'Julia Oliveira',
-      parent: 'Claudio Oliveira',
-      year: '8º Ano',
-      school: 'Escola Rio Branco',
-      status: 'ativo',
-    },
-  ])
+  const fetchStudents = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const [listResult, metricsResult] = await Promise.all([
+        studentService.getStudents({
+          query,
+          status: selectedStatus as 'all' | 'ativo' | 'inativo',
+        }),
+        studentService.getMetrics(),
+      ])
+      setStudents(listResult.items)
+      setTotal(listResult.total)
+      setMetrics(metricsResult)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [query, selectedStatus])
 
-  const filteredStudents = students.filter(student => {
-    const normalize = (text: string) =>
-      text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
-    const q = normalize(query)
-    const matchesQuery =
-      normalize(student.name).includes(q) ||
-      normalize(student.parent).includes(q) ||
-      normalize(student.school).includes(q) ||
-      normalize(student.year).includes(q)
-    const matchesStatus =
-      selectedStatus === 'all' || student.status === selectedStatus
+  useEffect(() => {
+    void fetchStudents()
+  }, [fetchStudents])
 
-    return matchesQuery && matchesStatus
-  })
+  const selectedStudentRow = students.find(s => s.id === selectedStudentId)
+
+  const editStudentData: Student | undefined = selectedStudentRow
+    ? {
+        name: selectedStudentRow.name,
+        school:
+          schoolOptions.find(o => o.label === selectedStudentRow.school)
+            ?.value ??
+          selectedStudentRow.school ??
+          '',
+        year:
+          yearOptions.find(o => o.label === selectedStudentRow.year)?.value ??
+          selectedStudentRow.year ??
+          '',
+      }
+    : undefined
+
+  async function handleCreateStudent(values: StudentFormValues) {
+    const NONE = 'none'
+    const created = await studentService.createStudent({
+      name: values.name,
+      email: values.email,
+      password: values.password,
+      schoolId: values.school !== NONE ? values.school : null,
+      guardianId: values.guardian !== NONE ? values.guardian : null,
+      year: values.year !== NONE ? values.year : null,
+      status: values.status as 'ativo' | 'inativo',
+    })
+    setStudents(current => [created, ...current])
+    setMetrics(m => ({
+      ...m,
+      total: m.total + 1,
+      active: created.status === 'ativo' ? m.active + 1 : m.active,
+      inactive: created.status === 'inativo' ? m.inactive + 1 : m.inactive,
+      schools: new Set(
+        [...students.map(s => s.school), created.school].filter(Boolean)
+      ).size,
+    }))
+    setIsCreateModalOpen(false)
+  }
+
+  async function handleEditStudent(values: EditFormValues) {
+    if (!selectedStudentId) return
+    const updated = await studentService.updateStudent(selectedStudentId, {
+      password: values.password || undefined,
+      schoolId:
+        schoolOptions.find(o => o.value === values.school)?.value ?? null,
+      year: yearOptions.find(o => o.value === values.year)?.value ?? null,
+    })
+    setStudents(current =>
+      current.map(s => (s.id === selectedStudentId ? updated : s))
+    )
+    setIsEditModalOpen(false)
+  }
+
+  async function handleToggleStatus() {
+    if (!selectedStudentId) return
+    setMenuAnchorEl(null)
+    const student = students.find(s => s.id === selectedStudentId)
+    if (!student) return
+    const updated = await studentService.toggleStudentStatus(
+      selectedStudentId,
+      student.status === 'inativo'
+    )
+    setStudents(current =>
+      current.map(s => (s.id === selectedStudentId ? updated : s))
+    )
+    setMetrics(m => ({
+      ...m,
+      active: updated.status === 'ativo' ? m.active + 1 : m.active - 1,
+      inactive: updated.status === 'inativo' ? m.inactive + 1 : m.inactive - 1,
+    }))
+  }
+
+  async function handleDeleteStudent() {
+    if (!selectedStudentId) return
+    const student = students.find(s => s.id === selectedStudentId)
+    await studentService.deleteStudent(selectedStudentId)
+    setStudents(current => current.filter(s => s.id !== selectedStudentId))
+    setMetrics(m => ({
+      ...m,
+      total: m.total - 1,
+      active: student?.status === 'ativo' ? m.active - 1 : m.active,
+      inactive: student?.status === 'inativo' ? m.inactive - 1 : m.inactive,
+    }))
+    setIsDeleteModalOpen(false)
+    setSelectedStudentId(null)
+  }
 
   const headerActions = (
     <Button
       data-testid="create-student-button"
-      onClick={() => setIsModalOpen(true)}
+      onClick={() => setIsCreateModalOpen(true)}
       startIcon={<AddRoundedIcon />}
       variant="contained"
       disableElevation
@@ -132,94 +185,17 @@ export default function Page() {
         fontWeight: '700',
         px: 2.5,
         textTransform: 'none',
-        '&:hover': {
-          backgroundColor: theme.palette.error.dark,
-        },
+        '&:hover': { backgroundColor: theme.palette.error.dark },
       }}
     >
       Criar aluno
     </Button>
   )
 
-  function handleCreateStudent(values: StudentFormValues) {
-    const newStudent: StudentRow = {
-      id: String(Date.now()),
-      name: values.name,
-      parent: values.guardian,
-      year:
-        yearOptions.find(c => c.value === values.year)?.label ?? values.year,
-      school:
-        schoolOptions.find(s => s.value === values.school)?.label ??
-        values.school,
-      status: values.status,
-    }
-    setStudents(current => [...current, newStudent])
-    setIsModalOpen(false)
-  }
-
   const cards = [
-    {
-      id: 'visible',
-      title: 'Alunos Visíveis',
-      value: String(filteredStudents.length),
-    },
-    {
-      id: 'schools',
-      title: 'Escolas',
-      value: String(new Set(students.map(s => s.school)).size),
-    },
+    { id: 'total', title: 'Total de Alunos', value: String(metrics.total) },
+    { id: 'schools', title: 'Escolas', value: String(metrics.schools) },
   ]
-
-  function handleEditStudent(values: EditFormValues) {
-    const schoolLabel =
-      schoolOptions.find(s => s.value === values.school)?.label ?? values.school
-    const yearLabel =
-      yearOptions.find(c => c.value === values.year)?.label ?? values.year
-
-    setStudents(current =>
-      current.map(s =>
-        s.id === selectedStudentId
-          ? { ...s, school: schoolLabel, year: yearLabel }
-          : s
-      )
-    )
-    setIsEditModalOpen(false)
-  }
-
-  function handleDeleteStudent() {
-    setStudents(current => current.filter(s => s.id !== selectedStudentId))
-    setIsDeleteModalOpen(false)
-    setSelectedStudentId(null)
-  }
-
-  function handleToggleStatus() {
-    setStudents(current =>
-      current.map(student =>
-        student.id === selectedStudentId
-          ? {
-              ...student,
-              status: student.status === 'ativo' ? 'inativo' : 'ativo',
-            }
-          : student
-      )
-    )
-
-    setMenuAnchorEl(null)
-  }
-
-  const selectedStudentRow = students.find(s => s.id === selectedStudentId)
-
-  const editStudentData: Student | undefined = selectedStudentRow
-    ? {
-        name: selectedStudentRow.name,
-        school:
-          schoolOptions.find(o => o.label === selectedStudentRow.school)
-            ?.value ?? selectedStudentRow.school,
-        year:
-          yearOptions.find(o => o.label === selectedStudentRow.year)?.value ??
-          selectedStudentRow.year,
-      }
-    : undefined
 
   return (
     <AppPageContainer className="gap-4 md:gap-5">
@@ -238,9 +214,11 @@ export default function Page() {
 
       <CreateStudentModal
         data-testid="create-student-modal"
-        open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onConfirm={handleCreateStudent}
+        open={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onConfirm={values => {
+          void handleCreateStudent(values)
+        }}
       />
 
       <Box className="grid grid-cols-2 gap-3 md:gap-4">
@@ -257,7 +235,7 @@ export default function Page() {
           onQueryChange={setQuery}
           query={query}
           resultsSummary={{
-            count: filteredStudents.length,
+            count: total,
             singularLabel: 'resultado',
             pluralLabel: 'resultados',
           }}
@@ -308,73 +286,75 @@ export default function Page() {
           ))}
         </Box>
 
-        {filteredStudents.length === 0 ? (
+        {isLoading ? (
+          <Box sx={{ py: 8, display: 'flex', justifyContent: 'center' }}>
+            <CircularProgress size={28} />
+          </Box>
+        ) : students.length === 0 ? (
           <Box sx={{ py: 6, textAlign: 'center' }}>
             <Typography sx={{ color: 'text.secondary', fontWeight: 600 }}>
               Nenhum aluno encontrado.
             </Typography>
           </Box>
         ) : (
-          filteredStudents.map(student => {
-            return (
-              <Box
-                key={student.id}
-                data-testid={`student-row-${student.id}`}
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: '2fr 1.5fr 1fr 1fr 40px',
-                  alignItems: 'center',
-                  px: 1,
-                  py: 1.75,
-                  borderBottom: `1px solid ${alpha(theme.palette.divider, 0.18)}`,
-                  '&:hover': {
-                    backgroundColor: alpha(theme.palette.background.hover, 0.6),
-                    borderRadius: '12px',
-                  },
-                }}
-              >
-                <Box>
-                  <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
-                    {student.name}
-                  </Typography>
-                  <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
-                    Responsável: {student.parent}
-                  </Typography>
-                </Box>
-                <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
-                  {student.school}
+          students.map(student => (
+            <Box
+              key={student.id}
+              data-testid={`student-row-${student.id}`}
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: '2fr 1.5fr 1fr 1fr 40px',
+                alignItems: 'center',
+                px: 1,
+                py: 1.75,
+                borderBottom: `1px solid ${alpha(theme.palette.divider, 0.18)}`,
+                '&:hover': {
+                  backgroundColor: alpha(theme.palette.background.hover, 0.6),
+                  borderRadius: '12px',
+                },
+              }}
+            >
+              <Box>
+                <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+                  {student.name}
                 </Typography>
-                <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
-                  {student.year}
+                <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
+                  {student.guardian ? `Responsável: ${student.guardian}` : '—'}
                 </Typography>
-                <Box sx={{ display: 'flex' }}>
-                  <AppTag
-                    data-testid={`student-status-${student.id}`}
-                    size="sm"
-                    tag={
-                      statusConfig[student.status] ?? {
-                        label: student.status,
-                        color: 'default',
-                      }
-                    }
-                  />
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                  <IconButton
-                    data-testid={`student-menu-${student.id}`}
-                    size="small"
-                    onClick={e => {
-                      setSelectedStudentId(student.id)
-                      setMenuAnchorEl(e.currentTarget)
-                    }}
-                    sx={{ color: 'text.secondary' }}
-                  >
-                    <MoreHorizRoundedIcon fontSize="small" />
-                  </IconButton>
-                </Box>
               </Box>
-            )
-          })
+              <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
+                {student.school ?? '—'}
+              </Typography>
+              <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
+                {student.year ?? '—'}
+              </Typography>
+              <Box sx={{ display: 'flex' }}>
+                <AppTag
+                  data-testid={`student-status-${student.id}`}
+                  size="sm"
+                  tag={
+                    statusConfig[student.status] ?? {
+                      label: student.status,
+                      color: 'default',
+                    }
+                  }
+                />
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                <IconButton
+                  data-testid={`student-menu-${student.id}`}
+                  size="small"
+                  onClick={e => {
+                    setSelectedStudentId(student.id)
+                    setMenuAnchorEl(e.currentTarget)
+                  }}
+                  sx={{ color: 'text.secondary' }}
+                >
+                  <MoreHorizRoundedIcon fontSize="small" />
+                </IconButton>
+              </Box>
+            </Box>
+          ))
         )}
 
         <Menu
@@ -394,7 +374,7 @@ export default function Page() {
           }}
         >
           <MenuItem
-            data-testid="transfer-student-action"
+            data-testid="edit-student-action"
             onClick={() => {
               setMenuAnchorEl(null)
               setIsEditModalOpen(true)
@@ -408,13 +388,14 @@ export default function Page() {
           </MenuItem>
           <MenuItem
             data-testid="toggle-status-action"
-            onClick={handleToggleStatus}
+            onClick={() => {
+              void handleToggleStatus()
+            }}
             sx={{ color: 'text.secondary', gap: 1.25, py: 1.1 }}
           >
             <SwapHorizRoundedIcon sx={{ fontSize: 18 }} />
             <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
-              {students.find(s => s.id === selectedStudentId)?.status ===
-              'ativo'
+              {selectedStudentRow?.status === 'ativo'
                 ? 'Tornar inativo'
                 : 'Tornar ativo'}
             </Typography>
@@ -437,26 +418,30 @@ export default function Page() {
         {editStudentData && (
           <EditStudentModal
             data-testid="edit-student-modal"
+            key={selectedStudentId}
             open={isEditModalOpen}
             onClose={() => setIsEditModalOpen(false)}
-            onConfirm={handleEditStudent}
+            onConfirm={values => {
+              void handleEditStudent(values)
+            }}
             student={editStudentData}
           />
         )}
 
         <AppActionModal
           confirmLabel="Confirmar exclusão"
-          description="Essa ação remove o aluno da lista."
+          description="Essa ação remove o aluno permanentemente."
           mode="confirm"
           onClose={() => setIsDeleteModalOpen(false)}
-          onConfirm={handleDeleteStudent}
+          onConfirm={() => {
+            void handleDeleteStudent()
+          }}
           open={isDeleteModalOpen}
           title="Excluir aluno"
           confirmColor={theme.palette.error.main}
         >
           <Typography color="text.secondary">
-            Deseja remover "
-            {students.find(s => s.id === selectedStudentId)?.name}" da lista?
+            Deseja remover "{selectedStudentRow?.name}" da lista?
           </Typography>
         </AppActionModal>
       </Box>
