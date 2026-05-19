@@ -6,36 +6,127 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded'
 import SwapHorizRoundedIcon from '@mui/icons-material/SwapHorizRounded'
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
+import EditRoundedIcon from '@mui/icons-material/EditRounded'
+import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded'
+import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded'
+import UnfoldMoreRoundedIcon from '@mui/icons-material/UnfoldMoreRounded'
 import { AppColors } from '@/app/theme/core/colors'
-import { IconButton, Menu, MenuItem } from '@mui/material'
+import { IconButton, Menu, MenuItem, CircularProgress } from '@mui/material'
 import { Box, Button, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
-import { useState } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { SearchBarAndFilter } from '@/shared/ui/SearchBarAndFilter'
 import { AppTag } from '@/shared/ui/AppTags'
 import type { TagContext } from '@/shared/types/common'
-import TransferStudentModal, {
-  type TransferFormValues,
-} from '@/modules/admin/shared/components/TransferStudentModal'
+import EditStudentModal, {
+  type EditFormValues,
+  type Student,
+} from '@/modules/admin/shared/components/EditStudentModal'
 import CreateStudentModal, {
   type StudentFormValues,
 } from '@/modules/admin/shared/components/CreateStudentModal'
 import AppActionModal from '@/shared/ui/AppActionModal'
-import {
-  schoolOptions,
-  classOptions,
-} from '@/modules/admin/shared/constants/studentOptions'
+import { yearOptions } from '@/modules/admin/shared/constants/studentOptions'
+import { studentService } from '@/modules/admin/student/services/service'
+import type {
+  StudentItem,
+  StudentMetrics,
+} from '@/modules/admin/student/types/types'
 
-interface Student {
-  id: string
-  name: string
-  parent: string
-  class: string
-  school: string
-  status: string
-  risk: string
-  frequency: string
-  average: string
+type SortField = 'name' | 'school' | 'year'
+type SortDirection = 'asc' | 'desc'
+
+interface SortState {
+  field: SortField | null
+  direction: SortDirection
+}
+
+const yearOrder: Record<string, number> = {
+  '5º Ano': 5,
+  '6º Ano': 6,
+  '7º Ano': 7,
+  '8º Ano': 8,
+  '9º Ano': 9,
+}
+
+function sortStudents(students: StudentItem[], sort: SortState): StudentItem[] {
+  if (!sort.field) return students
+
+  return [...students].sort((a, b) => {
+    let comparison = 0
+
+    if (sort.field === 'name') {
+      comparison = a.name.localeCompare(b.name, 'pt-BR')
+    } else if (sort.field === 'school') {
+      comparison = (a.school ?? '').localeCompare(b.school ?? '', 'pt-BR')
+    } else if (sort.field === 'year') {
+      const aOrder = yearOrder[a.year ?? ''] ?? 0
+      const bOrder = yearOrder[b.year ?? ''] ?? 0
+      comparison = aOrder - bOrder
+    }
+
+    return sort.direction === 'asc' ? comparison : -comparison
+  })
+}
+
+function SortableHeader({
+  label,
+  field,
+  sort,
+  onSort,
+}: {
+  label: string
+  field: SortField
+  sort: SortState
+  onSort: (field: SortField) => void
+}) {
+  const isActive = sort.field === field
+  const theme = useTheme()
+
+  return (
+    <Box
+      onClick={() => onSort(field)}
+      sx={{
+        alignItems: 'center',
+        cursor: 'pointer',
+        display: 'flex',
+        gap: 0.5,
+        userSelect: 'none',
+        '&:hover .sort-label': {
+          color: 'text.primary',
+        },
+      }}
+    >
+      <Typography
+        className="sort-label"
+        sx={{
+          color: isActive ? 'text.primary' : 'text.secondary',
+          fontSize: 12,
+          fontWeight: 700,
+          letterSpacing: '0.05em',
+          textTransform: 'uppercase',
+          transition: 'color 0.15s',
+        }}
+      >
+        {label}
+      </Typography>
+      <Box
+        sx={{
+          color: isActive ? theme.palette.error.main : 'text.disabled',
+          display: 'flex',
+          fontSize: 14,
+        }}
+      >
+        {!isActive ? (
+          <UnfoldMoreRoundedIcon sx={{ fontSize: 14 }} />
+        ) : sort.direction === 'asc' ? (
+          <ArrowUpwardRoundedIcon sx={{ fontSize: 14 }} />
+        ) : (
+          <ArrowDownwardRoundedIcon sx={{ fontSize: 14 }} />
+        )}
+      </Box>
+    </Box>
+  )
 }
 
 export default function Page() {
@@ -44,102 +135,151 @@ export default function Page() {
     ativo: { label: 'Ativo', color: theme.palette.success.main },
     inativo: { label: 'Inativo', color: theme.palette.warning.main },
   }
-  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  const [students, setStudents] = useState<StudentItem[]>([])
+  const [metrics, setMetrics] = useState<StudentMetrics>({
+    total: 0,
+    active: 0,
+    inactive: 0,
+    schools: 0,
+  })
+  const [total, setTotal] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
+
   const [query, setQuery] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('all')
-  const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null)
-  const [selectedStudent, setSelectedStudent] = useState<string | null>(null)
-  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false)
+  const [sort, setSort] = useState<SortState>({ field: null, direction: 'asc' })
+
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null)
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
+    null
+  )
 
-  const [students, setStudents] = useState<Student[]>([
-    {
-      id: '1',
-      name: 'Lucas Silva',
-      parent: 'Maria Silva',
-      class: '7º A',
-      school: 'Escola São Paulo',
-      status: 'inativo',
-      risk: 'alto',
-      frequency: '75',
-      average: '5',
-    },
-    {
-      id: '2',
-      name: 'Carlos Nunes',
-      parent: 'Roberta Nunes',
-      class: '7º A',
-      school: 'Escola São Paulo',
-      status: 'ativo',
-      risk: 'baixo',
-      frequency: '92',
-      average: '9',
-    },
-    {
-      id: '3',
-      name: 'Lívia Santos',
-      parent: 'Paula Santos',
-      class: '6º A',
-      school: 'Escola São Paulo',
-      status: 'ativo',
-      risk: 'alto',
-      frequency: '86',
-      average: '6',
-    },
-    {
-      id: '4',
-      name: 'Marina Costa',
-      parent: 'Pedro Costa',
-      class: '7º B',
-      school: 'Escola Rio Branco',
-      status: 'ativo',
-      risk: 'baixo',
-      frequency: '85',
-      average: '8',
-    },
-    {
-      id: '5',
-      name: 'Rafael Souza',
-      parent: 'Ana Souza',
-      class: '8º A',
-      school: 'Escola Horizonte',
-      status: 'ativo',
-      risk: 'baixo',
-      frequency: '100',
-      average: '10',
-    },
-    {
-      id: '6',
-      name: 'Julia Oliveira',
-      parent: 'Claudio Oliveira',
-      class: '8º A',
-      school: 'Escola Rio Branco',
-      status: 'ativo',
-      risk: 'medio',
-      frequency: '65',
-      average: '7',
-    },
-  ])
+  const fetchStudents = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const [listResult, metricsResult] = await Promise.all([
+        studentService.getStudents({
+          query,
+          status: selectedStatus as 'all' | 'ativo' | 'inativo',
+        }),
+        studentService.getMetrics(),
+      ])
+      setStudents(listResult.items)
+      setTotal(listResult.total)
+      setMetrics(metricsResult)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [query, selectedStatus])
 
-  const filteredStudents = students.filter(student => {
-    const normalize = (text: string) =>
-      text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
-    const q = normalize(query)
-    const matchesQuery =
-      normalize(student.name).includes(q) ||
-      normalize(student.parent).includes(q) ||
-      normalize(student.school).includes(q) ||
-      normalize(student.class).includes(q)
-    const matchesStatus =
-      selectedStatus === 'all' || student.status === selectedStatus
+  useEffect(() => {
+    void fetchStudents()
+  }, [fetchStudents])
 
-    return matchesQuery && matchesStatus
-  })
+  function handleSort(field: SortField) {
+    setSort(current => ({
+      field,
+      direction:
+        current.field === field && current.direction === 'asc' ? 'desc' : 'asc',
+    }))
+  }
+
+  const sortedStudents = useMemo(
+    () => sortStudents(students, sort),
+    [students, sort]
+  )
+
+  const selectedStudentRow = students.find(s => s.id === selectedStudentId)
+
+  const editStudentData: Student | undefined = selectedStudentRow
+    ? {
+        name: selectedStudentRow.name,
+        schoolId: selectedStudentRow.schoolId ?? '',
+        year:
+          yearOptions.find(o => o.label === selectedStudentRow.year)?.value ??
+          '',
+      }
+    : undefined
+
+  async function handleCreateStudent(values: StudentFormValues) {
+    const NONE = 'none'
+    const created = await studentService.createStudent({
+      name: values.name,
+      email: values.email,
+      password: values.password,
+      schoolId: values.school !== NONE ? values.school : null,
+      guardianId: values.guardian !== NONE ? values.guardian : null,
+      year: values.year !== NONE ? values.year : null,
+      status: values.status as 'ativo' | 'inativo',
+    })
+    setStudents(current => [created, ...current])
+    setMetrics(m => ({
+      ...m,
+      total: m.total + 1,
+      active: created.status === 'ativo' ? m.active + 1 : m.active,
+      inactive: created.status === 'inativo' ? m.inactive + 1 : m.inactive,
+      schools: new Set(
+        [...students.map(s => s.school), created.school].filter(Boolean)
+      ).size,
+    }))
+    setIsCreateModalOpen(false)
+  }
+
+  async function handleEditStudent(values: EditFormValues) {
+    if (!selectedStudentId) return
+    const updated = await studentService.updateStudent(selectedStudentId, {
+      password: values.password || undefined,
+      schoolId: values.schoolId || null,
+      year: values.year || null,
+    })
+    setStudents(current =>
+      current.map(s => (s.id === selectedStudentId ? updated : s))
+    )
+    setIsEditModalOpen(false)
+  }
+
+  async function handleToggleStatus() {
+    if (!selectedStudentId) return
+    setMenuAnchorEl(null)
+    const student = students.find(s => s.id === selectedStudentId)
+    if (!student) return
+    const updated = await studentService.toggleStudentStatus(
+      selectedStudentId,
+      student.status === 'inativo'
+    )
+    setStudents(current =>
+      current.map(s => (s.id === selectedStudentId ? updated : s))
+    )
+    setMetrics(m => ({
+      ...m,
+      active: updated.status === 'ativo' ? m.active + 1 : m.active - 1,
+      inactive: updated.status === 'inativo' ? m.inactive + 1 : m.inactive - 1,
+    }))
+  }
+
+  async function handleDeleteStudent() {
+    if (!selectedStudentId) return
+    const student = students.find(s => s.id === selectedStudentId)
+    await studentService.deleteStudent(selectedStudentId)
+    setStudents(current => current.filter(s => s.id !== selectedStudentId))
+    setMetrics(m => ({
+      ...m,
+      total: m.total - 1,
+      active: student?.status === 'ativo' ? m.active - 1 : m.active,
+      inactive: student?.status === 'inativo' ? m.inactive - 1 : m.inactive,
+    }))
+    setIsDeleteModalOpen(false)
+    setSelectedStudentId(null)
+  }
 
   const headerActions = (
     <Button
       data-testid="create-student-button"
-      onClick={() => setIsModalOpen(true)}
+      onClick={() => setIsCreateModalOpen(true)}
       startIcon={<AddRoundedIcon />}
       variant="contained"
       disableElevation
@@ -149,96 +289,17 @@ export default function Page() {
         fontWeight: '700',
         px: 2.5,
         textTransform: 'none',
-        '&:hover': {
-          backgroundColor: theme.palette.error.dark,
-        },
+        '&:hover': { backgroundColor: theme.palette.error.dark },
       }}
     >
       Criar aluno
     </Button>
   )
 
-  function handleCreateStudent(values: StudentFormValues) {
-    const newStudent = {
-      id: String(Date.now()),
-      name: values.name,
-      parent: values.guardian,
-      class:
-        classOptions.find(c => c.value === values.class)?.label ?? values.class,
-      school:
-        schoolOptions.find(s => s.value === values.school)?.label ??
-        values.school,
-      status: values.status,
-      risk: values.risk,
-      frequency: values.frequency,
-      average: values.average,
-    }
-    setStudents(current => [...current, newStudent])
-    setIsModalOpen(false)
-  }
-
   const cards = [
-    {
-      id: 'visible',
-      title: 'Alunos Visíveis',
-      value: String(filteredStudents.length),
-    },
-    {
-      id: 'no-class',
-      title: 'Sem Turma',
-      value: String(students.filter(s => s.class === 'Sem turma').length),
-    },
-    {
-      id: 'risk',
-      title: 'Risco Alto',
-      value: String(students.filter(s => s.risk === 'alto').length),
-    },
-    {
-      id: 'schools',
-      title: 'Escolas',
-      value: String(new Set(students.map(s => s.school)).size),
-    },
+    { id: 'total', title: 'Total de Alunos', value: String(metrics.total) },
+    { id: 'schools', title: 'Escolas', value: String(metrics.schools) },
   ]
-
-  function handleTransferStudent(values: TransferFormValues) {
-    const schoolLabel =
-      schoolOptions.find(s => s.value === values.school)?.label ?? values.school
-    const classLabel =
-      classOptions
-        .find(c => c.value === values.class)
-        ?.label.split('·')[0]
-        .trim() ?? values.class
-
-    setStudents(current =>
-      current.map(s =>
-        s.id === values.studentId
-          ? { ...s, school: schoolLabel, class: classLabel }
-          : s
-      )
-    )
-    setIsTransferModalOpen(false)
-  }
-
-  function handleDeleteStudent() {
-    setStudents(current => current.filter(s => s.id !== selectedStudent))
-    setIsDeleteModalOpen(false)
-    setSelectedStudent(null)
-  }
-
-  function handleToggleStatus() {
-    setStudents(current =>
-      current.map(student =>
-        student.id === selectedStudent
-          ? {
-              ...student,
-              status: student.status === 'ativo' ? 'inativo' : 'ativo',
-            }
-          : student
-      )
-    )
-
-    setMenuAnchorEl(null)
-  }
 
   return (
     <AppPageContainer className="gap-4 md:gap-5">
@@ -251,21 +312,23 @@ export default function Page() {
 
       <OrdinaryHeader
         title="Gestão de alunos da rede"
-        subtitle="O administrador pode criar alunos, atrelar a turmas, mover entre escolas e ajustar vínculos da base inteira"
+        subtitle="O administrador pode criar alunos, mover entre escolas e ajustar vínculos da base inteira"
         actions={headerActions}
       />
 
       <CreateStudentModal
         data-testid="create-student-modal"
-        open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onConfirm={handleCreateStudent}
+        open={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onConfirm={values => {
+          void handleCreateStudent(values)
+        }}
       />
 
-      <Box className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-4">
+      <Box className="grid grid-cols-2 gap-3 md:gap-4">
         {cards.map(card => (
           <Box key={card.id} data-testid={`metric-card-${card.id}`}>
-            <MetricsCard contentClassName="p-5" key={card.id} {...card} />
+            <MetricsCard contentClassName="p-5" {...card} />
           </Box>
         ))}
       </Box>
@@ -276,11 +339,11 @@ export default function Page() {
           onQueryChange={setQuery}
           query={query}
           resultsSummary={{
-            count: filteredStudents.length,
+            count: total,
             singularLabel: 'resultado',
             pluralLabel: 'resultados',
           }}
-          searchPlaceholder="Pesquisar alunos, responsáveis, escola ou turma..."
+          searchPlaceholder="Pesquisar alunos, responsáveis, escola ou ano..."
           filterOptions={[
             { label: 'Todos', value: 'all' },
             { label: 'Ativo', value: 'ativo' },
@@ -311,89 +374,106 @@ export default function Page() {
             borderBottom: `1px solid ${theme.palette.divider}`,
           }}
         >
-          {['Aluno', 'Escola', 'Turma', 'Status'].map(col => (
-            <Typography
-              key={col}
-              sx={{
-                color: 'text.secondary',
-                fontSize: 12,
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-              }}
-            >
-              {col}
-            </Typography>
-          ))}
+          <SortableHeader
+            label="Aluno"
+            field="name"
+            sort={sort}
+            onSort={handleSort}
+          />
+          <SortableHeader
+            label="Escola"
+            field="school"
+            sort={sort}
+            onSort={handleSort}
+          />
+          <SortableHeader
+            label="Turma"
+            field="year"
+            sort={sort}
+            onSort={handleSort}
+          />
+          <Typography
+            sx={{
+              color: 'text.secondary',
+              fontSize: 12,
+              fontWeight: 700,
+              letterSpacing: '0.05em',
+              textTransform: 'uppercase',
+            }}
+          >
+            Status
+          </Typography>
         </Box>
 
-        {filteredStudents.length === 0 ? (
+        {isLoading ? (
+          <Box sx={{ py: 8, display: 'flex', justifyContent: 'center' }}>
+            <CircularProgress size={28} />
+          </Box>
+        ) : students.length === 0 ? (
           <Box sx={{ py: 6, textAlign: 'center' }}>
             <Typography sx={{ color: 'text.secondary', fontWeight: 600 }}>
               Nenhum aluno encontrado.
             </Typography>
           </Box>
         ) : (
-          filteredStudents.map(student => {
-            return (
-              <Box
-                key={student.id}
-                data-testid={`student-row-${student.id}`}
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: '2fr 1.5fr 1fr 1fr 40px',
-                  alignItems: 'center',
-                  px: 1,
-                  py: 1.75,
-                  borderBottom: `1px solid ${alpha(theme.palette.divider, 0.18)}`,
-                  '&:hover': {
-                    backgroundColor: alpha(theme.palette.background.hover, 0.6),
-                    borderRadius: '12px',
-                  },
-                }}
-              >
-                <Box>
-                  <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
-                    {student.name}
-                  </Typography>
-                  <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
-                    Responsável: {student.parent}
-                  </Typography>
-                </Box>
-                <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
-                  {student.school}
+          sortedStudents.map(student => (
+            <Box
+              key={student.id}
+              data-testid={`student-row-${student.id}`}
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: '2fr 1.5fr 1fr 1fr 40px',
+                alignItems: 'center',
+                px: 1,
+                py: 1.75,
+                borderBottom: `1px solid ${alpha(theme.palette.divider, 0.18)}`,
+                '&:hover': {
+                  backgroundColor: alpha(theme.palette.background.hover, 0.6),
+                  borderRadius: '12px',
+                },
+              }}
+            >
+              <Box>
+                <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+                  {student.name}
                 </Typography>
-                <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
-                  {student.class}
+                <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
+                  {student.guardian ? `Responsável: ${student.guardian}` : '—'}
                 </Typography>
-                <Box sx={{ display: 'flex' }}>
-                  <AppTag
-                    data-testid={`student-status-${student.id}`}
-                    size="sm"
-                    tag={
-                      statusConfig[student.status] ?? {
-                        label: student.status,
-                        color: 'default',
-                      }
-                    }
-                  />
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                  <IconButton
-                    data-testid={`student-menu-${student.id}`}
-                    size="small"
-                    onClick={e => {
-                      setSelectedStudent(student.id)
-                      setMenuAnchorEl(e.currentTarget)
-                    }}
-                    sx={{ color: 'text.secondary' }}
-                  >
-                    <MoreHorizRoundedIcon fontSize="small" />
-                  </IconButton>
-                </Box>
               </Box>
-            )
-          })
+              <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
+                {student.school ?? '—'}
+              </Typography>
+              <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
+                {student.year ?? '—'}
+              </Typography>
+              <Box sx={{ display: 'flex' }}>
+                <AppTag
+                  data-testid={`student-status-${student.id}`}
+                  size="sm"
+                  tag={
+                    statusConfig[student.status] ?? {
+                      label: student.status,
+                      color: 'default',
+                    }
+                  }
+                />
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                <IconButton
+                  data-testid={`student-menu-${student.id}`}
+                  size="small"
+                  onClick={e => {
+                    setSelectedStudentId(student.id)
+                    setMenuAnchorEl(e.currentTarget)
+                  }}
+                  sx={{ color: 'text.secondary' }}
+                >
+                  <MoreHorizRoundedIcon fontSize="small" />
+                </IconButton>
+              </Box>
+            </Box>
+          ))
         )}
 
         <Menu
@@ -413,26 +493,28 @@ export default function Page() {
           }}
         >
           <MenuItem
-            data-testid="transfer-student-action"
+            data-testid="edit-student-action"
             onClick={() => {
               setMenuAnchorEl(null)
-              setIsTransferModalOpen(true)
+              setIsEditModalOpen(true)
             }}
             sx={{ color: 'warning.main', gap: 1.25, py: 1.1 }}
           >
-            <SwapHorizRoundedIcon sx={{ fontSize: 18 }} />
+            <EditRoundedIcon sx={{ fontSize: 18 }} />
             <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
-              Transferir aluno
+              Editar aluno
             </Typography>
           </MenuItem>
           <MenuItem
             data-testid="toggle-status-action"
-            onClick={handleToggleStatus}
+            onClick={() => {
+              void handleToggleStatus()
+            }}
             sx={{ color: 'text.secondary', gap: 1.25, py: 1.1 }}
           >
             <SwapHorizRoundedIcon sx={{ fontSize: 18 }} />
             <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
-              {students.find(s => s.id === selectedStudent)?.status === 'ativo'
+              {selectedStudentRow?.status === 'ativo'
                 ? 'Tornar inativo'
                 : 'Tornar ativo'}
             </Typography>
@@ -452,34 +534,33 @@ export default function Page() {
           </MenuItem>
         </Menu>
 
-        <TransferStudentModal
-          data-testid="transfer-student-modal"
-          key={selectedStudent}
-          open={isTransferModalOpen}
-          onClose={() => setIsTransferModalOpen(false)}
-          defaultStudentId={selectedStudent ?? '1'}
-          onConfirm={handleTransferStudent}
-          studentOptions={students.map(s => ({
-            label: s.name,
-            value: s.id,
-            school: s.school,
-            class: s.class,
-          }))}
-        />
+        {editStudentData && (
+          <EditStudentModal
+            data-testid="edit-student-modal"
+            key={selectedStudentId}
+            open={isEditModalOpen}
+            onClose={() => setIsEditModalOpen(false)}
+            onConfirm={values => {
+              void handleEditStudent(values)
+            }}
+            student={editStudentData}
+          />
+        )}
 
         <AppActionModal
           confirmLabel="Confirmar exclusão"
-          description="Essa ação remove o aluno da lista."
+          description="Essa ação remove o aluno permanentemente."
           mode="confirm"
           onClose={() => setIsDeleteModalOpen(false)}
-          onConfirm={handleDeleteStudent}
+          onConfirm={() => {
+            void handleDeleteStudent()
+          }}
           open={isDeleteModalOpen}
           title="Excluir aluno"
           confirmColor={theme.palette.error.main}
         >
           <Typography color="text.secondary">
-            Deseja remover "{students.find(s => s.id === selectedStudent)?.name}
-            " da lista?
+            Deseja remover "{selectedStudentRow?.name}" da lista?
           </Typography>
         </AppActionModal>
       </Box>
