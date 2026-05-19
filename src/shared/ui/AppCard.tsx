@@ -80,7 +80,7 @@ function AppCard({
         />
       )}
       <CardContent
-        className={['grid gap-3 p-6 md:p-7', contentClassName]
+        className={['grid gap-3 p-4 sm:p-6 md:p-7', contentClassName]
           .filter(Boolean)
           .join(' ')}
         sx={Array.isArray(contentSx) ? contentSx : [contentSx]}

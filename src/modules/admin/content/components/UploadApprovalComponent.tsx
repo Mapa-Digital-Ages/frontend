@@ -98,17 +98,25 @@ function UploadApprovalComponent({
             minWidth: 0,
           }}
         >
-          <Box className="space-y-1">
+          <Box
+            sx={{
+              flex: '1 1 auto',
+              minWidth: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 0.5,
+            }}
+          >
             <Typography
               sx={{
                 color: 'text.primary',
-                flex: '1 1 auto',
-                fontSize: { md: 20, xs: 18 },
+                fontSize: { md: 20, xs: 17 },
                 fontWeight: 700,
                 minWidth: 0,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
+                width: '100%',
               }}
               title={title}
             >
@@ -117,7 +125,7 @@ function UploadApprovalComponent({
             <Typography
               sx={{
                 color: 'text.secondary',
-                fontSize: { md: 15, xs: 14 },
+                fontSize: { md: 15, xs: 13 },
                 maxWidth: 720,
               }}
             >

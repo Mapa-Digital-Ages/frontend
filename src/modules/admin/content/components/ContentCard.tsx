@@ -63,24 +63,23 @@ function ContentCard({ actions, item, type }: ApprovalCardProps) {
     <AppCard>
       <Box
         sx={{
-          alignItems: { sm: 'flex-start', xs: 'center' },
+          alignItems: 'center',
+          columnGap: 1.5,
           display: 'flex',
-          gridTemplateRows: { sm: 'auto', xs: 'auto auto' },
           justifyContent: 'space-between',
-          rowGap: { sm: 0, xs: 1.5 },
+          minWidth: 0,
         }}
       >
         <Typography
           sx={{
             color: 'text.primary',
+            flex: '1 1 auto',
             fontSize: { md: 20, xs: 16 },
             fontWeight: 700,
-            gridColumn: { sm: 1, xs: '1 / -1' },
-            gridRow: { sm: 1, xs: 2 },
             minWidth: 0,
-            overflow: { sm: 'visible', xs: 'hidden' },
-            textOverflow: { sm: 'clip', xs: 'ellipsis' },
-            whiteSpace: { sm: 'normal', xs: 'nowrap' },
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
           }}
           title={item.title}
         >
@@ -93,8 +92,6 @@ function ContentCard({ actions, item, type }: ApprovalCardProps) {
             flexShrink: 0,
             flexWrap: 'wrap',
             gap: 1,
-            gridColumn: 2,
-            gridRow: 1,
             justifyContent: 'flex-end',
           }}
         >

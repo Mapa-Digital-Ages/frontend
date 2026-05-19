@@ -90,7 +90,12 @@ export function SearchBarAndFilter({
         value={query}
         InputProps={{
           endAdornment: (
-            <InputAdornment position="end">
+            <InputAdornment
+              position="end"
+              sx={{
+                display: { xs: 'none', sm: 'flex' },
+              }}
+            >
               <Typography
                 sx={{
                   color: 'text.secondary',
@@ -196,6 +201,24 @@ export function SearchBarAndFilter({
           width={isMobileLayout ? 44 : 'auto'}
         />
       ) : null}
+      <Box
+        sx={{
+          display: { xs: 'flex', sm: 'none' },
+          gridColumn: showFilter ? '1 / -1' : '1',
+          justifyContent: 'flex-end',
+        }}
+      >
+        <Typography
+          sx={{
+            color: 'text.secondary',
+            fontSize: 12,
+            fontWeight: 600,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {resultLabel}
+        </Typography>
+      </Box>
     </Box>
   )
 }
