@@ -7,11 +7,14 @@ import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded'
 import SwapHorizRoundedIcon from '@mui/icons-material/SwapHorizRounded'
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 import EditRoundedIcon from '@mui/icons-material/EditRounded'
+import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded'
+import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded'
+import UnfoldMoreRoundedIcon from '@mui/icons-material/UnfoldMoreRounded'
 import { AppColors } from '@/app/theme/core/colors'
 import { IconButton, Menu, MenuItem, CircularProgress } from '@mui/material'
 import { Box, Button, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { SearchBarAndFilter } from '@/shared/ui/SearchBarAndFilter'
 import { AppTag } from '@/shared/ui/AppTags'
 import type { TagContext } from '@/shared/types/common'
@@ -29,6 +32,102 @@ import type {
   StudentItem,
   StudentMetrics,
 } from '@/modules/admin/student/types/types'
+
+type SortField = 'name' | 'school' | 'year'
+type SortDirection = 'asc' | 'desc'
+
+interface SortState {
+  field: SortField | null
+  direction: SortDirection
+}
+
+const yearOrder: Record<string, number> = {
+  '5º Ano': 5,
+  '6º Ano': 6,
+  '7º Ano': 7,
+  '8º Ano': 8,
+  '9º Ano': 9,
+}
+
+function sortStudents(students: StudentItem[], sort: SortState): StudentItem[] {
+  if (!sort.field) return students
+
+  return [...students].sort((a, b) => {
+    let comparison = 0
+
+    if (sort.field === 'name') {
+      comparison = a.name.localeCompare(b.name, 'pt-BR')
+    } else if (sort.field === 'school') {
+      comparison = (a.school ?? '').localeCompare(b.school ?? '', 'pt-BR')
+    } else if (sort.field === 'year') {
+      const aOrder = yearOrder[a.year ?? ''] ?? 0
+      const bOrder = yearOrder[b.year ?? ''] ?? 0
+      comparison = aOrder - bOrder
+    }
+
+    return sort.direction === 'asc' ? comparison : -comparison
+  })
+}
+
+function SortableHeader({
+  label,
+  field,
+  sort,
+  onSort,
+}: {
+  label: string
+  field: SortField
+  sort: SortState
+  onSort: (field: SortField) => void
+}) {
+  const isActive = sort.field === field
+  const theme = useTheme()
+
+  return (
+    <Box
+      onClick={() => onSort(field)}
+      sx={{
+        alignItems: 'center',
+        cursor: 'pointer',
+        display: 'flex',
+        gap: 0.5,
+        userSelect: 'none',
+        '&:hover .sort-label': {
+          color: 'text.primary',
+        },
+      }}
+    >
+      <Typography
+        className="sort-label"
+        sx={{
+          color: isActive ? 'text.primary' : 'text.secondary',
+          fontSize: 12,
+          fontWeight: 700,
+          letterSpacing: '0.05em',
+          textTransform: 'uppercase',
+          transition: 'color 0.15s',
+        }}
+      >
+        {label}
+      </Typography>
+      <Box
+        sx={{
+          color: isActive ? theme.palette.error.main : 'text.disabled',
+          display: 'flex',
+          fontSize: 14,
+        }}
+      >
+        {!isActive ? (
+          <UnfoldMoreRoundedIcon sx={{ fontSize: 14 }} />
+        ) : sort.direction === 'asc' ? (
+          <ArrowUpwardRoundedIcon sx={{ fontSize: 14 }} />
+        ) : (
+          <ArrowDownwardRoundedIcon sx={{ fontSize: 14 }} />
+        )}
+      </Box>
+    </Box>
+  )
+}
 
 export default function Page() {
   const theme = useTheme()
@@ -49,6 +148,7 @@ export default function Page() {
 
   const [query, setQuery] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('all')
+  const [sort, setSort] = useState<SortState>({ field: null, direction: 'asc' })
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -79,6 +179,19 @@ export default function Page() {
   useEffect(() => {
     void fetchStudents()
   }, [fetchStudents])
+
+  function handleSort(field: SortField) {
+    setSort(current => ({
+      field,
+      direction:
+        current.field === field && current.direction === 'asc' ? 'desc' : 'asc',
+    }))
+  }
+
+  const sortedStudents = useMemo(
+    () => sortStudents(students, sort),
+    [students, sort]
+  )
 
   const selectedStudentRow = students.find(s => s.id === selectedStudentId)
 
@@ -199,7 +312,7 @@ export default function Page() {
 
       <OrdinaryHeader
         title="Gestão de alunos da rede"
-        subtitle="O administrador pode criar alunos, atrelar a turmas, mover entre escolas e ajustar vínculos da base inteira"
+        subtitle="O administrador pode criar alunos, mover entre escolas e ajustar vínculos da base inteira"
         actions={headerActions}
       />
 
@@ -230,7 +343,7 @@ export default function Page() {
             singularLabel: 'resultado',
             pluralLabel: 'resultados',
           }}
-          searchPlaceholder="Pesquisar alunos, responsáveis, escola ou turma..."
+          searchPlaceholder="Pesquisar alunos, responsáveis, escola ou ano..."
           filterOptions={[
             { label: 'Todos', value: 'all' },
             { label: 'Ativo', value: 'ativo' },
@@ -261,20 +374,35 @@ export default function Page() {
             borderBottom: `1px solid ${theme.palette.divider}`,
           }}
         >
-          {['Aluno', 'Escola', 'Turma', 'Status'].map(col => (
-            <Typography
-              key={col}
-              sx={{
-                color: 'text.secondary',
-                fontSize: 12,
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-              }}
-            >
-              {col}
-            </Typography>
-          ))}
+          <SortableHeader
+            label="Aluno"
+            field="name"
+            sort={sort}
+            onSort={handleSort}
+          />
+          <SortableHeader
+            label="Escola"
+            field="school"
+            sort={sort}
+            onSort={handleSort}
+          />
+          <SortableHeader
+            label="Turma"
+            field="year"
+            sort={sort}
+            onSort={handleSort}
+          />
+          <Typography
+            sx={{
+              color: 'text.secondary',
+              fontSize: 12,
+              fontWeight: 700,
+              letterSpacing: '0.05em',
+              textTransform: 'uppercase',
+            }}
+          >
+            Status
+          </Typography>
         </Box>
 
         {isLoading ? (
@@ -288,7 +416,7 @@ export default function Page() {
             </Typography>
           </Box>
         ) : (
-          students.map(student => (
+          sortedStudents.map(student => (
             <Box
               key={student.id}
               data-testid={`student-row-${student.id}`}
