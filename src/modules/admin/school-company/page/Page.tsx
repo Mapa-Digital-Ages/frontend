@@ -1,19 +1,20 @@
-import AppPageContainer from '@/shared/ui/AppPageContainer'
-import PageHeader from '@/shared/ui/PageHeader'
-import MetricsCard from '@/shared/ui/MetricsCard'
-import { SearchBarAndFilter } from '@/shared/ui/SearchBarAndFilter'
-import { AppTag } from '@/shared/ui/AppTags'
-import AddRoundedIcon from '@mui/icons-material/AddRounded'
-import PersonAddAltRoundedIcon from '@mui/icons-material/PersonAddAltRounded'
-import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded'
-import { alpha, useTheme } from '@mui/material/styles'
-import { Box, Button, colors, Typography } from '@mui/material'
-import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
-import CancelRoundedIcon from '@mui/icons-material/CancelRounded'
-import { useState } from 'react'
 import { AppColors } from '@/app/theme/core/colors'
-import { BusinessCenterRounded } from '@mui/icons-material'
-import BusinessTwoToneIcon from '@mui/icons-material/BusinessTwoTone';
+import AppPageContainer from '@/shared/ui/AppPageContainer'
+import { AppTag } from '@/shared/ui/AppTags'
+import MetricsCard from '@/shared/ui/MetricsCard'
+import PageHeader from '@/shared/ui/PageHeader'
+import { SearchBarAndFilter } from '@/shared/ui/SearchBarAndFilter'
+import AddRoundedIcon from '@mui/icons-material/AddRounded'
+import BusinessTwoToneIcon from '@mui/icons-material/BusinessTwoTone'
+import CancelRoundedIcon from '@mui/icons-material/CancelRounded'
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
+import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded'
+import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded'
+import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded'
+import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded'
+import { Box, Button, IconButton, Typography } from '@mui/material'
+import { alpha, useTheme } from '@mui/material/styles'
+import { useState } from 'react'
 
 interface School {
   id: string
@@ -33,6 +34,23 @@ interface ClassItem {
   schoolId: string
   students: number
   avgProgress: number
+}
+
+type PartnerRequest = {
+  id: string
+  schoolName: string
+  location: string
+  status: 'ativa' | 'pendente'
+}
+
+type Company = {
+  id: string
+  name: string
+  email: string
+  type: string
+  status: 'ativa' | 'pendente' | 'inativa'
+  description: string
+  requests: PartnerRequest[]
 }
 
 const SCHOOLS: School[] = [
@@ -79,85 +97,62 @@ const CLASSES: ClassItem[] = [
   { id: 'c5', name: '8º A', schoolId: '3', students: 2, avgProgress: 40 },
 ]
 
-type Company = {
-  id: string
-  name: string
-  type: string
-  focus: string
-  status: 'ativa' | 'pendente' | 'inativa'
-  description: string
-  supportedSchools: {
-    name: string
-    location: string
-    status: 'ativa' | 'pendente' | 'inativa'
-  }[]
-}
-
 const COMPANIES: Company[] = [
   {
     id: '1',
     name: 'Tech Corp',
+    email: 'parcerias@techcorp.com',
     type: 'Patrocínio',
-    focus: 'Bolsas e conectividade',
     status: 'pendente',
     description:
       'Apoia escolas com patrocínio recorrente e cobertura de conectividade para turmas prioritárias.',
-    supportedSchools: [
+    requests: [
       {
-        name: 'Escola São Paulo',
+        id: 'r1',
+        schoolName: 'Escola São Paulo',
         location: 'São Paulo, SP • Pública',
         status: 'ativa',
       },
       {
-        name: 'Escola Rio Branco',
+        id: 'r2',
+        schoolName: 'Escola Rio Branco',
         location: 'Rio de Janeiro, RJ • Privada',
         status: 'ativa',
       },
       {
-        name: 'Escola Horizonte',
+        id: 'r3',
+        schoolName: 'Escola Horizonte',
         location: 'Belo Horizonte, MG • Pública',
-        status: 'ativa',
+        status: 'pendente',
       },
     ],
   },
-
   {
     id: '2',
     name: 'Futuro S/A',
+    email: 'contato@futurosa.com',
     type: 'Investimento social',
-    focus: 'Expansão regional',
     status: 'ativa',
     description:
       'Empresa parceira focada na ampliação do acesso à plataforma em regiões com menor cobertura educacional.',
-    supportedSchools: [
+    requests: [
       {
-        name: 'Escola Monte Azul',
+        id: 'r4',
+        schoolName: 'Escola Monte Azul',
         location: 'Porto Alegre, RS • Pública',
-        status: 'ativa',
-      },
-      {
-        name: 'Escola Boa Vista',
-        location: 'Curitiba, PR • Pública',
         status: 'ativa',
       },
     ],
   },
-
   {
     id: '3',
     name: 'Educa Mais',
+    email: 'parcerias@educamais.com',
     type: 'Apoio educacional',
-    focus: 'Materiais digitais',
     status: 'inativa',
     description:
       'Parceria voltada ao fornecimento de recursos digitais e apoio pedagógico para escolas cadastradas.',
-    supportedSchools: [
-      {
-        name: 'Escola Caminhos',
-        location: 'Florianópolis, SC • Privada',
-        status: 'inativa',
-      },
-    ],
+    requests: [],
   },
 ]
 
@@ -169,28 +164,149 @@ const STATUS_COLORS: Record<School['status'], string> = {
 
 export default function Page() {
   const theme = useTheme()
-  const [view, setView] = useState<'escola' | 'empresa'>('escola')
-  const [selectedSchoolId, setSelectedSchoolId] = useState<string>('1')
-  const [query, setQuery] = useState('')
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string>('1')
 
-  const filteredSchools = SCHOOLS.filter(s =>
-    s.name.toLowerCase().includes(query.toLowerCase())
+  const [view, setView] = useState<'escola' | 'empresa'>('escola')
+  const [selectedSchoolId, setSelectedSchoolId] = useState('1')
+  const [query, setQuery] = useState('')
+  const [companies, setCompanies] = useState<Company[]>(COMPANIES)
+  const [selectedCompanyId, setSelectedCompanyId] = useState('1')
+  const [isNewPartnerOpen, setIsNewPartnerOpen] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
+  const [newPartner, setNewPartner] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    type: '',
+  })
+
+  const filteredSchools = SCHOOLS.filter(school =>
+    school.name.toLowerCase().includes(query.toLowerCase())
   )
 
-  const selectedSchool = SCHOOLS.find(s => s.id === selectedSchoolId)
-  const schoolClasses = CLASSES.filter(c => c.schoolId === selectedSchoolId)
-  const filteredCompanies = COMPANIES.filter(company =>
-  company.name.toLowerCase().includes(query.toLowerCase())
-)
+  const selectedSchool = SCHOOLS.find(school => school.id === selectedSchoolId)
 
-const selectedCompany = COMPANIES.find(
-  company => company.id === selectedCompanyId
-)
+  const schoolClasses = CLASSES.filter(
+    classItem => classItem.schoolId === selectedSchoolId
+  )
+
+  const filteredCompanies = companies.filter(company =>
+    company.name.toLowerCase().includes(query.toLowerCase())
+  )
+
+  const selectedCompany =
+    companies.find(company => company.id === selectedCompanyId) ??
+    filteredCompanies[0]
+
+  const emailIsValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+    newPartner.email.trim()
+  )
+
+  const passwordIsValid =
+    newPartner.password.length >= 8 &&
+    /[A-Z]/.test(newPartner.password) &&
+    /[a-z]/.test(newPartner.password) &&
+    /[0-9]/.test(newPartner.password)
+
+  const passwordsMatch =
+    newPartner.password.length > 0 &&
+    newPartner.password === newPartner.confirmPassword
+
+  const canCreatePartner =
+    newPartner.name.trim() !== '' &&
+    newPartner.type.trim() !== '' &&
+    emailIsValid &&
+    passwordIsValid &&
+    passwordsMatch
+
+  function handleCreatePartner() {
+    if (!canCreatePartner) return
+
+    const newCompany: Company = {
+      id: crypto.randomUUID(),
+      name: newPartner.name.trim(),
+      email: newPartner.email.trim(),
+      type: newPartner.type.trim(),
+      status: 'pendente',
+      description:
+        'Empresa recém-cadastrada aguardando solicitações de parceria.',
+      requests: [],
+    }
+
+    setCompanies(prev => [newCompany, ...prev])
+    setSelectedCompanyId(newCompany.id)
+
+    setNewPartner({
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      type: '',
+    })
+
+    setShowPassword(false)
+    setShowConfirmPassword(false)
+    setIsNewPartnerOpen(false)
+  }
+
+  function handleApproveRequest(requestId: string) {
+    if (!selectedCompany) return
+
+    setCompanies(prev =>
+      prev.map(company =>
+        company.id === selectedCompany.id
+          ? {
+              ...company,
+              status: 'ativa',
+              requests: company.requests.map(request =>
+                request.id === requestId
+                  ? { ...request, status: 'ativa' }
+                  : request
+              ),
+            }
+          : company
+      )
+    )
+  }
+
+  function handleRejectRequest(requestId: string) {
+    if (!selectedCompany) return
+
+    setCompanies(prev =>
+      prev.map(company =>
+        company.id === selectedCompany.id
+          ? {
+              ...company,
+              requests: company.requests.filter(
+                request => request.id !== requestId
+              ),
+            }
+          : company
+      )
+    )
+  }
+
+  function handleRemoveRequest(requestId: string) {
+    if (!selectedCompany) return
+
+    setCompanies(prev =>
+      prev.map(company =>
+        company.id === selectedCompany.id
+          ? {
+              ...company,
+              requests: company.requests.filter(
+                request => request.id !== requestId
+              ),
+            }
+          : company
+      )
+    )
+  }
 
   return (
     <AppPageContainer className="gap-4 md:gap-5">
-      {/* Banner */}
       <PageHeader
         data-testid="school-company-page-header"
         title="Gestão de Escolas e Empresas"
@@ -198,7 +314,6 @@ const selectedCompany = COMPANIES.find(
         variant="admin"
       />
 
-      {/* Toggle Escola / Empresa */}
       <Box
         data-testid="view-toggle-group"
         sx={{
@@ -211,41 +326,41 @@ const selectedCompany = COMPANIES.find(
           backgroundColor: 'background.paper',
         }}
       >
-        {(['escola', 'empresa'] as const).map(v => (
+        {(['escola', 'empresa'] as const).map(item => (
           <button
-            key={v}
-            data-testid={`toggle-${v}`}
-            onClick={() => setView(v)}
+            key={item}
+            data-testid={`toggle-${item}`}
+            onClick={() => {
+              setView(item)
+              setQuery('')
+            }}
             style={{
               background:
-                view === v ? theme.palette.background.default : 'transparent',
+                view === item
+                  ? theme.palette.background.default
+                  : 'transparent',
               border: 'none',
               borderRadius: '8px',
               color:
-                view === v
+                view === item
                   ? theme.palette.text.primary
                   : theme.palette.text.secondary,
               cursor: 'pointer',
               fontFamily: 'inherit',
               fontSize: 14,
-              fontWeight: view === v ? 700 : 500,
+              fontWeight: view === item ? 700 : 500,
               margin: 4,
-              padding: '6px 24px',
+              padding: '6px 40px',
               transition: 'all 0.18s',
             }}
           >
-            {v.charAt(0).toUpperCase() + v.slice(1)}
+            {item === 'escola' ? 'Escolas' : 'Empresas'}
           </button>
         ))}
       </Box>
 
-      {/* ---- ESCOLA VIEW ---- */}
       {view === 'escola' && (
-        <Box
-          data-testid="escola-view"
-          sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}
-        >
-          {/* Section header */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           <Box
             sx={{
               display: 'flex',
@@ -266,7 +381,6 @@ const selectedCompany = COMPANIES.find(
             </Box>
 
             <Button
-              data-testid="add-new-school"
               startIcon={<AddRoundedIcon />}
               variant="contained"
               disableElevation
@@ -277,7 +391,6 @@ const selectedCompany = COMPANIES.find(
                 px: 2.5,
                 py: 1,
                 textTransform: 'none',
-                flexShrink: 0,
                 '&:hover': { backgroundColor: theme.palette.error.dark },
               }}
             >
@@ -285,7 +398,6 @@ const selectedCompany = COMPANIES.find(
             </Button>
           </Box>
 
-          {/* Search bar */}
           <Box
             sx={{
               backgroundColor: 'background.paper',
@@ -296,7 +408,6 @@ const selectedCompany = COMPANIES.find(
             }}
           >
             <SearchBarAndFilter
-              data-testid="school-search"
               onQueryChange={setQuery}
               query={query}
               resultsSummary={{
@@ -308,9 +419,7 @@ const selectedCompany = COMPANIES.find(
             />
           </Box>
 
-          {/* School cards grid */}
           <Box
-            data-testid="schools-section"
             sx={{
               display: 'grid',
               gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
@@ -319,10 +428,10 @@ const selectedCompany = COMPANIES.find(
           >
             {filteredSchools.map(school => {
               const isSelected = school.id === selectedSchoolId
+
               return (
                 <Box
                   key={school.id}
-                  data-testid={`school-item-${school.id}`}
                   onClick={() => setSelectedSchoolId(school.id)}
                   sx={{
                     backgroundColor: isSelected
@@ -335,42 +444,33 @@ const selectedCompany = COMPANIES.find(
                     borderRadius: '16px',
                     cursor: 'pointer',
                     p: 2.5,
-                    transition: 'all 0.18s',
-                    '&:hover': {
-                      borderColor: alpha(AppColors.role.admin.secondary, 0.4),
-                      backgroundColor: alpha(AppColors.role.admin.secondary, 0.05),
-                    },
                   }}
                 >
-                  {/* School icon + name */}
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1.5,
-                      mb: 1.25,
-                    }}
-                  >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                     <Box
                       sx={{
                         width: 36,
                         height: 36,
                         borderRadius: '10px',
-                        backgroundColor: alpha(AppColors.role.admin.secondary, 0.12),
+                        backgroundColor: alpha(
+                          AppColors.role.admin.secondary,
+                          0.12
+                        ),
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        flexShrink: 0,
                       }}
                     >
                       <SchoolRoundedIcon
-                        sx={{ color: AppColors.role.admin.secondary, fontSize: 20 }}
+                        sx={{
+                          color: AppColors.role.admin.secondary,
+                          fontSize: 20,
+                        }}
                       />
                     </Box>
+
                     <Box>
-                      <Typography
-                        sx={{ fontWeight: 700, fontSize: 15, lineHeight: 1.2 }}
-                      >
+                      <Typography sx={{ fontWeight: 700, fontSize: 15 }}>
                         {school.name}
                       </Typography>
                       <Typography
@@ -381,9 +481,8 @@ const selectedCompany = COMPANIES.find(
                     </Box>
                   </Box>
 
-                  {/* Badges */}
                   <Box
-                    sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}
+                    sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 2 }}
                   >
                     <AppTag
                       size="sm"
@@ -412,13 +511,14 @@ const selectedCompany = COMPANIES.find(
             })}
           </Box>
 
-          {/* Metrics for selected school */}
           {selectedSchool && (
             <Box
-              data-testid="school-metrics"
               sx={{
                 display: 'grid',
-                gridTemplateColumns: { xs: '1fr 1fr', md: '1fr 1fr 1fr 1fr' },
+                gridTemplateColumns: {
+                  xs: '1fr 1fr',
+                  md: '1fr 1fr 1fr 1fr',
+                },
                 gap: 2,
               }}
             >
@@ -443,525 +543,766 @@ const selectedCompany = COMPANIES.find(
             </Box>
           )}
 
-          {/* Classes section */}
-          <Box>
+          <Box
+            sx={{
+              backgroundColor: 'background.paper',
+              border: '1px solid',
+              borderColor: 'background.border',
+              borderRadius: '22px',
+              overflow: 'hidden',
+            }}
+          >
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: '1.5fr 1fr 1fr',
+                px: 2.5,
+                py: 1.5,
+                borderBottom: `1px solid ${theme.palette.divider}`,
+              }}
+            >
+              {['Turma', 'Alunos', 'Progresso médio'].map(col => (
+                <Typography
+                  key={col}
+                  sx={{
+                    color: 'text.secondary',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {col}
+                </Typography>
+              ))}
+            </Box>
+
+            {schoolClasses.map(classItem => (
+              <Box
+                key={classItem.id}
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: '1.5fr 1fr 1fr',
+                  alignItems: 'center',
+                  px: 2.5,
+                  py: 1.75,
+                  borderBottom: `1px solid ${alpha(
+                    theme.palette.divider,
+                    0.18
+                  )}`,
+                  '&:last-child': { borderBottom: 'none' },
+                }}
+              >
+                <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+                  {classItem.name}
+                </Typography>
+                <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
+                  {classItem.students}
+                </Typography>
+                <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
+                  {classItem.avgProgress}%
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        </Box>
+      )}
+
+      {view === 'empresa' && selectedCompany && (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Box
+            sx={{
+              backgroundColor: 'background.paper',
+              border: '1px solid',
+              borderColor: 'background.border',
+              borderRadius: '14px',
+              p: 2,
+            }}
+          >
             <Box
               sx={{
                 display: 'flex',
-                alignItems: 'center',
                 justifyContent: 'space-between',
-                mb: 2,
+                alignItems: 'flex-start',
                 gap: 2,
+                mb: 2,
               }}
             >
-              <Typography sx={{ fontWeight: 700, fontSize: 18 }}>
-                Turmas da escola selecionada
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 1.5 }}>
-                <Button
-                  data-testid="add-new-student"
-                  startIcon={<PersonAddAltRoundedIcon />}
-                  variant="outlined"
-                  disableElevation
-                  sx={{
-                    borderColor: 'background.border',
-                    borderRadius: '10px',
-                    color: 'text.secondary',
-                    fontWeight: 700,
-                    px: 2,
-                    textTransform: 'none',
-                    '&:hover': { borderColor: 'text.secondary' },
-                  }}
+              <Box>
+                <Typography sx={{ fontWeight: 700, fontSize: 18 }}>
+                  Empresas parceiras
+                </Typography>
+                <Typography
+                  sx={{ color: 'text.secondary', fontSize: 13, mt: 0.25 }}
                 >
-                  Novo aluno
-                </Button>
-                <Button
-                  data-testid="add-new-class"
-                  startIcon={<AddRoundedIcon />}
-                  variant="contained"
-                  disableElevation
-                  sx={{
-                    backgroundColor:  AppColors.role.admin.secondary,
-                    borderRadius: '10px',
-                    fontWeight: 700,
-                    px: 2.5,
-                    py: 1,
-                    textTransform: 'none',
-                    '&:hover': { backgroundColor: theme.palette.error.dark },
-                  }}
-                >
-                  Nova turma
-                </Button>
+                  Gerencie a operação das empresas em blocos separados: lista,
+                  cobertura e escolas apoiadas.
+                </Typography>
               </Box>
+
+              <Button
+                startIcon={<AddRoundedIcon />}
+                variant="contained"
+                disableElevation
+                onClick={() => setIsNewPartnerOpen(true)}
+                sx={{
+                  backgroundColor: AppColors.role.admin.secondary,
+                  borderRadius: '10px',
+                  fontWeight: 700,
+                  px: 2.5,
+                  py: 1,
+                  textTransform: 'none',
+                  '&:hover': { backgroundColor: theme.palette.error.dark },
+                }}
+              >
+                Nova parceria
+              </Button>
             </Box>
 
-            {/* Classes list */}
+            <SearchBarAndFilter
+              query={query}
+              onQueryChange={setQuery}
+              resultsSummary={{
+                count: filteredCompanies.length,
+                singularLabel: 'resultado',
+                pluralLabel: 'resultado(s)',
+              }}
+              searchPlaceholder="Pesquisar empresas..."
+            />
+          </Box>
+
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', lg: '1fr 1.1fr' },
+              gap: 2,
+            }}
+          >
             <Box
-              data-testid="classes-section"
               sx={{
                 backgroundColor: 'background.paper',
                 border: '1px solid',
                 borderColor: 'background.border',
-                borderRadius: '22px',
-                overflow: 'hidden',
+                borderRadius: '18px',
+                p: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1.5,
               }}
             >
-              {/* Table header */}
               <Box
                 sx={{
-                  display: 'grid',
-                  gridTemplateColumns: '1.5fr 1fr 1fr',
-                  px: 2.5,
-                  py: 1.5,
-                  borderBottom: `1px solid ${theme.palette.divider}`,
+                  border: '1px solid',
+                  borderColor: 'background.border',
+                  borderRadius: '14px',
+                  p: 2,
                 }}
               >
-                {['Turma', 'Alunos', 'Progresso médio'].map(col => (
-                  <Typography
-                    key={col}
-                    sx={{
-                      color: 'text.secondary',
-                      fontSize: 11,
-                      fontWeight: 700,
-                      letterSpacing: '0.06em',
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    {col}
-                  </Typography>
-                ))}
+                <Typography sx={{ fontWeight: 700, fontSize: 16 }}>
+                  Lista de empresas
+                </Typography>
+                <Typography
+                  sx={{ color: 'text.secondary', fontSize: 13, mt: 0.5 }}
+                >
+                  Selecione uma empresa para visualizar o detalhamento do apoio
+                  e das escolas cobertas.
+                </Typography>
               </Box>
 
-              {/* Table rows */}
-              {!selectedSchoolId ? (
-                <Box sx={{ py: 6, textAlign: 'center' }}>
-                  <Typography sx={{ color: 'text.secondary' }}>
-                    Selecione uma escola para ver as turmas.
-                  </Typography>
-                </Box>
-              ) : schoolClasses.length === 0 ? (
-                <Box sx={{ py: 6, textAlign: 'center' }}>
-                  <Typography sx={{ color: 'text.secondary' }}>
-                    Nenhuma turma cadastrada para esta escola.
-                  </Typography>
-                </Box>
-              ) : (
-                schoolClasses.map(cls => (
+              {filteredCompanies.map(company => {
+                const isSelected = company.id === selectedCompany.id
+
+                const pendingCount = company.requests.filter(
+                  request => request.status === 'pendente'
+                ).length
+
+                const activeCount = company.requests.filter(
+                  request => request.status === 'ativa'
+                ).length
+
+                return (
                   <Box
-                    key={cls.id}
-                    data-testid={`class-item-${cls.id}`}
+                    key={company.id}
+                    onClick={() => setSelectedCompanyId(company.id)}
                     sx={{
-                      display: 'grid',
-                      gridTemplateColumns: '1.5fr 1fr 1fr',
-                      alignItems: 'center',
-                      px: 2.5,
-                      py: 1.75,
-                      borderBottom: `1px solid ${alpha(theme.palette.divider, 0.18)}`,
-                      '&:last-child': { borderBottom: 'none' },
-                      '&:hover': {
-                        backgroundColor: alpha(
-                          theme.palette.background.hover,
-                          0.6
-                        ),
-                      },
+                      backgroundColor: isSelected
+                        ? alpha(AppColors.role.admin.secondary, 0.07)
+                        : 'background.paper',
+                      border: '1px solid',
+                      borderColor: isSelected
+                        ? alpha(AppColors.role.admin.secondary, 0.28)
+                        : 'background.border',
+                      borderRadius: '14px',
+                      cursor: 'pointer',
+                      p: 2,
                     }}
                   >
-                    <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
-                      {cls.name}
-                    </Typography>
-                    <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
-                      {cls.students}
-                    </Typography>
-                    <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
-                      {cls.avgProgress}%
-                    </Typography>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1.5,
+                        mb: 2,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: '10px',
+                          backgroundColor: alpha(
+                            AppColors.role.admin.secondary,
+                            0.12
+                          ),
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <BusinessTwoToneIcon
+                          sx={{
+                            color: AppColors.role.admin.secondary,
+                            fontSize: 20,
+                          }}
+                        />
+                      </Box>
+
+                      <Typography sx={{ fontWeight: 700, fontSize: 16 }}>
+                        {company.name}
+                      </Typography>
+                    </Box>
+
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: 1.5,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          border: '1px solid',
+                          borderColor: 'background.border',
+                          borderRadius: '10px',
+                          backgroundColor: 'background.default',
+                          p: 1.5,
+                        }}
+                      >
+                        <Typography
+                          sx={{ color: 'text.secondary', fontSize: 12 }}
+                        >
+                          Em aprovação
+                        </Typography>
+                        <Typography sx={{ fontWeight: 700 }}>
+                          {pendingCount}
+                        </Typography>
+                      </Box>
+
+                      <Box
+                        sx={{
+                          border: '1px solid',
+                          borderColor: 'background.border',
+                          borderRadius: '10px',
+                          backgroundColor: 'background.default',
+                          p: 1.5,
+                        }}
+                      >
+                        <Typography
+                          sx={{ color: 'text.secondary', fontSize: 12 }}
+                        >
+                          Escolas apoiadas
+                        </Typography>
+                        <Typography sx={{ fontWeight: 700 }}>
+                          {activeCount}
+                        </Typography>
+                      </Box>
+                    </Box>
                   </Box>
-                ))
-              )}
+                )
+              })}
+            </Box>
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box
+                sx={{
+                  backgroundColor: 'background.paper',
+                  border: '1px solid',
+                  borderColor: 'background.border',
+                  borderRadius: '18px',
+                  p: 2.5,
+                }}
+              >
+                <Typography sx={{ fontWeight: 700, fontSize: 22 }}>
+                  {selectedCompany.name}
+                </Typography>
+
+                <Typography
+                  sx={{ color: 'text.secondary', mt: 0.5, lineHeight: 1.5 }}
+                >
+                  {selectedCompany.description}
+                </Typography>
+
+                <Box
+                  sx={{
+                    border: '1px solid',
+                    borderColor: 'background.border',
+                    backgroundColor: 'background.default',
+                    borderRadius: '12px',
+                    p: 1.5,
+                    mt: 2,
+                  }}
+                >
+                  <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
+                    Contato
+                  </Typography>
+                  <Typography sx={{ fontWeight: 600, fontSize: 14 }}>
+                    {selectedCompany.email}
+                  </Typography>
+                </Box>
+              </Box>
+
+              <Box
+                sx={{
+                  backgroundColor: 'background.paper',
+                  border: '1px solid',
+                  borderColor: 'background.border',
+                  borderRadius: '18px',
+                  p: 2.5,
+                  minHeight: 360,
+                }}
+              >
+                <Typography sx={{ fontWeight: 700, fontSize: 20, mb: 2 }}>
+                  Solicitação de parcerias
+                </Typography>
+
+                {selectedCompany.requests.length === 0 ? (
+                  <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
+                    Essa empresa ainda não solicitou apoio para nenhuma escola.
+                  </Typography>
+                ) : (
+                  selectedCompany.requests.map(request => (
+                    <Box
+                      key={request.id}
+                      sx={{
+                        border: '1px solid',
+                        borderColor: 'background.border',
+                        borderRadius: '12px',
+                        p: 1.5,
+                        mb: 1.5,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: 2,
+                      }}
+                    >
+                      <Box>
+                        <Typography sx={{ fontWeight: 700, fontSize: 15 }}>
+                          {request.schoolName}
+                        </Typography>
+                        <Typography
+                          sx={{ color: 'text.secondary', fontSize: 13 }}
+                        >
+                          {request.location}
+                        </Typography>
+                      </Box>
+
+                      <Box
+                        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                      >
+                        <Box
+                          sx={{
+                            backgroundColor:
+                              request.status === 'ativa'
+                                ? alpha('#22C55E', 0.12)
+                                : alpha('#F59E0B', 0.12),
+                            color:
+                              request.status === 'ativa'
+                                ? '#22C55E'
+                                : '#F59E0B',
+                            borderRadius: '999px',
+                            px: 1.5,
+                            py: 0.5,
+                            fontSize: 12,
+                            fontWeight: 700,
+                          }}
+                        >
+                          {request.status === 'ativa' ? 'ativa' : 'Pendente'}
+                        </Box>
+
+                        {request.status === 'pendente' ? (
+                          <>
+                            <Box
+                              onClick={() => handleApproveRequest(request.id)}
+                              sx={{
+                                width: 26,
+                                height: 26,
+                                borderRadius: '50%',
+                                border: '1px solid',
+                                borderColor: alpha('#22C55E', 0.35),
+                                backgroundColor: alpha('#22C55E', 0.08),
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <CheckCircleRoundedIcon
+                                sx={{ color: '#22C55E', fontSize: 17 }}
+                              />
+                            </Box>
+
+                            <Box
+                              onClick={() => handleRejectRequest(request.id)}
+                              sx={{
+                                width: 26,
+                                height: 26,
+                                borderRadius: '50%',
+                                border: '1px solid',
+                                borderColor: alpha('#EF4444', 0.35),
+                                backgroundColor: alpha('#EF4444', 0.08),
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <CancelRoundedIcon
+                                sx={{ color: '#EF4444', fontSize: 17 }}
+                              />
+                            </Box>
+                          </>
+                        ) : (
+                          <Box
+                            onClick={() => handleRemoveRequest(request.id)}
+                            sx={{
+                              width: 26,
+                              height: 26,
+                              borderRadius: '50%',
+                              border: '1px solid',
+                              borderColor: alpha('#EF4444', 0.25),
+                              backgroundColor: alpha('#EF4444', 0.06),
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <DeleteRoundedIcon
+                              sx={{ color: '#EF4444', fontSize: 16 }}
+                            />
+                          </Box>
+                        )}
+                      </Box>
+                    </Box>
+                  ))
+                )}
+              </Box>
             </Box>
           </Box>
         </Box>
       )}
 
-    {/* ---- EMPRESA  ---- */}
-{view === 'empresa' && selectedCompany && (
-  <Box data-testid="empresa-view" sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-    <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              justifyContent: 'space-between',
-              gap: 2,
-            }}
-          >
-      <Box>
-        <Typography sx={{ fontWeight: 700, fontSize: 18 }}>
-          Empresas parceiras
-        </Typography>
-        <Typography sx={{ color: 'text.secondary', fontSize: 13, mt: 0.25 }}>
-          Gerencie a operação das empresas em blocos separados: lista, cobertura e escolas apoiadas.
-        </Typography>
-      </Box>
-
-      <Button
-        startIcon={<AddRoundedIcon />}
-        variant="contained"
-        disableElevation
-        sx={{
-          backgroundColor: AppColors.role.admin.secondary,
-          borderRadius: '10px',
-          fontWeight: 700,
-          px: 2.5,
-          py: 1,
-          textTransform: 'none',
-          flexShrink: 0,
-          '&:hover': { backgroundColor: theme.palette.error.dark },
-        }}
-      >
-        Nova parceria
-      </Button>
-    </Box>
-
-    <Box
-      sx={{
-        backgroundColor: 'background.paper',
-        borderRadius: '14px',
-        border: '1px solid',
-        borderColor: 'background.border',
-        p: 1.5,
-      }}
-    >
-      <SearchBarAndFilter
-        query={query}
-        onQueryChange={setQuery}
-        resultsSummary={{
-          count: filteredCompanies.length,
-          singularLabel: 'resultado',
-          pluralLabel: 'resultado(s)',
-        }}
-        searchPlaceholder="Pesquisar empresas..."
-      />
-    </Box>
-
-    <Box
-      sx={{
-        display: 'grid',
-        gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
-        gap: 2,
-      }}
-    >
-     
-      <Box
-        sx={{
-          backgroundColor: 'background.paper',
-          border: '1px solid',
-          borderColor: 'background.border',
-          borderRadius: '18px',
-          p: 2,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 2,
-        }}
-      >
+      {isNewPartnerOpen && (
         <Box
           sx={{
-            border: '1px solid',
-            borderColor: 'background.border',
-            borderRadius: '14px',
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.45)',
+            zIndex: 999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             p: 2,
           }}
         >
-          <Typography sx={{ fontWeight: 700, fontSize: 16 }}>
-            Lista de empresas
-          </Typography>
-          <Typography sx={{ color: 'text.secondary', fontSize: 13, mt: 0.5 }}>
-            Selecione uma empresa para visualizar o detalhamento do apoio e das escolas cobertas.
-          </Typography>
-        </Box>
-
-        {filteredCompanies.map(company => {
-          const isSelected = company.id === selectedCompanyId
-
-          return (
+          <Box
+            sx={{
+              width: '100%',
+              maxWidth: 520,
+              backgroundColor: 'background.paper',
+              borderRadius: '24px',
+              p: 3,
+            }}
+          >
             <Box
-              key={company.id}
-              onClick={() => setSelectedCompanyId(company.id)}
               sx={{
-                backgroundColor: isSelected
-                  ? alpha(AppColors.role.admin.secondary, 0.08)
-                  : 'background.paper',
-                border: '1px solid',
-                borderColor: isSelected
-                  ? alpha(AppColors.role.admin.secondary, 0.25)
-                  : 'background.border',
-                borderRadius: '16px',
-                cursor: 'pointer',
-                p: 2,
-                transition: 'all 0.18s',
-                '&:hover': {
-                  borderColor: alpha(AppColors.role.admin.secondary, 0.3),
-                  backgroundColor: alpha(AppColors.role.admin.secondary, 0.04),
-                },
-              }}
-            >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                  <Box
-                    sx={{
-                      width: 42,
-                      height: 42,
-                      borderRadius: '12px',
-                      backgroundColor: alpha(AppColors.role.admin.secondary, 0.1),
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <BusinessTwoToneIcon sx={{ color: AppColors.role.admin.secondary, fontSize: 22 }} />
-                  </Box>
-
-                  <Typography sx={{ fontWeight: 700, fontSize: 16 }}>
-                    {company.name}
-                  </Typography>
-                </Box>
-
-                <Box
-                  sx={{
-                    backgroundColor:
-                      company.status === 'ativa'
-                        ? alpha('#22C55E', 0.12)
-                        : company.status === 'pendente'
-                          ? alpha('#F59E0B', 0.12)
-                          : alpha('#EF4444', 0.12),
-                    color:
-                      company.status === 'ativa'
-                        ? '#22C55E'
-                        : company.status === 'pendente'
-                          ? '#F59E0B'
-                          : '#EF4444',
-                    borderRadius: '999px',
-                    px: 1.5,
-                    py: 0.5,
-                    fontSize: 12,
-                    fontWeight: 700,
-                    height: 'fit-content',
-                  }}
-                >
-                  {company.status}
-                </Box>
-              </Box>
-
-              <Box
-                sx={{
-                  border: '1px solid',
-                  borderColor: 'background.border',
-                  borderRadius: '12px',
-                  p: 1.5,
-                  backgroundColor: 'background.default',
-                  mb: 1.5,
-                }}
-              >
-                <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
-                  {company.type}
-                </Typography>
-              </Box>
-
-              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
-                <Box sx={{ border: '1px solid', borderColor: 'background.border', borderRadius: '12px', p: 1.5, backgroundColor: 'background.default' }}>
-                  <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
-                    Foco
-                  </Typography>
-                  <Typography sx={{ fontWeight: 600, mt: 0.5 }}>
-                    {company.focus}
-                  </Typography>
-                </Box>
-
-                <Box sx={{ border: '1px solid', borderColor: 'background.border', borderRadius: '12px', p: 1.5, backgroundColor: 'background.default' }}>
-                  <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
-                    Escolas apoiadas
-                  </Typography>
-                  <Typography sx={{ fontWeight: 600, mt: 0.5 }}>
-                    {company.supportedSchools.length}
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
-          )
-        })}
-      </Box>
-
-      <Box
-  sx={{
-    backgroundColor: 'background.paper',
-    border: '1px solid',
-    borderColor: 'background.border',
-    borderRadius: '18px',
-    p: 2.5,
-  }}
->
-  <Box
-    sx={{
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
-      gap: 2,
-    }}
-  >
- 
-    <Box>
-      <Typography
-        sx={{
-          color: AppColors.role.admin.secondary,
-          fontWeight: 700,
-          fontSize: 14,
-        }}
-      >
-        Empresa selecionada sob aprovação
-      </Typography>
-
-      <Typography
-        sx={{
-          fontWeight: 700,
-          fontSize: 24,
-          mt: 1,
-        }}
-      >
-        {selectedCompany.name}
-      </Typography>
-
-      <Typography
-        sx={{
-          color: 'text.secondary',
-          mt: 1,
-          lineHeight: 1.5,
-        }}
-      >
-        {selectedCompany.description}
-      </Typography>
-    </Box>
-
-  
-    <Box
-      sx={{
-        display: 'flex',
-        gap: 1,
-      }}
-    >
-    
-      <Box
-        sx={{
-          width: 36,
-          height: 36,
-          borderRadius: '12px',
-          border: '1px solid',
-          borderColor: alpha('#22C55E', 0.25),
-          backgroundColor: alpha('#22C55E', 0.08),
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          transition: '0.18s',
-          '&:hover': {
-            backgroundColor: alpha('#22C55E', 0.16),
-          },
-        }}
-      >
-        <CheckCircleRoundedIcon
-          sx={{
-            color: '#22C55E',
-            fontSize: 20,
-          }}
-        />
-      </Box>
-
-      
-      <Box
-        sx={{
-          width: 36,
-          height: 36,
-          borderRadius: '12px',
-          border: '1px solid',
-          borderColor: alpha('#EF4444', 0.25),
-          backgroundColor: alpha('#EF4444', 0.08),
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          transition: '0.18s',
-          '&:hover': {
-            backgroundColor: alpha('#EF4444', 0.16),
-          },
-        }}
-      >
-        <CancelRoundedIcon
-          sx={{
-            color: '#EF4444',
-            fontSize: 20,
-          }}
-        />
-      </Box>
-    </Box>
-  </Box>
-
-
-        <Box
-          sx={{
-            backgroundColor: 'background.paper',
-            border: '1px solid',
-            borderColor: 'background.border',
-            borderRadius: '18px',
-            p: 2.5,
-          }}
-        >
-          <Typography sx={{ fontWeight: 700, fontSize: 16 }}>
-            Escolas apoiadas
-          </Typography>
-
-          <Typography sx={{ color: 'text.secondary', fontSize: 13, mt: 0.5, mb: 2 }}>
-            Visualização por lista das escolas vinculadas a esta parceria.
-          </Typography>
-
-          {selectedCompany.supportedSchools.map(school => (
-            <Box
-              key={school.name}
-              sx={{
-                border: '1px solid',
-                borderColor: 'background.border',
-                borderRadius: '14px',
-                p: 2,
-                mb: 1.5,
                 display: 'flex',
                 justifyContent: 'space-between',
-                alignItems: 'center',
+                alignItems: 'flex-start',
+                mb: 2.5,
               }}
             >
               <Box>
-                <Typography sx={{ fontWeight: 600 }}>{school.name}</Typography>
-                <Typography sx={{ color: 'text.secondary', fontSize: 13, mt: 0.25 }}>
-                  {school.location}
+                <Typography sx={{ fontSize: 26, fontWeight: 700 }}>
+                  Criar parceria
+                </Typography>
+                <Typography sx={{ color: 'text.secondary', mt: 0.5 }}>
+                  Cadastre uma nova empresa parceira.
                 </Typography>
               </Box>
 
-              <Box
+              <Button
+                onClick={() => setIsNewPartnerOpen(false)}
                 sx={{
-                  backgroundColor: alpha('#22C55E', 0.12),
-                  color: '#22C55E',
-                  borderRadius: '999px',
-                  px: 1.5,
-                  py: 0.5,
-                  fontSize: 12,
+                  minWidth: 'auto',
+                  color: 'text.secondary',
+                  fontSize: 22,
                   fontWeight: 700,
                 }}
               >
-                {school.status}
+                ×
+              </Button>
+            </Box>
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.6 }}>
+              <Box>
+                <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 0.6 }}>
+                  Nome da empresa
+                </Typography>
+                <input
+                  value={newPartner.name}
+                  onChange={event =>
+                    setNewPartner(prev => ({
+                      ...prev,
+                      name: event.target.value,
+                    }))
+                  }
+                  placeholder="Ex.: Instituto Futuro"
+                  type="text"
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    borderRadius: '12px',
+                    border: '1px solid #d9dee7',
+                    fontSize: 14,
+                    outline: 'none',
+                  }}
+                />
+              </Box>
+
+              <Box>
+                <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 0.6 }}>
+                  E-mail
+                </Typography>
+                <input
+                  value={newPartner.email}
+                  onChange={event =>
+                    setNewPartner(prev => ({
+                      ...prev,
+                      email: event.target.value,
+                    }))
+                  }
+                  placeholder="Ex.: contato@empresa.com"
+                  type="email"
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    borderRadius: '12px',
+                    border: `1px solid ${
+                      newPartner.email && !emailIsValid ? '#ef4444' : '#d9dee7'
+                    }`,
+                    fontSize: 14,
+                    outline: 'none',
+                  }}
+                />
+
+                {newPartner.email && !emailIsValid && (
+                  <Typography
+                    sx={{ color: '#ef4444', fontSize: 11.5, mt: 0.6 }}
+                  >
+                    Digite um e-mail válido com @ e domínio.
+                  </Typography>
+                )}
+              </Box>
+
+              <Box>
+                <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 0.6 }}>
+                  Tipo de parceria
+                </Typography>
+                <input
+                  value={newPartner.type}
+                  onChange={event =>
+                    setNewPartner(prev => ({
+                      ...prev,
+                      type: event.target.value,
+                    }))
+                  }
+                  placeholder="Ex.: Patrocínio"
+                  type="text"
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    borderRadius: '12px',
+                    border: '1px solid #d9dee7',
+                    fontSize: 14,
+                    outline: 'none',
+                  }}
+                />
+              </Box>
+
+              <Box>
+                <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 0.6 }}>
+                  Senha
+                </Typography>
+
+                <Box sx={{ position: 'relative' }}>
+                  <input
+                    value={newPartner.password}
+                    onChange={event =>
+                      setNewPartner(prev => ({
+                        ...prev,
+                        password: event.target.value,
+                      }))
+                    }
+                    placeholder="Mínimo 8 caracteres"
+                    type={showPassword ? 'text' : 'password'}
+                    style={{
+                      width: '100%',
+                      padding: '12px 44px 12px 16px',
+                      borderRadius: '12px',
+                      border: `1px solid ${
+                        newPartner.password && !passwordIsValid
+                          ? '#ef4444'
+                          : '#d9dee7'
+                      }`,
+                      fontSize: 14,
+                      outline: 'none',
+                    }}
+                  />
+
+                  <IconButton
+                    onClick={() => setShowPassword(prev => !prev)}
+                    sx={{
+                      position: 'absolute',
+                      right: 6,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: 'text.secondary',
+                    }}
+                  >
+                    {showPassword ? (
+                      <VisibilityOffRoundedIcon fontSize="small" />
+                    ) : (
+                      <VisibilityRoundedIcon fontSize="small" />
+                    )}
+                  </IconButton>
+                </Box>
+
+                <Typography
+                  sx={{
+                    color:
+                      newPartner.password && !passwordIsValid
+                        ? '#ef4444'
+                        : 'text.secondary',
+                    fontSize: 11.5,
+                    mt: 0.6,
+                  }}
+                >
+                  Use no mínimo 8 caracteres, uma letra maiúscula, uma minúscula
+                  e um número.
+                </Typography>
+              </Box>
+
+              <Box>
+                <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 0.6 }}>
+                  Confirmar senha
+                </Typography>
+
+                <Box sx={{ position: 'relative' }}>
+                  <input
+                    value={newPartner.confirmPassword}
+                    onChange={event =>
+                      setNewPartner(prev => ({
+                        ...prev,
+                        confirmPassword: event.target.value,
+                      }))
+                    }
+                    placeholder="Digite a senha novamente"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    style={{
+                      width: '100%',
+                      padding: '12px 44px 12px 16px',
+                      borderRadius: '12px',
+                      border: `1px solid ${
+                        newPartner.confirmPassword && !passwordsMatch
+                          ? '#ef4444'
+                          : '#d9dee7'
+                      }`,
+                      fontSize: 14,
+                      outline: 'none',
+                    }}
+                  />
+
+                  <IconButton
+                    onClick={() => setShowConfirmPassword(prev => !prev)}
+                    sx={{
+                      position: 'absolute',
+                      right: 6,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: 'text.secondary',
+                    }}
+                  >
+                    {showConfirmPassword ? (
+                      <VisibilityOffRoundedIcon fontSize="small" />
+                    ) : (
+                      <VisibilityRoundedIcon fontSize="small" />
+                    )}
+                  </IconButton>
+                </Box>
+
+                {newPartner.confirmPassword && !passwordsMatch && (
+                  <Typography
+                    sx={{ color: '#ef4444', fontSize: 11.5, mt: 0.6 }}
+                  >
+                    As senhas não coincidem.
+                  </Typography>
+                )}
               </Box>
             </Box>
-          ))}
+
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 1.5,
+                mt: 3,
+              }}
+            >
+              <Button
+                variant="outlined"
+                onClick={() => setIsNewPartnerOpen(false)}
+                sx={{
+                  borderRadius: '12px',
+                  fontWeight: 700,
+                  px: 3,
+                  py: 1,
+                  textTransform: 'none',
+                }}
+              >
+                Cancelar
+              </Button>
+
+              <Button
+                variant="contained"
+                onClick={handleCreatePartner}
+                disabled={!canCreatePartner}
+                sx={{
+                  backgroundColor: AppColors.role.admin.secondary,
+                  borderRadius: '12px',
+                  fontWeight: 700,
+                  px: 3,
+                  py: 1,
+                  textTransform: 'none',
+                  '&:hover': { backgroundColor: theme.palette.error.dark },
+                }}
+              >
+                Criar parceria
+              </Button>
+            </Box>
+          </Box>
         </Box>
-      </Box>
-    </Box>
-  </Box>
-)}
+      )}
     </AppPageContainer>
   )
 }
