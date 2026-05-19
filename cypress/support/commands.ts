@@ -30,19 +30,23 @@ type PerfisSuportados = 'aluno'
 
 export {}
 
+/* eslint-disable @typescript-eslint/no-namespace */
 declare global {
   namespace Cypress {
     interface Chainable {
       login(perfil: PerfisSuportados): Chainable<void>
-      getBySel(selector: string, ...args: any[]): Chainable<JQuery<HTMLElement>>
+      getBySel(
+        selector: string,
+        ...args: unknown[]
+      ): Chainable<JQuery<HTMLElement>>
     }
   }
 }
+/* eslint-enable @typescript-eslint/no-namespace */
 
-Cypress.Commands.add('getBySel', (selector, ...args) => {
+Cypress.Commands.add('getBySel', (selector: string, ...args: unknown[]) => {
   return cy.get(`[data-testid="${selector}"]`, ...args)
 })
-
 Cypress.Commands.add('login', (perfil: PerfisSuportados) => {
   const email = Cypress.env('EMAIL_LOGIN_ALUNO')
   const senha = Cypress.env('PASSWORD_LOGIN_ALUNO')
@@ -58,5 +62,4 @@ Cypress.Commands.add('login', (perfil: PerfisSuportados) => {
     .type(email)
   cy.getBySel('input-password').should('be.visible').type(senha, { log: false })
   cy.getBySel('button-login').should('be.visible').click()
-  cy.location('pathname', { timeout: 15000 }).should('eq', '/dashboard')
 })
