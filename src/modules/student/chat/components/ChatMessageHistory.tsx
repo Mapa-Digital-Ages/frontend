@@ -32,23 +32,32 @@ interface ChatMessageHistoryProps {
 
 function ChatMessageHistory({ chat }: ChatMessageHistoryProps) {
   const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
+  const suggestionChipBackgroundColor = isDarkMode
+    ? 'var(--app-role-action-selected-bg)'
+    : 'var(--app-role-current-soft, rgba(66,165,245,0.12))'
+  const suggestionChipTextColor = isDarkMode
+    ? theme.palette.primary.main
+    : 'var(--app-role-current-primary)'
 
   return (
     <Box
-      className="flex flex-col rounded-2xl h-full"
+      className="flex min-h-0 flex-col rounded-2xl"
       sx={{
         backgroundColor: 'background.paper',
         border: '1px solid',
         borderColor: 'background.border',
         borderRadius: 'var(--app-radius-card)',
         boxShadow: 'none',
-        minHeight: 400,
+        height: { xs: 'calc(100vh - 200px)', lg: '100%' },
+        minHeight: 0,
       }}
     >
       <Box
         sx={{
           borderBottom: '1px solid',
           borderColor: 'background.border',
+          flexShrink: 0,
           px: 2.5,
           pt: 2.5,
           pb: 2,
@@ -92,14 +101,16 @@ function ChatMessageHistory({ chat }: ChatMessageHistoryProps) {
                   height: 26,
                   fontSize: '0.7rem',
                   fontWeight: 500,
-                  backgroundColor:
-                    'var(--app-role-current-soft, rgba(66,165,245,0.12))',
-                  color: 'var(--app-role-current-primary)',
-                  border: 'none',
+                  backgroundColor: suggestionChipBackgroundColor,
+                  color: suggestionChipTextColor,
+                  border: '1px solid',
+                  borderColor: isDarkMode
+                    ? 'var(--app-role-action-selected-border)'
+                    : 'transparent',
                   borderRadius: '13px',
                   '&:hover': {
-                    backgroundColor:
-                      'var(--app-role-action-hover-bg, rgba(66,165,245,0.18))',
+                    backgroundColor: 'var(--app-role-action-hover-bg)',
+                    borderColor: 'var(--app-role-action-hover-border)',
                   },
                 }}
               />
@@ -108,7 +119,11 @@ function ChatMessageHistory({ chat }: ChatMessageHistoryProps) {
         )}
       </Box>
 
-      <Box className="flex-1 overflow-y-auto px-5 py-4 grid gap-4 content-start">
+      <Box
+        className="grid min-h-0 flex-1 content-start gap-4 overflow-y-auto px-5 py-4"
+        data-testid="chat-message-scroll"
+        sx={{ overscrollBehavior: 'contain' }}
+      >
         {chat.messages.map(message => {
           const isUser = message.role === 'user'
 
@@ -123,7 +138,7 @@ function ChatMessageHistory({ chat }: ChatMessageHistoryProps) {
                 sx={{
                   backgroundColor: isUser
                     ? 'var(--app-role-current-primary)'
-                    : theme.palette.mode === 'dark'
+                    : isDarkMode
                       ? 'rgba(255,255,255,0.08)'
                       : 'rgba(0,0,0,0.06)',
                 }}
@@ -146,7 +161,7 @@ function ChatMessageHistory({ chat }: ChatMessageHistoryProps) {
                 sx={{
                   backgroundColor: isUser
                     ? 'var(--app-role-current-primary)'
-                    : theme.palette.mode === 'dark'
+                    : isDarkMode
                       ? 'rgba(255,255,255,0.06)'
                       : 'rgba(0,0,0,0.04)',
                 }}

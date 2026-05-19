@@ -16,7 +16,12 @@ const INITIAL_CHATS: ChatSession[] = [
     subject: 'Matemática',
     createdAt: '2026-05-18T09:30:00',
     lastMessageAt: '2026-05-18T09:30:00',
-    suggestions: ['Explicar frações', 'Dicas de redação', 'Revisar ciências', 'Como me organizar'],
+    suggestions: [
+      'Explicar frações',
+      'Dicas de redação',
+      'Revisar ciências',
+      'Como me organizar',
+    ],
     messages: [
       {
         id: 'm1',
@@ -39,7 +44,11 @@ const INITIAL_CHATS: ChatSession[] = [
     subject: 'Português',
     createdAt: '2026-05-17T20:12:00',
     lastMessageAt: '2026-05-17T20:12:00',
-    suggestions: ['Dicas de introdução', 'Exemplo de conclusão', 'Conectivos úteis'],
+    suggestions: [
+      'Dicas de introdução',
+      'Exemplo de conclusão',
+      'Conectivos úteis',
+    ],
     messages: [
       {
         id: 'm3',
@@ -133,7 +142,12 @@ export default function Page() {
         title="Chat Inteligente"
         subtitle="Tire dúvidas e acompanhe o histórico das conversas criadas durante as atividades."
       />
-      <Box className="grid grid-cols-1 gap-4 lg:grid-cols-[370px_1fr] items-start">
+      <Box
+        className="grid min-h-0 grid-cols-1 gap-4 lg:grid-cols-[370px_minmax(0,1fr)] lg:items-stretch"
+        sx={{
+          height: { lg: 'calc(100vh - 200px)' },
+        }}
+      >
         <ChatHistoryMenu
           chats={chats}
           selectedChatId={selectedChatId}

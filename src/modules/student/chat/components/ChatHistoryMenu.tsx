@@ -1,6 +1,8 @@
+import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded'
 import {
   Box,
+  IconButton,
   List,
   ListItemButton,
   ListItemText,
@@ -15,6 +17,7 @@ import type { ChatSession } from '@/modules/student/chat/types/types'
 interface ChatHistoryMenuProps {
   chats: ChatSession[]
   selectedChatId: string | null
+  onNewChat: () => void
   onSelectChat: (chatId: string) => void
 }
 
@@ -42,6 +45,7 @@ function formatRelativeDate(dateString: string) {
 function ChatHistoryMenu({
   chats,
   selectedChatId,
+  onNewChat,
   onSelectChat,
 }: ChatHistoryMenuProps) {
   const theme = useTheme()
@@ -61,7 +65,8 @@ function ChatHistoryMenu({
         borderColor: 'background.border',
         borderRadius: 'var(--app-radius-card)',
         boxShadow: 'none',
-        height: 'calc(100vh - 200px)',
+        height: { xs: 'calc(100vh - 200px)', lg: '100%' },
+        minHeight: 0,
       }}
     >
       <Box className="flex items-center justify-between">
@@ -73,6 +78,26 @@ function ChatHistoryMenu({
             Histórico
           </Typography>
         </Box>
+        <IconButton
+          aria-label="Nova conversa"
+          onClick={onNewChat}
+          size="small"
+          sx={{
+            border: '1px solid',
+            borderColor: 'background.border',
+            borderRadius: 'var(--app-radius-control)',
+            color: 'text.primary',
+            height: 32,
+            width: 32,
+            '&:hover': {
+              backgroundColor: 'var(--app-role-action-hover-bg)',
+              borderColor: 'var(--app-role-action-hover-border)',
+              color: 'var(--app-role-current-primary)',
+            },
+          }}
+        >
+          <AddRoundedIcon fontSize="small" />
+        </IconButton>
       </Box>
 
       <Box>
@@ -93,7 +118,7 @@ function ChatHistoryMenu({
         />
       </Box>
 
-      <List className="flex-1 overflow-y-auto p-0 m-0">
+      <List className="min-h-0 flex-1 overflow-y-auto p-0 m-0">
         {filteredChats.map(chat => {
           const isSelected = chat.id === selectedChatId
 
@@ -104,7 +129,7 @@ function ChatHistoryMenu({
               selected={isSelected}
               onClick={() => onSelectChat(chat.id)}
               sx={{
-                mb: '8px', 
+                mb: '8px',
                 borderRadius: '12px',
                 border: '1px solid',
                 borderColor: 'background.border',
@@ -112,17 +137,16 @@ function ChatHistoryMenu({
                 px: 2,
                 py: 0.8,
                 '&.Mui-selected': {
-                  backgroundColor:
-                    'var(--app-role-current-soft, rgba(66,165,245,0.10))',
-                  borderColor: 'background.border',
+                  backgroundColor: 'var(--app-role-action-selected-bg)',
+                  borderColor: 'var(--app-role-action-selected-border)',
                 },
                 '&.Mui-selected:hover': {
-                  backgroundColor:
-                    'var(--app-role-current-soft, rgba(66,165,245,0.10))',
+                  backgroundColor: 'var(--app-role-action-selected-bg)',
+                  borderColor: 'var(--app-role-action-selected-border)',
                 },
                 '&:hover': {
-                  backgroundColor:
-                    'var(--app-role-current-soft, rgba(66,165,245,0.06))',
+                  backgroundColor: 'var(--app-role-action-hover-bg)',
+                  borderColor: 'var(--app-role-action-hover-border)',
                 },
               }}
             >
