@@ -15,11 +15,6 @@ import {
   type StudentDto,
   type StudentListDto,
 } from './mapper'
-import {
-  schoolOptions,
-  guardianOptions,
-  yearOptions,
-} from '@/modules/admin/shared/constants/studentOptions'
 
 let mockStudents: StudentItem[] = [
   {
@@ -28,6 +23,7 @@ let mockStudents: StudentItem[] = [
     email: 'lucas@escola.com',
     guardian: 'Maria Silva',
     school: 'Escola São Paulo',
+    schoolId: null,
     year: '7º Ano',
     status: 'inativo',
   },
@@ -37,6 +33,7 @@ let mockStudents: StudentItem[] = [
     email: 'carlos@escola.com',
     guardian: 'Roberta Nunes',
     school: 'Escola São Paulo',
+    schoolId: null,
     year: '7º Ano',
     status: 'ativo',
   },
@@ -46,6 +43,7 @@ let mockStudents: StudentItem[] = [
     email: 'livia@escola.com',
     guardian: 'Paula Santos',
     school: 'Escola São Paulo',
+    schoolId: null,
     year: '6º Ano',
     status: 'ativo',
   },
@@ -55,6 +53,7 @@ let mockStudents: StudentItem[] = [
     email: 'marina@escola.com',
     guardian: 'Pedro Costa',
     school: 'Escola Rio Branco',
+    schoolId: null,
     year: '7º Ano',
     status: 'ativo',
   },
@@ -64,6 +63,7 @@ let mockStudents: StudentItem[] = [
     email: 'rafael@escola.com',
     guardian: 'Ana Souza',
     school: 'Escola Horizonte',
+    schoolId: null,
     year: '8º Ano',
     status: 'ativo',
   },
@@ -73,6 +73,7 @@ let mockStudents: StudentItem[] = [
     email: 'julia@escola.com',
     guardian: 'Claudio Oliveira',
     school: 'Escola Rio Branco',
+    schoolId: null,
     year: '8º Ano',
     status: 'ativo',
   },
@@ -87,7 +88,8 @@ function shouldUseFallback(error: unknown, allowFallback: boolean): boolean {
     'status' in error &&
     typeof (error as { status: unknown }).status === 'number'
   ) {
-    return Number((error as { status: number }).status) >= 500
+    const status = Number((error as { status: number }).status)
+    return status === 404 || status >= 500
   }
 
   return error instanceof Error
@@ -137,19 +139,16 @@ function getMockMetrics(): StudentMetrics {
 }
 
 function createMockStudent(input: CreateStudentInput): StudentItem {
-  const schoolLabel =
-    schoolOptions.find(o => o.value === input.schoolId)?.label ?? null
-  const guardianLabel =
-    guardianOptions.find(o => o.value === input.guardianId)?.label ?? null
-  const yearLabel = yearOptions.find(o => o.value === input.year)?.label ?? null
+  const yearLabel = input.year ? `${input.year}º Ano` : null
 
   const next: StudentItem = {
     id: String(Date.now()),
     name: input.name.trim(),
     email: input.email.trim(),
-    guardian: guardianLabel, // ← era: input.guardianId ?? null
-    school: schoolLabel, // ← era: input.schoolId ?? null
-    year: yearLabel, // ← era: input.year ? `${input.year}º Ano` : null
+    guardian: input.guardianId ?? null,
+    school: input.schoolId ?? null,
+    schoolId: input.schoolId ?? null,
+    year: yearLabel,
     status: input.status,
   }
   mockStudents = [next, ...mockStudents]

@@ -1,15 +1,16 @@
 import { Box } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { BoxProps } from '@mui/material'
 import AppActionModal from '@/shared/ui/AppActionModal'
 import AppDropdown from '@/shared/ui/AppDropdown'
 import AppInput from '@/shared/ui/AppInput'
 import { isValidEmail, hasMinLength } from '@/shared/utils/validators'
 import {
-  schoolOptions,
-  guardianOptions,
+  studentFormOptionsService,
   yearOptions,
+  type SchoolOption,
+  type GuardianOption,
 } from '@/modules/admin/shared/constants/studentOptions'
 
 const fieldLabelSx = {
@@ -89,6 +90,24 @@ export default function CreateStudentModal({
   const [values, setValues] = useState<StudentFormValues>(getDefaultValues())
   const [errors, setErrors] = useState<FormErrors>({})
 
+  const [schools, setSchools] = useState<SchoolOption[]>([])
+  const [guardians, setGuardians] = useState<GuardianOption[]>([])
+  const [isLoadingOptions, setIsLoadingOptions] = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsLoadingOptions(true)
+    void Promise.all([
+      studentFormOptionsService.getSchools(),
+      studentFormOptionsService.getGuardians(),
+    ]).then(([schoolList, guardianList]) => {
+      setSchools(schoolList)
+      setGuardians(guardianList)
+      setIsLoadingOptions(false)
+    })
+  }, [open])
+
   const hasSchool = values.school !== NONE_VALUE
   const hasGuardian = values.guardian !== NONE_VALUE
   const isLinked = hasSchool || hasGuardian
@@ -130,14 +149,24 @@ export default function CreateStudentModal({
     onClose()
   }
 
-  const canConfirm = isLinked
+  const schoolDropdownOptions = [
+    NONE_OPTION,
+    ...schools.map(s => ({ label: s.label, value: s.value })),
+  ]
+
+  const guardianDropdownOptions = [
+    NONE_OPTION,
+    ...guardians.map(g => ({ label: g.label, value: g.value })),
+  ]
+
+  const yearDropdownOptions = [NONE_OPTION, ...yearOptions]
 
   return (
     <AppActionModal
       {...props}
       confirmLabel="Criar aluno"
       description="Cadastre um novo aluno. Vincule-o a uma escola e/ou a um responsável"
-      disableConfirm={!canConfirm}
+      disableConfirm={!isLinked || isLoadingOptions}
       maxWidth="sm"
       mode="form"
       onClose={handleClose}
@@ -192,8 +221,9 @@ export default function CreateStudentModal({
           <AppDropdown
             fullWidth
             label="Escola"
+            disabled={isLoadingOptions}
             onChange={e => handleChange('school', String(e.target.value))}
-            options={[NONE_OPTION, ...schoolOptions]}
+            options={schoolDropdownOptions}
             sx={selectSx}
             value={values.school}
           />
@@ -201,7 +231,7 @@ export default function CreateStudentModal({
             fullWidth
             label="Ano"
             onChange={e => handleChange('year', String(e.target.value))}
-            options={[NONE_OPTION, ...yearOptions]}
+            options={yearDropdownOptions}
             sx={selectSx}
             value={values.year}
           />
@@ -218,7 +248,7 @@ export default function CreateStudentModal({
             fullWidth
             label="Responsável"
             onChange={e => handleChange('guardian', String(e.target.value))}
-            options={[NONE_OPTION, ...guardianOptions]}
+            options={guardianDropdownOptions}
             sx={selectSx}
             value={values.guardian}
           />
@@ -232,7 +262,7 @@ export default function CreateStudentModal({
           />
         </Box>
 
-        {!isLinked && (
+        {!isLinked && !isLoadingOptions && (
           <Box
             sx={{
               fontSize: { md: 12, xs: 11 },

@@ -50,6 +50,7 @@ export function mapStudentDto(dto: StudentDto): StudentItem {
     email: dto.email,
     guardian: dto.guardian_name,
     school: dto.school_name,
+    schoolId: dto.school_id,
     year: dto.student_class
       ? (classLabelMap[dto.student_class] ?? dto.student_class)
       : null,

@@ -3,12 +3,13 @@ import AppDropdown from '@/shared/ui/AppDropdown'
 import AppInput from '@/shared/ui/AppInput'
 import { Box, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { BoxProps } from '@mui/material'
 import { hasMinLength } from '@/shared/utils/validators'
 import {
-  schoolOptions,
+  studentFormOptionsService,
   yearOptions,
+  type SchoolOption,
 } from '@/modules/admin/shared/constants/studentOptions'
 
 const fieldLabelSx = {
@@ -42,7 +43,7 @@ const selectSx = {
 
 export interface Student {
   name: string
-  school: string
+  schoolId: string
   year: string
 }
 
@@ -55,14 +56,14 @@ interface EditStudentModalProps extends BoxProps {
 
 export interface EditFormValues {
   password: string
-  school: string
+  schoolId: string
   year: string
 }
 
 function getDefaultValues(student: Student): EditFormValues {
   return {
     password: '',
-    school: student.school,
+    schoolId: student.schoolId,
     year: student.year,
   }
 }
@@ -79,6 +80,18 @@ export default function EditStudentModal({
     getDefaultValues(student)
   )
   const [passwordError, setPasswordError] = useState('')
+  const [schools, setSchools] = useState<SchoolOption[]>([])
+  const [isLoadingOptions, setIsLoadingOptions] = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsLoadingOptions(true)
+    void studentFormOptionsService.getSchools().then(list => {
+      setSchools(list)
+      setIsLoadingOptions(false)
+    })
+  }, [open])
 
   function handleChange(field: keyof EditFormValues, value: string) {
     setValues(current => ({ ...current, [field]: value }))
@@ -98,21 +111,20 @@ export default function EditStudentModal({
     onConfirm(values)
   }
 
-  function handleClose() {
-    onClose()
-  }
-
-  const hasPasswordError = Boolean(passwordError)
+  const schoolDropdownOptions = schools.map(s => ({
+    label: s.label,
+    value: s.value,
+  }))
 
   return (
     <AppActionModal
       {...props}
       confirmLabel="Salvar alterações"
       description="Edite os dados do aluno. A senha só será alterada se um novo valor for informado."
-      disableConfirm={hasPasswordError}
+      disableConfirm={Boolean(passwordError) || isLoadingOptions}
       maxWidth="sm"
       mode="form"
-      onClose={handleClose}
+      onClose={onClose}
       onConfirm={handleConfirm}
       open={open}
       title="Editar aluno"
@@ -177,7 +189,7 @@ export default function EditStudentModal({
           sx={inputSx}
           type="password"
           value={values.password}
-          error={hasPasswordError}
+          error={Boolean(passwordError)}
           helperText={passwordError || ' '}
         />
 
@@ -191,10 +203,10 @@ export default function EditStudentModal({
           <AppDropdown
             fullWidth
             label="Escola"
-            onChange={e => handleChange('school', String(e.target.value))}
-            options={schoolOptions}
+            onChange={e => handleChange('schoolId', String(e.target.value))}
+            options={schoolDropdownOptions}
             sx={selectSx}
-            value={values.school}
+            value={values.schoolId}
           />
           <AppDropdown
             fullWidth

@@ -8,6 +8,7 @@ export interface StudentItem {
   email: string
   guardian: string | null
   school: string | null
+  schoolId: string | null
   year: string | null
   status: StudentStatus
 }

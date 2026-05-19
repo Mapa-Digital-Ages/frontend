@@ -23,10 +23,7 @@ import CreateStudentModal, {
   type StudentFormValues,
 } from '@/modules/admin/shared/components/CreateStudentModal'
 import AppActionModal from '@/shared/ui/AppActionModal'
-import {
-  schoolOptions,
-  yearOptions,
-} from '@/modules/admin/shared/constants/studentOptions'
+import { yearOptions } from '@/modules/admin/shared/constants/studentOptions'
 import { studentService } from '@/modules/admin/student/services/service'
 import type {
   StudentItem,
@@ -88,14 +85,9 @@ export default function Page() {
   const editStudentData: Student | undefined = selectedStudentRow
     ? {
         name: selectedStudentRow.name,
-        school:
-          schoolOptions.find(o => o.label === selectedStudentRow.school)
-            ?.value ??
-          selectedStudentRow.school ??
-          '',
+        schoolId: selectedStudentRow.schoolId ?? '',
         year:
           yearOptions.find(o => o.label === selectedStudentRow.year)?.value ??
-          selectedStudentRow.year ??
           '',
       }
     : undefined
@@ -128,9 +120,8 @@ export default function Page() {
     if (!selectedStudentId) return
     const updated = await studentService.updateStudent(selectedStudentId, {
       password: values.password || undefined,
-      schoolId:
-        schoolOptions.find(o => o.value === values.school)?.value ?? null,
-      year: yearOptions.find(o => o.value === values.year)?.value ?? null,
+      schoolId: values.schoolId || null,
+      year: values.year || null,
     })
     setStudents(current =>
       current.map(s => (s.id === selectedStudentId ? updated : s))
