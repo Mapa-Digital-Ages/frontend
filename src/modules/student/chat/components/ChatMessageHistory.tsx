@@ -1,6 +1,5 @@
 import SmartToyRoundedIcon from '@mui/icons-material/SmartToyRounded'
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded'
-import ChatBubbleOutlineRoundedIcon from '@mui/icons-material/ChatBubbleOutlineRounded'
 import { Box, Chip, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import dayjs from 'dayjs'
@@ -109,91 +108,78 @@ function ChatMessageHistory({ chat }: ChatMessageHistoryProps) {
         )}
       </Box>
 
-      {chat.messages.length === 0 ? (
-        <Box className="flex-1 flex flex-col items-center justify-center gap-3 px-6 py-16 text-center">
-          <Box className="grid size-14 place-items-center rounded-full bg-black/5 dark:bg-white/10">
-            <ChatBubbleOutlineRoundedIcon color="action" />
-          </Box>
-          <Typography variant="h6">Nova conversa</Typography>
-          <Typography color="text.secondary" className="max-w-sm">
-            Esta conversa ainda não possui mensagens. Inicie uma nova interação
-            com o assistente durante uma atividade.
-          </Typography>
-        </Box>
-      ) : (
-        <Box className="flex-1 overflow-y-auto px-5 py-4 grid gap-4 content-start">
-          {chat.messages.map(message => {
-            const isUser = message.role === 'user'
+      <Box className="flex-1 overflow-y-auto px-5 py-4 grid gap-4 content-start">
+        {chat.messages.map(message => {
+          const isUser = message.role === 'user'
 
-            return (
+          return (
+            <Box
+              key={message.id}
+              data-testid={`message-${message.id}`}
+              className={`flex gap-3 ${isUser ? 'flex-row-reverse' : ''}`}
+            >
               <Box
-                key={message.id}
-                data-testid={`message-${message.id}`}
-                className={`flex gap-3 ${isUser ? 'flex-row-reverse' : ''}`}
+                className="grid size-9 shrink-0 place-items-center rounded-full"
+                sx={{
+                  backgroundColor: isUser
+                    ? 'var(--app-role-current-primary)'
+                    : theme.palette.mode === 'dark'
+                      ? 'rgba(255,255,255,0.08)'
+                      : 'rgba(0,0,0,0.06)',
+                }}
               >
-                <Box
-                  className="grid size-9 shrink-0 place-items-center rounded-full"
-                  sx={{
-                    backgroundColor: isUser
-                      ? 'var(--app-role-current-primary)'
-                      : theme.palette.mode === 'dark'
-                        ? 'rgba(255,255,255,0.08)'
-                        : 'rgba(0,0,0,0.06)',
-                  }}
-                >
-                  {isUser ? (
-                    <PersonRoundedIcon
-                      fontSize="small"
-                      sx={{ color: 'var(--app-role-current-contrast)' }}
-                    />
-                  ) : (
-                    <SmartToyRoundedIcon
-                      fontSize="small"
-                      sx={{ color: theme.palette.text.secondary }}
-                    />
-                  )}
-                </Box>
-
-                <Box
-                  className="rounded-2xl px-4 py-3 max-w-[75%]"
-                  sx={{
-                    backgroundColor: isUser
-                      ? 'var(--app-role-current-primary)'
-                      : theme.palette.mode === 'dark'
-                        ? 'rgba(255,255,255,0.06)'
-                        : 'rgba(0,0,0,0.04)',
-                  }}
-                >
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: isUser
-                        ? 'var(--app-role-current-contrast)'
-                        : theme.palette.text.primary,
-                      whiteSpace: 'pre-wrap',
-                      lineHeight: 1.6,
-                    }}
-                  >
-                    {message.content}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    className="mt-1 block text-right"
-                    sx={{
-                      color: isUser
-                        ? 'rgba(255,255,255,0.7)'
-                        : theme.palette.text.secondary,
-                      fontSize: '0.65rem',
-                    }}
-                  >
-                    {dayjs(message.timestamp).format('HH:mm')}
-                  </Typography>
-                </Box>
+                {isUser ? (
+                  <PersonRoundedIcon
+                    fontSize="small"
+                    sx={{ color: 'var(--app-role-current-contrast)' }}
+                  />
+                ) : (
+                  <SmartToyRoundedIcon
+                    fontSize="small"
+                    sx={{ color: theme.palette.text.secondary }}
+                  />
+                )}
               </Box>
-            )
-          })}
-        </Box>
-      )}
+
+              <Box
+                className="rounded-2xl px-4 py-3 max-w-[75%]"
+                sx={{
+                  backgroundColor: isUser
+                    ? 'var(--app-role-current-primary)'
+                    : theme.palette.mode === 'dark'
+                      ? 'rgba(255,255,255,0.06)'
+                      : 'rgba(0,0,0,0.04)',
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: isUser
+                      ? 'var(--app-role-current-contrast)'
+                      : theme.palette.text.primary,
+                    whiteSpace: 'pre-wrap',
+                    lineHeight: 1.6,
+                  }}
+                >
+                  {message.content}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  className="mt-1 block text-right"
+                  sx={{
+                    color: isUser
+                      ? 'rgba(255,255,255,0.7)'
+                      : theme.palette.text.secondary,
+                    fontSize: '0.65rem',
+                  }}
+                >
+                  {dayjs(message.timestamp).format('HH:mm')}
+                </Typography>
+              </Box>
+            </Box>
+          )
+        })}
+      </Box>
     </Box>
   )
 }

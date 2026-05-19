@@ -1,8 +1,6 @@
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded'
-import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import {
   Box,
-  Chip,
   List,
   ListItemButton,
   ListItemText,
@@ -18,7 +16,6 @@ interface ChatHistoryMenuProps {
   chats: ChatSession[]
   selectedChatId: string | null
   onSelectChat: (chatId: string) => void
-  onNewChat: () => void
 }
 
 function formatRelativeDate(dateString: string) {
@@ -46,7 +43,6 @@ function ChatHistoryMenu({
   chats,
   selectedChatId,
   onSelectChat,
-  onNewChat,
 }: ChatHistoryMenuProps) {
   const theme = useTheme()
   const [searchQuery, setSearchQuery] = useState('')
@@ -57,8 +53,9 @@ function ChatHistoryMenu({
 
   return (
     <Box
-      className="flex flex-col rounded-2xl"
+      className="flex flex-col gap-4 rounded-2xl"
       sx={{
+        p: '15px',
         backgroundColor: 'background.paper',
         border: '1px solid',
         borderColor: 'background.border',
@@ -67,7 +64,7 @@ function ChatHistoryMenu({
         height: 'calc(100vh - 200px)',
       }}
     >
-      <Box className="flex items-center justify-between px-5 pt-5 pb-2">
+      <Box className="flex items-center justify-between">
         <Box className="flex items-center gap-1.5">
           <AccessTimeRoundedIcon
             sx={{ fontSize: 18, color: theme.palette.text.primary }}
@@ -76,34 +73,9 @@ function ChatHistoryMenu({
             Histórico
           </Typography>
         </Box>
-        <Chip
-          icon={<AddRoundedIcon sx={{ fontSize: '14px !important' }} />}
-          label="Nova"
-          size="small"
-          onClick={onNewChat}
-          data-testid="new-chat-button"
-          sx={{
-            height: 28,
-            fontSize: '0.75rem',
-            fontWeight: 600,
-            backgroundColor:
-              'var(--app-role-current-soft, rgba(66,165,245,0.12))',
-            color: 'var(--app-role-current-primary)',
-            border: 'none',
-            cursor: 'pointer',
-            '& .MuiChip-icon': {
-              color: 'var(--app-role-current-primary)',
-              marginLeft: '6px',
-              marginRight: '-2px',
-            },
-            '&:hover': {
-              backgroundColor: 'var(--app-role-action-hover-bg)',
-            },
-          }}
-        />
       </Box>
 
-      <Box className="px-4 pb-3">
+      <Box>
         <AppInput
           type="search"
           placeholder="Buscar conversa"
@@ -121,7 +93,7 @@ function ChatHistoryMenu({
         />
       </Box>
 
-      <List className="flex-1 overflow-y-auto px-4 pb-4 pt-1">
+      <List className="flex-1 overflow-y-auto p-0 m-0">
         {filteredChats.map(chat => {
           const isSelected = chat.id === selectedChatId
 
@@ -131,8 +103,8 @@ function ChatHistoryMenu({
               data-testid={`chat-item-${chat.id}`}
               selected={isSelected}
               onClick={() => onSelectChat(chat.id)}
-              className="mb-1"
               sx={{
+                mb: '8px', 
                 borderRadius: '12px',
                 border: '1px solid',
                 borderColor: 'background.border',
