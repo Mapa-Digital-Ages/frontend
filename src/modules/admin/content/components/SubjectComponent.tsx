@@ -32,71 +32,41 @@ export interface ApprovalStatusOption extends DropdownOption {
 }
 
 interface ApprovalComponentProps<TItem extends { id: string }> {
-  currentPage: number
   description: string
   emptyStateDescription: string
   emptyStateTitle: string
-  filterOptions: ApprovalStatusOption[]
   items: TItem[]
   onCreate?: () => void | Promise<void>
   onDelete?: () => void | Promise<void>
   onEdit?: () => void | Promise<void>
   onItemSelect?: (item: TItem) => void
-  onPageChange: (page: number) => void
-  onQueryChange: (query: string) => void
-  onStatusChange: (status: ApprovalStatus) => void
-  query: string
   renderItem: (item: TItem) => ReactNode
-  resultsSummary: ApprovalResultsSummary
   role: UserRole
-  searchPlaceholder: string
-  selectedStatus: ApprovalStatus
   selectionMode?: 'edit' | 'delete' | null
   title: string
-  totalPages: number
 }
 
-function ApprovalComponent<TItem extends { id: string }>({
-  currentPage,
+function SubjectComponent<TItem extends { id: string }>({
   description,
   emptyStateDescription,
   emptyStateTitle,
-  filterOptions,
   items,
   onCreate,
-  onDelete,
-  onEdit,
   onItemSelect,
-  onPageChange,
-  onQueryChange,
-  onStatusChange,
-  query,
   renderItem,
-  resultsSummary,
   role,
-  searchPlaceholder,
-  selectedStatus,
   selectionMode,
   title,
-  totalPages,
 }: ApprovalComponentProps<TItem>) {
   const theme = useTheme()
   const accentColor = getRoleAccentColor(theme, role)
   const errorColor = theme.palette.error.main
   const isSelecting = selectionMode != null
   const accentHover = getHoverStyle(theme, accentColor)
-  const errorHover = getHoverStyle(theme, errorColor)
-
   const selectionColor = selectionMode === 'delete' ? errorColor : accentColor
   const selectionOutline = isSelecting
     ? getSelectionOutlineStyle(theme, selectionColor)
     : null
-  const selectionLabel =
-    selectionMode === 'edit'
-      ? 'Selecione um card para editar.'
-      : selectionMode === 'delete'
-        ? 'Selecione um card para excluir.'
-        : null
 
   return (
     <AppCard
@@ -178,93 +148,30 @@ function ApprovalComponent<TItem extends { id: string }>({
           ) : null}
         </Box>
       </Box>
-
-      <Box sx={{ flexShrink: 0 }}>
-        <SearchBarAndFilter
-          filterOptions={filterOptions}
-          onQueryChange={onQueryChange}
-          onStatusChange={status => onStatusChange(status as ApprovalStatus)}
-          query={query}
-          resultsSummary={resultsSummary}
-          searchPlaceholder={searchPlaceholder}
-          selectedStatus={selectedStatus}
-        />
-      </Box>
-      {selectionLabel ? (
-        <Box
-          sx={{
-            alignItems: { sm: 'center', xs: 'flex-start' },
-            backgroundColor:
-              selectionMode === 'delete'
-                ? errorHover.backgroundColor
-                : accentHover.backgroundColor,
-            border: '1px solid',
-            borderColor:
-              selectionMode === 'delete'
-                ? errorHover.borderColor
-                : accentHover.borderColor,
-            borderRadius: 'var(--app-radius-control)',
-            color: 'text.primary',
-            display: 'flex',
-            flexDirection: { sm: 'row', xs: 'column' },
-            gap: 1,
-            justifyContent: 'space-between',
-            px: 1.5,
-            py: 1,
-          }}
-        >
-          <Typography sx={{ fontSize: 13, fontWeight: 700 }}>
-            {selectionLabel}
-          </Typography>
-          <Button
-            onClick={() => {
-              if (selectionMode === 'edit') {
-                void onEdit?.()
-                return
-              }
-
-              void onDelete?.()
-            }}
-            size="small"
-            sx={{
-              borderRadius: 'var(--app-radius-control)',
-              color: selectionMode === 'delete' ? errorColor : accentColor,
-              fontSize: 12,
-              fontWeight: 700,
-              minHeight: 28,
-              textTransform: 'none',
-            }}
-          >
-            Cancelar seleção
-          </Button>
-        </Box>
-      ) : null}
       <Box
         sx={{
-          borderTop: `1px solid ${theme.palette.divider}`,
-          display: 'flex',
-          flex: 1,
-          flexDirection: 'column',
           minHeight: 0,
-          paddingTop: 2,
         }}
       >
         {items.length > 0 ? (
           <List
             disablePadding
             sx={{
-              display: 'flex',
-              flex: 1,
-              flexDirection: 'column',
+              display: 'grid',
+              gridTemplateColumns: {
+                md: 'repeat(4, minmax(0, 1fr))',
+                sm: 'repeat(2, minmax(0, 1fr))',
+                xs: '1fr',
+              },
               gap: 2,
-              width: '100%',
-              maxHeight: { md: 360, xs: 'none' },
+              maxHeight: { md: 320, sm: 360, xs: 280 },
               minHeight: 0,
               overflowX: 'hidden',
               overflowY: 'auto',
               pr: { md: 1, xs: 0.75 },
               pl: { md: 0.5, xs: 0.75 },
               pt: { md: 0.5, xs: 0.75 },
+              pb: 0.5,
             }}
           >
             {items.map(item => (
@@ -326,23 +233,8 @@ function ApprovalComponent<TItem extends { id: string }>({
           </Box>
         )}
       </Box>
-
-      <Box
-        sx={{
-          flexShrink: 0,
-          marginTop: 'auto',
-          width: '100%',
-        }}
-      >
-        <Pagination
-          currentPage={currentPage}
-          onPageChange={onPageChange}
-          role={role}
-          totalPages={totalPages}
-        />
-      </Box>
     </AppCard>
   )
 }
 
-export default ApprovalComponent
+export default SubjectComponent

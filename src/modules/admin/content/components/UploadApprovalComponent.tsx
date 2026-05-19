@@ -1,71 +1,58 @@
-import AddRoundedIcon from '@mui/icons-material/AddRounded'
-import ModeEditOutlineOutlinedIcon from '@mui/icons-material/ModeEditOutlineOutlined'
-import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined'
-import {
-  Box,
-  Button,
-  IconButton,
-  List,
-  ListItem,
-  Typography,
-} from '@mui/material'
+import { Box, Button, List, ListItem, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import type { ReactNode } from 'react'
 import EmptyState from '@/shared/ui/EmptyState'
 import Pagination from '@/shared/ui/Pagination'
 import { SearchBarAndFilter } from '@/shared/ui/SearchBarAndFilter'
-import type { DropdownOption } from '@/shared/ui/AppDropdown'
 import AppCard from '@/shared/ui/AppCard'
 import {
   getRoleAccentColor,
-  getHoverStyle,
   getSelectionOutlineStyle,
 } from '@/app/theme/core/roles'
-import type {
-  ApprovalResultsSummary,
-  ApprovalStatus,
-} from '@/modules/admin/shared/types/types'
+import type { ApprovalResultsSummary } from '@/modules/admin/shared/types/types'
 import type { UserRole } from '@/shared/types/user'
+import type {
+  UploadApprovalFilter,
+  UploadApprovalItem,
+  UploadApprovalStatus,
+} from '../types/upload'
+import type { DropdownOption } from '@/shared/ui/AppDropdown'
 
-export interface ApprovalStatusOption extends DropdownOption {
-  value: ApprovalStatus
+export interface UploadStatusOption extends DropdownOption {
+  value: UploadApprovalFilter
 }
 
-interface ApprovalComponentProps<TItem extends { id: string }> {
+interface UploadApprovalComponentProps {
   currentPage: number
   description: string
   emptyStateDescription: string
   emptyStateTitle: string
-  filterOptions: ApprovalStatusOption[]
-  items: TItem[]
-  onCreate?: () => void | Promise<void>
+  filterOptions: UploadStatusOption[]
+  items: UploadApprovalItem[]
   onDelete?: () => void | Promise<void>
   onEdit?: () => void | Promise<void>
-  onItemSelect?: (item: TItem) => void
+  onItemSelect?: (item: UploadApprovalItem) => void
   onPageChange: (page: number) => void
   onQueryChange: (query: string) => void
-  onStatusChange: (status: ApprovalStatus) => void
+  onStatusChange: (status: UploadApprovalFilter) => void
   query: string
-  renderItem: (item: TItem) => ReactNode
+  renderItem: (item: UploadApprovalItem) => ReactNode
   resultsSummary: ApprovalResultsSummary
   role: UserRole
   searchPlaceholder: string
-  selectedStatus: ApprovalStatus
+  selectedStatus: UploadApprovalFilter
   selectionMode?: 'edit' | 'delete' | null
   title: string
   totalPages: number
 }
 
-function ApprovalComponent<TItem extends { id: string }>({
+function UploadApprovalComponent({
   currentPage,
   description,
   emptyStateDescription,
   emptyStateTitle,
   filterOptions,
   items,
-  onCreate,
-  onDelete,
-  onEdit,
   onItemSelect,
   onPageChange,
   onQueryChange,
@@ -79,24 +66,15 @@ function ApprovalComponent<TItem extends { id: string }>({
   selectionMode,
   title,
   totalPages,
-}: ApprovalComponentProps<TItem>) {
+}: UploadApprovalComponentProps) {
   const theme = useTheme()
   const accentColor = getRoleAccentColor(theme, role)
   const errorColor = theme.palette.error.main
   const isSelecting = selectionMode != null
-  const accentHover = getHoverStyle(theme, accentColor)
-  const errorHover = getHoverStyle(theme, errorColor)
-
   const selectionColor = selectionMode === 'delete' ? errorColor : accentColor
   const selectionOutline = isSelecting
     ? getSelectionOutlineStyle(theme, selectionColor)
     : null
-  const selectionLabel =
-    selectionMode === 'edit'
-      ? 'Selecione um card para editar.'
-      : selectionMode === 'delete'
-        ? 'Selecione um card para excluir.'
-        : null
 
   return (
     <AppCard
@@ -154,28 +132,6 @@ function ApprovalComponent<TItem extends { id: string }>({
               {description}
             </Typography>
           </Box>
-          {onCreate ? (
-            <IconButton
-              aria-label="Adicionar"
-              onClick={onCreate}
-              sx={{
-                backgroundColor: 'background.paper',
-                border: '1px solid',
-                borderColor: 'background.border',
-                borderRadius: 'var(--app-radius-control)',
-                color: 'text.primary',
-                flexShrink: 0,
-                height: 32,
-                width: 32,
-                '&:hover': {
-                  backgroundColor: accentHover.backgroundColor,
-                  borderColor: accentHover.borderColor,
-                },
-              }}
-            >
-              <AddRoundedIcon fontSize="small" />
-            </IconButton>
-          ) : null}
         </Box>
       </Box>
 
@@ -183,62 +139,15 @@ function ApprovalComponent<TItem extends { id: string }>({
         <SearchBarAndFilter
           filterOptions={filterOptions}
           onQueryChange={onQueryChange}
-          onStatusChange={status => onStatusChange(status as ApprovalStatus)}
+          onStatusChange={status =>
+            onStatusChange(status as UploadApprovalFilter)
+          }
           query={query}
           resultsSummary={resultsSummary}
           searchPlaceholder={searchPlaceholder}
           selectedStatus={selectedStatus}
         />
       </Box>
-      {selectionLabel ? (
-        <Box
-          sx={{
-            alignItems: { sm: 'center', xs: 'flex-start' },
-            backgroundColor:
-              selectionMode === 'delete'
-                ? errorHover.backgroundColor
-                : accentHover.backgroundColor,
-            border: '1px solid',
-            borderColor:
-              selectionMode === 'delete'
-                ? errorHover.borderColor
-                : accentHover.borderColor,
-            borderRadius: 'var(--app-radius-control)',
-            color: 'text.primary',
-            display: 'flex',
-            flexDirection: { sm: 'row', xs: 'column' },
-            gap: 1,
-            justifyContent: 'space-between',
-            px: 1.5,
-            py: 1,
-          }}
-        >
-          <Typography sx={{ fontSize: 13, fontWeight: 700 }}>
-            {selectionLabel}
-          </Typography>
-          <Button
-            onClick={() => {
-              if (selectionMode === 'edit') {
-                void onEdit?.()
-                return
-              }
-
-              void onDelete?.()
-            }}
-            size="small"
-            sx={{
-              borderRadius: 'var(--app-radius-control)',
-              color: selectionMode === 'delete' ? errorColor : accentColor,
-              fontSize: 12,
-              fontWeight: 700,
-              minHeight: 28,
-              textTransform: 'none',
-            }}
-          >
-            Cancelar seleção
-          </Button>
-        </Box>
-      ) : null}
       <Box
         sx={{
           borderTop: `1px solid ${theme.palette.divider}`,
@@ -257,14 +166,14 @@ function ApprovalComponent<TItem extends { id: string }>({
               flex: 1,
               flexDirection: 'column',
               gap: 2,
-              width: '100%',
               maxHeight: { md: 360, xs: 'none' },
               minHeight: 0,
               overflowX: 'hidden',
               overflowY: 'auto',
-              pr: { md: 1, xs: 0.75 },
               pl: { md: 0.5, xs: 0.75 },
+              pr: { md: 1, xs: 0.75 },
               pt: { md: 0.5, xs: 0.75 },
+              width: '100%',
             }}
           >
             {items.map(item => (
@@ -312,12 +221,7 @@ function ApprovalComponent<TItem extends { id: string }>({
               py: 2,
             }}
           >
-            <Box
-              sx={{
-                maxWidth: 720,
-                width: '100%',
-              }}
-            >
+            <Box sx={{ maxWidth: 720, width: '100%' }}>
               <EmptyState
                 description={emptyStateDescription}
                 title={emptyStateTitle}
@@ -327,13 +231,7 @@ function ApprovalComponent<TItem extends { id: string }>({
         )}
       </Box>
 
-      <Box
-        sx={{
-          flexShrink: 0,
-          marginTop: 'auto',
-          width: '100%',
-        }}
-      >
+      <Box sx={{ flexShrink: 0, marginTop: 'auto', width: '100%' }}>
         <Pagination
           currentPage={currentPage}
           onPageChange={onPageChange}
@@ -345,4 +243,4 @@ function ApprovalComponent<TItem extends { id: string }>({
   )
 }
 
-export default ApprovalComponent
+export default UploadApprovalComponent

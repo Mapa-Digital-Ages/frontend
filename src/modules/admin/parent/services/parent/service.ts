@@ -1,8 +1,9 @@
 export {
-  buildParentApprovalQuery,
-  mapParentApprovalUserToParentApprovalItem,
-  mapParentStatusToParentApprovalUserStatus,
-  type ParentApprovalUserDto,
-  type ParentApprovalUserStatusDto,
+  buildGuardianListQuery,
+  mapGuardianResponseToParentApprovalItem,
+  mapParentStatusToGuardianStatusDto,
+  type GuardianResponseDto,
+  type GuardianListPaginatedDto,
+  type GuardianStatusDto,
 } from './mapper'
 export { createParentApprovalRepository } from './repository'

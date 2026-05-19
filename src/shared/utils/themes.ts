@@ -9,6 +9,7 @@ import type {
   ContentApprovalStatus,
   ParentApprovalStatus,
 } from '@/modules/admin/shared/types/types'
+import type { UploadApprovalStatus } from '@/modules/admin/content/types/upload'
 import type { TagContext } from '@/shared/types/common'
 
 export type TagSize = 'sm' | 'md' | 'lg'
@@ -464,6 +465,32 @@ export const PARENT_APPROVAL_CARD_STATUS: Record<
   },
   rejected: {
     label: 'Recusado',
+    tone: 'danger',
+  },
+}
+
+export const UPLOAD_APPROVAL_CARD_STATUS: Record<
+  UploadApprovalStatus,
+  ApprovalCardStatus
+> = {
+  pending: {
+    label: 'Aguardando revisão',
+    tone: 'neutral',
+  },
+  inReview: {
+    label: 'Em revisão',
+    tone: 'warning',
+  },
+  correctionInProgress: {
+    label: 'Correção em andamento',
+    tone: 'info',
+  },
+  corrected: {
+    label: 'Corrigido',
+    tone: 'success',
+  },
+  rejected: {
+    label: 'Rejeitado',
     tone: 'danger',
   },
 }

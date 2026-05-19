@@ -20,10 +20,17 @@ function normalizeBaseUrl(url: string) {
   return url.endsWith('/') ? url : `${url}/`
 }
 
+export type StudentUploadActivityType = 'exercise' | 'essay' | 'activity'
+
 export const uploadService = {
-  async uploadStudentFile(studentId: string, file: File): Promise<UploadItem> {
+  async uploadStudentFile(
+    studentId: string,
+    file: File,
+    activityType: StudentUploadActivityType
+  ): Promise<UploadItem> {
     const formData = new FormData()
     formData.append('file', file)
+    formData.append('activity_type', activityType)
 
     const response = await fetch(
       `${normalizeBaseUrl(baseUrl)}student/${encodeURIComponent(studentId)}/uploads`,
