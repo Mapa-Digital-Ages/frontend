@@ -11,6 +11,5 @@ export interface ChatSession {
   subject: string
   createdAt: string
   lastMessageAt: string
-  suggestions: string[]
   messages: ChatMessage[]
 }

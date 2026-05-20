@@ -1,30 +1,11 @@
+import { useEffect, useRef } from 'react'
 import SmartToyRoundedIcon from '@mui/icons-material/SmartToyRounded'
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded'
 import { Box, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import dayjs from 'dayjs'
+import { formatRelativeDate } from '@/shared/utils/date'
 import type { ChatSession } from '@/modules/student/chat/types/types'
-
-function formatRelativeDate(dateString: string) {
-  const date = dayjs(dateString)
-  const now = dayjs()
-  const time = date.format('HH:mm')
-
-  if (date.isSame(now, 'day')) {
-    return `Hoje · ${time}`
-  }
-
-  if (date.isSame(now.subtract(1, 'day'), 'day')) {
-    return `Ontem · ${time}`
-  }
-
-  const weekdays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
-  if (date.isAfter(now.subtract(7, 'day'))) {
-    return `${weekdays[date.day()]} · ${time}`
-  }
-
-  return date.format('DD/MM/YYYY · HH:mm')
-}
 
 interface ChatMessageHistoryProps {
   chat: ChatSession
@@ -33,6 +14,13 @@ interface ChatMessageHistoryProps {
 function ChatMessageHistory({ chat }: ChatMessageHistoryProps) {
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === 'dark'
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    }
+  }, [chat.messages])
 
   return (
     <Box
@@ -86,6 +74,7 @@ function ChatMessageHistory({ chat }: ChatMessageHistoryProps) {
       </Box>
 
       <Box
+        ref={scrollRef}
         className="grid min-h-0 flex-1 content-start gap-4 overflow-y-auto px-5 py-4"
         data-testid="chat-message-scroll"
         sx={{ overscrollBehavior: 'contain' }}

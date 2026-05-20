@@ -15,12 +15,6 @@ const INITIAL_CHATS: ChatSession[] = [
     subject: 'Matemática',
     createdAt: '2026-05-18T09:30:00',
     lastMessageAt: '2026-05-18T09:30:00',
-    suggestions: [
-      'Explicar frações',
-      'Dicas de redação',
-      'Revisar ciências',
-      'Como me organizar',
-    ],
     messages: [
       {
         id: 'm1',
@@ -43,11 +37,6 @@ const INITIAL_CHATS: ChatSession[] = [
     subject: 'Português',
     createdAt: '2026-05-17T20:12:00',
     lastMessageAt: '2026-05-17T20:12:00',
-    suggestions: [
-      'Dicas de introdução',
-      'Exemplo de conclusão',
-      'Conectivos úteis',
-    ],
     messages: [
       {
         id: 'm3',
@@ -70,7 +59,6 @@ const INITIAL_CHATS: ChatSession[] = [
     subject: 'Planejamento semanal',
     createdAt: '2026-05-12T18:40:00',
     lastMessageAt: '2026-05-12T18:40:00',
-    suggestions: ['Ajustar horários', 'Dicas de foco', 'Técnica Pomodoro'],
     messages: [
       {
         id: 'm5',

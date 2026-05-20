@@ -8,35 +8,14 @@ import {
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { useState } from 'react'
-import dayjs from 'dayjs'
 import AppInput from '@/shared/ui/AppInput'
+import { formatRelativeDate } from '@/shared/utils/date'
 import type { ChatSession } from '@/modules/student/chat/types/types'
 
 interface ChatHistoryMenuProps {
   chats: ChatSession[]
   selectedChatId: string | null
   onSelectChat: (chatId: string) => void
-}
-
-function formatRelativeDate(dateString: string) {
-  const date = dayjs(dateString)
-  const now = dayjs()
-  const time = date.format('HH:mm')
-
-  if (date.isSame(now, 'day')) {
-    return `Hoje · ${time}`
-  }
-
-  if (date.isSame(now.subtract(1, 'day'), 'day')) {
-    return `Ontem · ${time}`
-  }
-
-  const weekdays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
-  if (date.isAfter(now.subtract(7, 'day'))) {
-    return `${weekdays[date.day()]} · ${time}`
-  }
-
-  return date.format('DD/MM/YYYY · HH:mm')
 }
 
 function ChatHistoryMenu({
