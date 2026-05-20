@@ -33,6 +33,7 @@ export interface CreateStudentInput {
   guardianId: string | null
   year: string | null
   status: StudentStatus
+  birthDate?: string
 }
 
 export interface UpdateStudentInput {

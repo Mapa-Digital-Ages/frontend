@@ -1,10 +1,10 @@
+import { HttpRequestError } from '@/shared/lib/http/client'
 import AppPageContainer from '@/shared/ui/AppPageContainer'
 import PageHeader from '@/shared/ui/PageHeader'
 import OrdinaryHeader from '@/shared/ui/OrdinaryHeader'
 import MetricsCard from '@/shared/ui/MetricsCard'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded'
-import SwapHorizRoundedIcon from '@mui/icons-material/SwapHorizRounded'
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 import EditRoundedIcon from '@mui/icons-material/EditRounded'
 import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded'
@@ -151,6 +151,7 @@ export default function Page() {
   const [sort, setSort] = useState<SortState>({ field: null, direction: 'asc' })
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null)
@@ -161,16 +162,18 @@ export default function Page() {
   const fetchStudents = useCallback(async () => {
     setIsLoading(true)
     try {
-      const [listResult, metricsResult] = await Promise.all([
-        studentService.getStudents({
-          query,
-          status: selectedStatus as 'all' | 'ativo' | 'inativo',
-        }),
-        studentService.getMetrics(),
-      ])
+      const listResult = await studentService.getStudents({
+        query,
+        status: selectedStatus as 'all' | 'ativo' | 'inativo',
+      })
       setStudents(listResult.items)
       setTotal(listResult.total)
-      setMetrics(metricsResult)
+      setMetrics(m => ({
+        ...m,
+        total: listResult.total,
+        schools: new Set(listResult.items.map(s => s.school).filter(Boolean))
+          .size,
+      }))
     } finally {
       setIsLoading(false)
     }
@@ -207,26 +210,51 @@ export default function Page() {
 
   async function handleCreateStudent(values: StudentFormValues) {
     const NONE = 'none'
-    const created = await studentService.createStudent({
-      name: values.name,
-      email: values.email,
-      password: values.password,
-      schoolId: values.school !== NONE ? values.school : null,
-      guardianId: values.guardian !== NONE ? values.guardian : null,
-      year: values.year !== NONE ? values.year : null,
-      status: values.status as 'ativo' | 'inativo',
-    })
-    setStudents(current => [created, ...current])
-    setMetrics(m => ({
-      ...m,
-      total: m.total + 1,
-      active: created.status === 'ativo' ? m.active + 1 : m.active,
-      inactive: created.status === 'inativo' ? m.inactive + 1 : m.inactive,
-      schools: new Set(
-        [...students.map(s => s.school), created.school].filter(Boolean)
-      ).size,
-    }))
-    setIsCreateModalOpen(false)
+    setCreateError(null)
+    try {
+      const created = await studentService.createStudent({
+        name: values.name,
+        email: values.email,
+        password: values.password,
+        schoolId: values.school !== NONE ? values.school : null,
+        guardianId: values.guardian !== NONE ? values.guardian : null,
+        year: values.year !== NONE ? values.year : null,
+        status: values.status as 'ativo' | 'inativo',
+        birthDate: values.birthDate,
+      })
+      setStudents(current => [created, ...current])
+      setMetrics(m => ({
+        ...m,
+        total: m.total + 1,
+        active: created.status === 'ativo' ? m.active + 1 : m.active,
+        inactive: created.status === 'inativo' ? m.inactive + 1 : m.inactive,
+        schools: new Set(
+          [...students.map(s => s.school), created.school].filter(Boolean)
+        ).size,
+      }))
+      setIsCreateModalOpen(false)
+    } catch (err) {
+      let message = 'Não foi possível criar o aluno. Tente novamente.'
+      if (err instanceof HttpRequestError && err.response) {
+        try {
+          const body = (await err.response.json()) as {
+            detail?: string
+            message?: string
+          }
+          const apiMessage = (body.detail ?? body.message ?? '').toLowerCase()
+          if (apiMessage.includes('email')) {
+            message = 'E-mail já cadastrado.'
+          } else if (apiMessage.includes('password')) {
+            message = 'Senha inválida.'
+          } else if (apiMessage) {
+            message = apiMessage
+          }
+        } catch {
+          // ignora
+        }
+      }
+      setCreateError(message)
+    }
   }
 
   async function handleEditStudent(values: EditFormValues) {
@@ -240,25 +268,6 @@ export default function Page() {
       current.map(s => (s.id === selectedStudentId ? updated : s))
     )
     setIsEditModalOpen(false)
-  }
-
-  async function handleToggleStatus() {
-    if (!selectedStudentId) return
-    setMenuAnchorEl(null)
-    const student = students.find(s => s.id === selectedStudentId)
-    if (!student) return
-    const updated = await studentService.toggleStudentStatus(
-      selectedStudentId,
-      student.status === 'inativo'
-    )
-    setStudents(current =>
-      current.map(s => (s.id === selectedStudentId ? updated : s))
-    )
-    setMetrics(m => ({
-      ...m,
-      active: updated.status === 'ativo' ? m.active + 1 : m.active - 1,
-      inactive: updated.status === 'inativo' ? m.inactive + 1 : m.inactive - 1,
-    }))
   }
 
   async function handleDeleteStudent() {
@@ -319,10 +328,14 @@ export default function Page() {
       <CreateStudentModal
         data-testid="create-student-modal"
         open={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
+        onClose={() => {
+          setIsCreateModalOpen(false)
+          setCreateError(null)
+        }}
         onConfirm={values => {
           void handleCreateStudent(values)
         }}
+        apiError={createError}
       />
 
       <Box className="grid grid-cols-2 gap-3 md:gap-4">
@@ -503,20 +516,6 @@ export default function Page() {
             <EditRoundedIcon sx={{ fontSize: 18 }} />
             <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
               Editar aluno
-            </Typography>
-          </MenuItem>
-          <MenuItem
-            data-testid="toggle-status-action"
-            onClick={() => {
-              void handleToggleStatus()
-            }}
-            sx={{ color: 'text.secondary', gap: 1.25, py: 1.1 }}
-          >
-            <SwapHorizRoundedIcon sx={{ fontSize: 18 }} />
-            <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
-              {selectedStudentRow?.status === 'ativo'
-                ? 'Tornar inativo'
-                : 'Tornar ativo'}
             </Typography>
           </MenuItem>
           <MenuItem

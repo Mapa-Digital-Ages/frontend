@@ -58,7 +58,15 @@ export function mapStudentDto(dto: StudentDto): StudentItem {
   }
 }
 
-export function mapStudentListDto(dto: StudentListDto): StudentListResult {
+export function mapStudentListDto(
+  dto: StudentDto[] | StudentListDto
+): StudentListResult {
+  if (Array.isArray(dto)) {
+    return {
+      items: dto.map(mapStudentDto),
+      total: dto.length,
+    }
+  }
   return {
     items: dto.items.map(mapStudentDto),
     total: dto.total,
@@ -78,6 +86,7 @@ export function mapCreateStudentInput(input: CreateStudentInput) {
       ? (yearValueToClassEnum[input.year] ?? null)
       : null,
     is_active: input.status === 'ativo',
+    birth_date: input.birthDate ?? '',
   }
 }
 

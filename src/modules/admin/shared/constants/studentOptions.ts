@@ -40,9 +40,7 @@ interface GuardianApiItem {
 export const studentFormOptionsService = {
   async getSchools(): Promise<SchoolOption[]> {
     try {
-      const response = await httpClient.get<SchoolListResponse>(
-        'school?page=1&size=100'
-      )
+      const response = await httpClient.get<SchoolListResponse>('school')
       return response.data.items
         .filter(item => item.is_active)
         .map(item => ({
@@ -56,10 +54,16 @@ export const studentFormOptionsService = {
 
   async getGuardians(): Promise<GuardianOption[]> {
     try {
-      const response = await httpClient.get<GuardianApiItem[]>('admin/users', {
+      const response = await httpClient.get<{
+        items: GuardianApiItem[]
+        total: number
+      }>('admin/users', {
         query: { role: 'guardian', user_status: 'approved' },
       })
-      return response.data.map(item => {
+      const items = Array.isArray(response.data)
+        ? response.data
+        : ((response.data as { items: GuardianApiItem[] }).items ?? [])
+      return items.map(item => {
         const fullName =
           item.first_name && item.last_name
             ? `${item.first_name} ${item.last_name}`.trim()

@@ -54,6 +54,7 @@ interface CreateStudentModalProps extends BoxProps {
   open: boolean
   onClose: () => void
   onConfirm: (values: StudentFormValues) => void
+  apiError?: string | null
 }
 
 export interface StudentFormValues {
@@ -64,6 +65,7 @@ export interface StudentFormValues {
   guardian: string
   year: string
   status: string
+  birthDate: string
 }
 
 type FormErrors = Partial<Record<keyof StudentFormValues, string>>
@@ -75,8 +77,9 @@ function getDefaultValues(): StudentFormValues {
     password: '',
     school: NONE_VALUE,
     guardian: NONE_VALUE,
-    year: NONE_VALUE,
+    year: yearOptions[0].value,
     status: 'ativo',
+    birthDate: '',
   }
 }
 
@@ -84,6 +87,7 @@ export default function CreateStudentModal({
   open,
   onClose,
   onConfirm,
+  apiError,
   ...props
 }: CreateStudentModalProps) {
   const theme = useTheme()
@@ -159,7 +163,7 @@ export default function CreateStudentModal({
     ...guardians.map(g => ({ label: g.label, value: g.value })),
   ]
 
-  const yearDropdownOptions = [NONE_OPTION, ...yearOptions]
+  const yearDropdownOptions = [...yearOptions]
 
   return (
     <AppActionModal
@@ -218,14 +222,13 @@ export default function CreateStudentModal({
             gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
           }}
         >
-          <AppDropdown
-            fullWidth
-            label="Escola"
-            disabled={isLoadingOptions}
-            onChange={e => handleChange('school', String(e.target.value))}
-            options={schoolDropdownOptions}
-            sx={selectSx}
-            value={values.school}
+          <AppInput
+            label="Data de nascimento"
+            labelSx={fieldLabelSx}
+            onChange={e => handleChange('birthDate', e.target.value)}
+            sx={inputSx}
+            type="date"
+            value={values.birthDate}
           />
           <AppDropdown
             fullWidth
@@ -236,31 +239,33 @@ export default function CreateStudentModal({
             value={values.year}
           />
         </Box>
+        <AppDropdown
+          fullWidth
+          label="Escola"
+          disabled={isLoadingOptions}
+          onChange={e => handleChange('school', String(e.target.value))}
+          options={schoolDropdownOptions}
+          sx={selectSx}
+          value={values.school}
+        />
 
-        <Box
-          sx={{
-            display: 'grid',
-            gap: 2,
-            gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
-          }}
-        >
-          <AppDropdown
-            fullWidth
-            label="Responsável"
-            onChange={e => handleChange('guardian', String(e.target.value))}
-            options={guardianDropdownOptions}
-            sx={selectSx}
-            value={values.guardian}
-          />
-          <AppDropdown
-            fullWidth
-            label="Status"
-            onChange={e => handleChange('status', String(e.target.value))}
-            options={statusOptions}
-            sx={selectSx}
-            value={values.status}
-          />
-        </Box>
+        <AppDropdown
+          fullWidth
+          label="Responsável"
+          onChange={e => handleChange('guardian', String(e.target.value))}
+          options={guardianDropdownOptions}
+          sx={selectSx}
+          value={values.guardian}
+        />
+
+        <AppDropdown
+          fullWidth
+          label="Status"
+          onChange={e => handleChange('status', String(e.target.value))}
+          options={statusOptions}
+          sx={selectSx}
+          value={values.status}
+        />
 
         {!isLinked && !isLoadingOptions && (
           <Box
@@ -272,6 +277,21 @@ export default function CreateStudentModal({
           >
             Selecione ao menos uma <strong>escola</strong> ou um{' '}
             <strong>responsável</strong> para habilitar o cadastro.
+          </Box>
+        )}
+
+        {apiError && (
+          <Box
+            sx={{
+              borderRadius: '10px',
+              color: 'error.main',
+              fontSize: { md: 13, xs: 12 },
+              fontWeight: 600,
+              px: 1,
+              py: 0.5,
+            }}
+          >
+            ✕ {apiError}
           </Box>
         )}
       </Box>
