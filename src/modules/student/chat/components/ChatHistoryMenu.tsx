@@ -1,8 +1,6 @@
-import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded'
 import {
   Box,
-  IconButton,
   List,
   ListItemButton,
   ListItemText,
@@ -17,7 +15,6 @@ import type { ChatSession } from '@/modules/student/chat/types/types'
 interface ChatHistoryMenuProps {
   chats: ChatSession[]
   selectedChatId: string | null
-  onNewChat: () => void
   onSelectChat: (chatId: string) => void
 }
 
@@ -45,7 +42,6 @@ function formatRelativeDate(dateString: string) {
 function ChatHistoryMenu({
   chats,
   selectedChatId,
-  onNewChat,
   onSelectChat,
 }: ChatHistoryMenuProps) {
   const theme = useTheme()
@@ -78,26 +74,6 @@ function ChatHistoryMenu({
             Histórico
           </Typography>
         </Box>
-        <IconButton
-          aria-label="Nova conversa"
-          onClick={onNewChat}
-          size="small"
-          sx={{
-            border: '1px solid',
-            borderColor: 'background.border',
-            borderRadius: 'var(--app-radius-control)',
-            color: 'text.primary',
-            height: 32,
-            width: 32,
-            '&:hover': {
-              backgroundColor: 'var(--app-role-action-hover-bg)',
-              borderColor: 'var(--app-role-action-hover-border)',
-              color: 'var(--app-role-current-primary)',
-            },
-          }}
-        >
-          <AddRoundedIcon fontSize="small" />
-        </IconButton>
       </Box>
 
       <Box>

@@ -1,6 +1,6 @@
 import SmartToyRoundedIcon from '@mui/icons-material/SmartToyRounded'
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded'
-import { Box, Chip, Typography } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import dayjs from 'dayjs'
 import type { ChatSession } from '@/modules/student/chat/types/types'
@@ -33,12 +33,6 @@ interface ChatMessageHistoryProps {
 function ChatMessageHistory({ chat }: ChatMessageHistoryProps) {
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === 'dark'
-  const suggestionChipBackgroundColor = isDarkMode
-    ? 'var(--app-role-action-selected-bg)'
-    : 'var(--app-role-current-soft, rgba(66,165,245,0.12))'
-  const suggestionChipTextColor = isDarkMode
-    ? theme.palette.primary.main
-    : 'var(--app-role-current-primary)'
 
   return (
     <Box
@@ -89,34 +83,6 @@ function ChatMessageHistory({ chat }: ChatMessageHistoryProps) {
             {formatRelativeDate(chat.lastMessageAt)}
           </Typography>
         </Box>
-
-        {chat.suggestions.length > 0 && (
-          <Box className="flex flex-wrap gap-1.5 mt-2">
-            {chat.suggestions.map(suggestion => (
-              <Chip
-                key={suggestion}
-                label={suggestion}
-                size="small"
-                sx={{
-                  height: 26,
-                  fontSize: '0.7rem',
-                  fontWeight: 500,
-                  backgroundColor: suggestionChipBackgroundColor,
-                  color: suggestionChipTextColor,
-                  border: '1px solid',
-                  borderColor: isDarkMode
-                    ? 'var(--app-role-action-selected-border)'
-                    : 'transparent',
-                  borderRadius: '13px',
-                  '&:hover': {
-                    backgroundColor: 'var(--app-role-action-hover-bg)',
-                    borderColor: 'var(--app-role-action-hover-border)',
-                  },
-                }}
-              />
-            ))}
-          </Box>
-        )}
       </Box>
 
       <Box

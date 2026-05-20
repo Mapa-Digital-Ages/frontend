@@ -1,6 +1,5 @@
 import { Box } from '@mui/material'
-import { useCallback, useState } from 'react'
-import dayjs from 'dayjs'
+import { useState } from 'react'
 import AppPageContainer from '@/shared/ui/AppPageContainer'
 import OrdinaryHeader from '@/shared/ui/OrdinaryHeader'
 import ChatEmptyState from '@/modules/student/chat/components/ChatEmptyState'
@@ -109,21 +108,6 @@ export default function Page() {
 
   const selectedChat = chats.find(chat => chat.id === selectedChatId) ?? null
 
-  const handleNewChat = useCallback(() => {
-    const now = dayjs().toISOString()
-    const newChat: ChatSession = {
-      id: crypto.randomUUID(),
-      title: 'Nova conversa',
-      subject: 'Geral',
-      createdAt: now,
-      lastMessageAt: now,
-      suggestions: [],
-      messages: [],
-    }
-    setChats(prev => [newChat, ...prev])
-    setSelectedChatId(newChat.id)
-  }, [])
-
   if (chats.length === 0) {
     return (
       <AppPageContainer className="gap-4">
@@ -152,7 +136,6 @@ export default function Page() {
           chats={chats}
           selectedChatId={selectedChatId}
           onSelectChat={setSelectedChatId}
-          onNewChat={handleNewChat}
         />
         {selectedChat ? (
           <ChatMessageHistory chat={selectedChat} />
