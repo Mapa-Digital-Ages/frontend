@@ -191,15 +191,7 @@ export function createStudentRepository({
     async getStudents(query: StudentListQuery): Promise<StudentListResult> {
       try {
         const response = await client.get<StudentDto[] | StudentListDto>(
-          'student',
-          {
-            query: {
-              q: query.query,
-              status: query.status !== 'all' ? query.status : undefined,
-              page: query.page,
-              page_size: query.pageSize,
-            },
-          }
+          'student'
         )
         return mapStudentListDto(response.data)
       } catch (error) {

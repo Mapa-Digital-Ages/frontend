@@ -27,7 +27,10 @@ import CreateStudentModal, {
   type StudentFormValues,
 } from '@/modules/admin/shared/components/CreateStudentModal'
 import AppActionModal from '@/shared/ui/AppActionModal'
-import { yearOptions } from '@/modules/admin/shared/constants/studentOptions'
+import {
+  studentFormOptionsService,
+  yearOptions,
+} from '@/modules/admin/shared/constants/studentOptions'
 import { studentService } from '@/modules/admin/student/services/service'
 import type {
   StudentItem,
@@ -144,7 +147,6 @@ export default function Page() {
     inactive: 0,
     schools: 0,
   })
-  const [total, setTotal] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
 
   const [query, setQuery] = useState('')
@@ -163,22 +165,28 @@ export default function Page() {
   const fetchStudents = useCallback(async () => {
     setIsLoading(true)
     try {
-      const listResult = await studentService.getStudents({
-        query,
-        status: selectedStatus as 'all' | 'ativo' | 'inativo',
+      const [listResult, schools] = await Promise.all([
+        studentService.getStudents({}),
+        studentFormOptionsService.getSchools(),
+      ])
+      const map: Record<string, string> = {}
+      schools.forEach(s => {
+        map[s.value] = s.label
       })
-      setStudents(listResult.items)
-      setTotal(listResult.total)
+      const items = listResult.items.map(s => ({
+        ...s,
+        school: s.schoolId ? (map[s.schoolId] ?? s.school) : s.school,
+      }))
+      setStudents(items)
       setMetrics(m => ({
         ...m,
         total: listResult.total,
-        schools: new Set(listResult.items.map(s => s.school).filter(Boolean))
-          .size,
+        schools: new Set(items.map(s => s.school).filter(Boolean)).size,
       }))
     } finally {
       setIsLoading(false)
     }
-  }, [query, selectedStatus])
+  }, [])
 
   useEffect(() => {
     void fetchStudents()
@@ -196,6 +204,29 @@ export default function Page() {
     () => sortStudents(students, sort),
     [students, sort]
   )
+
+  const normalize = (text: string) =>
+    text
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+
+  const filteredStudents = useMemo(() => {
+    const q = normalize(query)
+    return sortedStudents.filter(student => {
+      const matchesQuery =
+        !q ||
+        normalize(student.name).includes(q) ||
+        normalize(student.school ?? '').includes(q) ||
+        normalize(student.year ?? '').includes(q) ||
+        normalize(student.guardian ?? '').includes(q)
+
+      const matchesStatus =
+        selectedStatus === 'all' || student.status === selectedStatus
+
+      return matchesQuery && matchesStatus
+    })
+  }, [sortedStudents, query, selectedStatus])
 
   const selectedStudentRow = students.find(s => s.id === selectedStudentId)
 
@@ -223,7 +254,8 @@ export default function Page() {
         status: values.status as 'ativo' | 'inativo',
         birthDate: values.birthDate,
       })
-      setStudents(current => [created, ...current])
+      await fetchStudents()
+      setIsCreateModalOpen(false)
       setMetrics(m => ({
         ...m,
         total: m.total + 1,
@@ -372,7 +404,7 @@ export default function Page() {
           onQueryChange={setQuery}
           query={query}
           resultsSummary={{
-            count: total,
+            count: filteredStudents.length,
             singularLabel: 'resultado',
             pluralLabel: 'resultados',
           }}
@@ -449,7 +481,7 @@ export default function Page() {
             </Typography>
           </Box>
         ) : (
-          sortedStudents.map(student => (
+          filteredStudents.map(student => (
             <Box
               key={student.id}
               data-testid={`student-row-${student.id}`}
