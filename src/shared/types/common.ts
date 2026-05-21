@@ -56,3 +56,10 @@ export interface WeeklyMoodEntry {
   date: string
   mood: 'good' | 'regular' | 'bad' | null
 }
+
+export interface AdminStat {
+  id: string
+  label: string
+  value: string
+  description: string
+}

@@ -392,7 +392,7 @@ export default function Page() {
       <UploadActivityModal
         open={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
-        onAddTask={() => {}}
+        onAddTask={() => Promise.resolve()}
       />
     </AppPageContainer>
   )

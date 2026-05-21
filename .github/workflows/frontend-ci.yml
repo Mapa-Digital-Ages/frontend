@@ -34,7 +34,7 @@ jobs:
 
       - name: Build
         run: |
-          echo "VITE_API_BASE_URL=http://3.128.24.232:8000" > .env
+          echo "VITE_API_BASE_URL=https://d3nxp30caidv33.cloudfront.net/api" > .env
           npm run build
 
       - name: Upload Build Artifact

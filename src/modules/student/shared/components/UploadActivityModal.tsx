@@ -13,23 +13,28 @@ import { useState, type ChangeEvent } from 'react'
 import AppInput from '@/shared/ui/AppInput'
 import AppButton from '@/shared/ui/AppButton'
 
-type UploadTaskPayload = {
+type SubjectKey =
+  | 'matematica'
+  | 'portugues'
+  | 'biologia'
+  | 'historia'
+  | 'ingles'
+  | 'geografia'
+  | 'ciencias'
+
+export type UploadTaskPayload = {
   title: string
   type: string
-  subject:
-    | 'matematica'
-    | 'portugues'
-    | 'biologia'
-    | 'historia'
-    | 'ingles'
-    | 'geografia'
-    | 'ciencias'
+  subject: SubjectKey
+  file: File
 }
 
 interface UploadActivityModalProps {
   open: boolean
   onClose: () => void
-  onAddTask: (task: UploadTaskPayload) => void
+  onAddTask: (task: UploadTaskPayload) => Promise<void>
+  isSubmitting?: boolean
+  submitError?: string | null
 }
 
 const env = (
@@ -52,16 +57,10 @@ function UploadActivityModal({
   open,
   onClose,
   onAddTask,
+  isSubmitting = false,
+  submitError = null,
 }: UploadActivityModalProps) {
   const [title, setTitle] = useState('')
-  type SubjectKey =
-    | 'matematica'
-    | 'portugues'
-    | 'biologia'
-    | 'historia'
-    | 'ingles'
-    | 'geografia'
-    | 'ciencias'
   const [subject, setSubject] = useState<SubjectKey>('matematica')
   const [type, setType] = useState('Exercício')
   const [file, setFile] = useState<File | null>(null)
@@ -88,7 +87,7 @@ function UploadActivityModal({
     setFile(selectedFile)
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!title.trim()) {
       setErrorMessage('Informe o título da atividade.')
       return
@@ -100,10 +99,12 @@ function UploadActivityModal({
     }
 
     try {
-      onAddTask({
-        title,
+      const renamedFile = new File([file], title.trim(), { type: file.type })
+      await onAddTask({
+        title: title.trim(),
         subject,
         type,
+        file: renamedFile,
       })
 
       setTitle('')
@@ -111,8 +112,6 @@ function UploadActivityModal({
       setType('Exercício')
       setFile(null)
       setErrorMessage('')
-
-      onClose()
     } catch {
       setErrorMessage('Não foi possível enviar o arquivo. Tente novamente.')
     }
@@ -226,9 +225,9 @@ function UploadActivityModal({
           />
         </Box>
 
-        {errorMessage && (
+        {(errorMessage || submitError) && (
           <Typography className="mt-4 text-sm font-semibold text-red-500">
-            {errorMessage}
+            {errorMessage || submitError}
           </Typography>
         )}
 
@@ -237,12 +236,17 @@ function UploadActivityModal({
             className="rounded-2xl px-8 py-3"
             variant="outlined"
             onClick={onClose}
+            disabled={isSubmitting}
           >
             Cancelar
           </Button>
 
-          <AppButton borderRadius="16px" onClick={handleSubmit}>
-            Adicionar
+          <AppButton
+            borderRadius="16px"
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Enviando...' : 'Adicionar'}
           </AppButton>
         </Box>
       </DialogContent>

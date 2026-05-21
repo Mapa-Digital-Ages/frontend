@@ -1,11 +1,11 @@
 import SecurityRoundedIcon from '@mui/icons-material/SecurityRounded'
 import { Box, Paper, Typography, Stack } from '@mui/material'
-import { alpha } from '@mui/material/styles'
+import { ThemeProvider } from '@mui/material/styles'
 import { Outlet } from 'react-router-dom'
 import siteLogo from '@/shared/assets/logos/white_logo.svg'
 import { APP_CONFIG } from '@/shared/constants/app'
-import { useState } from 'react'
-import { useTheme } from '@mui/material/styles'
+import React, { useEffect, useState } from 'react'
+import { createAppTheme } from '../theme/core/theme'
 
 export type LayoutMode =
   | 'login'
@@ -33,6 +33,36 @@ function SiteLogo() {
     </Box>
   )
 }
+
+const lightTheme = createAppTheme('light')
+
+function AuthThemeProvider({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    const root = document.documentElement
+    const previousTheme = root.dataset.theme
+    const hadDark = root.classList.contains('dark')
+
+    root.dataset.theme = 'light'
+    root.classList.remove('dark')
+
+    return () => {
+      if (previousTheme) {
+        root.dataset.theme = previousTheme
+      } else {
+        delete root.dataset.theme
+      }
+
+      if (hadDark) {
+        root.classList.add('dark')
+      } else {
+        root.classList.remove('dark')
+      }
+    }
+  }, [])
+
+  return <ThemeProvider theme={lightTheme}>{children}</ThemeProvider>
+}
+
 function AuthLayout() {
   const [mode, setMode] = useState<'login' | 'register'>('login')
 
@@ -70,105 +100,99 @@ function AuthLayout() {
         }
     }
   }
-  const theme = useTheme()
-  const isDark = theme.palette.mode === 'dark'
-  const panelBackground = isDark
-    ? theme.palette.background.paper
-    : 'linear-gradient(135deg, #359CDF 0%, #218cc9 100%)'
-  const panelTextColor = isDark
-    ? theme.palette.text.primary
-    : theme.palette.common.white
-  const panelMutedTextColor = isDark
-    ? theme.palette.text.secondary
-    : alpha(theme.palette.common.white, 0.9)
-  const panelBorderColor = isDark
-    ? theme.palette.background.border
-    : alpha(theme.palette.common.black, 0.1)
-  const badgeBackground = isDark
-    ? alpha(theme.palette.common.white, 0.05)
-    : alpha(theme.palette.common.white, 0.14)
-  const badgeBorderColor = isDark
-    ? theme.palette.background.border
-    : alpha(theme.palette.common.white, 0.36)
-  const badgeTextColor = isDark ? theme.palette.common.white : panelTextColor
-  const badgeIconColor = isDark ? theme.palette.primary.main : panelTextColor
+  const panelBackground = 'linear-gradient(135deg, #359CDF 0%, #218cc9 100%)'
+  const panelTextColor = '#FFFFFF'
+  const panelMutedTextColor = 'rgba(255, 255, 255, 0.9)'
+  const panelBorderColor = 'rgba(0, 0, 0, 0.1)'
+  const badgeBackground = 'rgba(255, 255, 255, 0.14)'
+  const badgeBorderColor = 'rgba(255, 255, 255, 0.36)'
+  const badgeTextColor = '#FFFFFF'
+  const badgeIconColor = '#FFFFFF'
 
   const { title, subtitle } = getLayoutContent(mode)
   return (
-    <Box
-      className="flex items-center justify-center px-4 py-6"
-      sx={{
-        backgroundColor: 'background.default',
-        backgroundImage: 'var(--app-body-gradient)',
-        minHeight: '100dvh',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        backgroundSize: 'cover',
-      }}
-    >
+    <AuthThemeProvider>
       <Box
-        className="grid items-stretch gap-5"
+        className="flex items-center justify-center px-4 py-6"
         sx={{
-          width: 'min(100%, 1300px)',
-          height: { xs: 'auto', md: mode === 'register' ? 720 : 600 },
-          gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
-          justifyContent: 'center',
+          '--app-background': 'rgba(244, 247, 251, 1)',
+          '--app-body-gradient':
+            'radial-gradient(circle at top left, rgba(31, 75, 153, 0.1), transparent 28%), linear-gradient(180deg, rgba(244, 247, 251, 1) 0%, rgba(238, 243, 250, 1) 100%)',
+          backgroundColor: 'rgba(244, 247, 251, 1)',
+          backgroundImage:
+            'radial-gradient(circle at top left, rgba(31, 75, 153, 0.1), transparent 28%), linear-gradient(180deg, rgba(244, 247, 251, 1) 0%, rgba(238, 243, 250, 1) 100%)',
+          minHeight: '100dvh',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          backgroundSize: 'cover',
         }}
       >
-        <Paper
-          className="flex min-h-105 flex-col p-7 md:min-h-0 md:p-9"
-          elevation={0}
+        <Box
+          className="grid items-stretch gap-5"
           sx={{
-            background: panelBackground,
-            border: '1px solid',
-            borderColor: panelBorderColor,
-            borderRadius: '16px',
-            color: panelTextColor,
+            width: 'min(100%, 1300px)',
+            height: { xs: 'auto', md: mode === 'register' ? 720 : 600 },
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
+            justifyContent: 'center',
           }}
         >
-          <Box
-            className="mb-7 inline-flex w-fit items-center gap-2 px-3 py-1.5 text-sm font-semibold"
+          <Paper
+            className="flex min-h-105 flex-col p-7 md:min-h-0 md:p-9"
+            elevation={0}
             sx={{
+              background: panelBackground,
               border: '1px solid',
-              borderColor: badgeBorderColor,
-              borderRadius: '999px',
-              backgroundColor: badgeBackground,
-              color: badgeTextColor,
+              borderColor: panelBorderColor,
+              borderRadius: '16px',
+              color: panelTextColor,
             }}
           >
-            <SecurityRoundedIcon sx={{ color: badgeIconColor, fontSize: 18 }} />
-            Acesso seguro à plataforma
-          </Box>
-
-          <Stack spacing={2}>
-            <Typography
-              className="max-w-112.5 leading-tight"
+            <Box
+              className="mb-7 inline-flex w-fit items-center gap-2 px-3 py-1.5 text-sm font-semibold"
               sx={{
-                color: panelTextColor,
-                fontSize: { md: '30px', xs: '26px' },
-                fontWeight: 700,
+                border: '1px solid',
+                borderColor: badgeBorderColor,
+                borderRadius: '999px',
+                backgroundColor: badgeBackground,
+                color: badgeTextColor,
               }}
             >
-              {title}
-            </Typography>
+              <SecurityRoundedIcon
+                sx={{ color: badgeIconColor, fontSize: 18 }}
+              />
+              Acesso seguro à plataforma
+            </Box>
 
-            <Typography
-              className="mt-12 max-w-112.5"
-              sx={{
-                color: panelMutedTextColor,
-                fontSize: '16px',
-                lineHeight: '21px',
-              }}
-            >
-              {subtitle}
-            </Typography>
-          </Stack>
-          <SiteLogo />
-        </Paper>
+            <Stack spacing={2}>
+              <Typography
+                className="max-w-112.5 leading-tight"
+                sx={{
+                  color: panelTextColor,
+                  fontSize: { md: '30px', xs: '26px' },
+                  fontWeight: 700,
+                }}
+              >
+                {title}
+              </Typography>
 
-        <Outlet context={{ mode, setMode }} />
+              <Typography
+                className="mt-12 max-w-112.5"
+                sx={{
+                  color: panelMutedTextColor,
+                  fontSize: '16px',
+                  lineHeight: '21px',
+                }}
+              >
+                {subtitle}
+              </Typography>
+            </Stack>
+            <SiteLogo />
+          </Paper>
+
+          <Outlet context={{ mode, setMode }} />
+        </Box>
       </Box>
-    </Box>
+    </AuthThemeProvider>
   )
 }
 

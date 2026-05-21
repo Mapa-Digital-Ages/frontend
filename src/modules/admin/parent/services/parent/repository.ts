@@ -35,11 +35,25 @@ export interface CreateParentApprovalRepositoryOptions {
 }
 
 function buildGuardianRegistrationPayload(input: ParentApprovalDraftInput) {
+  const guardian = input.guardian!
   return {
-    email: input.email,
-    first_name: input.first_name.trim(),
-    last_name: input.last_name.trim(),
-    password: input.password,
+    email: guardian.email,
+    first_name: guardian.first_name.trim(),
+    last_name: guardian.last_name.trim(),
+    password: guardian.password,
+    phone_number: guardian.phone_number.trim(),
+    student: input.student,
+  }
+}
+
+function buildGuardianUpdatePayload(input: ParentApprovalDraftInput) {
+  const guardian = input.guardian!
+  return {
+    email: guardian.email,
+    first_name: guardian.first_name.trim(),
+    last_name: guardian.last_name.trim(),
+    phone_number: guardian.phone_number.trim(),
+    student: input.student,
   }
 }
 
@@ -62,11 +76,13 @@ export function createParentApprovalRepository({
           query: buildParentApprovalQuery(query),
         }
       )
+
       const items = response.data.map(mapParentApprovalUserToParentApprovalItem)
       const filteredItems = filterApprovalItems(items, query)
 
       return paginateApprovalItems(filteredItems, query)
     },
+
     async createParentRegistration(
       input: ParentApprovalDraftInput
     ): Promise<void> {
@@ -76,18 +92,21 @@ export function createParentApprovalRepository({
         { skipAuth: true }
       )
     },
+
     async updateParentRegistration(
       guardianId: string,
       input: ParentApprovalDraftInput
     ): Promise<void> {
-      await client.patch<unknown>(buildGuardianPath(guardianId), {
-        first_name: input.first_name.trim(),
-        last_name: input.last_name.trim(),
-      })
+      await client.patch<unknown>(
+        buildGuardianPath(guardianId),
+        buildGuardianUpdatePayload(input)
+      )
     },
+
     async removeParentRegistration(guardianId: string): Promise<void> {
       await client.delete<unknown>(buildGuardianPath(guardianId))
     },
+
     async updateParentStatus(
       userId: string,
       status: ParentApprovalStatus

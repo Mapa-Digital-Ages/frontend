@@ -12,7 +12,8 @@ import {
   ListItemText,
 } from '@mui/material'
 import CheckIcon from '@mui/icons-material/Check'
-import FitnessCenterIcon from '@mui/icons-material/FitnessCenter'
+import HourglassBottomRoundedIcon from '@mui/icons-material/HourglassBottomRounded'
+import EditRoundedIcon from '@mui/icons-material/EditRounded'
 import AppSubjectsTags from '@/shared/ui/AppSubjectsTags'
 import EmptyState from '@/shared/ui/EmptyState'
 import type { SubjectContext } from '@/shared/types/common'
@@ -39,21 +40,21 @@ interface PlannerProps {
 }
 
 const dayMap: Record<string, string> = {
-  Monday: 'Segunda',
-  Tuesday: 'Terça',
-  Wednesday: 'Quarta',
-  Thursday: 'Quinta',
-  Friday: 'Sexta',
+  Monday: 'Segunda-feira',
+  Tuesday: 'Terça-feira',
+  Wednesday: 'Quarta-feira',
+  Thursday: 'Quinta-feira',
+  Friday: 'Sexta-feira',
   Saturday: 'Sábado',
   Sunday: 'Domingo',
 }
 
 const dayOrder: Record<string, number> = {
-  Segunda: 0,
-  Terça: 1,
-  Quarta: 2,
-  Quinta: 3,
-  Sexta: 4,
+  'Segunda-feira': 0,
+  'Terça-feira': 1,
+  'Quarta-feira': 2,
+  'Quinta-feira': 3,
+  'Sexta-feira': 4,
   Sábado: 5,
   Domingo: 6,
 }
@@ -101,12 +102,12 @@ function getTaskIcon(status: Task['status']) {
       bg: 'rgba(34,197,94,0.15)',
     },
     adjust: {
-      icon: <FitnessCenterIcon sx={{ fontSize: 20 }} />,
+      icon: <EditRoundedIcon sx={{ fontSize: 20 }} />,
       color: '#eab308',
       bg: 'rgba(234,179,8,0.15)',
     },
     pending: {
-      icon: <FitnessCenterIcon sx={{ fontSize: 20 }} />,
+      icon: <HourglassBottomRoundedIcon sx={{ fontSize: 20 }} />,
       color: '#9ca3af',
       bg: 'rgba(156,163,175,0.15)',
     },
@@ -121,7 +122,6 @@ function Planner({ tasks, sx, hideStatus = false }: PlannerProps) {
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
   const startOfWeek = dayjs().startOf('week').add(1, 'day')
   const endOfWeek = dayjs().endOf('week').add(1, 'day')
-
   const tasksThisWeek = tasks.filter(
     task =>
       dayjs(task.date).isAfter(startOfWeek.subtract(1, 'day')) &&
@@ -130,8 +130,11 @@ function Planner({ tasks, sx, hideStatus = false }: PlannerProps) {
 
   const groupedTasks: Record<string, Task[]> = {}
   for (const task of tasksThisWeek) {
-    const day =
-      dayMap[dayjs(task.date).format('dddd')] ?? dayjs(task.date).format('dddd')
+    const rawDay = dayjs(task.date).format('dddd')
+    const formattedDay =
+      rawDay.charAt(0).toUpperCase() + rawDay.slice(1).toLowerCase()
+    const day = dayMap[formattedDay] ?? formattedDay
+
     if (!groupedTasks[day]) groupedTasks[day] = []
     groupedTasks[day].push(task)
   }
