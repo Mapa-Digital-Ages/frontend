@@ -44,7 +44,6 @@ test('SchoolCompanyPage renders escola view by default with all action buttons',
 
   expect(screen.getByTestId('escola-view')).toBeInTheDocument()
   expect(screen.getByTestId('add-new-school')).toBeInTheDocument()
-  expect(screen.getByTestId('add-new-class')).toBeInTheDocument()
   expect(screen.getByTestId('add-new-student')).toBeInTheDocument()
 })
 
@@ -63,26 +62,26 @@ test('SchoolCompanyPage shows metrics for the initially selected school', () => 
   renderPage()
 
   expect(screen.getByTestId('school-metrics')).toBeInTheDocument()
-  expect(screen.getByText('75%')).toBeInTheDocument()
+  expect(screen.getByText('3')).toBeInTheDocument()
 })
 
-test('SchoolCompanyPage renders classes for the initially selected school', () => {
+test('SchoolCompanyPage renders students for the initially selected school', () => {
   renderPage()
 
-  expect(screen.getByTestId('class-item-c1')).toBeInTheDocument()
-  expect(screen.getByTestId('class-item-c2')).toBeInTheDocument()
-  expect(screen.getByText('7º A')).toBeInTheDocument()
-  expect(screen.getByText('6º A')).toBeInTheDocument()
+  expect(screen.getByTestId('student-item-s1')).toBeInTheDocument()
+  expect(screen.getByTestId('student-item-s2')).toBeInTheDocument()
+  expect(screen.getByText('Lucas Silva')).toBeInTheDocument()
+  expect(screen.getByText('Carlos Nunes')).toBeInTheDocument()
 })
 
-test('SchoolCompanyPage changes classes when another school is selected', async () => {
+test('SchoolCompanyPage changes students when another school is selected', async () => {
   const user = userEvent.setup()
   renderPage()
 
   await user.click(screen.getByTestId('school-item-3'))
 
-  expect(screen.getByTestId('class-item-c5')).toBeInTheDocument()
-  expect(screen.getByText('8º A')).toBeInTheDocument()
+  expect(screen.getByTestId('student-item-s6')).toBeInTheDocument()
+  expect(screen.getByText('Pedro Henrique')).toBeInTheDocument()
 })
 
 test('SchoolCompanyPage filters schools by search query', async () => {
@@ -103,4 +102,28 @@ test('SchoolCompanyPage toggles to empresa view', async () => {
 
   expect(screen.getByTestId('empresa-view')).toBeInTheDocument()
   expect(screen.queryByTestId('escola-view')).not.toBeInTheDocument()
+})
+
+test('SchoolCompanyPage opens new school modal and verifies fields', async () => {
+  const user = userEvent.setup()
+  renderPage()
+
+  await user.click(screen.getByTestId('add-new-school'))
+
+  expect(screen.getByText('Criar nova escola')).toBeInTheDocument()
+
+  const nameInput = screen.getByPlaceholderText('Ex: Escola São Paulo')
+  const locationInput = screen.getByPlaceholderText('Ex: São Paulo, SP')
+
+  await user.type(nameInput, 'Escola de Teste')
+  await user.type(locationInput, 'Testeville, TS')
+
+  expect(nameInput).toHaveValue('Escola de Teste')
+  expect(locationInput).toHaveValue('Testeville, TS')
+  expect(screen.getByTestId('new-school-type')).toBeInTheDocument()
+
+  expect(
+    screen.getByRole('button', { name: /Criar escola/i })
+  ).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /Cancelar/i })).toBeInTheDocument()
 })
