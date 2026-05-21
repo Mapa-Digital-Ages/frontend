@@ -362,6 +362,7 @@ export default function Page() {
       {view === 'escola' && (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           <Box
+            data-testid="empresa-view"
             sx={{
               display: 'flex',
               alignItems: 'flex-start',
@@ -432,6 +433,7 @@ export default function Page() {
               return (
                 <Box
                   key={school.id}
+                  data-testid={`school-item-${school.id}`}
                   onClick={() => setSelectedSchoolId(school.id)}
                   sx={{
                     backgroundColor: isSelected
@@ -580,6 +582,7 @@ export default function Page() {
             {schoolClasses.map(classItem => (
               <Box
                 key={classItem.id}
+                data-testid={`class-item-${classItem.id}`}
                 sx={{
                   display: 'grid',
                   gridTemplateColumns: '1.5fr 1fr 1fr',
@@ -611,6 +614,7 @@ export default function Page() {
       {view === 'empresa' && selectedCompany && (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Box
+            data-testid="empresa-view"
             sx={{
               backgroundColor: 'background.paper',
               border: '1px solid',
@@ -724,6 +728,7 @@ export default function Page() {
                   <Box
                     key={company.id}
                     onClick={() => setSelectedCompanyId(company.id)}
+                    data-testid={`company-item-${company.id}`}
                     sx={{
                       backgroundColor: isSelected
                         ? alpha(AppColors.role.admin.secondary, 0.07)
