@@ -154,9 +154,17 @@ export default function Page() {
     setSubmitError(null)
 
     try {
+      const activityType =
+        task.type === 'Redação'
+          ? 'essay'
+          : task.type === 'Atividade'
+            ? 'activity'
+            : 'exercise'
+
       const uploaded = await uploadService.uploadStudentFile(
         studentId,
-        task.file
+        task.file,
+        activityType
       )
 
       const newTask = mapUploadToTask(uploaded)
