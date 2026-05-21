@@ -10,10 +10,10 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import PersonAddAltRoundedIcon from '@mui/icons-material/PersonAddAltRounded'
 import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded'
 import { alpha, useTheme } from '@mui/material/styles'
-import { Box, Button, colors, Typography } from '@mui/material'
+import { Box, Button, Typography } from '@mui/material'
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 import CancelRoundedIcon from '@mui/icons-material/CancelRounded'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { AppColors } from '@/app/theme/core/colors'
 import BusinessTwoToneIcon from '@mui/icons-material/BusinessTwoTone'
 
@@ -279,27 +279,21 @@ export default function Page() {
     company.name.toLowerCase().includes(query.toLowerCase())
   )
 
-  useEffect(() => {
-    if (
-      selectedSchoolId &&
-      !filteredSchools.some(s => s.id === selectedSchoolId)
-    ) {
-      setSelectedSchoolId(
-        filteredSchools.length > 0 ? filteredSchools[0].id : ''
-      )
-    }
-  }, [filteredSchools, selectedSchoolId])
+  if (
+    selectedSchoolId &&
+    !filteredSchools.some(s => s.id === selectedSchoolId)
+  ) {
+    setSelectedSchoolId(filteredSchools.length > 0 ? filteredSchools[0].id : '')
+  }
 
-  useEffect(() => {
-    if (
-      selectedCompanyId &&
-      !filteredCompanies.some(c => c.id === selectedCompanyId)
-    ) {
-      setSelectedCompanyId(
-        filteredCompanies.length > 0 ? filteredCompanies[0].id : ''
-      )
-    }
-  }, [filteredCompanies, selectedCompanyId])
+  if (
+    selectedCompanyId &&
+    !filteredCompanies.some(c => c.id === selectedCompanyId)
+  ) {
+    setSelectedCompanyId(
+      filteredCompanies.length > 0 ? filteredCompanies[0].id : ''
+    )
+  }
 
   const selectedCompany = COMPANIES.find(
     company => company.id === selectedCompanyId
