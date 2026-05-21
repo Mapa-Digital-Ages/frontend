@@ -92,7 +92,7 @@ const INITIAL_CHATS: ChatSession[] = [
 
 export default function Page() {
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
-  const [chats, setChats] = useState<ChatSession[]>(INITIAL_CHATS)
+  const [chats] = useState<ChatSession[]>(INITIAL_CHATS)
 
   const selectedChat = chats.find(chat => chat.id === selectedChatId) ?? null
 
