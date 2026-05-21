@@ -16,16 +16,6 @@ export default defineConfig({
       //  | 'escola_empresa'
     },
     setupNodeEvents(on, config) {
-      console.log('--- DEBUG VARIÁVEIS CYPRESS ---')
-      console.log(
-        'E-mail do Aluno carregado:',
-        process.env.VITE_EMAIL_LOGIN_ALUNO
-      )
-      console.log(
-        'Senha do Aluno carregada:',
-        process.env.VITE_PASSWORD_LOGIN_ALUNO ? '****' : 'UNDEFINED'
-      )
-      console.log('--------------------------------')
       return config
     },
   },
