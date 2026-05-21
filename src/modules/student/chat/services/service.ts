@@ -1,28 +1,16 @@
-import { COOKIE_KEYS } from '@/shared/constants/storage'
 import { httpClient } from '@/shared/lib/http/client'
-import type { StudentTask, SummaryMetric } from '@/shared/types/common'
-import { getCookie } from '@/shared/lib/storage/cookies'
+import type { ChatSession } from '@/modules/student/chat/types/types'
 
-export const studentService = {
-  getName(): string | null {
-    return getCookie(COOKIE_KEYS.authName)
-  },
-
-  getEmail(): string | null {
-    return getCookie(COOKIE_KEYS.authEmail)
-  },
-
-  getOrganization(): string | null {
-    return getCookie(COOKIE_KEYS.authOrganization)
-  },
-
-  async getSummary() {
-    const response = await httpClient.get<SummaryMetric[]>('student/summary')
+export const chatService = {
+  async getChats(): Promise<ChatSession[]> {
+    const response = await httpClient.get<ChatSession[]>('student/chats')
     return response.data
   },
 
-  async getTasks() {
-    const response = await httpClient.get<StudentTask[]>('student/tasks')
+  async getChatById(chatId: string): Promise<ChatSession> {
+    const response = await httpClient.get<ChatSession>(
+      `student/chats/${encodeURIComponent(chatId)}`
+    )
     return response.data
   },
 }
