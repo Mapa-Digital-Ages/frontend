@@ -63,3 +63,10 @@ export interface AdminStat {
   value: string
   description: string
 }
+
+export interface CompanyStat {
+  id: string
+  label: string
+  value: string
+  description: string
+}
