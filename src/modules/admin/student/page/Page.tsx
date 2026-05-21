@@ -10,6 +10,7 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded'
 import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded'
 import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded'
 import UnfoldMoreRoundedIcon from '@mui/icons-material/UnfoldMoreRounded'
+import SwapHorizRoundedIcon from '@mui/icons-material/SwapHorizRounded'
 import { AppColors } from '@/app/theme/core/colors'
 import { IconButton, Menu, MenuItem, CircularProgress } from '@mui/material'
 import { Box, Button, Typography } from '@mui/material'
@@ -270,6 +271,25 @@ export default function Page() {
     setIsEditModalOpen(false)
   }
 
+  async function handleToggleStatus() {
+    if (!selectedStudentId) return
+    setMenuAnchorEl(null)
+    const student = students.find(s => s.id === selectedStudentId)
+    if (!student) return
+    const updated = await studentService.toggleStudentStatus(
+      selectedStudentId,
+      student.status === 'inativo'
+    )
+    setStudents(current =>
+      current.map(s => (s.id === selectedStudentId ? updated : s))
+    )
+    setMetrics(m => ({
+      ...m,
+      active: updated.status === 'ativo' ? m.active + 1 : m.active - 1,
+      inactive: updated.status === 'inativo' ? m.inactive + 1 : m.inactive - 1,
+    }))
+  }
+
   async function handleDeleteStudent() {
     if (!selectedStudentId) return
     const student = students.find(s => s.id === selectedStudentId)
@@ -516,6 +536,20 @@ export default function Page() {
             <EditRoundedIcon sx={{ fontSize: 18 }} />
             <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
               Editar aluno
+            </Typography>
+          </MenuItem>
+          <MenuItem
+            data-testid="toggle-status-action"
+            onClick={() => {
+              void handleToggleStatus()
+            }}
+            sx={{ color: 'text.secondary', gap: 1.25, py: 1.1 }}
+          >
+            <SwapHorizRoundedIcon sx={{ fontSize: 18 }} />
+            <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+              {selectedStudentRow?.status === 'ativo'
+                ? 'Tornar inativo'
+                : 'Tornar ativo'}
             </Typography>
           </MenuItem>
           <MenuItem

@@ -166,6 +166,19 @@ function updateMockStudent(id: string, input: UpdateStudentInput): StudentItem {
   return updated
 }
 
+function toggleMockStatus(id: string): StudentItem {
+  let updated: StudentItem | undefined
+
+  mockStudents = mockStudents.map(s => {
+    if (s.id !== id) return s
+    updated = { ...s, status: s.status === 'ativo' ? 'inativo' : 'ativo' }
+    return updated
+  })
+
+  if (!updated) throw new Error(`Student ${id} not found`)
+  return updated
+}
+
 function deleteMockStudent(id: string): void {
   mockStudents = mockStudents.filter(s => s.id !== id)
 }
@@ -222,6 +235,13 @@ export function createStudentRepository({
         if (!shouldUseFallback(error, allowFallback)) throw error
         return updateMockStudent(id, input)
       }
+    },
+
+    async toggleStudentStatus(
+      id: string,
+      _isActive: boolean
+    ): Promise<StudentItem> {
+      return toggleMockStatus(id)
     },
 
     async deleteStudent(id: string): Promise<void> {
