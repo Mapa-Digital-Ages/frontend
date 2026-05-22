@@ -6,7 +6,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { createAppTheme } from '@/app/theme/core/theme'
 import { APP_ROUTES, buildStudentTrailRoute } from '@/app/router/paths'
-import StudentAdaptiveTrailDetailPage from '@/modules/student/adaptivetrail-detail/page/Page'
+import StudentAdaptiveTrailDetailPage from '@/modules/student/adaptivetrail/detail/page/Page'
 
 function renderPage(trailId = 'math') {
   render(
@@ -23,38 +23,47 @@ function renderPage(trailId = 'math') {
   )
 }
 
-test('StudentAdaptiveTrailDetailPage shows the trail flow with a locked step', async () => {
+test('StudentAdaptiveTrailDetailPage shows the trail title and all steps', async () => {
   renderPage()
 
   expect(
-    await screen.findByRole('heading', {
-      name: /trilha adaptativa de matemática/i,
-    })
+    await screen.findByRole('heading', { name: /fundamentos de algebra/i })
   ).toBeInTheDocument()
+
+  expect(screen.getByText('Equações do 1º Grau')).toBeInTheDocument()
+  expect(screen.getByText('Frações e Decimais')).toBeInTheDocument()
+  expect(screen.getByText('Problemas Aplicados')).toBeInTheDocument()
   expect(
-    screen.getAllByText('Equações do 1º Grau - Introdução').length
+    screen.getAllByText('Libera ao concluir a etapa anterior').length
   ).toBeGreaterThan(0)
-  expect(screen.getByText('Conteúdo bloqueado')).toBeInTheDocument()
+})
+
+test('StudentAdaptiveTrailDetailPage shows sub-steps when active step is expanded', async () => {
+  renderPage()
+
+  await screen.findByRole('heading', { name: /fundamentos de algebra/i })
+
   expect(
-    screen.getByText('Libera ao concluir a etapa anterior')
+    screen.getByText('Assistir: Introdução às Equações do 1º Grau')
   ).toBeInTheDocument()
 })
 
-test('StudentAdaptiveTrailDetailPage opens the onboarding question flow from an unlocked step', async () => {
+test('StudentAdaptiveTrailDetailPage unlocks quiz sub-step after completing video', async () => {
   const user = userEvent.setup()
 
   renderPage()
 
-  const answerStepButton = await screen.findByRole('button', {
-    name: /responder etapa equações do 1º grau - introdução/i,
+  const videoButton = await screen.findByRole('button', {
+    name: /responder etapa assistir: introdução às equações do 1º grau/i,
   })
 
-  await user.click(answerStepButton)
+  await user.click(videoButton)
 
   await waitFor(() => {
     expect(
-      screen.getByRole('heading', { name: /questionário da trilha/i })
+      screen.getByRole('button', {
+        name: /responder etapa questões de equações do 1º grau/i,
+      })
     ).toBeInTheDocument()
   })
-  expect(screen.getByText('Quanto vale x em 2x + 4 = 10?')).toBeInTheDocument()
 })
