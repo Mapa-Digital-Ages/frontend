@@ -22,7 +22,6 @@ interface School {
   name: string
   city: string
   state: string
-  classes: number
   students: number
   status: 'ativa' | 'pendente' | 'inativa'
   progress: number
@@ -45,7 +44,6 @@ const INITIAL_SCHOOLS: School[] = [
     name: 'Escola São Paulo',
     city: 'São Paulo',
     state: 'SP',
-    classes: 2,
     students: 3,
     status: 'ativa',
     progress: 75,
@@ -57,7 +55,6 @@ const INITIAL_SCHOOLS: School[] = [
     name: 'Escola Rio Branco',
     city: 'Rio de Janeiro',
     state: 'RJ',
-    classes: 2,
     students: 2,
     status: 'ativa',
     progress: 60,
@@ -69,7 +66,6 @@ const INITIAL_SCHOOLS: School[] = [
     name: 'Escola Horizonte',
     city: 'Belo Horizonte',
     state: 'MG',
-    classes: 1,
     students: 2,
     status: 'pendente',
     progress: 40,
@@ -521,13 +517,6 @@ export default function Page() {
                       <AppTag
                         size="sm"
                         tag={{
-                          label: `${school.classes} turma(s)`,
-                          color: theme.palette.primary.main,
-                        }}
-                      />
-                      <AppTag
-                        size="sm"
-                        tag={{
                           label: `${school.students} aluno(s)`,
                           color: theme.palette.info?.main ?? '#0ea5e9',
                         }}
@@ -885,7 +874,6 @@ export default function Page() {
               name: newSchoolName,
               city: city,
               state: state,
-              classes: 0,
               students: 0,
               status: 'pendente',
               progress: 0,
