@@ -143,8 +143,8 @@ export default function Page() {
 
       <Box className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <AppCard
-          contentClassName="gap-2 p-5"
-          contentSx={{ maxHeight: 260, overflowY: 'auto' }}
+          contentClassName="gap-3 p-5"
+          contentSx={{ maxHeight: 400, overflowY: 'auto' }}
           data-testid="support-requests-section"
           title="Solicitações de Apoio"
           titleClassName="text-2xl font-bold md:text-3xl"
@@ -230,8 +230,8 @@ export default function Page() {
         </AppCard>
 
         <AppCard
-          contentClassName="gap-2 p-5"
-          contentSx={{ maxHeight: 260, overflowY: 'auto' }}
+          contentClassName="gap-3 p-5"
+          contentSx={{ maxHeight: 400, overflowY: 'auto' }}
           data-testid="supported-schools-section"
           title="Escolas Apoiadas"
           titleClassName="text-2xl font-bold md:text-3xl"
