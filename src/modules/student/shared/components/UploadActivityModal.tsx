@@ -9,7 +9,7 @@ import {
   MenuItem,
   Typography,
 } from '@mui/material'
-import { useEffect, useState, type ChangeEvent } from 'react'
+import { useMemo, useState, type ChangeEvent } from 'react'
 import AppInput from '@/shared/ui/AppInput'
 import AppButton from '@/shared/ui/AppButton'
 
@@ -64,15 +64,12 @@ function UploadActivityModal({
   const [file, setFile] = useState<File | null>(null)
   const [errorMessage, setErrorMessage] = useState('')
 
-  useEffect(() => {
-    setSubjectId(current => {
-      if (current === 'none') {
-        return subjects[0]?.id ?? 'none'
-      }
-      const stillExists = subjects.some(option => option.id === current)
-      return stillExists ? current : (subjects[0]?.id ?? 'none')
-    })
-  }, [subjects])
+  const resolvedSubjectId = useMemo<number | 'none'>(() => {
+    if (subjectId !== 'none' && subjects.some(s => s.id === subjectId)) {
+      return subjectId
+    }
+    return subjects[0]?.id ?? 'none'
+  }, [subjectId, subjects])
 
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const selectedFile = event.target.files?.[0]
@@ -110,13 +107,13 @@ function UploadActivityModal({
       const renamedFile = new File([file], title.trim(), { type: file.type })
       await onAddTask({
         title: title.trim(),
-        subjectId: subjectId === 'none' ? null : subjectId,
+        subjectId: resolvedSubjectId === 'none' ? null : resolvedSubjectId,
         type,
         file: renamedFile,
       })
 
       setTitle('')
-      setSubjectId(subjects[0]?.id ?? 'none')
+      setSubjectId('none')
       setType('Exercício')
       setFile(null)
       setErrorMessage('')
@@ -170,7 +167,11 @@ function UploadActivityModal({
             <AppInput
               select
               label="Disciplina"
-              value={subjectId === 'none' ? 'none' : String(subjectId)}
+              value={
+                resolvedSubjectId === 'none'
+                  ? 'none'
+                  : String(resolvedSubjectId)
+              }
               onChange={event => {
                 const raw = event.target.value
                 setSubjectId(raw === 'none' ? 'none' : Number(raw))
