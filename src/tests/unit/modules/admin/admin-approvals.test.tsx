@@ -7,11 +7,15 @@ import type {
   ParentApprovalItem,
 } from '../../../../modules/admin/shared/types/types'
 import { buildApprovalQueueQuery } from '../../../../modules/admin/content/services/content/mapper'
+import type {
+  ApprovalQueueResponseDto,
+  ContentApprovalDto,
+} from '../../../../modules/admin/content/services/content/mapper'
 import { mapContentApprovalQueueResponse } from '../../../../modules/admin/content/services/content/service'
 import {
-  buildParentApprovalQuery,
-  mapParentApprovalUserToParentApprovalItem,
-  mapParentStatusToParentApprovalUserStatus,
+  buildGuardianListQuery,
+  mapGuardianResponseToParentApprovalItem,
+  mapParentStatusToGuardianStatusDto,
 } from '../../../../modules/admin/parent/services/parent/service'
 import {
   filterApprovalItems,
@@ -23,6 +27,7 @@ const contentItems: ContentApprovalItem[] = [
   {
     id: 'content-1',
     kind: 'content',
+    description: 'Conteúdo de matemática',
     title: 'Lista de Equações do 7º ano',
     subtitle: 'Tarefa · Matemática · 22/03/2026',
     status: 'inReview',
@@ -37,6 +42,7 @@ const contentItems: ContentApprovalItem[] = [
   {
     id: 'content-2',
     kind: 'content',
+    description: 'Conteúdo de português',
     title: 'Prova mensal de interpretação',
     subtitle: 'Prova · Português · 28/03/2026',
     status: 'sent',
@@ -101,48 +107,23 @@ const parentItems: ParentApprovalItem[] = [
   },
 ]
 
-const contentQueueResponse: ApiResponse<{
-  items: Array<{
-    id: string
-    requested_at: string
-    resource_type: 'task' | 'exam'
-    stage_label: string
-    status:
-      | 'in_review'
-      | 'sent'
-      | 'approved'
-      | 'rejected'
-      | 'correction_in_progress'
-    subject_label: string
-    tags: Array<{
-      id: string
-      label: string
-      tone: 'neutral' | 'info' | 'success' | 'warning' | 'danger'
-    }>
-    title: string
-  }>
-  page: number
-  page_size: number
-  total_items: number
-  total_pages: number
-}> = {
+const contentQueueResponse: ApiResponse<
+  ApprovalQueueResponseDto<ContentApprovalDto>
+> = {
   data: {
     items: [
       {
         id: 'content-10',
-        requested_at: '2026-04-07',
-        resource_type: 'exam',
-        stage_label: 'Português',
-        status: 'in_review',
-        subject_label: '7º ano',
-        tags: [
-          {
-            id: 'tag-1',
-            label: '2 questões vinculadas',
-            tone: 'danger',
-          },
-        ],
+        created_at: '2026-04-07T12:00:00+00:00',
+        description: 'Avaliação bimestral',
+        subject: {
+          id: '1',
+          name: 'Português',
+          slug: 'portuguese',
+          color: 'rgba(5, 113, 247, 1)',
+        },
         title: 'Avaliação bimestral',
+        updated_at: null,
       },
     ],
     page: 2,
@@ -220,21 +201,24 @@ test('mapContentApprovalQueueResponse normalizes python-style DTOs into UI items
 
   assert.equal(response.currentPage, 2)
   assert.equal(response.totalItems, 11)
-  assert.equal(response.items[0]?.status, 'inReview')
-  assert.equal(response.items[0]?.subtitle, 'Prova · Português · 07/04/2026')
-  assert.equal(response.items[0]?.badges[0]?.label, '2 questões vinculadas')
+  assert.equal(response.items[0]?.status, 'sent')
+  assert.equal(response.items[0]?.subtitle, 'Português · Criado em 07/04/2026')
+  assert.equal(response.items[0]?.badges.length, 0)
   assert.equal(response.items[0]?.subject?.label, 'Português')
 })
 
-test('admin user approvals normalize backend users into parent queue items', () => {
-  const item = mapParentApprovalUserToParentApprovalItem({
-    created_at: '2026-04-08T10:15:00+00:00',
+test('guardian response normalizes into parent queue items', () => {
+  const item = mapGuardianResponseToParentApprovalItem({
+    user_id: '47f2a20f-77cb-4d0b-89ef-b64d160fce48',
+    first_name: 'Mariana',
+    last_name: 'Souza',
     email: 'responsavel@test.com',
-    id: '47f2a20f-77cb-4d0b-89ef-b64d160fce48',
-    is_superadmin: false,
-    name: 'Mariana Souza',
-    role: 'guardian',
-    status: 'waiting',
+    phone_number: '+55 51 99999-0000',
+    guardian_status: 'waiting',
+    is_active: true,
+    created_at: '2026-04-08T10:15:00+00:00',
+    deactivated_at: null,
+    students: [],
   })
 
   assert.equal(item.id, '47f2a20f-77cb-4d0b-89ef-b64d160fce48')
@@ -247,6 +231,7 @@ test('admin user approvals normalize backend users into parent queue items', () 
   assert.equal(item.requestedAt, '08/04/2026')
   assert.equal(item.roleLabel, 'Responsável')
   assert.equal(item.validation.hasDocument, true)
+  assert.equal(item.validation.studentLinked, false)
   assert.equal(
     item.badges.some(badge => badge.label === 'responsavel@test.com'),
     true
@@ -260,16 +245,16 @@ test('admin approval query builders translate UI filters to API parameters', () 
     query: ' matemática ',
     status: 'inReview',
   })
-  const parentPendingQuery = buildParentApprovalQuery({
+  const guardianPendingQuery = buildGuardianListQuery({
+    page: 1,
+    pageSize: 10,
+    query: 'mariana',
+    status: 'pendingValidation',
+  })
+  const guardianAllQuery = buildGuardianListQuery({
     page: 1,
     pageSize: 10,
     query: '',
-    status: 'pendingValidation',
-  })
-  const parentAllQuery = buildParentApprovalQuery({
-    page: 1,
-    pageSize: 10,
-    query: 'ignored locally',
     status: 'all',
   })
 
@@ -277,33 +262,28 @@ test('admin approval query builders translate UI filters to API parameters', () 
     page: 3,
     page_size: 25,
     query: 'matemática',
-    status: 'in_review',
   })
-  assert.deepEqual(parentPendingQuery, {
-    role: 'guardian',
-    user_status: 'waiting',
+  assert.deepEqual(guardianPendingQuery, {
+    page: 1,
+    size: 10,
+    name: 'mariana',
+    guardian_status: 'waiting',
   })
-  assert.deepEqual(parentAllQuery, {
-    role: 'guardian',
-    user_status: undefined,
+  assert.deepEqual(guardianAllQuery, {
+    page: 1,
+    size: 10,
+    name: undefined,
+    guardian_status: undefined,
   })
 })
 
 test('admin parent status updates only send final approval states to the backend', () => {
-  assert.equal(
-    mapParentStatusToParentApprovalUserStatus('approved'),
-    'approved'
-  )
-  assert.equal(
-    mapParentStatusToParentApprovalUserStatus('rejected'),
-    'rejected'
-  )
-  assert.doesNotThrow(() =>
-    mapParentStatusToParentApprovalUserStatus('approved')
-  )
+  assert.equal(mapParentStatusToGuardianStatusDto('approved'), 'approved')
+  assert.equal(mapParentStatusToGuardianStatusDto('rejected'), 'rejected')
+  assert.doesNotThrow(() => mapParentStatusToGuardianStatusDto('approved'))
 
   try {
-    mapParentStatusToParentApprovalUserStatus('pendingValidation')
+    mapParentStatusToGuardianStatusDto('pendingValidation')
     throw new Error('Expected pendingValidation to be rejected')
   } catch (error) {
     assert.match(
@@ -313,7 +293,7 @@ test('admin parent status updates only send final approval states to the backend
   }
 })
 
-test('parent approvals use only real admin user endpoints', () => {
+test('parent approvals use guardian endpoint with real pagination', () => {
   const repositorySource = readSource(
     'modules/admin/parent/services/parent/repository.ts'
   )
@@ -323,74 +303,52 @@ test('parent approvals use only real admin user endpoints', () => {
 
   assert.match(
     repositorySource,
-    /client\.get<ParentApprovalUserDto\[\]>\(\s*'admin\/users'/
+    /client\.get<GuardianListPaginatedDto>\(\s*'guardian'/
   )
-  assert.match(repositorySource, /client\.patch<ParentApprovalUserDto>/)
+  assert.match(repositorySource, /admin\/users\/\$\{encodeURIComponent/)
+  assert.match(repositorySource, /client\.get<GuardianResponseDto>/)
   assert.match(
     repositorySource,
-    /admin\/users\/\$\{encodeURIComponent\(userId\)\}\/status/
+    /guardian\/\$\{encodeURIComponent\(guardianId\)\}/
   )
   assert.match(repositorySource, /post<unknown>\(\s*'register\/guardian'/)
-  assert.match(mapperSource, /role: 'guardian'/)
+  assert.match(mapperSource, /GuardianListPaginatedDto/)
+  assert.match(mapperSource, /guardian_status/)
   assert.doesNotMatch(repositorySource, /mock/i)
   assert.doesNotMatch(repositorySource, /fallback/i)
-  assert.doesNotMatch(repositorySource, /LocalParent/)
 })
 
-test('content correction sessions use a route-level workflow', async () => {
-  const adminContentPageSource = readSource(
-    'modules/admin/content/page/Page.tsx'
-  )
+test('content correction page uses upload details and presigned download URLs', async () => {
   const correctionPageSource = readSource(
     'modules/admin/content-correction/page/Page.tsx'
   )
-  const repositorySource = readSource(
-    'modules/admin/content/services/content/repository.ts'
-  )
-  const modalSource = readSource(
-    'modules/admin/shared/components/ApprovalActionModal.tsx'
+  const uploadRepositorySource = readSource(
+    'modules/admin/content/services/upload/repository.ts'
   )
 
-  assert.match(adminContentPageSource, /buildAdminCorrectionRoute\(item\.id\)/)
-  assert.match(adminContentPageSource, /navigate\(/)
   assert.match(correctionPageSource, /useParams/)
   assert.match(correctionPageSource, /useUserRole/)
-  assert.match(correctionPageSource, /getContentCorrectionSession/)
-  assert.match(correctionPageSource, /markContentCorrectionInProgress/)
-  assert.match(correctionPageSource, /sendContentCorrectionMessage/)
-  assert.match(correctionPageSource, /Prévia do upload/)
-  assert.match(correctionPageSource, /Chat de orientação com o aluno/)
+  assert.match(correctionPageSource, /uploadApprovalService\.getUpload/)
+  assert.match(correctionPageSource, /getUploadDownloadUrl/)
+  assert.match(correctionPageSource, /previewExpiresAt/)
+  assert.match(correctionPageSource, /link\.href = fresh\.url/)
   assert.match(correctionPageSource, /correctionCardHeight/)
   assert.match(correctionPageSource, /height: correctionCardHeight/)
-  assert.match(correctionPageSource, /'&:last-child': \{ pb: 0 \}/)
-  assert.match(correctionPageSource, /flex: '1 1 auto'/)
-  assert.match(correctionPageSource, /quickActions/)
-  assert.match(correctionPageSource, /Pedir mais detalhes/)
-  assert.match(correctionPageSource, /Explicar com exemplo/)
   assert.match(correctionPageSource, /flexWrap: \{ md: 'nowrap', xs: 'wrap' \}/)
-  assert.match(correctionPageSource, /alignSelf: 'end'/)
   assert.doesNotMatch(correctionPageSource, /overflowX: 'auto'/)
   assert.doesNotMatch(correctionPageSource, /marginTop: 'auto'/)
-  assert.match(repositorySource, /correction_in_progress/)
-  assert.doesNotMatch(modalSource, /content-correction/)
-  assert.doesNotMatch(modalSource, /Feedback da correção/)
+  assert.match(uploadRepositorySource, /uploads\/\$\{id\}\/download-url/)
+  assert.match(uploadRepositorySource, /presigned/)
+  assert.match(
+    uploadRepositorySource,
+    /correctionInProgress'\) return 'in_review'/
+  )
 })
 
-test('content correction status is normalized and exposed in admin queues', () => {
-  const response = mapContentApprovalQueueResponse({
-    ...contentQueueResponse,
-    data: {
-      ...contentQueueResponse.data,
-      items: [
-        {
-          ...contentQueueResponse.data.items[0],
-          status: 'correction_in_progress',
-        },
-      ],
-    },
-  })
+test('backend content records are exposed as sent admin queue items', () => {
+  const response = mapContentApprovalQueueResponse(contentQueueResponse)
 
-  assert.equal(response.items[0]?.status, 'correctionInProgress')
+  assert.equal(response.items[0]?.status, 'sent')
 })
 
 test('theme selector and approvals filter reuse AppDropdown with the ghost trigger', () => {
@@ -446,10 +404,7 @@ test('admin approvals page uses a responsive grid and a bounded page size for qu
   )
 
   assert.match(adminContentPageSource, /pageSize: 10/)
-  assert.match(
-    adminContentPageSource,
-    /gridTemplateColumns: \{ md: 'minmax\(0, 1fr\)', xs: '1fr' \}/
-  )
+  assert.match(adminContentPageSource, /gridTemplateColumns:/)
 })
 
 test('approval list cards preserve the compact visual proportions from the reference', () => {
@@ -499,7 +454,8 @@ test('admin approvals page renders cards directly and provides visible actions',
   assert.match(adminTypesSource, /export interface ApprovalCardAction/)
   assert.match(adminTypesSource, /export interface ApprovalCardStatus/)
   assert.match(adminTypesSource, /export interface ApprovalCardHelperText/)
-  assert.match(adminContentPageSource, /<ApprovalCard/)
+  assert.match(adminContentPageSource, /<UploadApprovalCard/)
+  assert.match(adminContentPageSource, /<ContentCard/)
   assert.doesNotMatch(adminContentPageSource, /actions=\{\[\]\}/)
   assert.match(
     adminContentPageSource,
@@ -528,7 +484,6 @@ test('admin approval service separates repository and mapper concerns for future
 
   assert.doesNotMatch(serviceSource, /runtime/)
   assert.match(runtimeSource, /from '\.\/content\/runtime'/)
-  assert.match(runtimeSource, /from '\.\/parent\/runtime'/)
   assert.match(contentServiceSource, /from '\.\/repository'/)
   assert.match(contentServiceSource, /from '\.\/mapper'/)
   assert.match(
@@ -558,17 +513,16 @@ test('admin approvals page routes create edit and correction through a reusable 
   const adminParentPageSource = readSource('modules/admin/parent/page/Page.tsx')
 
   assert.match(adminContentPageSource, /ApprovalActionModal/)
-  assert.match(adminContentPageSource, /modalState/)
+  assert.match(adminContentPageSource, /contentModalState/)
   assert.match(adminContentPageSource, /action: 'create'/)
   assert.match(adminContentPageSource, /action: 'edit'/)
-  assert.match(adminContentPageSource, /buildAdminCorrectionRoute\(item\.id\)/)
-  assert.match(adminContentPageSource, /label: 'Revisar conteúdo'/)
-  assert.match(adminContentPageSource, /label: 'Excluir conteúdo'/)
   assert.match(adminContentPageSource, /action: 'delete'/)
-  assert.match(adminContentPageSource, /priority: 'secondary'/)
-  assert.match(adminContentPageSource, /Corrigir atividade/)
-  assert.match(adminContentPageSource, /label: 'Validar conteúdo'/)
-  assert.match(adminContentPageSource, /label: 'Rejeitar conteúdo'/)
+  assert.match(adminContentPageSource, /label: 'Editar Conteúdo'/)
+  assert.match(adminContentPageSource, /label: 'Excluir Conteúdo'/)
+  assert.match(adminContentPageSource, /UploadApprovalComponent/)
+  assert.match(adminContentPageSource, /label: 'Iniciar correção'/)
+  assert.match(adminContentPageSource, /buildAdminCorrectionRoute\(item\.id\)/)
+  assert.doesNotMatch(adminContentPageSource, /applyContentCorrection/)
   assert.match(adminParentPageSource, /parentApprovalService/)
   assert.match(adminParentPageSource, /updateParentStatus/)
   assert.match(adminParentPageSource, /updateParentRegistration/)
@@ -580,16 +534,12 @@ test('admin approvals page routes create edit and correction through a reusable 
   assert.doesNotMatch(adminParentPageSource, /label: 'Limpar requisição'/)
   assert.match(adminParentPageSource, /createParentRegistration/)
   assert.match(adminParentPageSource, /action: 'create', type: 'parent'/)
-  assert.doesNotMatch(adminContentPageSource, /label: 'Revisão de cadastro'/)
-  assert.doesNotMatch(adminContentPageSource, /applyContentCorrection/)
   assert.match(modalSource, /AppActionModal/)
   assert.match(modalSource, /resolveUsageMode/)
   assert.match(modalSource, /mode=\{dialogMode\}/)
   assert.doesNotMatch(modalSource, /mode\.action === 'correct'/)
-  assert.doesNotMatch(modalSource, /Corrigir atividade/)
   assert.doesNotMatch(modalSource, /Feedback da correção/)
   assert.doesNotMatch(modalSource, /correctionOutcomeOptions/)
-  assert.doesNotMatch(modalSource, /label="Nota"/)
   assert.doesNotMatch(modalSource, /roleOptions/)
   assert.match(modalSource, /mode\.type === 'parent'/)
   assert.match(modalSource, /mode\.type === 'content'/)

@@ -6,159 +6,141 @@ import type {
   ParentApprovalStatus,
 } from '@/modules/admin/shared/types/types'
 
-export type ParentApprovalUserStatusDto = 'waiting' | 'approved' | 'rejected'
-export type ParentApprovalUserRoleDto = 'admin' | 'guardian' | 'student'
+export type GuardianStatusDto = 'waiting' | 'approved' | 'rejected'
 
-export interface ParentApprovalUserDto {
-  created_at: string
+export interface GuardianStudentDto {
+  user_id: string
+  first_name: string
+  last_name: string
   email: string
-  first_name?: string
-  id: string
-  is_superadmin: boolean
-  last_name?: string
-  name: string
-  phone_number?: string
-  role: ParentApprovalUserRoleDto
-  status: ParentApprovalUserStatusDto
+  birth_date: string
+  student_class: string
 }
 
-const parentStatusMap: Record<
-  ParentApprovalUserStatusDto,
-  ParentApprovalStatus
-> = {
-  approved: 'approved',
-  rejected: 'rejected',
+export interface GuardianResponseDto {
+  user_id: string
+  first_name: string
+  last_name: string
+  email: string
+  phone_number: string | null
+  guardian_status: GuardianStatusDto
+  is_active: boolean
+  created_at: string | null
+  deactivated_at: string | null
+  students: GuardianStudentDto[]
+}
+
+export interface GuardianListPaginatedDto {
+  items: GuardianResponseDto[]
+  total: number
+  page: number
+  size: number
+}
+
+const guardianStatusMap: Record<GuardianStatusDto, ParentApprovalStatus> = {
   waiting: 'pendingValidation',
+  approved: 'approved',
+  rejected: 'rejected',
 }
 
-const parentStatusDtoMap: Record<
+const guardianStatusDtoMap: Record<
   Exclude<ParentApprovalStatus, 'pendingValidation'>,
-  ParentApprovalUserStatusDto
+  GuardianStatusDto
 > = {
   approved: 'approved',
   rejected: 'rejected',
 }
 
-const statusQueryMap: Partial<
-  Record<ParentApprovalStatus, ParentApprovalUserStatusDto>
-> = {
-  approved: 'approved',
-  pendingValidation: 'waiting',
-  rejected: 'rejected',
+export function buildGuardianListQuery(
+  query: ApprovalQueueQuery
+): HttpRequestOptions['query'] {
+  const guardianStatus: GuardianStatusDto | undefined =
+    query.status === 'approved'
+      ? 'approved'
+      : query.status === 'pendingValidation'
+        ? 'waiting'
+        : query.status === 'rejected'
+          ? 'rejected'
+          : undefined
+
+  return {
+    page: query.page,
+    size: query.pageSize,
+    name: query.query.trim() || undefined,
+    guardian_status: guardianStatus,
+  }
 }
 
-const roleLabelMap: Record<ParentApprovalUserRoleDto, string> = {
-  admin: 'Administrador',
-  guardian: 'Responsável',
-  student: 'Aluno',
-}
-
-function formatBrazilianDate(value: string) {
+function formatBrazilianDate(value: string | null): string {
+  if (!value) return 'Data desconhecida'
   const datePart = value.split('T')[0] ?? value
   const [year, month, day] = datePart.split('-')
-
-  if (!year || !month || !day) {
-    return value
-  }
-
+  if (!year || !month || !day) return value
   return `${day}/${month}/${year}`
 }
 
-function splitDisplayName(name: string) {
-  const [firstName = '', ...lastNameParts] = name.trim().split(/\s+/)
+function getFirstLinkedStudentName(students: GuardianStudentDto[]): string {
+  if (students.length === 0) return 'Aluno a confirmar'
+  const s = students[0]!
+  return `${s.first_name} ${s.last_name}`.trim()
+}
 
+function buildGuardianItem(dto: GuardianResponseDto): GuardianItem {
   return {
-    firstName,
-    lastName: lastNameParts.join(' '),
+    email: dto.email,
+    first_name: dto.first_name,
+    last_name: dto.last_name,
+    phone_number: dto.phone_number ?? '',
   }
 }
 
-function getParentNames(user: ParentApprovalUserDto) {
-  const fallback = splitDisplayName(user.name)
-
-  return {
-    firstName: user.first_name?.trim() || fallback.firstName,
-    lastName: user.last_name?.trim() || fallback.lastName,
-  }
-}
-
-function getGuardian(user: ParentApprovalUserDto): GuardianItem {
-  const name = getParentNames(user)
-
-  return {
-    email: user.email,
-    first_name: name.firstName,
-    last_name: name.lastName,
-    phone_number: user.phone_number ?? '',
-  }
-}
-
-function getParentTitle(guardian: GuardianItem, fallbackName: string) {
-  const fullName = `${guardian.first_name} ${guardian.last_name}`.trim()
-
-  return fullName || fallbackName || 'Responsável sem nome'
-}
-
-export function buildParentApprovalQuery(query: ApprovalQueueQuery) {
-  const userStatus =
-    query.status === 'approved' ||
-    query.status === 'pendingValidation' ||
-    query.status === 'rejected'
-      ? statusQueryMap[query.status]
-      : undefined
-
-  return {
-    role: 'guardian',
-    user_status: userStatus,
-  } satisfies HttpRequestOptions['query']
-}
-
-export function mapParentStatusToParentApprovalUserStatus(
-  status: ParentApprovalStatus
-): ParentApprovalUserStatusDto {
-  if (status === 'pendingValidation') {
-    throw new Error(
-      'Não é possível retornar um usuário para aguardando pela fila de aprovação.'
-    )
-  }
-
-  return parentStatusDtoMap[status]
-}
-
-export function mapParentApprovalUserToParentApprovalItem(
-  user: ParentApprovalUserDto
+export function mapGuardianResponseToParentApprovalItem(
+  dto: GuardianResponseDto
 ): ParentApprovalItem {
-  const requestedAt = formatBrazilianDate(user.created_at)
-  const roleLabel = roleLabelMap[user.role]
-  const guardian = getGuardian(user)
-  const title = getParentTitle(guardian, user.name)
+  const requestedAt = formatBrazilianDate(dto.created_at)
+  const guardian = buildGuardianItem(dto)
+  const fullName =
+    `${dto.first_name} ${dto.last_name}`.trim() || 'Responsável sem nome'
+  const childName = getFirstLinkedStudentName(dto.students)
 
   return {
     badges: [
       {
-        id: `${user.email}-email`,
-        label: user.email,
+        id: `${dto.user_id}-email`,
+        label: dto.email,
         tone: 'neutral',
       },
       {
-        id: `${user.email}-requested-at`,
+        id: `${dto.user_id}-requested-at`,
         label: `Solicitação em ${requestedAt}`,
         tone: 'info',
       },
     ],
-    childName: 'Aluno a confirmar',
+    childName,
     guardian,
-    id: user.id,
+    id: dto.user_id,
     kind: 'parent',
     requestedAt,
-    roleLabel,
-    status: parentStatusMap[user.status],
-    subtitle: `${roleLabel} · Solicitação em ${requestedAt}`,
-    title,
+    roleLabel: 'Responsável',
+    status: guardianStatusMap[dto.guardian_status],
+    subtitle: `Responsável · Solicitação em ${requestedAt}`,
+    title: fullName,
+    name: { firstName: dto.first_name, lastName: dto.last_name },
     validation: {
       hasDocument: true,
       relationshipConfirmed: true,
-      studentLinked: true,
+      studentLinked: dto.students.length > 0,
     },
   }
+}
+
+export function mapParentStatusToGuardianStatusDto(
+  status: ParentApprovalStatus
+): GuardianStatusDto {
+  if (status === 'pendingValidation') {
+    throw new Error(
+      'Não é possível retornar um responsável para aguardando pela fila de aprovação.'
+    )
+  }
+  return guardianStatusDtoMap[status]
 }

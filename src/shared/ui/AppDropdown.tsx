@@ -43,6 +43,7 @@ export interface AppDropdownProps extends Omit<
   onChange: SelectProps['onChange']
   placeholder?: string
   dropdownPlacement?: 'bottom' | 'top'
+  menuAlign?: 'left' | 'right'
   width?: string | number
   borderRadius?: string | number
   backgroundColor?: string
@@ -66,6 +67,7 @@ function AppDropdown({
   onChange,
   placeholder = 'Selecione uma opção',
   dropdownPlacement = 'bottom',
+  menuAlign = 'left',
   width = 240,
   borderRadius = 'var(--dropdown-radius)',
   backgroundColor = 'background.paper',
@@ -348,12 +350,12 @@ function AppDropdown({
           },
           anchorOrigin:
             dropdownPlacement === 'top'
-              ? { vertical: 'top', horizontal: 'left' }
-              : { vertical: 'bottom', horizontal: 'left' },
+              ? { vertical: 'top', horizontal: menuAlign }
+              : { vertical: 'bottom', horizontal: menuAlign },
           transformOrigin:
             dropdownPlacement === 'top'
-              ? { vertical: 'bottom', horizontal: 'left' }
-              : { vertical: 'top', horizontal: 'left' },
+              ? { vertical: 'bottom', horizontal: menuAlign }
+              : { vertical: 'top', horizontal: menuAlign },
           PaperProps: {
             ...MenuProps?.PaperProps,
             sx: {
@@ -365,9 +367,10 @@ function AppDropdown({
                   ? '0 18px 45px rgba(8, 17, 31, 0.42)'
                   : '0 16px 40px rgba(16, 42, 67, 0.12)',
               color: theme.palette.text.primary,
-              maxHeight: menuMaxHeight,
-              minWidth: resolvedMenuWidth,
-              width: resolvedMenuWidth,
+              maxHeight: { sm: menuMaxHeight, xs: 'min(60vh, 360px)' },
+              maxWidth: { sm: 'unset', xs: 'calc(100vw - 32px)' },
+              minWidth: { sm: resolvedMenuWidth, xs: 'min(260px, 90vw)' },
+              width: { sm: resolvedMenuWidth, xs: 'min(280px, 92vw)' },
               overflowY: 'auto',
               '& .MuiListItemText-primary': {
                 overflow: 'hidden',

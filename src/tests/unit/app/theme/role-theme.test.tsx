@@ -35,6 +35,30 @@ test('role variables are applied globally so MUI portals inherit dropdown and mo
   assert.match(globalCssSource, /--app-role-current-hover-solid:/)
 })
 
+test('chat history hover uses role action tokens instead of fixed role soft colors', () => {
+  const chatHistorySource = readSource(
+    'modules/student/chat/components/ChatHistoryMenu.tsx'
+  )
+
+  assert.match(chatHistorySource, /--app-role-action-hover-bg/)
+  assert.match(chatHistorySource, /--app-role-action-hover-border/)
+  assert.match(chatHistorySource, /--app-role-action-selected-bg/)
+  assert.doesNotMatch(chatHistorySource, /UserRole/)
+  assert.doesNotMatch(chatHistorySource, /--app-role-current-soft/)
+})
+
+test('chat suggestion chips use dark-mode action tokens with readable text', () => {
+  const messageHistorySource = readSource(
+    'modules/student/chat/components/ChatMessageHistory.tsx'
+  )
+
+  assert.match(messageHistorySource, /suggestionChipBackgroundColor/)
+  assert.match(messageHistorySource, /--app-role-action-selected-bg/)
+  assert.match(messageHistorySource, /--app-role-action-selected-border/)
+  assert.match(messageHistorySource, /--app-role-action-hover-bg/)
+  assert.match(messageHistorySource, /theme\.palette\.primary\.main/)
+})
+
 test('PageHeader derives the user greeting when an explicit eyebrow is not provided', () => {
   const headerSource = readSource('shared/ui/PageHeader.tsx')
   const studentDashboardPageSource = readSource(
