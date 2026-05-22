@@ -38,6 +38,19 @@ const supportedSchools: SupportedSchool[] = [
     description: 'Estamos solicitando apoio para 200 alunos da nossa escola..',
     status: 'apoiada',
   },
+  {
+    id: 'school-2',
+    schoolName: 'Escola Rio de Janeiro',
+    description: 'Programa de reforço escolar para 150 alunos do ensino médio.',
+    status: 'apoiada',
+  },
+  {
+    id: 'school-3',
+    schoolName: 'Escola Belo Horizonte',
+    description:
+      'Apoio pedagógico para 120 alunos em situação de vulnerabilidade.',
+    status: 'apoiada',
+  },
 ]
 
 export const companyDashboardService = {

@@ -1,7 +1,7 @@
 import AccountBalanceRoundedIcon from '@mui/icons-material/AccountBalanceRounded'
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded'
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
-import LinkRoundedIcon from '@mui/icons-material/LinkRounded'
+import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded'
 import { Box, Chip, IconButton, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import { useEffect, useState } from 'react'
@@ -44,6 +44,23 @@ export default function Page() {
     []
   )
   const [isLoading, setIsLoading] = useState(true)
+
+  function handleApprove(request: SupportRequest) {
+    setSupportRequests(prev => prev.filter(r => r.id !== request.id))
+    setSupportedSchools(prev => [
+      ...prev,
+      {
+        id: request.id,
+        schoolName: request.schoolName,
+        description: request.description,
+        status: 'apoiada' as const,
+      },
+    ])
+  }
+
+  function handleReject(requestId: string) {
+    setSupportRequests(prev => prev.filter(r => r.id !== requestId))
+  }
 
   useEffect(() => {
     let isActive = true
@@ -91,7 +108,7 @@ export default function Page() {
       value: schoolsStat?.value ?? '0',
     },
     {
-      icon: <LinkRoundedIcon />,
+      icon: <SchoolRoundedIcon />,
       iconVariant: 'blue' as IconVariantName,
       id: 'impacted-students',
       title: 'Alunos Impactados',
@@ -126,7 +143,8 @@ export default function Page() {
 
       <Box className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <AppCard
-          contentClassName="gap-3 p-5"
+          contentClassName="gap-2 p-5"
+          contentSx={{ maxHeight: 260, overflowY: 'auto' }}
           data-testid="support-requests-section"
           title="Solicitações de Apoio"
           titleClassName="text-2xl font-bold md:text-3xl"
@@ -135,8 +153,8 @@ export default function Page() {
               label={supportRequests.length}
               size="small"
               sx={{
-                backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                color: theme.palette.primary.main,
+                backgroundColor: alpha('#7c3aed', 0.1),
+                color: '#7c3aed',
                 fontWeight: 700,
                 fontSize: 14,
                 height: 28,
@@ -151,8 +169,8 @@ export default function Page() {
               data-testid={`support-request-${request.id}`}
               key={request.id}
               sx={{
-                backgroundColor: alpha(theme.palette.background.hover, 0.8),
-                border: `1px solid ${alpha(theme.palette.divider, 0.7)}`,
+                backgroundColor: theme.palette.background.paper,
+                border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
               }}
             >
               <Box className="min-w-0 flex-1">
@@ -191,6 +209,7 @@ export default function Page() {
                 <IconButton
                   aria-label="Aprovar solicitação"
                   data-testid={`approve-request-${request.id}`}
+                  onClick={() => handleApprove(request)}
                   size="small"
                   sx={{ color: theme.palette.success.main }}
                 >
@@ -199,6 +218,7 @@ export default function Page() {
                 <IconButton
                   aria-label="Recusar solicitação"
                   data-testid={`reject-request-${request.id}`}
+                  onClick={() => handleReject(request.id)}
                   size="small"
                   sx={{ color: theme.palette.error.main }}
                 >
@@ -210,7 +230,8 @@ export default function Page() {
         </AppCard>
 
         <AppCard
-          contentClassName="gap-3 p-5"
+          contentClassName="gap-2 p-5"
+          contentSx={{ maxHeight: 260, overflowY: 'auto' }}
           data-testid="supported-schools-section"
           title="Escolas Apoiadas"
           titleClassName="text-2xl font-bold md:text-3xl"
@@ -219,8 +240,8 @@ export default function Page() {
               label={supportedSchools.length}
               size="small"
               sx={{
-                backgroundColor: alpha(theme.palette.success.main, 0.1),
-                color: theme.palette.success.main,
+                backgroundColor: alpha('#7c3aed', 0.1),
+                color: '#7c3aed',
                 fontWeight: 700,
                 fontSize: 14,
                 height: 28,
@@ -235,8 +256,8 @@ export default function Page() {
               data-testid={`supported-school-${school.id}`}
               key={school.id}
               sx={{
-                backgroundColor: alpha(theme.palette.background.hover, 0.8),
-                border: `1px solid ${alpha(theme.palette.divider, 0.7)}`,
+                backgroundColor: theme.palette.background.paper,
+                border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
               }}
             >
               <Box className="min-w-0 flex-1">
