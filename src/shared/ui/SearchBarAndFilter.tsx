@@ -89,13 +89,8 @@ export function SearchBarAndFilter({
         type="search"
         value={query}
         InputProps={{
-          endAdornment: (
-            <InputAdornment
-              position="end"
-              sx={{
-                display: { xs: 'none', sm: 'flex' },
-              }}
-            >
+          endAdornment: isMobileLayout ? null : (
+            <InputAdornment position="end">
               <Typography
                 sx={{
                   color: 'text.secondary',

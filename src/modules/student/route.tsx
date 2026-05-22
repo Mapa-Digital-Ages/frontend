@@ -5,6 +5,7 @@ import DashboardLayout from '@/app/layout/DashboardLayout'
 import StudentComponentsPage from '@/modules/student/components/page/Page'
 import StudentDashboardPage from '@/modules/student/dashboard/page/Page'
 import StudentAdaptiveTrailPage from '@/modules/student/adaptivetrail/page/Page'
+import StudentAdaptiveTrailDetailPage from '@/modules/student/adaptivetrail-detail/page/Page'
 import StudentContentsPage from '@/modules/student/contents/page/Page'
 import StudentUploadPage from '@/modules/student/upload/page/Page'
 import StudentRoutinePage from '@/modules/student/routine/page/Page'
@@ -27,6 +28,10 @@ export const studentRoutes: RouteObject[] = [
               {
                 path: APP_ROUTES.student.adaptiveTrail,
                 element: <StudentAdaptiveTrailPage />,
+              },
+              {
+                path: APP_ROUTES.student.adaptiveTrailDetail,
+                element: <StudentAdaptiveTrailDetailPage />,
               },
               {
                 path: APP_ROUTES.student.contents,

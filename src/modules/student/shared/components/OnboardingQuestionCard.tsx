@@ -123,13 +123,14 @@ function OnboardingQuestionCard({
     <AppCard
       contentSx={{
         display: 'grid',
-        gap: { md: 3, xs: 2.5 },
-        p: { md: 4, xs: 2.5 },
+        gap: { md: 3, xs: 2 },
+        p: { md: 4, xs: 2 },
       }}
       sx={{
         border: `1px solid ${subjectTheme.border.borderColor}`,
         boxShadow: '0 12px 30px rgba(16, 24, 40, 0.04)',
         maxWidth: 768,
+        width: '100%',
       }}
     >
       {onBack ? (

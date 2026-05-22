@@ -9,23 +9,19 @@ import {
   MenuItem,
   Typography,
 } from '@mui/material'
-import { useState, type ChangeEvent } from 'react'
+import { useEffect, useState, type ChangeEvent } from 'react'
 import AppInput from '@/shared/ui/AppInput'
 import AppButton from '@/shared/ui/AppButton'
 
-type SubjectKey =
-  | 'matematica'
-  | 'portugues'
-  | 'biologia'
-  | 'historia'
-  | 'ingles'
-  | 'geografia'
-  | 'ciencias'
+export interface UploadModalSubject {
+  id: number
+  name: string
+}
 
 export type UploadTaskPayload = {
   title: string
   type: string
-  subject: SubjectKey
+  subjectId: number | null
   file: File
 }
 
@@ -33,6 +29,7 @@ interface UploadActivityModalProps {
   open: boolean
   onClose: () => void
   onAddTask: (task: UploadTaskPayload) => Promise<void>
+  subjects?: UploadModalSubject[]
   isSubmitting?: boolean
   submitError?: string | null
 }
@@ -57,14 +54,25 @@ function UploadActivityModal({
   open,
   onClose,
   onAddTask,
+  subjects = [],
   isSubmitting = false,
   submitError = null,
 }: UploadActivityModalProps) {
   const [title, setTitle] = useState('')
-  const [subject, setSubject] = useState<SubjectKey>('matematica')
+  const [subjectId, setSubjectId] = useState<number | 'none'>('none')
   const [type, setType] = useState('Exercício')
   const [file, setFile] = useState<File | null>(null)
   const [errorMessage, setErrorMessage] = useState('')
+
+  useEffect(() => {
+    setSubjectId(current => {
+      if (current === 'none') {
+        return subjects[0]?.id ?? 'none'
+      }
+      const stillExists = subjects.some(option => option.id === current)
+      return stillExists ? current : (subjects[0]?.id ?? 'none')
+    })
+  }, [subjects])
 
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const selectedFile = event.target.files?.[0]
@@ -102,13 +110,13 @@ function UploadActivityModal({
       const renamedFile = new File([file], title.trim(), { type: file.type })
       await onAddTask({
         title: title.trim(),
-        subject,
+        subjectId: subjectId === 'none' ? null : subjectId,
         type,
         file: renamedFile,
       })
 
       setTitle('')
-      setSubject('matematica')
+      setSubjectId(subjects[0]?.id ?? 'none')
       setType('Exercício')
       setFile(null)
       setErrorMessage('')
@@ -162,17 +170,19 @@ function UploadActivityModal({
             <AppInput
               select
               label="Disciplina"
-              value={subject}
-              onChange={event => setSubject(event.target.value as SubjectKey)}
+              value={subjectId === 'none' ? 'none' : String(subjectId)}
+              onChange={event => {
+                const raw = event.target.value
+                setSubjectId(raw === 'none' ? 'none' : Number(raw))
+              }}
               backgroundColor="background.default"
             >
-              <MenuItem value="matematica">Matemática</MenuItem>
-              <MenuItem value="portugues">Português</MenuItem>
-              <MenuItem value="ciencias">Ciências</MenuItem>
-              <MenuItem value="historia">História</MenuItem>
-              <MenuItem value="biologia">Biologia</MenuItem>
-              <MenuItem value="ingles">Inglês</MenuItem>
-              <MenuItem value="geografia">Geografia</MenuItem>
+              <MenuItem value="none">Sem disciplina</MenuItem>
+              {subjects.map(option => (
+                <MenuItem key={option.id} value={String(option.id)}>
+                  {option.name}
+                </MenuItem>
+              ))}
             </AppInput>
 
             <AppInput
