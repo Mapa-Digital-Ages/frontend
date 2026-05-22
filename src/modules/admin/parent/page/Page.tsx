@@ -14,7 +14,6 @@ import {
 } from 'react'
 import { useUserRole } from '@/app/access/hook'
 import { parentApprovalService } from '@/modules/admin/parent/services/runtime'
-import { getParentApprovalEligibility } from '@/modules/admin/parent/utils/utils'
 import type {
   ApprovalActionFormValues,
   ApprovalActionModalMode,
@@ -163,14 +162,11 @@ export default function Page() {
 
     setModalValues({
       type: 'content',
+      description: '',
       requestedAt:
         nextMode.action === 'create'
           ? getTodayRequestDate()
           : (nextMode.item?.requestedAt ?? getTodayRequestDate()),
-      resourceType:
-        nextMode.item?.kind === 'content'
-          ? (nextMode.item.resourceType ?? 'task')
-          : 'task',
       subjectId: 'default',
       title: nextMode.item?.kind === 'content' ? nextMode.item.title : '',
     })
@@ -201,7 +197,6 @@ export default function Page() {
     (item: ParentApprovalItem): ApprovalCardAction[] => {
       const success = theme.palette.success.main
       const error = theme.palette.error.main
-      const eligibility = getParentApprovalEligibility(item)
 
       return [
         {
@@ -228,16 +223,13 @@ export default function Page() {
         },
         {
           accentColor: success,
-          disabled: item.status === 'approved' || !eligibility.canApprove,
           icon: <CheckRoundedIcon />,
           id: `${item.id}-approve`,
           label: 'Validar cadastro',
           onClick: () => {
             void handleParentStatusUpdate(item.id, 'approved')
           },
-          tooltip: eligibility.canApprove
-            ? 'Validar cadastro'
-            : `Pendências: ${eligibility.missingRequirements.join(', ')}`,
+          tooltip: 'Validar cadastro',
         },
         {
           accentColor: error,
@@ -490,7 +482,6 @@ export default function Page() {
         onClose={resetModal}
         onConfirm={handleModalConfirm}
         open={modalState !== null}
-        resourceTypeOptions={[]}
         role={role}
         subjectOptions={[]}
         values={modalValues}

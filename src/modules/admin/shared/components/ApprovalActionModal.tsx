@@ -1,7 +1,6 @@
 import { Box, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { getRoleActionTone } from '@/app/theme/core/roles'
-import type { DropdownOption } from '@/shared/ui/AppDropdown'
 import AppActionModal, {
   type AppActionModalMode,
 } from '@/shared/ui/AppActionModal'
@@ -13,10 +12,10 @@ import type {
   ApprovalModalAction,
   ApprovalType,
   ContentApprovalActionFormValues,
-  ContentApprovalResourceType,
   GuardianApprovalActionFormValues,
 } from '@/modules/admin/shared/types/types'
 import type { UserRole } from '@/shared/types/user'
+import type { DropdownOption } from '@/shared/ui/AppDropdown'
 
 export type ApprovalActionModalMode = {
   action: Exclude<ApprovalModalAction, 'correct'>
@@ -32,12 +31,11 @@ interface ApprovalActionModalProps {
     field:
       | keyof ContentApprovalActionFormValues
       | keyof GuardianApprovalActionFormValues,
-    value: string | ContentApprovalResourceType
+    value: string
   ) => void
   onClose: () => void
   onConfirm: () => void
   open: boolean
-  resourceTypeOptions: DropdownOption[]
   subjectOptions: DropdownOption[]
   values: ApprovalActionFormValues
   role: UserRole
@@ -147,8 +145,7 @@ function resolveModalCopy(mode: ApprovalActionModalMode) {
   return {
     confirmLabel:
       mode.action === 'create' ? 'Salvar cadastro' : 'Salvar alterações',
-    description:
-      'Preencha os dados da tarefa ou prova usada no fluxo de aprovação.',
+    description: 'Preencha os dados do conteúdo usado no fluxo de revisão.',
     title: mode.action === 'create' ? 'Cadastrar conteúdo' : 'Editar conteúdo',
   }
 }
@@ -159,7 +156,6 @@ function ApprovalActionModal({
   onClose,
   onConfirm,
   open,
-  resourceTypeOptions,
   subjectOptions,
   values,
   role,
@@ -222,7 +218,7 @@ function ApprovalActionModal({
               value={values.last_name}
             />
             <AppInput
-              label="Email"
+              label="E-mail do responsável"
               labelSx={fieldLabelSx}
               onChange={event => onChange('email', event.target.value)}
               placeholder="Ex.: m.souza@email.com"
@@ -254,14 +250,6 @@ function ApprovalActionModal({
 
       {isContentForm ? (
         <Box className="grid gap-3">
-          <AppInput
-            label="Título"
-            labelSx={fieldLabelSx}
-            onChange={event => onChange('title', event.target.value)}
-            placeholder="Ex.: Lista de Equações do 7º ano"
-            sx={inputSx}
-            value={values.title}
-          />
           <Box
             sx={{
               display: 'grid',
@@ -273,19 +261,13 @@ function ApprovalActionModal({
             }}
           >
             <Box className="grid gap-1">
-              <Typography sx={fieldLabelSx}>Tipo</Typography>
-              <AppDropdown
-                fullWidth
-                onChange={event =>
-                  onChange(
-                    'resourceType',
-                    String(event.target.value) as ContentApprovalResourceType
-                  )
-                }
-                options={resourceTypeOptions}
-                placeholder="Selecione o tipo"
-                sx={selectSx}
-                value={values.resourceType}
+              <AppInput
+                label="Título"
+                labelSx={fieldLabelSx}
+                onChange={event => onChange('title', event.target.value)}
+                placeholder="Ex.: Lista de Equações do 7º ano"
+                sx={inputSx}
+                value={values.title}
               />
             </Box>
             <Box className="grid gap-1">
@@ -304,12 +286,12 @@ function ApprovalActionModal({
           </Box>
           <AppInput
             disabled={mode.action === 'create'}
-            label="Data da solicitação"
+            label="Descrição"
             labelSx={fieldLabelSx}
-            onChange={event => onChange('requestedAt', event.target.value)}
-            placeholder="DD/MM/AAAA"
+            onChange={event => onChange('description', event.target.value)}
+            placeholder="Ex.: Lista de Equações do 7º ano"
             sx={inputSx}
-            value={values.requestedAt}
+            value={values.description}
           />
         </Box>
       ) : null}

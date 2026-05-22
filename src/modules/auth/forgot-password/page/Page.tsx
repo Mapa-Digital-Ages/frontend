@@ -1,4 +1,10 @@
-import { Box, Stack, Typography, TextField } from '@mui/material'
+import {
+  Box,
+  CircularProgress,
+  Stack,
+  Typography,
+  TextField,
+} from '@mui/material'
 import AppButton from '@/shared/ui/AppButton'
 import AppInput from '@/shared/ui/AppInput'
 import AppLink from '@/shared/ui/AppLink'
@@ -8,6 +14,9 @@ import React, { useState, useEffect } from 'react'
 import type { LayoutMode } from '@/app/layout/AuthLayout'
 import { isValidEmail } from '@/shared/utils/validators'
 import { forgotPasswordService } from '../services/service'
+import { HttpRequestError } from '@/shared/lib/http/client'
+
+const PASSWORD_MIN_LENGTH = 8
 
 export default function Page() {
   const { setMode } = useOutletContext<{
@@ -24,6 +33,7 @@ export default function Page() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordError, setPasswordError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     if (step === 1) setMode('forgot_password_email')
@@ -31,29 +41,80 @@ export default function Page() {
     if (step === 3) setMode('forgot_password_new')
   }, [step, setMode])
 
-  const handleCodeChange = (index: number, value: string) => {
-    if (value.length > 1) {
-      value = value.substring(value.length - 1)
-    }
+  const focusCodeInput = (index: number) => {
+    document.getElementById(`code-input-${index}`)?.focus()
+  }
+
+  const handleCodeChange = (index: number, rawValue: string) => {
+    const digit = rawValue.replace(/\D/g, '').slice(-1)
     const newCode = [...code]
-    newCode[index] = value
+    newCode[index] = digit
     setCode(newCode)
     setCodeError('')
 
-    // auto focus next
-    if (value && index < 5) {
-      const nextInput = document.getElementById(`code-input-${index + 1}`)
-      nextInput?.focus()
+    if (digit && index < 5) {
+      focusCodeInput(index + 1)
+    }
+  }
+
+  const handleCodeKeyDown = (
+    index: number,
+    event: React.KeyboardEvent<HTMLDivElement>
+  ) => {
+    if (event.key === 'Backspace' && !code[index] && index > 0) {
+      event.preventDefault()
+      focusCodeInput(index - 1)
+    }
+  }
+
+  const handleCodePaste = (
+    index: number,
+    event: React.ClipboardEvent<HTMLDivElement>
+  ) => {
+    const digits = event.clipboardData.getData('text').replace(/\D/g, '')
+    if (!digits) return
+    event.preventDefault()
+
+    const newCode = [...code]
+    for (
+      let offset = 0;
+      offset < digits.length && index + offset < 6;
+      offset++
+    ) {
+      newCode[index + offset] = digits[offset]
+    }
+    setCode(newCode)
+    setCodeError('')
+
+    const nextEmpty = newCode.findIndex((d, i) => i >= index && !d)
+    focusCodeInput(nextEmpty === -1 ? 5 : nextEmpty)
+  }
+
+  async function handleResendCode() {
+    if (isSubmitting) return
+    setCodeError('')
+    setCode(['', '', '', '', '', ''])
+    setIsSubmitting(true)
+    try {
+      const result = await forgotPasswordService.requestReset(email)
+      setGeneratedCode(result.resetCode)
+      focusCodeInput(0)
+    } catch {
+      setCodeError('Não foi possível reenviar o código. Tente novamente.')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   async function handleSubmitEmail(e: React.FormEvent) {
     e.preventDefault()
+    if (isSubmitting) return
     if (!isValidEmail(email)) {
       setEmailError('Informe um e-mail válido.')
       return
     }
 
+    setIsSubmitting(true)
     try {
       const result = await forgotPasswordService.requestReset(email)
       setGeneratedCode(result.resetCode)
@@ -61,6 +122,8 @@ export default function Page() {
       setStep(2)
     } catch {
       setEmailError('Não foi possível enviar o código. Tente novamente.')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -77,8 +140,15 @@ export default function Page() {
 
   async function handleSubmitPassword(e: React.FormEvent) {
     e.preventDefault()
+    if (isSubmitting) return
     if (!password || !confirmPassword) {
       setPasswordError('Preencha os dois campos de senha.')
+      return
+    }
+    if (password.length < PASSWORD_MIN_LENGTH) {
+      setPasswordError(
+        `A senha deve ter pelo menos ${PASSWORD_MIN_LENGTH} caracteres.`
+      )
       return
     }
     if (password !== confirmPassword) {
@@ -86,6 +156,7 @@ export default function Page() {
       return
     }
 
+    setIsSubmitting(true)
     try {
       await forgotPasswordService.confirmReset({
         email,
@@ -96,11 +167,19 @@ export default function Page() {
       setPassword('')
       setConfirmPassword('')
       navigate(APP_ROUTES.auth.login)
-    } catch {
+    } catch (error) {
+      if (error instanceof HttpRequestError && error.status === 422) {
+        setPasswordError(
+          `A senha deve ter pelo menos ${PASSWORD_MIN_LENGTH} caracteres.`
+        )
+        return
+      }
       setPassword('')
       setConfirmPassword('')
       setCodeError('Código inválido ou expirado.')
       setStep(2)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -155,6 +234,7 @@ export default function Page() {
               type="submit"
               borderRadius="8px"
               textColor="#ffffff"
+              disabled={isSubmitting}
               sx={{
                 mt: 2,
                 minHeight: 50,
@@ -171,7 +251,11 @@ export default function Page() {
                 },
               }}
             >
-              Enviar link
+              {isSubmitting ? (
+                <CircularProgress size={22} sx={{ color: '#ffffff' }} />
+              ) : (
+                'Enviar link'
+              )}
             </AppButton>
             <Box className="flex justify-center">
               <AppLink
@@ -207,18 +291,46 @@ export default function Page() {
                   id={`code-input-${index}`}
                   value={digit}
                   onChange={e => handleCodeChange(index, e.target.value)}
+                  onKeyDown={e => handleCodeKeyDown(index, e)}
+                  onPaste={e => handleCodePaste(index, e)}
                   error={Boolean(codeError)}
+                  autoComplete="off"
                   inputProps={{
+                    inputMode: 'numeric',
+                    pattern: '[0-9]*',
                     maxLength: 1,
+                    autoComplete: 'one-time-code',
+                    name: `reset-code-${index}`,
+                    'aria-label': `Dígito ${index + 1} do código`,
+                    'data-1p-ignore': 'true',
+                    'data-lpignore': 'true',
                     style: {
                       textAlign: 'center',
-                      fontSize: '1.25rem',
-                      padding: '12px',
+                      fontSize: '1.5rem',
+                      fontWeight: 600,
+                      padding: '12px 0',
+                      color: '#0f172a',
                     },
                   }}
                   sx={{
                     flex: 1,
-                    '& .MuiOutlinedInput-root': { borderRadius: '8px' },
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '10px',
+                      height: 60,
+                      backgroundColor: '#ffffff',
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: codeError ? '#dc2626' : '#475569',
+                      borderWidth: '2px',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: codeError ? '#dc2626' : '#1e293b',
+                    },
+                    '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline':
+                      {
+                        borderColor: codeError ? '#dc2626' : '#359CDF',
+                        borderWidth: '2px',
+                      },
                   }}
                 />
               ))}
@@ -238,24 +350,38 @@ export default function Page() {
               </Typography>
             )}
 
-            <Box className="flex justify-start">
+            <Box className="flex justify-start items-center gap-2">
               <Typography
+                component="button"
+                type="button"
+                onClick={handleResendCode}
+                disabled={isSubmitting}
                 sx={{
-                  color: '#359CDF',
+                  color: isSubmitting ? '#94a3b8' : '#359CDF',
                   fontSize: '14px',
-                  cursor: 'pointer',
+                  cursor: isSubmitting ? 'default' : 'pointer',
                   fontWeight: 600,
-                  '&:hover': { textDecoration: 'underline' },
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  textAlign: 'left',
+                  '&:hover': {
+                    textDecoration: isSubmitting ? 'none' : 'underline',
+                  },
                 }}
               >
-                Reenviar código
+                {isSubmitting ? 'Reenviando…' : 'Reenviar código'}
               </Typography>
+              {isSubmitting && (
+                <CircularProgress size={14} sx={{ color: '#359CDF' }} />
+              )}
             </Box>
 
             <AppButton
               type="submit"
               borderRadius="8px"
               textColor="#ffffff"
+              disabled={isSubmitting}
               sx={{
                 mt: 2,
                 minHeight: 50,
@@ -309,6 +435,22 @@ export default function Page() {
                 setPasswordError('')
               }}
               placeholder="••••••••"
+              labelSx={{ color: '#334155', fontWeight: 600 }}
+              backgroundColor="#ffffff"
+              error={Boolean(passwordError)}
+              sx={{
+                '& .MuiOutlinedInput-root': { height: 48 },
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: passwordError ? '#dc2626' : '#cbd5e1',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: passwordError ? '#dc2626' : '#94a3b8',
+                },
+                '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline':
+                  {
+                    borderColor: passwordError ? '#dc2626' : '#359CDF',
+                  },
+              }}
             />
             <AppInput
               label="Confirmar senha"
@@ -321,7 +463,10 @@ export default function Page() {
               error={Boolean(passwordError)}
               helperText={passwordError || ' '}
               placeholder="••••••••"
+              labelSx={{ color: '#334155', fontWeight: 600 }}
+              backgroundColor="#ffffff"
               sx={{
+                '& .MuiOutlinedInput-root': { height: 48 },
                 '& .MuiOutlinedInput-notchedOutline': {
                   borderColor: passwordError ? '#dc2626' : '#cbd5e1',
                 },
@@ -338,6 +483,7 @@ export default function Page() {
               type="submit"
               borderRadius="8px"
               textColor="#ffffff"
+              disabled={isSubmitting}
               sx={{
                 mt: 2,
                 minHeight: 50,
@@ -354,7 +500,11 @@ export default function Page() {
                 },
               }}
             >
-              Salvar senha
+              {isSubmitting ? (
+                <CircularProgress size={22} sx={{ color: '#ffffff' }} />
+              ) : (
+                'Salvar senha'
+              )}
             </AppButton>
             <Box className="flex justify-center">
               <AppLink

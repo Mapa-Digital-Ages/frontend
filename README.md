@@ -121,6 +121,16 @@ npm run coverage
 
 Executa os testes automatizados com Jest. O script `npm test` roda todos os arquivos `src/tests/**/*.test.tsx`.
 
+### Testes E2E (Cypress)
+
+```bash
+npx cypress open        # Abre o Cypress em modo interativo
+npx cypress run         # Executa todos os testes E2E em modo headless
+npx cypress run --spec cypress/e2e/login.cy.ts  # Executa um teste específico
+```
+
+> **Pré-requisito:** a aplicação deve estar rodando (`npm run dev` ou por Docker) e o arquivo `.env` deve conter as variáveis `VITE_EMAIL_LOGIN_ALUNO` e `VITE_PASSWORD_LOGIN_ALUNO` configuradas.
+
 ### Preview da Build
 
 ```bash
