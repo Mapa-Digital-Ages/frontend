@@ -7,6 +7,7 @@ export interface StudentItem {
   name: string
   email: string
   guardian: string | null
+  guardianId: string | null
   school: string | null
   schoolId: string | null
   year: string | null
@@ -41,12 +42,11 @@ export interface UpdateStudentInput {
   password?: string
   schoolId?: string | null
   year?: string | null
+  guardianId?: string | null
 }
 
 export interface StudentMetrics {
   total: number
-  active: number
-  inactive: number
   schools: number
 }
 
@@ -62,6 +62,5 @@ export type StudentApiClient = {
 }
 
 export interface CreateStudentRepositoryOptions {
-  allowFallback?: boolean
   client: StudentApiClient
 }

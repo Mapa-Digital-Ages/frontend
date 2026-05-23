@@ -10,12 +10,11 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded'
 import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded'
 import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded'
 import UnfoldMoreRoundedIcon from '@mui/icons-material/UnfoldMoreRounded'
-import SwapHorizRoundedIcon from '@mui/icons-material/SwapHorizRounded'
 import { AppColors } from '@/app/theme/core/colors'
 import { IconButton, Menu, MenuItem, CircularProgress } from '@mui/material'
 import { Box, Button, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
-import { useEffect, useState, useMemo, useRef } from 'react'
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react'
 import { SearchBarAndFilter } from '@/shared/ui/SearchBarAndFilter'
 import { AppTag } from '@/shared/ui/AppTags'
 import type { TagContext } from '@/shared/types/common'
@@ -143,8 +142,6 @@ export default function Page() {
   const [students, setStudents] = useState<StudentItem[]>([])
   const [metrics, setMetrics] = useState<StudentMetrics>({
     total: 0,
-    active: 0,
-    inactive: 0,
     schools: 0,
   })
   const [filteredTotal, setFilteredTotal] = useState(0)
@@ -154,10 +151,10 @@ export default function Page() {
 
   const [inputQuery, setInputQuery] = useState('')
   const [activeQuery, setActiveQuery] = useState('')
-  const [selectedStatus, setSelectedStatus] = useState('all')
   const [sort, setSort] = useState<SortState>({ field: null, direction: 'asc' })
 
   const schoolMapRef = useRef<Record<string, string>>({})
+  const guardianMapRef = useRef<Record<string, string>>({})
   const activePageRef = useRef(1)
   const sentinelRef = useRef<HTMLDivElement>(null)
 
@@ -202,13 +199,21 @@ export default function Page() {
     })
   }, [])
 
-  function applySchoolNames(items: StudentItem[]): StudentItem[] {
-    const map = schoolMapRef.current
-    return items.map(s => ({
+  const enrichItems = useCallback((items: StudentItem[]): StudentItem[] => {
+    const schoolMap = schoolMapRef.current
+    const guardianMap = guardianMapRef.current
+    const enriched = items.map(s => ({
       ...s,
-      school: s.schoolId ? (map[s.schoolId] ?? s.school) : s.school,
+      school: s.schoolId ? (schoolMap[s.schoolId] ?? s.school) : s.school,
+      guardian: s.guardianId
+        ? (s.guardian ?? guardianMap[s.guardianId] ?? null)
+        : s.guardian,
     }))
-  }
+    enriched.forEach(s => {
+      if (s.guardianId && s.guardian) guardianMap[s.guardianId] = s.guardian
+    })
+    return enriched
+  }, [])
 
   useEffect(() => {
     void studentService.countStudents().then(total => {
@@ -228,7 +233,7 @@ export default function Page() {
           query: activeQuery,
           page: 1,
         })
-        const items = applySchoolNames(result.items)
+        const items = enrichItems(result.items)
         setStudents(items)
         setHasMore(result.hasMore)
         setFilteredTotal(result.total)
@@ -242,9 +247,8 @@ export default function Page() {
     }
 
     void fetchFirstPage()
-  }, [activeQuery])
+  }, [activeQuery, enrichItems])
 
-  // Stable IntersectionObserver — reads current values from refs to avoid re-registering
   useEffect(() => {
     const sentinel = sentinelRef.current
     if (!sentinel) return
@@ -263,7 +267,7 @@ export default function Page() {
       void studentService
         .getStudents({ query: activeQueryRef.current, page: nextPage })
         .then(result => {
-          const items = applySchoolNames(result.items)
+          const items = enrichItems(result.items)
           setStudents(prev => {
             const merged = [...prev, ...items]
             setMetrics(m => ({
@@ -288,7 +292,7 @@ export default function Page() {
 
     observer.observe(sentinel)
     return () => observer.disconnect()
-  }, [])
+  }, [enrichItems])
 
   function handleSort(field: SortField) {
     setSort(current => ({
@@ -303,15 +307,6 @@ export default function Page() {
     [students, sort]
   )
 
-  const filteredStudents = useMemo(() => {
-    return sortedStudents.filter(student => {
-      const matchesStatus =
-        selectedStatus === 'all' || student.status === selectedStatus
-
-      return matchesStatus
-    })
-  }, [sortedStudents, selectedStatus])
-
   const selectedStudentRow = students.find(s => s.id === selectedStudentId)
 
   const editStudentData: Student | undefined = selectedStudentRow
@@ -321,6 +316,7 @@ export default function Page() {
         year:
           yearOptions.find(o => o.label === selectedStudentRow.year)?.value ??
           '',
+        guardianId: selectedStudentRow.guardianId ?? '',
       }
     : undefined
 
@@ -338,7 +334,7 @@ export default function Page() {
         status: values.status as 'ativo' | 'inativo',
         birthDate: values.birthDate,
       })
-      const withNames = applySchoolNames([created])
+      const withNames = enrichItems([created])
       setStudents(prev => [...withNames, ...prev])
       setMetrics(m => ({
         ...m,
@@ -379,42 +375,22 @@ export default function Page() {
       password: values.password || undefined,
       schoolId: values.schoolId || null,
       year: values.year || null,
+      guardianId: values.guardianId || null,
     })
+    const [enriched] = enrichItems([updated])
     setStudents(current =>
-      current.map(s => (s.id === selectedStudentId ? updated : s))
+      current.map(s => (s.id === selectedStudentId ? enriched : s))
     )
     setIsEditModalOpen(false)
   }
 
-  async function handleToggleStatus() {
-    if (!selectedStudentId) return
-    setMenuAnchorEl(null)
-    const student = students.find(s => s.id === selectedStudentId)
-    if (!student) return
-    const updated = await studentService.toggleStudentStatus(
-      selectedStudentId,
-      student.status === 'inativo'
-    )
-    setStudents(current =>
-      current.map(s => (s.id === selectedStudentId ? updated : s))
-    )
-    setMetrics(m => ({
-      ...m,
-      active: updated.status === 'ativo' ? m.active + 1 : m.active - 1,
-      inactive: updated.status === 'inativo' ? m.inactive + 1 : m.inactive - 1,
-    }))
-  }
-
   async function handleDeleteStudent() {
     if (!selectedStudentId) return
-    const student = students.find(s => s.id === selectedStudentId)
     await studentService.deleteStudent(selectedStudentId)
     setStudents(current => current.filter(s => s.id !== selectedStudentId))
     setMetrics(m => ({
       ...m,
       total: m.total - 1,
-      active: student?.status === 'ativo' ? m.active - 1 : m.active,
-      inactive: student?.status === 'inativo' ? m.inactive - 1 : m.inactive,
     }))
     setFilteredTotal(prev => prev - 1)
     setIsDeleteModalOpen(false)
@@ -493,13 +469,6 @@ export default function Page() {
             pluralLabel: 'resultados',
           }}
           searchPlaceholder="Pesquisar alunos por nome..."
-          filterOptions={[
-            { label: 'Todos', value: 'all' },
-            { label: 'Ativo', value: 'ativo' },
-            { label: 'Inativo', value: 'inativo' },
-          ]}
-          selectedStatus={selectedStatus}
-          onStatusChange={setSelectedStatus}
         />
       </Box>
 
@@ -536,7 +505,7 @@ export default function Page() {
             onSort={handleSort}
           />
           <SortableHeader
-            label="Turma"
+            label="Ano"
             field="year"
             sort={sort}
             onSort={handleSort}
@@ -565,7 +534,7 @@ export default function Page() {
             </Typography>
           </Box>
         ) : (
-          filteredStudents.map(student => (
+          sortedStudents.map(student => (
             <Box
               key={student.id}
               data-testid={`student-row-${student.id}`}
@@ -659,20 +628,6 @@ export default function Page() {
             <EditRoundedIcon sx={{ fontSize: 18 }} />
             <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
               Editar aluno
-            </Typography>
-          </MenuItem>
-          <MenuItem
-            data-testid="toggle-status-action"
-            onClick={() => {
-              void handleToggleStatus()
-            }}
-            sx={{ color: 'text.secondary', gap: 1.25, py: 1.1 }}
-          >
-            <SwapHorizRoundedIcon sx={{ fontSize: 18 }} />
-            <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
-              {selectedStudentRow?.status === 'ativo'
-                ? 'Tornar inativo'
-                : 'Tornar ativo'}
             </Typography>
           </MenuItem>
           <MenuItem

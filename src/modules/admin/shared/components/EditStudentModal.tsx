@@ -10,6 +10,7 @@ import {
   studentFormOptionsService,
   yearOptions,
   type SchoolOption,
+  type GuardianOption,
 } from '@/modules/admin/shared/constants/studentOptions'
 
 const fieldLabelSx = {
@@ -45,6 +46,7 @@ export interface Student {
   name: string
   schoolId: string
   year: string
+  guardianId: string
 }
 
 interface EditStudentModalProps extends BoxProps {
@@ -58,6 +60,7 @@ export interface EditFormValues {
   password: string
   schoolId: string
   year: string
+  guardianId: string
 }
 
 function getDefaultValues(student: Student): EditFormValues {
@@ -65,6 +68,7 @@ function getDefaultValues(student: Student): EditFormValues {
     password: '',
     schoolId: student.schoolId,
     year: student.year,
+    guardianId: student.guardianId,
   }
 }
 
@@ -81,14 +85,19 @@ export default function EditStudentModal({
   )
   const [passwordError, setPasswordError] = useState('')
   const [schools, setSchools] = useState<SchoolOption[]>([])
+  const [guardians, setGuardians] = useState<GuardianOption[]>([])
   const [isLoadingOptions, setIsLoadingOptions] = useState(false)
 
   useEffect(() => {
     if (!open) return
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsLoadingOptions(true)
-    void studentFormOptionsService.getSchools().then(list => {
-      setSchools(list)
+    void Promise.all([
+      studentFormOptionsService.getSchools(),
+      studentFormOptionsService.getGuardians(),
+    ]).then(([schoolList, guardianList]) => {
+      setSchools(schoolList)
+      setGuardians(guardianList)
       setIsLoadingOptions(false)
     })
   }, [open])
@@ -110,11 +119,6 @@ export default function EditStudentModal({
     if (!validate()) return
     onConfirm(values)
   }
-
-  const schoolDropdownOptions = schools.map(s => ({
-    label: s.label,
-    value: s.value,
-  }))
 
   return (
     <AppActionModal
@@ -204,7 +208,7 @@ export default function EditStudentModal({
             fullWidth
             label="Escola"
             onChange={e => handleChange('schoolId', String(e.target.value))}
-            options={schoolDropdownOptions}
+            options={schools.map(s => ({ label: s.label, value: s.value }))}
             sx={selectSx}
             value={values.schoolId}
           />
@@ -217,6 +221,14 @@ export default function EditStudentModal({
             value={values.year}
           />
         </Box>
+        <AppDropdown
+          fullWidth
+          label="Responsável"
+          onChange={e => handleChange('guardianId', String(e.target.value))}
+          options={guardians.map(g => ({ label: g.label, value: g.value }))}
+          sx={selectSx}
+          value={values.guardianId}
+        />
       </Box>
     </AppActionModal>
   )

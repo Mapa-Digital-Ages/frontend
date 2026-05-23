@@ -49,6 +49,7 @@ export function mapStudentDto(dto: StudentDto): StudentItem {
     name: `${dto.first_name} ${dto.last_name}`.trim(),
     email: dto.email,
     guardian: dto.guardian_name,
+    guardianId: dto.guardian_id,
     school: dto.school_name,
     schoolId: dto.school_id,
     year: dto.student_class
@@ -106,6 +107,9 @@ export function mapUpdateStudentInput(input: UpdateStudentInput) {
     body.student_class = input.year
       ? (yearValueToClassEnum[input.year] ?? null)
       : null
+  }
+  if (input.guardianId !== undefined) {
+    body.guardian_id = input.guardianId ?? null
   }
   return body
 }
