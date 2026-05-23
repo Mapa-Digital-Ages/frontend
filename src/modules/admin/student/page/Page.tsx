@@ -244,7 +244,7 @@ export default function Page() {
     const NONE = 'none'
     setCreateError(null)
     try {
-      const created = await studentService.createStudent({
+      await studentService.createStudent({
         name: values.name,
         email: values.email,
         password: values.password,
@@ -255,16 +255,6 @@ export default function Page() {
         birthDate: values.birthDate,
       })
       await fetchStudents()
-      setIsCreateModalOpen(false)
-      setMetrics(m => ({
-        ...m,
-        total: m.total + 1,
-        active: created.status === 'ativo' ? m.active + 1 : m.active,
-        inactive: created.status === 'inativo' ? m.inactive + 1 : m.inactive,
-        schools: new Set(
-          [...students.map(s => s.school), created.school].filter(Boolean)
-        ).size,
-      }))
       setIsCreateModalOpen(false)
     } catch (err) {
       let message = 'Não foi possível criar o aluno. Tente novamente.'
@@ -292,14 +282,12 @@ export default function Page() {
 
   async function handleEditStudent(values: EditFormValues) {
     if (!selectedStudentId) return
-    const updated = await studentService.updateStudent(selectedStudentId, {
+    await studentService.updateStudent(selectedStudentId, {
       password: values.password || undefined,
       schoolId: values.schoolId || null,
       year: values.year || null,
     })
-    setStudents(current =>
-      current.map(s => (s.id === selectedStudentId ? updated : s))
-    )
+    await fetchStudents()
     setIsEditModalOpen(false)
   }
 
