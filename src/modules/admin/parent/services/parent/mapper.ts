@@ -150,6 +150,10 @@ export function mapParentApprovalUserToParentApprovalItem(
     guardian,
     id: user.id,
     kind: 'parent',
+    name: {
+      firstName: guardian.first_name,
+      lastName: guardian.last_name,
+    },
     requestedAt,
     roleLabel,
     status: parentStatusMap[user.status],
