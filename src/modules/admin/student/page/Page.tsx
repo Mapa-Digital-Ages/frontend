@@ -15,7 +15,7 @@ import { AppColors } from '@/app/theme/core/colors'
 import { IconButton, Menu, MenuItem, CircularProgress } from '@mui/material'
 import { Box, Button, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { SearchBarAndFilter } from '@/shared/ui/SearchBarAndFilter'
 import { AppTag } from '@/shared/ui/AppTags'
 import type { TagContext } from '@/shared/types/common'
@@ -147,11 +147,36 @@ export default function Page() {
     inactive: 0,
     schools: 0,
   })
+  const [filteredTotal, setFilteredTotal] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
+  const [isFetchingMore, setIsFetchingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
 
-  const [query, setQuery] = useState('')
+  const [inputQuery, setInputQuery] = useState('')
+  const [activeQuery, setActiveQuery] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('all')
   const [sort, setSort] = useState<SortState>({ field: null, direction: 'asc' })
+
+  const schoolMapRef = useRef<Record<string, string>>({})
+  const activePageRef = useRef(1)
+  const sentinelRef = useRef<HTMLDivElement>(null)
+
+  const isFetchingMoreRef = useRef(false)
+  const isLoadingRef = useRef(true)
+  const hasMoreRef = useRef(true)
+  const activeQueryRef = useRef('')
+  useEffect(() => {
+    isFetchingMoreRef.current = isFetchingMore
+  })
+  useEffect(() => {
+    isLoadingRef.current = isLoading
+  })
+  useEffect(() => {
+    hasMoreRef.current = hasMore
+  })
+  useEffect(() => {
+    activeQueryRef.current = activeQuery
+  }, [activeQuery])
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
@@ -162,35 +187,108 @@ export default function Page() {
     null
   )
 
-  const fetchStudents = useCallback(async () => {
-    setIsLoading(true)
-    try {
-      const [listResult, schools] = await Promise.all([
-        studentService.getStudents({}),
-        studentFormOptionsService.getSchools(),
-      ])
+  useEffect(() => {
+    const timer = setTimeout(() => setActiveQuery(inputQuery), 350)
+    return () => clearTimeout(timer)
+  }, [inputQuery])
+
+  useEffect(() => {
+    void studentFormOptionsService.getSchools().then(schools => {
       const map: Record<string, string> = {}
       schools.forEach(s => {
         map[s.value] = s.label
       })
-      const items = listResult.items.map(s => ({
-        ...s,
-        school: s.schoolId ? (map[s.schoolId] ?? s.school) : s.school,
-      }))
-      setStudents(items)
-      setMetrics(m => ({
-        ...m,
-        total: listResult.total,
-        schools: new Set(items.map(s => s.school).filter(Boolean)).size,
-      }))
-    } finally {
-      setIsLoading(false)
-    }
+      schoolMapRef.current = map
+    })
+  }, [])
+
+  function applySchoolNames(items: StudentItem[]): StudentItem[] {
+    const map = schoolMapRef.current
+    return items.map(s => ({
+      ...s,
+      school: s.schoolId ? (map[s.schoolId] ?? s.school) : s.school,
+    }))
+  }
+
+  useEffect(() => {
+    void studentService.countStudents().then(total => {
+      setMetrics(m => ({ ...m, total }))
+    })
   }, [])
 
   useEffect(() => {
-    void fetchStudents()
-  }, [fetchStudents])
+    activePageRef.current = 1
+
+    const fetchFirstPage = async () => {
+      setStudents([])
+      setHasMore(true)
+      setIsLoading(true)
+      try {
+        const result = await studentService.getStudents({
+          query: activeQuery,
+          page: 1,
+        })
+        const items = applySchoolNames(result.items)
+        setStudents(items)
+        setHasMore(result.hasMore)
+        setFilteredTotal(result.total)
+        setMetrics(m => ({
+          ...m,
+          schools: new Set(items.map(s => s.school).filter(Boolean)).size,
+        }))
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    void fetchFirstPage()
+  }, [activeQuery])
+
+  // Stable IntersectionObserver — reads current values from refs to avoid re-registering
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+
+    function loadMore() {
+      if (
+        isFetchingMoreRef.current ||
+        isLoadingRef.current ||
+        !hasMoreRef.current
+      )
+        return
+      const nextPage = activePageRef.current + 1
+      activePageRef.current = nextPage
+      setIsFetchingMore(true)
+
+      void studentService
+        .getStudents({ query: activeQueryRef.current, page: nextPage })
+        .then(result => {
+          const items = applySchoolNames(result.items)
+          setStudents(prev => {
+            const merged = [...prev, ...items]
+            setMetrics(m => ({
+              ...m,
+              schools: new Set(merged.map(s => s.school).filter(Boolean)).size,
+            }))
+            return merged
+          })
+          setHasMore(result.hasMore)
+        })
+        .finally(() => setIsFetchingMore(false))
+    }
+
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting) {
+          loadMore()
+        }
+      },
+      { rootMargin: '200px' }
+    )
+
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [])
 
   function handleSort(field: SortField) {
     setSort(current => ({
@@ -205,28 +303,14 @@ export default function Page() {
     [students, sort]
   )
 
-  const normalize = (text: string) =>
-    text
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase()
-
   const filteredStudents = useMemo(() => {
-    const q = normalize(query)
     return sortedStudents.filter(student => {
-      const matchesQuery =
-        !q ||
-        normalize(student.name).includes(q) ||
-        normalize(student.school ?? '').includes(q) ||
-        normalize(student.year ?? '').includes(q) ||
-        normalize(student.guardian ?? '').includes(q)
-
       const matchesStatus =
         selectedStatus === 'all' || student.status === selectedStatus
 
-      return matchesQuery && matchesStatus
+      return matchesStatus
     })
-  }, [sortedStudents, query, selectedStatus])
+  }, [sortedStudents, selectedStatus])
 
   const selectedStudentRow = students.find(s => s.id === selectedStudentId)
 
@@ -244,7 +328,7 @@ export default function Page() {
     const NONE = 'none'
     setCreateError(null)
     try {
-      await studentService.createStudent({
+      const created = await studentService.createStudent({
         name: values.name,
         email: values.email,
         password: values.password,
@@ -254,7 +338,16 @@ export default function Page() {
         status: values.status as 'ativo' | 'inativo',
         birthDate: values.birthDate,
       })
-      await fetchStudents()
+      const withNames = applySchoolNames([created])
+      setStudents(prev => [...withNames, ...prev])
+      setMetrics(m => ({
+        ...m,
+        total: m.total + 1,
+        schools: new Set(
+          [...withNames, ...students].map(s => s.school).filter(Boolean)
+        ).size,
+      }))
+      setFilteredTotal(prev => prev + 1)
       setIsCreateModalOpen(false)
     } catch (err) {
       let message = 'Não foi possível criar o aluno. Tente novamente.'
@@ -282,12 +375,14 @@ export default function Page() {
 
   async function handleEditStudent(values: EditFormValues) {
     if (!selectedStudentId) return
-    await studentService.updateStudent(selectedStudentId, {
+    const updated = await studentService.updateStudent(selectedStudentId, {
       password: values.password || undefined,
       schoolId: values.schoolId || null,
       year: values.year || null,
     })
-    await fetchStudents()
+    setStudents(current =>
+      current.map(s => (s.id === selectedStudentId ? updated : s))
+    )
     setIsEditModalOpen(false)
   }
 
@@ -321,6 +416,7 @@ export default function Page() {
       active: student?.status === 'ativo' ? m.active - 1 : m.active,
       inactive: student?.status === 'inativo' ? m.inactive - 1 : m.inactive,
     }))
+    setFilteredTotal(prev => prev - 1)
     setIsDeleteModalOpen(false)
     setSelectedStudentId(null)
   }
@@ -389,14 +485,14 @@ export default function Page() {
       <Box sx={{ backgroundColor: 'background.default', borderRadius: '14px' }}>
         <SearchBarAndFilter
           data-testid="students-search"
-          onQueryChange={setQuery}
-          query={query}
+          onQueryChange={setInputQuery}
+          query={inputQuery}
           resultsSummary={{
-            count: filteredStudents.length,
+            count: filteredTotal,
             singularLabel: 'resultado',
             pluralLabel: 'resultados',
           }}
-          searchPlaceholder="Pesquisar alunos, responsáveis, escola ou ano..."
+          searchPlaceholder="Pesquisar alunos por nome..."
           filterOptions={[
             { label: 'Todos', value: 'all' },
             { label: 'Ativo', value: 'ativo' },
@@ -527,6 +623,13 @@ export default function Page() {
               </Box>
             </Box>
           ))
+        )}
+
+        <Box ref={sentinelRef} sx={{ height: '1px' }} />
+        {isFetchingMore && (
+          <Box sx={{ py: 3, display: 'flex', justifyContent: 'center' }}>
+            <CircularProgress size={22} />
+          </Box>
         )}
 
         <Menu

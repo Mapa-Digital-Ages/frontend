@@ -119,11 +119,15 @@ function queryMockStudents(query: StudentListQuery): StudentListResult {
   })
 
   const page = query.page ?? 1
-  const pageSize = query.pageSize ?? 50
+  const pageSize = query.pageSize ?? 10
   const start = (page - 1) * pageSize
   const items = filtered.slice(start, start + pageSize)
 
-  return { items, total: filtered.length }
+  return {
+    items,
+    total: filtered.length,
+    hasMore: start + items.length < filtered.length,
+  }
 }
 
 function createMockStudent(input: CreateStudentInput): StudentItem {
@@ -189,14 +193,25 @@ export function createStudentRepository({
 }: CreateStudentRepositoryOptions) {
   return {
     async getStudents(query: StudentListQuery): Promise<StudentListResult> {
+      const pageSize = query.pageSize ?? 10
       try {
+        const params: Record<string, string | number> = {
+          page: query.page ?? 1,
+          size: pageSize,
+        }
+        if (query.query) {
+          params.name = query.query
+        }
         const response = await client.get<StudentDto[] | StudentListDto>(
-          'student'
+          'student',
+          {
+            query: params,
+          }
         )
-        return mapStudentListDto(response.data)
+        return mapStudentListDto(response.data, pageSize)
       } catch (error) {
         if (!shouldUseFallback(error, allowFallback)) throw error
-        return queryMockStudents(query)
+        return queryMockStudents({ ...query, pageSize })
       }
     },
 
@@ -242,6 +257,20 @@ export function createStudentRepository({
       } catch (error) {
         if (!shouldUseFallback(error, allowFallback)) throw error
         deleteMockStudent(id)
+      }
+    },
+
+    async countStudents(name?: string): Promise<number> {
+      try {
+        const params: Record<string, string> = {}
+        if (name) params.name = name
+        const response = await client.get<{ total: number }>('student/count', {
+          query: params,
+        })
+        return response.data.total
+      } catch (error) {
+        if (!shouldUseFallback(error, allowFallback)) throw error
+        return queryMockStudents({ query: name, page: 1, pageSize: 9999 }).total
       }
     },
   }

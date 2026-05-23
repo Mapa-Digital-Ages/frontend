@@ -16,6 +16,7 @@ export interface StudentItem {
 export interface StudentListResult {
   items: StudentItem[]
   total: number
+  hasMore: boolean
 }
 
 export interface StudentListQuery {

@@ -59,17 +59,21 @@ export function mapStudentDto(dto: StudentDto): StudentItem {
 }
 
 export function mapStudentListDto(
-  dto: StudentDto[] | StudentListDto
+  dto: StudentDto[] | StudentListDto,
+  pageSize?: number
 ): StudentListResult {
   if (Array.isArray(dto)) {
+    const hasMore = pageSize !== undefined ? dto.length >= pageSize : false
     return {
       items: dto.map(mapStudentDto),
       total: dto.length,
+      hasMore,
     }
   }
   return {
     items: dto.items.map(mapStudentDto),
     total: dto.total,
+    hasMore: dto.page < dto.total_pages,
   }
 }
 
