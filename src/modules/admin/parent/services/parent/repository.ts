@@ -5,6 +5,7 @@ import type {
   ParentApprovalItem,
   ParentApprovalStatus,
 } from '@/modules/admin/shared/types/types'
+import { invalidateStudentListCache } from '@/modules/admin/student/services/listCache'
 import {
   filterApprovalItems,
   paginateApprovalItems,
@@ -34,27 +35,56 @@ export interface CreateParentApprovalRepositoryOptions {
   client: ParentApprovalApiClient
 }
 
-function buildGuardianRegistrationPayload(input: ParentApprovalDraftInput) {
-  const guardian = input.guardian!
-  return {
-    email: guardian.email,
-    first_name: guardian.first_name.trim(),
-    last_name: guardian.last_name.trim(),
-    password: guardian.password,
-    phone_number: guardian.phone_number.trim(),
-    student: input.student,
+function getGuardianDraft(input: ParentApprovalDraftInput) {
+  return (
+    input.guardian ?? {
+      email: input.email,
+      first_name: input.first_name,
+      last_name: input.last_name,
+      password: input.password,
+      phone_number: input.phone_number,
+    }
+  )
+}
+
+function addTrimmedPayloadField(
+  payload: Record<string, string>,
+  field: string,
+  value?: string
+) {
+  if (value === undefined) return
+
+  const trimmed = value.trim()
+  if (trimmed) {
+    payload[field] = trimmed
   }
 }
 
+function buildGuardianRegistrationPayload(input: ParentApprovalDraftInput) {
+  const guardian = getGuardianDraft(input)
+  const payload: Record<string, string> = {}
+
+  addTrimmedPayloadField(payload, 'email', guardian.email)
+  addTrimmedPayloadField(payload, 'first_name', guardian.first_name)
+  addTrimmedPayloadField(payload, 'last_name', guardian.last_name)
+  addTrimmedPayloadField(payload, 'phone_number', guardian.phone_number)
+  addTrimmedPayloadField(payload, 'student', input.student)
+  if (guardian.password !== undefined) payload.password = guardian.password
+
+  return payload
+}
+
 function buildGuardianUpdatePayload(input: ParentApprovalDraftInput) {
-  const guardian = input.guardian!
-  return {
-    email: guardian.email,
-    first_name: guardian.first_name.trim(),
-    last_name: guardian.last_name.trim(),
-    phone_number: guardian.phone_number.trim(),
-    student: input.student,
-  }
+  const guardian = getGuardianDraft(input)
+  const payload: Record<string, string> = {}
+
+  addTrimmedPayloadField(payload, 'email', guardian.email)
+  addTrimmedPayloadField(payload, 'first_name', guardian.first_name)
+  addTrimmedPayloadField(payload, 'last_name', guardian.last_name)
+  addTrimmedPayloadField(payload, 'phone_number', guardian.phone_number)
+  addTrimmedPayloadField(payload, 'student', input.student)
+
+  return payload
 }
 
 function buildUserStatusPath(userId: string) {
@@ -91,6 +121,7 @@ export function createParentApprovalRepository({
         buildGuardianRegistrationPayload(input),
         { skipAuth: true }
       )
+      invalidateStudentListCache()
     },
 
     async updateParentRegistration(
@@ -101,10 +132,12 @@ export function createParentApprovalRepository({
         buildGuardianPath(guardianId),
         buildGuardianUpdatePayload(input)
       )
+      invalidateStudentListCache()
     },
 
     async removeParentRegistration(guardianId: string): Promise<void> {
       await client.delete<unknown>(buildGuardianPath(guardianId))
+      invalidateStudentListCache()
     },
 
     async updateParentStatus(
@@ -118,6 +151,7 @@ export function createParentApprovalRepository({
         }
       )
 
+      invalidateStudentListCache()
       return mapParentApprovalUserToParentApprovalItem(response.data)
     },
   }

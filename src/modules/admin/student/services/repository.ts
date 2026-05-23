@@ -14,27 +14,45 @@ import {
   type StudentDto,
   type StudentListDto,
 } from './mapper'
+import { getCachedStudentList, invalidateStudentListCache } from './listCache'
 
 export function createStudentRepository({
   client,
 }: CreateStudentRepositoryOptions) {
   return {
     async getStudents(query: StudentListQuery): Promise<StudentListResult> {
-      const pageSize = query.pageSize ?? 10
-      const params: Record<string, string | number> = {
-        page: query.page ?? 1,
-        size: pageSize,
-      }
-      if (query.query) {
-        params.name = query.query
-      }
-      const response = await client.get<StudentDto[] | StudentListDto>(
-        'student',
+      const pageSize = query.size ?? query.pageSize ?? 10
+      const page = query.page ?? 1
+      const name = query.name ?? query.query
+      const email = query.email
+
+      return getCachedStudentList(
         {
-          query: params,
+          email,
+          name,
+          page,
+          size: pageSize,
+        },
+        async () => {
+          const params: Record<string, string | number> = {
+            page,
+            size: pageSize,
+          }
+          if (name) {
+            params.name = name
+          }
+          if (email) {
+            params.email = email
+          }
+          const response = await client.get<StudentDto[] | StudentListDto>(
+            'student',
+            {
+              query: params,
+            }
+          )
+          return mapStudentListDto(response.data, pageSize)
         }
       )
-      return mapStudentListDto(response.data, pageSize)
     },
 
     async createStudent(input: CreateStudentInput): Promise<StudentItem> {
@@ -42,6 +60,7 @@ export function createStudentRepository({
         'student',
         mapCreateStudentInput(input)
       )
+      invalidateStudentListCache()
       return mapStudentDto(response.data)
     },
 
@@ -53,11 +72,13 @@ export function createStudentRepository({
         `student/${id}`,
         mapUpdateStudentInput(input)
       )
+      invalidateStudentListCache()
       return mapStudentDto(response.data)
     },
 
     async deleteStudent(id: string): Promise<void> {
       await client.delete<void>(`student/${id}`)
+      invalidateStudentListCache()
     },
 
     async countStudents(name?: string): Promise<number> {

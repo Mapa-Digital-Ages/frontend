@@ -21,6 +21,9 @@ export interface StudentListResult {
 }
 
 export interface StudentListQuery {
+  email?: string
+  name?: string
+  size?: number
   query?: string
   status?: StudentStatus | 'all'
   page?: number

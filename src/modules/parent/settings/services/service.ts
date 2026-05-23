@@ -7,6 +7,7 @@ import {
   getLinkedChildIds,
   removeLinkedChildId,
 } from '@/modules/parent/shared/storage/linkedChildren'
+import { invalidateStudentListCache } from '@/modules/admin/student/services/listCache'
 import type { ApiResponse } from '@/shared/types/api'
 import type {
   ParentDashboardChild,
@@ -274,6 +275,7 @@ export const parentService = {
     }
 
     addLinkedChildId(guardianEmail, studentId)
+    invalidateStudentListCache()
 
     return {
       id: studentId,
@@ -297,12 +299,14 @@ export const parentService = {
         school_id: data.school_id || undefined,
       }
     )
+    invalidateStudentListCache()
     return mapStudentResponseToChild(response.data)
   },
 
   async deleteChild(childId: string): Promise<void> {
     const guardianEmail = getCookie(COOKIE_KEYS.authEmail)
     await httpClient.delete(`student/${childId}`)
+    invalidateStudentListCache()
     removeLinkedChildId(guardianEmail, childId)
   },
 
@@ -363,6 +367,7 @@ export const parentService = {
 
       const studentId = response.data.user_id ?? response.data.id
       if (studentId) addLinkedChildId(guardianEmail, studentId)
+      invalidateStudentListCache()
 
       return { success: true, studentId }
     } catch (err: unknown) {
