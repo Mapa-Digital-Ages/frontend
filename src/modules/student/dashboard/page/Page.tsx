@@ -3,7 +3,7 @@ import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded'
 import PublicRoundedIcon from '@mui/icons-material/PublicRounded'
 import { Box } from '@mui/material'
 import dayjs from 'dayjs'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Planner from '@/modules/student/shared/components/Planner'
 import type { Task } from '@/modules/student/shared/components/Planner'
 import SubjectBaseCard from '@/modules/student/shared/components/SubjectBaseCard'
@@ -11,6 +11,7 @@ import AppPageContainer from '@/shared/ui/AppPageContainer'
 import EmotionalContainer from '@/shared/ui/EmotionalContainer'
 import PageHeader from '@/shared/ui/PageHeader'
 import { SUBJECTS } from '@/shared/utils/themes'
+import { studentService } from '@/modules/student/dashboard/services/service'
 
 export default function Page() {
   const initialTasks: Task[] = [
@@ -59,6 +60,28 @@ export default function Page() {
   ]
 
   const [tasks] = useState<Task[]>(initialTasks)
+  const [studentClassLabel, setStudentClassLabel] = useState<string>()
+
+  useEffect(() => {
+    let isMounted = true
+
+    void studentService
+      .getCurrentStudentClassLabel()
+      .then(label => {
+        if (isMounted) {
+          setStudentClassLabel(label)
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setStudentClassLabel(undefined)
+        }
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   return (
     <AppPageContainer className="gap-4 md:gap-5">
@@ -66,7 +89,7 @@ export default function Page() {
         variant="aluno"
         title="Continue sua jornada no Mapa Digital"
         subtitle="Progresso até o próximo nível:"
-        tag="7º Ano"
+        tag={studentClassLabel}
         progress={85}
       />
 

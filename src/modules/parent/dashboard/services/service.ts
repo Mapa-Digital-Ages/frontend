@@ -10,6 +10,7 @@ import {
   addLinkedChildId,
   getLinkedChildIds,
 } from '@/modules/parent/shared/storage/linkedChildren'
+import { invalidateStudentListCache } from '@/modules/admin/student/services/listCache'
 import type { ApiResponse } from '@/shared/types/api'
 import type { StudentDisciplineProgress } from '../types/types'
 import type { Task } from '@/modules/student/shared/components/Planner'
@@ -230,6 +231,7 @@ export const parentService = {
 
       const studentId = response.data.user_id ?? response.data.id
       if (studentId) addLinkedChildId(guardianEmail, studentId)
+      invalidateStudentListCache()
 
       return { success: true, studentId }
     } catch (err: unknown) {

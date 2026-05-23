@@ -120,12 +120,15 @@ export function mapGuardianResponseToParentApprovalItem(
     guardian,
     id: dto.user_id,
     kind: 'parent',
+    name: {
+      firstName: guardian.first_name,
+      lastName: guardian.last_name,
+    },
     requestedAt,
     roleLabel: 'Responsável',
     status: guardianStatusMap[dto.guardian_status],
     subtitle: `Responsável · Solicitação em ${requestedAt}`,
     title: fullName,
-    name: { firstName: dto.first_name, lastName: dto.last_name },
     validation: {
       hasDocument: true,
       relationshipConfirmed: true,
