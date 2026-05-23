@@ -12,7 +12,7 @@ import type { FilterOption } from '../types/types'
 import MetricsCard from '@/shared/ui/MetricsCard'
 
 const filterOptions: FilterOption[] = [
-  { label: 'Todos', value: 'all', subject: null },
+  { label: 'Em Andamento', value: 'in_progress', subject: null },
   { label: 'Matemática', value: 'mathematics', subject: SUBJECTS.matematica },
   { label: 'Português', value: 'portuguese', subject: SUBJECTS.portugues },
   { label: 'Ciências', value: 'science', subject: SUBJECTS.ciencias },
@@ -30,7 +30,7 @@ function normalizeText(value: string) {
 
 export default function Page() {
   const [query, setQuery] = useState('')
-  const [selectedSubject, setSelectedSubject] = useState('all')
+  const [selectedSubject, setSelectedSubject] = useState('in_progress')
   const [currentPage, setCurrentPage] = useState(1)
   const metricCards = useMemo(() => getTrailMetrics(), [])
 
@@ -44,7 +44,10 @@ export default function Page() {
       const matchesQuery =
         normalizedQuery.length === 0 || searchableText.includes(normalizedQuery)
       const matchesSubject =
-        selectedSubject === 'all' || trail.subject?.id === selectedSubject
+        selectedSubject === 'all' ||
+        (selectedSubject === 'in_progress'
+          ? trail.progress > 0 && trail.progress < 100
+          : trail.subject?.id === selectedSubject)
 
       return matchesQuery && matchesSubject
     })

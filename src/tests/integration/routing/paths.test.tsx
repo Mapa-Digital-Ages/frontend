@@ -4,6 +4,7 @@ import {
   APP_ROUTES,
   buildAdminCorrectionRoute,
   buildParentStudentDetailsRoute,
+  buildStudentTrailRoute,
   DEFAULT_ROUTE_BY_ROLE,
 } from '../../../app/router/paths'
 
@@ -11,6 +12,7 @@ test('APP_ROUTES exposes auth, student, parent, admin, school and company paths'
   assert.equal(typeof APP_ROUTES.auth.login, 'string')
   assert.equal(typeof APP_ROUTES.auth.forgotPassword, 'string')
   assert.equal(typeof APP_ROUTES.student.adaptiveTrail, 'string')
+  assert.equal(typeof APP_ROUTES.student.adaptiveTrailDetail, 'string')
   assert.equal(typeof APP_ROUTES.student.contents, 'string')
   assert.equal(typeof APP_ROUTES.student.components, 'string')
   assert.equal(typeof APP_ROUTES.parent.dashboard, 'string')
@@ -42,5 +44,9 @@ test('route builders encode dynamic path segments safely', () => {
   assert.equal(
     buildParentStudentDetailsRoute('student/7 ano'),
     '/parent/students/student%2F7%20ano'
+  )
+  assert.equal(
+    buildStudentTrailRoute('trail/matemática'),
+    '/student/adaptive-trail/trail%2Fmatem%C3%A1tica'
   )
 })
