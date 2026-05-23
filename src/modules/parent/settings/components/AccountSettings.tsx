@@ -7,14 +7,14 @@ import {
   Typography,
   useTheme,
 } from '@mui/material'
-import { alpha, Theme } from '@mui/material/styles'
+import { alpha } from '@mui/material/styles'
 import { useEffect, useMemo, useState } from 'react'
 import AppActionModal from '@/shared/ui/AppActionModal'
 import AppButton from '@/shared/ui/AppButton'
 import AppCard from '@/shared/ui/AppCard'
 import AppInput from '@/shared/ui/AppInput'
 import type { ParentAccountSettings } from '@/modules/parent/settings/services/service'
-import { HowToVoteRounded } from '@mui/icons-material'
+import ChangePasswordModal from './ChangePasswordModal'
 
 interface AccountSettingsProps {
   initialValues: ParentAccountSettings
@@ -22,7 +22,7 @@ interface AccountSettingsProps {
   onDeleteAccount?: () => void | Promise<void>
 }
 
-type PendingAccountAction = 'password' | 'delete' | null
+type PendingAccountAction = 'delete' | null
 
 const EMPTY_ACCOUNT_SETTINGS: ParentAccountSettings = {
   email: '',
@@ -71,6 +71,7 @@ function AccountSettings({
   })
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null)
   const [pendingAction, setPendingAction] = useState<PendingAccountAction>(null)
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isSubmittingAction, setIsSubmittingAction] = useState(false)
   const theme = useTheme()
@@ -122,11 +123,6 @@ function AccountSettings({
   async function handleConfirmAccountAction() {
     if (!pendingAction) return
 
-    if (pendingAction === 'password') {
-      setPendingAction(null)
-      return
-    }
-
     setIsSubmittingAction(true)
     setFeedbackMessage(null)
     try {
@@ -139,23 +135,12 @@ function AccountSettings({
     }
   }
 
-  const actionCopy = (() => {
-    if (pendingAction === 'password') {
-      return {
-        confirmLabel: 'Entendi',
-        description:
-          'Para alterar a senha, use o fluxo de recuperação na tela de login ou solicite uma redefinição ao suporte.',
-        title: 'Alterar senha',
-      }
-    }
-
-    return {
-      confirmLabel: 'Excluir',
-      description:
-        'Essa ação remove o acesso da conta e pode afetar vínculos existentes com os alunos.',
-      title: 'Excluir conta?',
-    }
-  })()
+  const actionCopy = {
+    confirmLabel: 'Excluir',
+    description:
+      'Essa ação remove o acesso da conta e pode afetar vínculos existentes com os alunos.',
+    title: 'Excluir conta?',
+  }
 
   return (
     <>
@@ -310,7 +295,7 @@ function AccountSettings({
               backgroundColor="background.paper"
               hasBorder
               hoverBackgroundColor={neutralHoverBackground}
-              onClick={() => setPendingAction('password')}
+              onClick={() => setIsPasswordModalOpen(true)}
               textColor="text.primary"
               variant="outlined"
               sx={{
@@ -388,7 +373,7 @@ function AccountSettings({
 
       <AppActionModal
         confirmLabel={actionCopy.confirmLabel}
-        confirmTone={pendingAction === 'delete' ? 'error.main' : 'primary.main'}
+        confirmTone="error.main"
         description={actionCopy.description}
         loading={isSubmittingAction}
         mode="confirm"
@@ -397,6 +382,13 @@ function AccountSettings({
         open={pendingAction != null}
         title={actionCopy.title}
         variant="confirm"
+      />
+
+      <ChangePasswordModal
+        initialEmail={savedValues.email}
+        onClose={() => setIsPasswordModalOpen(false)}
+        open={isPasswordModalOpen}
+        title="Alterar minha senha"
       />
     </>
   )

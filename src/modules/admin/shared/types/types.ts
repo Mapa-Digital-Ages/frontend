@@ -55,6 +55,7 @@ interface BaseApprovalItem {
   id: string
   requestedAt?: string
   title: string
+  description?: string
   subtitle?: string
   badges: ApprovalBadge[]
 }
@@ -70,6 +71,7 @@ export type ContentApprovalStatus =
 export interface ContentApprovalItem extends BaseApprovalItem {
   id: string
   kind: 'content'
+  description: string
   resourceType?: ContentApprovalResourceType
   status: ContentApprovalStatus
   subject?: SubjectContext
@@ -124,9 +126,9 @@ export interface ApprovalQueueResult<TItem> {
 
 export interface ContentApprovalDraftInput {
   requestedAt?: string
-  resourceType: ContentApprovalResourceType
   subject?: SubjectContext
   title: string
+  description: string
 }
 
 export interface GuardianItem {
@@ -191,9 +193,9 @@ export type ApprovalActionModalMode = {
 export interface ContentApprovalActionFormValues {
   type: 'content'
   requestedAt: string
-  resourceType: ContentApprovalResourceType
   subjectId: string
   title: string
+  description: string
 }
 
 export interface GuardianApprovalActionFormValues {
@@ -209,3 +211,15 @@ export interface GuardianApprovalActionFormValues {
 export type ApprovalActionFormValues =
   | ContentApprovalActionFormValues
   | GuardianApprovalActionFormValues
+
+export interface SubjectItem {
+  id: string
+  slug?: string
+  name: string
+  color?: string
+  contentCount: number
+  tasksCount: number
+  uploadsCount: number
+  trailsCount: number
+  questionnaireCount: number
+}

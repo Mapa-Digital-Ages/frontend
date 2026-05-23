@@ -5,6 +5,8 @@ import PlayCircleOutlineRoundedIcon from '@mui/icons-material/PlayCircleOutlineR
 import { Box, Card, Stack, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import type { ReactNode } from 'react'
+import { Link } from 'react-router-dom'
+import { buildStudentTrailRoute } from '@/app/router/paths'
 import AppSubjectsTags from '@/shared/ui/AppSubjectsTags'
 import ProgressBar from '@/shared/ui/ProgressBar'
 import { getSubjectTheme } from '@/shared/utils/themes'
@@ -52,8 +54,9 @@ export default function TrailCard({ trail }: TrailCardProps) {
 
   return (
     <Card
-      component="article"
-      role="listitem"
+      aria-label={`Abrir trilha ${trail.name}`}
+      component={Link}
+      to={buildStudentTrailRoute(trail.id)}
       sx={{
         backgroundColor: 'background.paper',
         border: '1px solid',

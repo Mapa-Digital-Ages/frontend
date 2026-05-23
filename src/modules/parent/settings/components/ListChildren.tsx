@@ -19,6 +19,7 @@ interface ListChildrenProps {
   description?: string
   emptyStateDescription: string
   emptyStateTitle: string
+  onChangePassword?: (child: ParentDashboardChild) => void | Promise<void>
   onCreate?: () => void | Promise<void>
   onDelete?: (child: ParentDashboardChild) => void | Promise<void>
   onEdit?: (child: ParentDashboardChild) => void | Promise<void>
@@ -39,6 +40,7 @@ export default function ListChildren({
   description = 'Gerencie os alunos vinculados ao responsável.',
   emptyStateDescription,
   emptyStateTitle,
+  onChangePassword,
   onCreate,
   onDelete,
   onEdit,
@@ -162,6 +164,7 @@ export default function ListChildren({
               <ListChildrenCard
                 child={child}
                 key={child.id}
+                onChangePassword={onChangePassword}
                 onDelete={onDelete}
                 onEdit={onEdit}
                 onSelect={onSelect}

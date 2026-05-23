@@ -1,13 +1,17 @@
 import FilterListRoundedIcon from '@mui/icons-material/FilterListRounded'
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded'
-import { Box, CircularProgress, Typography } from '@mui/material'
+import { Box, CircularProgress, Tooltip, Typography } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
 import { authService } from '@/app/auth/core/service'
 import TaskList from '@/modules/student/shared/components/TaskList'
 import UploadActivityModal, {
   type UploadTaskPayload,
 } from '@/modules/student/shared/components/UploadActivityModal'
-import { uploadService } from '@/modules/student/upload/services/uploadService'
+import {
+  uploadService,
+  type SubjectDirectoryItem,
+} from '@/modules/student/upload/services/uploadService'
+const DEFAULT_SUBJECT_COLOR = 'rgba(32, 109, 197, 1)'
 import type { UploadItem } from '@/modules/student/upload/types/types'
 import AppButton from '@/shared/ui/AppButton'
 import AppCard from '@/shared/ui/AppCard'
@@ -16,43 +20,31 @@ import AppInput from '@/shared/ui/AppInput'
 import AppPageContainer from '@/shared/ui/AppPageContainer'
 import EmptyState from '@/shared/ui/EmptyState'
 import OrdinaryHeader from '@/shared/ui/OrdinaryHeader'
-import { SUBJECTS } from '@/shared/utils/themes'
 
-type SubjectKey =
-  | 'matematica'
-  | 'portugues'
-  | 'ciencias'
-  | 'historia'
-  | 'biologia'
-  | 'ingles'
-  | 'geografia'
-
-type SubjectFilterValue = SubjectKey | 'all'
+type SubjectFilterValue = number | 'all' | 'none'
 
 type TaskType = 'Imagem' | 'PDF' | 'Documento' | 'Arquivo'
 
 type TypeFilterValue = TaskType | 'all'
 
+interface SubjectDescriptor {
+  id: number
+  name: string
+  color: string
+}
+
 type UploadedTask = {
   id: string
   title: string
   type: TaskType
-  subject: SubjectKey
+  subjectId: number | null
 }
 
-const SUBJECT_FILTER_OPTIONS = [
-  { label: 'Todas as disciplinas', value: 'all' },
-  { label: 'Matemática', value: 'matematica' },
-  { label: 'Português', value: 'portugues' },
-  { label: 'Ciências', value: 'ciencias' },
-  { label: 'História', value: 'historia' },
-  { label: 'Biologia', value: 'biologia' },
-  { label: 'Inglês', value: 'ingles' },
-  { label: 'Geografia', value: 'geografia' },
-] satisfies Array<{
-  label: string
-  value: SubjectFilterValue
-}>
+const NEUTRAL_SUBJECT_TAG = {
+  id: 'none',
+  label: 'Sem disciplina',
+  color: 'rgba(148, 163, 184, 1)',
+} as const
 
 const TYPE_FILTER_OPTIONS = [
   { label: 'Todos os tipos', value: 'all' },
@@ -65,17 +57,26 @@ const TYPE_FILTER_OPTIONS = [
   value: TypeFilterValue
 }>
 
-const TASK_FILTER_OPTIONS: DropdownOption[] = [
-  ...SUBJECT_FILTER_OPTIONS.map(option => ({
-    label: option.label,
-    value: `subject:${option.value}`,
-  })),
-  ...TYPE_FILTER_OPTIONS.map((option, index) => ({
-    groupLabel: index === 0 ? 'Tipo de arquivo' : undefined,
-    label: option.label,
-    value: `type:${option.value}`,
-  })),
-]
+function buildTaskFilterOptions(
+  subjects: SubjectDescriptor[]
+): DropdownOption[] {
+  const subjectOptions: DropdownOption[] = [
+    { label: 'Todas as disciplinas', value: 'subject:all' },
+    ...subjects.map(subject => ({
+      label: subject.name,
+      value: `subject:${subject.id}`,
+    })),
+    { label: 'Sem disciplina', value: 'subject:none' },
+  ]
+  const typeOptions: DropdownOption[] = TYPE_FILTER_OPTIONS.map(
+    (option, index) => ({
+      groupLabel: index === 0 ? 'Tipo de arquivo' : undefined,
+      label: option.label,
+      value: `type:${option.value}`,
+    })
+  )
+  return [...subjectOptions, ...typeOptions]
+}
 
 function getUploadTaskType(fileType: string): TaskType {
   if (fileType.startsWith('image/')) return 'Imagem'
@@ -92,26 +93,50 @@ function getUploadTaskType(fileType: string): TaskType {
   return 'Arquivo'
 }
 
+function toSubjectDescriptors(
+  items: SubjectDirectoryItem[]
+): SubjectDescriptor[] {
+  return items
+    .map(item => ({
+      id: item.id,
+      name: item.name,
+      color: item.color ?? DEFAULT_SUBJECT_COLOR,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+}
+
 function mapUploadToTask(upload: UploadItem): UploadedTask {
   return {
     id: upload.id,
     title: upload.file_name,
     type: getUploadTaskType(upload.file_type),
-    subject: 'matematica',
+    subjectId: upload.subject_id ?? null,
   }
 }
 
-function getSubjectLabel(value: SubjectFilterValue) {
-  return SUBJECT_FILTER_OPTIONS.find(option => option.value === value)?.label
+function getSubjectFilterLabel(
+  value: SubjectFilterValue,
+  subjects: SubjectDescriptor[]
+) {
+  if (value === 'all') return 'Todas as disciplinas'
+  if (value === 'none') return 'Sem disciplina'
+  return subjects.find(subject => subject.id === value)?.name
 }
 
 function getTypeLabel(value: TypeFilterValue) {
   return TYPE_FILTER_OPTIONS.find(option => option.value === value)?.label
 }
 
+function parseSubjectFilterValue(value: string): SubjectFilterValue {
+  if (value === 'all' || value === 'none') return value
+  const asNumber = Number(value)
+  return Number.isFinite(asNumber) ? asNumber : 'all'
+}
+
 export default function Page() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
   const [tasks, setTasks] = useState<UploadedTask[]>([])
+  const [subjects, setSubjects] = useState<SubjectDescriptor[]>([])
   const [subjectFilter, setSubjectFilter] = useState<SubjectFilterValue>('all')
   const [typeFilter, setTypeFilter] = useState<TypeFilterValue>('all')
   const [selectedFilterOption, setSelectedFilterOption] =
@@ -123,44 +148,82 @@ export default function Page() {
   const [submitError, setSubmitError] = useState<string | null>(null)
 
   const studentId = authService.getUserId()
+  const isLocalSession = !studentId
 
   useEffect(() => {
-    if (!studentId) {
+    if (isLocalSession) {
       setIsLoading(false)
       return
     }
 
-    async function fetchUploads() {
+    let cancelled = false
+
+    async function loadAll() {
       setIsLoading(true)
       setFetchError(null)
 
       try {
-        const result = await uploadService.listStudentUploads(studentId!)
-        setTasks(result.map(mapUploadToTask))
+        const [subjectList, uploads] = await Promise.all([
+          uploadService
+            .listSubjects()
+            .catch(
+              () => [] as Awaited<ReturnType<typeof uploadService.listSubjects>>
+            ),
+          uploadService.listStudentUploads(studentId!),
+        ])
+
+        if (cancelled) return
+
+        setSubjects(toSubjectDescriptors(subjectList))
+        setTasks(uploads.map(item => mapUploadToTask(item)))
       } catch {
-        setFetchError('Não foi possível carregar as tarefas. Tente novamente.')
+        if (!cancelled) {
+          setFetchError(
+            'Não foi possível carregar as tarefas. Tente novamente.'
+          )
+        }
       } finally {
-        setIsLoading(false)
+        if (!cancelled) setIsLoading(false)
       }
     }
 
-    void fetchUploads()
-  }, [studentId])
+    void loadAll()
+
+    return () => {
+      cancelled = true
+    }
+  }, [studentId, isLocalSession])
 
   async function handleAddTask(task: UploadTaskPayload) {
-    if (!studentId) return
+    if (!studentId) {
+      setSubmitError(
+        'Upload indisponível em sessão local. Entre com uma conta real para enviar arquivos.'
+      )
+      throw new Error('Upload blocked for local session')
+    }
 
     setIsSubmitting(true)
     setSubmitError(null)
 
     try {
+      const activityType =
+        task.type === 'Redação'
+          ? 'essay'
+          : task.type === 'Atividade'
+            ? 'activity'
+            : 'exercise'
+
       const uploaded = await uploadService.uploadStudentFile(
         studentId,
-        task.file
+        task.file,
+        activityType,
+        task.subjectId
       )
 
       const newTask = mapUploadToTask(uploaded)
-      newTask.subject = task.subject
+      if (newTask.subjectId == null && task.subjectId != null) {
+        newTask.subjectId = task.subjectId
+      }
 
       setTasks(currentTasks => [newTask, ...currentTasks])
       setIsUploadModalOpen(false)
@@ -178,7 +241,7 @@ export default function Page() {
     const [filterType, filterValue] = rawValue.split(':')
 
     if (filterType === 'subject') {
-      setSubjectFilter(filterValue as SubjectFilterValue)
+      setSubjectFilter(parseSubjectFilterValue(filterValue))
       return
     }
 
@@ -186,6 +249,17 @@ export default function Page() {
       setTypeFilter(filterValue as TypeFilterValue)
     }
   }
+
+  const subjectsById = useMemo(() => {
+    const lookup: Record<number, SubjectDescriptor> = {}
+    for (const subject of subjects) lookup[subject.id] = subject
+    return lookup
+  }, [subjects])
+
+  const taskFilterOptions = useMemo(
+    () => buildTaskFilterOptions(subjects),
+    [subjects]
+  )
 
   const activeFilterValues = useMemo(
     () => [`subject:${subjectFilter}`, `type:${typeFilter}`],
@@ -196,7 +270,7 @@ export default function Page() {
     const activeFilters: string[] = []
 
     if (subjectFilter !== 'all') {
-      const subjectLabel = getSubjectLabel(subjectFilter)
+      const subjectLabel = getSubjectFilterLabel(subjectFilter, subjects)
 
       if (subjectLabel) activeFilters.push(subjectLabel)
     }
@@ -210,7 +284,7 @@ export default function Page() {
     if (activeFilters.length === 0) return 'Filtros'
 
     return activeFilters.join(' • ')
-  }, [subjectFilter, typeFilter])
+  }, [subjectFilter, typeFilter, subjects])
 
   const filteredTaskListItems = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLocaleLowerCase('pt-BR')
@@ -218,7 +292,10 @@ export default function Page() {
     return tasks
       .filter(task => {
         const matchesSubject =
-          subjectFilter === 'all' || task.subject === subjectFilter
+          subjectFilter === 'all' ||
+          (subjectFilter === 'none'
+            ? task.subjectId == null
+            : task.subjectId === subjectFilter)
 
         const matchesType = typeFilter === 'all' || task.type === typeFilter
 
@@ -229,13 +306,23 @@ export default function Page() {
 
         return matchesSubject && matchesType && matchesSearch
       })
-      .map(task => ({
-        id: task.id,
-        title: task.title,
-        type: task.type,
-        subject: SUBJECTS[task.subject],
-      }))
-  }, [tasks, subjectFilter, typeFilter, searchQuery])
+      .map(task => {
+        const subject =
+          task.subjectId != null ? subjectsById[task.subjectId] : undefined
+        return {
+          id: task.id,
+          title: task.title,
+          type: task.type,
+          subject: subject
+            ? {
+                id: String(subject.id),
+                label: subject.name,
+                color: subject.color,
+              }
+            : NEUTRAL_SUBJECT_TAG,
+        }
+      })
+  }, [tasks, subjectFilter, typeFilter, searchQuery, subjectsById])
 
   return (
     <AppPageContainer className="gap-4 md:gap-5">
@@ -297,7 +384,7 @@ export default function Page() {
             }}
             neutralOutline
             onChange={event => handleFilterChange(String(event.target.value))}
-            options={TASK_FILTER_OPTIONS}
+            options={taskFilterOptions}
             triggerVariant="ghost"
             value={selectedFilterOption}
             selectedValues={activeFilterValues}
@@ -305,20 +392,39 @@ export default function Page() {
             menuWidth="min(320px, calc(100vw - 32px))"
           />
 
-          <AppButton
-            label="Upload de Atividade"
-            backgroundColor="primary.main"
-            data-testid="upload-activity-button"
-            fullWidth
-            onClick={() => setIsUploadModalOpen(true)}
-            sx={{ minHeight: 48 }}
-          />
+          <Tooltip
+            title={
+              isLocalSession
+                ? 'Upload indisponível em sessão local. Entre com uma conta real para enviar arquivos.'
+                : ''
+            }
+            disableHoverListener={!isLocalSession}
+            disableFocusListener={!isLocalSession}
+            disableTouchListener={!isLocalSession}
+          >
+            <span style={{ display: 'block' }}>
+              <AppButton
+                label="Upload de Atividade"
+                backgroundColor="primary.main"
+                data-testid="upload-activity-button"
+                disabled={isLocalSession}
+                fullWidth
+                onClick={() => setIsUploadModalOpen(true)}
+                sx={{ minHeight: 48 }}
+              />
+            </span>
+          </Tooltip>
         </Box>
 
         {isLoading ? (
           <Box className="flex items-center justify-center py-10">
             <CircularProgress size={32} />
           </Box>
+        ) : isLocalSession ? (
+          <EmptyState
+            description="O upload de tarefas exige uma conta real. Faça login com uma conta vinculada ao backend para enviar e listar arquivos."
+            title="Indisponível em sessão local"
+          />
         ) : fetchError ? (
           <Box className="flex items-center justify-center py-10">
             <Typography sx={{ color: 'text.secondary' }}>
@@ -335,16 +441,19 @@ export default function Page() {
         )}
       </AppCard>
 
-      <UploadActivityModal
-        open={isUploadModalOpen}
-        onClose={() => {
-          setIsUploadModalOpen(false)
-          setSubmitError(null)
-        }}
-        onAddTask={handleAddTask}
-        isSubmitting={isSubmitting}
-        submitError={submitError}
-      />
+      {!isLocalSession && (
+        <UploadActivityModal
+          open={isUploadModalOpen}
+          onClose={() => {
+            setIsUploadModalOpen(false)
+            setSubmitError(null)
+          }}
+          onAddTask={handleAddTask}
+          subjects={subjects}
+          isSubmitting={isSubmitting}
+          submitError={submitError}
+        />
+      )}
     </AppPageContainer>
   )
 }

@@ -1,6 +1,25 @@
 import { expect, jest, test } from '@jest/globals'
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+
+jest.mock('@/modules/auth/forgot-password/services/service', () => ({
+  forgotPasswordService: {
+    requestReset: jest.fn(),
+    confirmReset: jest.fn(),
+  },
+}))
+
+jest.mock('@/shared/lib/http/client', () => ({
+  HttpRequestError: class HttpRequestError extends Error {
+    status: number
+    constructor(status: number, statusText: string) {
+      super(statusText)
+      this.status = status
+    }
+  },
+  httpClient: {},
+}))
+
 import AccountSettings from '@/modules/parent/settings/components/AccountSettings'
 import type { ParentAccountSettings } from '@/modules/parent/settings/services/service'
 import { renderWithProviders } from '@/tests/helpers/render'

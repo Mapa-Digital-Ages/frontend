@@ -20,10 +20,35 @@ function normalizeBaseUrl(url: string) {
   return url.endsWith('/') ? url : `${url}/`
 }
 
+export type StudentUploadActivityType = 'exercise' | 'essay' | 'activity'
+
+export interface SubjectDirectoryItem {
+  id: number
+  slug: string | null
+  name: string
+  color: string | null
+}
+
+interface SubjectListDto {
+  id: number | string
+  slug?: string | null
+  name: string
+  color?: string | null
+}
+
 export const uploadService = {
-  async uploadStudentFile(studentId: string, file: File): Promise<UploadItem> {
+  async uploadStudentFile(
+    studentId: string,
+    file: File,
+    activityType: StudentUploadActivityType,
+    subjectId?: number | null
+  ): Promise<UploadItem> {
     const formData = new FormData()
     formData.append('file', file)
+    formData.append('activity_type', activityType)
+    if (subjectId != null) {
+      formData.append('subject_id', String(subjectId))
+    }
 
     const response = await fetch(
       `${normalizeBaseUrl(baseUrl)}student/${encodeURIComponent(studentId)}/uploads`,
@@ -51,6 +76,16 @@ export const uploadService = {
       { query: { page, size } }
     )
     return response.data
+  },
+
+  async listSubjects(): Promise<SubjectDirectoryItem[]> {
+    const response = await httpClient.get<SubjectListDto[]>('subjects')
+    return response.data.map(dto => ({
+      id: Number(dto.id),
+      slug: dto.slug ?? null,
+      name: dto.name,
+      color: dto.color ?? null,
+    }))
   },
 
   async getUpload(uploadId: string): Promise<UploadItem> {

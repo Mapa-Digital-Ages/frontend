@@ -1,20 +1,18 @@
 import type { ApiResponse, HttpRequestOptions } from '@/shared/types/api'
 import type {
   ApprovalQueueQuery,
+  ApprovalQueueResult,
   ParentApprovalDraftInput,
   ParentApprovalItem,
   ParentApprovalStatus,
 } from '@/modules/admin/shared/types/types'
 import { invalidateStudentListCache } from '@/modules/admin/student/services/listCache'
 import {
-  filterApprovalItems,
-  paginateApprovalItems,
-} from '@/modules/admin/parent/utils/utils'
-import {
-  buildParentApprovalQuery,
-  mapParentApprovalUserToParentApprovalItem,
-  mapParentStatusToParentApprovalUserStatus,
-  type ParentApprovalUserDto,
+  buildGuardianListQuery,
+  mapGuardianResponseToParentApprovalItem,
+  mapParentStatusToGuardianStatusDto,
+  type GuardianListPaginatedDto,
+  type GuardianResponseDto,
 } from './mapper'
 
 export type ParentApprovalApiClient = {
@@ -35,82 +33,52 @@ export interface CreateParentApprovalRepositoryOptions {
   client: ParentApprovalApiClient
 }
 
-function getGuardianDraft(input: ParentApprovalDraftInput) {
-  return (
-    input.guardian ?? {
-      email: input.email,
-      first_name: input.first_name,
-      last_name: input.last_name,
-      password: input.password,
-      phone_number: input.phone_number,
-    }
-  )
-}
-
-function addTrimmedPayloadField(
-  payload: Record<string, string>,
-  field: string,
-  value?: string
-) {
-  if (value === undefined) return
-
-  const trimmed = value.trim()
-  if (trimmed) {
-    payload[field] = trimmed
-  }
+function buildGuardianPath(guardianId: string) {
+  return `guardian/${encodeURIComponent(guardianId)}`
 }
 
 function buildGuardianRegistrationPayload(input: ParentApprovalDraftInput) {
-  const guardian = getGuardianDraft(input)
-  const payload: Record<string, string> = {}
-
-  addTrimmedPayloadField(payload, 'email', guardian.email)
-  addTrimmedPayloadField(payload, 'first_name', guardian.first_name)
-  addTrimmedPayloadField(payload, 'last_name', guardian.last_name)
-  addTrimmedPayloadField(payload, 'phone_number', guardian.phone_number)
-  addTrimmedPayloadField(payload, 'student', input.student)
-  if (guardian.password !== undefined) payload.password = guardian.password
-
-  return payload
+  const guardian = input.guardian!
+  return {
+    email: guardian.email,
+    first_name: guardian.first_name.trim(),
+    last_name: guardian.last_name.trim(),
+    password: guardian.password,
+    phone_number: guardian.phone_number.trim(),
+  }
 }
 
 function buildGuardianUpdatePayload(input: ParentApprovalDraftInput) {
-  const guardian = getGuardianDraft(input)
-  const payload: Record<string, string> = {}
-
-  addTrimmedPayloadField(payload, 'email', guardian.email)
-  addTrimmedPayloadField(payload, 'first_name', guardian.first_name)
-  addTrimmedPayloadField(payload, 'last_name', guardian.last_name)
-  addTrimmedPayloadField(payload, 'phone_number', guardian.phone_number)
-  addTrimmedPayloadField(payload, 'student', input.student)
-
-  return payload
-}
-
-function buildUserStatusPath(userId: string) {
-  return `admin/users/${encodeURIComponent(userId)}/status`
-}
-
-function buildGuardianPath(guardianId: string) {
-  return `guardian/${encodeURIComponent(guardianId)}`
+  const guardian = input.guardian!
+  return {
+    email: guardian.email,
+    first_name: guardian.first_name.trim(),
+    last_name: guardian.last_name.trim(),
+    phone_number: guardian.phone_number.trim(),
+  }
 }
 
 export function createParentApprovalRepository({
   client,
 }: CreateParentApprovalRepositoryOptions) {
   return {
-    async getParentQueue(query: ApprovalQueueQuery) {
-      const response = await client.get<ParentApprovalUserDto[]>(
-        'admin/users',
-        {
-          query: buildParentApprovalQuery(query),
-        }
-      )
+    async getParentQueue(
+      query: ApprovalQueueQuery
+    ): Promise<ApprovalQueueResult<ParentApprovalItem>> {
+      const response = await client.get<GuardianListPaginatedDto>('guardian', {
+        query: buildGuardianListQuery(query),
+      })
 
-      const items = response.data.map(mapParentApprovalUserToParentApprovalItem)
-      const filteredItems = filterApprovalItems(items, query)
-
-      return paginateApprovalItems(filteredItems, query)
+      return {
+        currentPage: response.data.page,
+        items: response.data.items.map(mapGuardianResponseToParentApprovalItem),
+        pageSize: response.data.size,
+        totalItems: response.data.total,
+        totalPages: Math.max(
+          1,
+          Math.ceil(response.data.total / response.data.size)
+        ),
+      }
     },
 
     async createParentRegistration(
@@ -141,18 +109,18 @@ export function createParentApprovalRepository({
     },
 
     async updateParentStatus(
-      userId: string,
+      guardianId: string,
       status: ParentApprovalStatus
     ): Promise<ParentApprovalItem> {
-      const response = await client.patch<ParentApprovalUserDto>(
-        buildUserStatusPath(userId),
-        {
-          status: mapParentStatusToParentApprovalUserStatus(status),
-        }
+      await client.patch<unknown>(
+        `admin/users/${encodeURIComponent(guardianId)}/status`,
+        { status: mapParentStatusToGuardianStatusDto(status) }
       )
-
       invalidateStudentListCache()
-      return mapParentApprovalUserToParentApprovalItem(response.data)
+      const refreshed = await client.get<GuardianResponseDto>(
+        buildGuardianPath(guardianId)
+      )
+      return mapGuardianResponseToParentApprovalItem(refreshed.data)
     },
   }
 }
