@@ -4,14 +4,7 @@ import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownR
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded'
 import QuizOutlinedIcon from '@mui/icons-material/QuizOutlined'
-import {
-  Box,
-  Chip,
-  Collapse,
-  IconButton,
-  Stack,
-  Typography,
-} from '@mui/material'
+import { Box, Chip, Collapse, Stack, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import { Fragment, type ReactElement } from 'react'
 import type {
@@ -190,22 +183,23 @@ function SubStepItem({
       <CheckRoundedIcon sx={{ fontSize: 15 }} />
     </Box>
   ) : (
-    <IconButton
-      aria-label={`Responder etapa ${subStep.title}`}
-      onClick={() => onAnswer(subStep)}
+    <Box
+      aria-hidden
       sx={{
+        alignItems: 'center',
         border: '1px solid',
         borderColor: alpha(subjectColor, isDark ? 0.5 : 0.4),
         borderRadius: '10px',
         color: subjectColor,
+        display: 'flex',
         flexShrink: 0,
         height: 32,
+        justifyContent: 'center',
         width: 32,
-        '&:hover': { backgroundColor: alpha(subjectColor, 0.1) },
       }}
     >
       <PlayArrowRoundedIcon sx={{ fontSize: 18 }} />
-    </IconButton>
+    </Box>
   )
 
   return (
@@ -272,8 +266,15 @@ function SubStepItem({
       {/* Sub-step card */}
       <Box sx={{ flex: 1, minWidth: 0, pb: isLast ? 0 : 1.5 }}>
         <Box
+          aria-label={
+            isAvailable ? `Responder etapa ${subStep.title}` : undefined
+          }
+          component={isAvailable ? 'button' : 'div'}
+          onClick={isAvailable ? () => onAnswer(subStep) : undefined}
+          type={isAvailable ? 'button' : undefined}
           sx={{
             alignItems: 'center',
+            appearance: 'none',
             backgroundColor: isCompleted
               ? alpha(theme.palette.success.main, isDark ? 0.07 : 0.04)
               : isLocked
@@ -286,11 +287,29 @@ function SubStepItem({
                 ? alpha(theme.palette.text.secondary, isDark ? 0.1 : 0.08)
                 : alpha(subjectColor, isDark ? 0.3 : 0.22),
             borderRadius: '14px',
+            boxSizing: 'border-box',
+            cursor: isAvailable ? 'pointer' : 'default',
             display: 'flex',
+            font: 'inherit',
             gap: 1.5,
             opacity: isLocked ? 0.72 : 1,
             p: { md: 1.75, xs: 1.25 },
+            textAlign: 'left',
             transition: 'all 160ms ease',
+            width: '100%',
+            '&:focus-visible': isAvailable
+              ? {
+                  borderColor: subjectColor,
+                  outline: `3px solid ${alpha(subjectColor, 0.22)}`,
+                  outlineOffset: 2,
+                }
+              : {},
+            '&:hover': isAvailable
+              ? {
+                  backgroundColor: alpha(subjectColor, isDark ? 0.15 : 0.1),
+                  borderColor: alpha(subjectColor, isDark ? 0.4 : 0.3),
+                }
+              : {},
           }}
         >
           {/* Kind icon */}
