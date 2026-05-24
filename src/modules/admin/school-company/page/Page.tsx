@@ -30,6 +30,7 @@ export default function Page() {
           overflow: 'hidden',
           alignSelf: 'flex-start',
           backgroundColor: 'background.paper',
+          width: 'fit-content',
         }}
       >
         {(['escola', 'empresa'] as const).map(item => (
