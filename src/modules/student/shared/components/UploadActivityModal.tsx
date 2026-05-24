@@ -202,7 +202,7 @@ function UploadActivityModal({
 
         <Box
           component="label"
-          className="mt-6 flex cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-400 p-10 text-center transition hover:bg-slate-50"
+          className="mt-6 flex cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-400 p-10 text-center transition hover:bg-slate-50 dark:hover:bg-slate-900"
         >
           <CloudUploadOutlinedIcon
             sx={{ fontSize: 36, color: 'text.primary' }}
