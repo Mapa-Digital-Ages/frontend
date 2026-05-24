@@ -19,7 +19,7 @@ import { alpha, useTheme } from '@mui/material/styles'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 const SCHOOL_PAGE_SIZE = 6
-const STUDENT_PAGE_SIZE = 20
+const STUDENT_PAGE_SIZE = 10
 
 const STATUS_COLORS: Record<'ativa' | 'inativa', string> = {
   ativa: '#22c55e',
@@ -128,25 +128,22 @@ export default function SchoolPage() {
     []
   )
 
-  // Initial schools load
-  useEffect(() => {
-    loadSchools(1, '')
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // School page navigation
-  useEffect(() => {
-    if (schoolPage === 0) return
-    loadSchools(schoolPage, query)
-  }, [schoolPage]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // School search debounce
+  // Reset school pagination when search changes
   useEffect(() => {
     setSchoolPage(1)
-    const timer = setTimeout(() => {
-      loadSchools(1, query)
-    }, 350)
+  }, [query])
+
+  // Schools load
+  useEffect(() => {
+    const timer = setTimeout(
+      () => {
+        loadSchools(schoolPage, query)
+      },
+      query.trim() ? 350 : 0
+    )
+
     return () => clearTimeout(timer)
-  }, [query]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loadSchools, query, schoolPage])
 
   // Reset & load students when school selection changes
   useEffect(() => {

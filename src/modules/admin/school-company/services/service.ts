@@ -142,7 +142,7 @@ export const adminSchoolService = {
   async listStudentsBySchool(
     schoolId: string,
     page = 1,
-    size = 20,
+    size = 10,
     name?: string
   ): Promise<{ items: StudentItem[]; total: number; hasMore: boolean }> {
     const params: Record<string, string | number> = {
