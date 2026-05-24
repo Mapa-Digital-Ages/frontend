@@ -1,5 +1,19 @@
 import { httpClient } from '@/shared/lib/http/client'
-import { Company, CompanyApi, CreateCompanyPayload } from '../types/types'
+import {
+  mapStudentListDto,
+  type StudentDto,
+  type StudentListDto,
+} from '@/modules/admin/student/services/mapper'
+import type { StudentItem } from '@/modules/admin/student/types/types'
+import {
+  Company,
+  CompanyApi,
+  CreateCompanyPayload,
+  School,
+  SchoolApi,
+  SchoolListApiResponse,
+  CreateSchoolPayload,
+} from '../types/types'
 
 function mapCompany(company: CompanyApi): Company {
   const firstName =
@@ -75,5 +89,85 @@ export const adminCompanyService = {
 
   async deleteCompany(companyId: string): Promise<void> {
     await httpClient.delete(`company/${encodeURIComponent(companyId)}`)
+  },
+}
+
+function mapSchool(api: SchoolApi): School {
+  return {
+    id: api.user_id,
+    name: api.name,
+    email: api.email,
+    isPrivate: api.is_private,
+    requestedSpots: api.requested_spots,
+    isActive: api.is_active,
+    studentCount: api.student_count,
+    deactivatedAt: api.deactivated_at,
+    createdAt: api.created_at,
+  }
+}
+
+export const adminSchoolService = {
+  async listSchools(
+    page = 1,
+    size = 10,
+    name?: string
+  ): Promise<{ items: School[]; total: number }> {
+    const params = new URLSearchParams({
+      page: String(page),
+      size: String(size),
+    })
+    if (name) params.set('name', name)
+    const response = await httpClient.get<SchoolListApiResponse>(
+      `school?${params}`
+    )
+    return {
+      items: response.data.items.map(mapSchool),
+      total: response.data.total,
+    }
+  },
+
+  async createSchool(payload: CreateSchoolPayload): Promise<School> {
+    const [firstName] = payload.name.trim().split(' ')
+    const response = await httpClient.post<SchoolApi>('school', {
+      first_name: firstName,
+      email: payload.email,
+      password: payload.password,
+      is_private: payload.isPrivate,
+      requested_spots: payload.requestedSpots ?? null,
+      phone_number: null,
+    })
+    return mapSchool(response.data)
+  },
+
+  async listStudentsBySchool(
+    schoolId: string,
+    page = 1,
+    size = 20,
+    name?: string
+  ): Promise<{ items: StudentItem[]; total: number; hasMore: boolean }> {
+    const params: Record<string, string | number> = {
+      school_id: schoolId,
+      page,
+      size,
+    }
+    if (name) params.name = name
+    const response = await httpClient.get<StudentDto[] | StudentListDto>(
+      'student',
+      { query: params }
+    )
+    const result = mapStudentListDto(response.data, size)
+    return result
+  },
+
+  async countStudentsBySchool(
+    schoolId: string,
+    name?: string
+  ): Promise<number> {
+    const params: Record<string, string> = { school_id: schoolId }
+    if (name) params.name = name
+    const response = await httpClient.get<{ total: number }>('student/count', {
+      query: params,
+    })
+    return response.data.total
   },
 }

@@ -4,187 +4,277 @@ import AppActionModal from '@/shared/ui/AppActionModal'
 import AppInput from '@/shared/ui/AppInput'
 import AppDropdown from '@/shared/ui/AppDropdown'
 import { SearchBarAndFilter } from '@/shared/ui/SearchBarAndFilter'
+import CreateStudentModal from '@/modules/admin/shared/components/CreateStudentModal'
+import type { StudentFormValues } from '@/modules/admin/shared/components/CreateStudentModal'
+import { studentService } from '@/modules/admin/student/services/service'
+import { adminSchoolService } from '@/modules/admin/school-company/services/service'
+import type { School } from '@/modules/admin/school-company/types/types'
+import type { StudentItem } from '@/modules/admin/student/types/types'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
+import NavigateBeforeRoundedIcon from '@mui/icons-material/NavigateBeforeRounded'
+import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded'
 import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded'
-import { Box, Button, Typography } from '@mui/material'
+import { Box, Button, IconButton, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
-interface School {
-  id: string
-  name: string
-  city: string
-  state: string
-  students: number
-  status: 'ativa' | 'pendente' | 'inativa'
-  progress: number
-  atRisk: number
-  type?: 'Pública' | 'Privada'
-}
+const SCHOOL_PAGE_SIZE = 6
+const STUDENT_PAGE_SIZE = 20
 
-interface StudentItem {
-  id: string
-  name: string
-  parent: string
-  schoolId: string
-  year: string
-  status: 'Ativo' | 'Inativo' | 'Pendente'
-}
-
-const INITIAL_SCHOOLS: School[] = [
-  {
-    id: '1',
-    name: 'Escola São Paulo',
-    city: 'São Paulo',
-    state: 'SP',
-    students: 3,
-    status: 'ativa',
-    progress: 75,
-    atRisk: 0,
-    type: 'Pública',
-  },
-  {
-    id: '2',
-    name: 'Escola Rio Branco',
-    city: 'Rio de Janeiro',
-    state: 'RJ',
-    students: 2,
-    status: 'ativa',
-    progress: 60,
-    atRisk: 1,
-    type: 'Privada',
-  },
-  {
-    id: '3',
-    name: 'Escola Horizonte',
-    city: 'Belo Horizonte',
-    state: 'MG',
-    students: 2,
-    status: 'pendente',
-    progress: 40,
-    atRisk: 2,
-    type: 'Pública',
-  },
-]
-
-const STUDENTS: StudentItem[] = [
-  {
-    id: 's1',
-    name: 'Lucas Silva',
-    parent: 'Maria Silva',
-    schoolId: '1',
-    year: '7º',
-    status: 'Inativo',
-  },
-  {
-    id: 's2',
-    name: 'Carlos Nunes',
-    parent: 'Roberta Nunes',
-    schoolId: '1',
-    year: '7º',
-    status: 'Ativo',
-  },
-  {
-    id: 's3',
-    name: 'Lívia Santos',
-    parent: 'Paula Santos',
-    schoolId: '1',
-    year: '6º',
-    status: 'Ativo',
-  },
-  {
-    id: 's4',
-    name: 'João Paulo',
-    parent: 'Ana Paulo',
-    schoolId: '2',
-    year: '7º',
-    status: 'Ativo',
-  },
-  {
-    id: 's5',
-    name: 'Maria Fernanda',
-    parent: 'Fernanda Lima',
-    schoolId: '2',
-    year: '6º',
-    status: 'Ativo',
-  },
-  {
-    id: 's6',
-    name: 'Pedro Henrique',
-    parent: 'Henrique Alves',
-    schoolId: '3',
-    year: '8º',
-    status: 'Inativo',
-  },
-  {
-    id: 's7',
-    name: 'Ana Clara',
-    parent: 'Clara Mendes',
-    schoolId: '3',
-    year: '8º',
-    status: 'Ativo',
-  },
-]
-
-const STATUS_COLORS: Record<School['status'], string> = {
+const STATUS_COLORS: Record<'ativa' | 'inativa', string> = {
   ativa: '#22c55e',
-  pendente: '#f59e0b',
   inativa: '#ef4444',
 }
 
 const schoolFilterOptions = [
   { label: 'Todos', value: 'Todos' },
   { label: 'Ativa', value: 'ativa' },
-  { label: 'Pendente', value: 'pendente' },
   { label: 'Inativa', value: 'inativa' },
 ]
 
 const studentFilterOptions = [
   { label: 'Todos', value: 'Todos' },
-  { label: 'Ativo', value: 'Ativo' },
-  { label: 'Inativo', value: 'Inativo' },
+  { label: 'Ativo', value: 'ativo' },
+  { label: 'Inativo', value: 'inativo' },
 ]
 
 export default function SchoolPage() {
   const theme = useTheme()
 
-  const [schools, setSchools] = useState<School[]>(INITIAL_SCHOOLS)
-  const [selectedSchoolId, setSelectedSchoolId] = useState<string>('1')
+  // Schools
+  const [schools, setSchools] = useState<School[]>([])
+  const [schoolTotal, setSchoolTotal] = useState<number | null>(null)
+  const [schoolPage, setSchoolPage] = useState(1)
+  const [schoolTotalPages, setSchoolTotalPages] = useState(1)
+  const [isLoadingSchools, setIsLoadingSchools] = useState(false)
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string>('')
   const [query, setQuery] = useState('')
-  const [studentQuery, setStudentQuery] = useState('')
   const [schoolFilter, setSchoolFilter] = useState('Todos')
+
+  // Students
+  const [students, setStudents] = useState<StudentItem[]>([])
+  const [studentTotal, setStudentTotal] = useState<number | null>(null)
+  const [studentPage, setStudentPage] = useState(1)
+  const [hasMoreStudents, setHasMoreStudents] = useState(false)
+  const [isLoadingStudents, setIsLoadingStudents] = useState(false)
+  const [studentQuery, setStudentQuery] = useState('')
   const [studentFilter, setStudentFilter] = useState('Todos')
+  const studentSentinelRef = useRef<HTMLDivElement | null>(null)
+
+  // Modals
   const [isNewSchoolModalOpen, setIsNewSchoolModalOpen] = useState(false)
   const [isNewStudentModalOpen, setIsNewStudentModalOpen] = useState(false)
-  const [newSchoolName, setNewSchoolName] = useState('')
-  const [newSchoolLocation, setNewSchoolLocation] = useState('')
-  const [newSchoolType, setNewSchoolType] = useState('Pública')
+  const [studentApiError, setStudentApiError] = useState<string | null>(null)
+  const [newSchool, setNewSchool] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    isPrivate: false,
+  })
 
-  const filteredSchools = schools.filter(
-    s =>
-      s.name.toLowerCase().includes(query.toLowerCase()) &&
-      (schoolFilter === 'Todos' || s.status === schoolFilter)
+  const loadSchools = useCallback(
+    async (pageToLoad: number, search: string) => {
+      try {
+        setIsLoadingSchools(true)
+        const data = await adminSchoolService.listSchools(
+          pageToLoad,
+          SCHOOL_PAGE_SIZE,
+          search || undefined
+        )
+        setSchools(data.items)
+        setSchoolTotal(data.total)
+        setSchoolTotalPages(
+          Math.max(1, Math.ceil(data.total / SCHOOL_PAGE_SIZE))
+        )
+        if (pageToLoad === 1 && data.items.length > 0) {
+          setSelectedSchoolId(id => id || data.items[0].id)
+        }
+      } catch (error) {
+        console.error('Erro ao carregar escolas:', error)
+      } finally {
+        setIsLoadingSchools(false)
+      }
+    },
+    []
   )
+
+  const loadStudents = useCallback(
+    async (schoolId: string, pageToLoad: number, search: string) => {
+      if (!schoolId) return
+      try {
+        setIsLoadingStudents(true)
+        const result = await adminSchoolService.listStudentsBySchool(
+          schoolId,
+          pageToLoad,
+          STUDENT_PAGE_SIZE,
+          search || undefined
+        )
+        if (result.items.length < STUDENT_PAGE_SIZE) {
+          setHasMoreStudents(false)
+        } else {
+          setHasMoreStudents(true)
+        }
+        setStudents(prev =>
+          pageToLoad === 1 ? result.items : [...prev, ...result.items]
+        )
+        if (pageToLoad === 1) setStudentTotal(result.total)
+      } catch (error) {
+        console.error('Erro ao carregar alunos:', error)
+      } finally {
+        setIsLoadingStudents(false)
+      }
+    },
+    []
+  )
+
+  // Initial schools load
+  useEffect(() => {
+    loadSchools(1, '')
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // School page navigation
+  useEffect(() => {
+    if (schoolPage === 0) return
+    loadSchools(schoolPage, query)
+  }, [schoolPage]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // School search debounce
+  useEffect(() => {
+    setSchoolPage(1)
+    const timer = setTimeout(() => {
+      loadSchools(1, query)
+    }, 350)
+    return () => clearTimeout(timer)
+  }, [query]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Reset & load students when school selection changes
+  useEffect(() => {
+    if (!selectedSchoolId) return
+    setStudents([])
+    setStudentPage(1)
+    setHasMoreStudents(false)
+    setStudentTotal(null)
+    setStudentQuery('')
+    loadStudents(selectedSchoolId, 1, '')
+  }, [selectedSchoolId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Student search debounce
+  useEffect(() => {
+    if (!selectedSchoolId) return
+    setStudents([])
+    setStudentPage(1)
+    setHasMoreStudents(false)
+    const timer = setTimeout(() => {
+      loadStudents(selectedSchoolId, 1, studentQuery)
+    }, 350)
+    return () => clearTimeout(timer)
+  }, [studentQuery]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Students infinite scroll
+  useEffect(() => {
+    if (studentPage === 1) return
+    loadStudents(selectedSchoolId, studentPage, studentQuery)
+  }, [studentPage]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Intersection observer for student infinite scroll
+  useEffect(() => {
+    const sentinel = studentSentinelRef.current
+    if (!sentinel) return
+    const observer = new IntersectionObserver(
+      entries => {
+        if (
+          entries[0].isIntersecting &&
+          hasMoreStudents &&
+          !isLoadingStudents
+        ) {
+          setStudentPage(prev => prev + 1)
+        }
+      },
+      { threshold: 0.1 }
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [hasMoreStudents, isLoadingStudents])
 
   const selectedSchool = schools.find(s => s.id === selectedSchoolId)
-  const schoolStudents = STUDENTS.filter(s => s.schoolId === selectedSchoolId)
-  const filteredStudents = schoolStudents.filter(
-    s =>
-      (s.name.toLowerCase().includes(studentQuery.toLowerCase()) ||
-        s.parent.toLowerCase().includes(studentQuery.toLowerCase()) ||
-        s.year.toLowerCase().includes(studentQuery.toLowerCase()) ||
-        s.status.toLowerCase().includes(studentQuery.toLowerCase()) ||
-        (selectedSchool?.name || '')
-          .toLowerCase()
-          .includes(studentQuery.toLowerCase())) &&
-      (studentFilter === 'Todos' || s.status === studentFilter)
-  )
 
-  if (
-    selectedSchoolId &&
-    !filteredSchools.some(s => s.id === selectedSchoolId)
-  ) {
-    setSelectedSchoolId(filteredSchools.length > 0 ? filteredSchools[0].id : '')
+  const filteredSchools =
+    schoolFilter === 'Todos'
+      ? schools
+      : schools.filter(s =>
+          schoolFilter === 'ativa' ? s.isActive : !s.isActive
+        )
+
+  const filteredStudents =
+    studentFilter === 'Todos'
+      ? students
+      : students.filter(s => s.status === studentFilter)
+
+  const emailIsValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newSchool.email.trim())
+  const passwordIsValid =
+    newSchool.password.length >= 8 &&
+    /[A-Z]/.test(newSchool.password) &&
+    /[a-z]/.test(newSchool.password) &&
+    /[0-9]/.test(newSchool.password)
+  const passwordsMatch =
+    newSchool.password.length > 0 &&
+    newSchool.password === newSchool.confirmPassword
+  const canCreateSchool =
+    newSchool.name.trim() !== '' &&
+    emailIsValid &&
+    passwordIsValid &&
+    passwordsMatch
+
+  async function handleCreateSchool() {
+    if (!canCreateSchool) return
+    try {
+      const created = await adminSchoolService.createSchool({
+        name: newSchool.name.trim(),
+        email: newSchool.email.trim(),
+        password: newSchool.password,
+        isPrivate: newSchool.isPrivate,
+      })
+      setSchools(prev => [created, ...prev])
+      setSchoolTotal(prev => (prev !== null ? prev + 1 : 1))
+      setSelectedSchoolId(created.id)
+      setNewSchool({
+        name: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        isPrivate: false,
+      })
+      setIsNewSchoolModalOpen(false)
+    } catch (error) {
+      console.error('Erro ao criar escola:', error)
+    }
+  }
+
+  async function handleCreateStudent(values: StudentFormValues) {
+    setStudentApiError(null)
+    try {
+      await studentService.createStudent({
+        name: values.name,
+        email: values.email,
+        password: values.password,
+        schoolId:
+          values.school !== 'none' ? values.school : (selectedSchoolId ?? null),
+        guardianId: values.guardian !== 'none' ? values.guardian : null,
+        year: values.year,
+        status: values.status as 'ativo' | 'inativo',
+        birthDate: values.birthDate,
+      })
+      setIsNewStudentModalOpen(false)
+      setStudents([])
+      setStudentPage(1)
+      setHasMoreStudents(false)
+      if (selectedSchoolId) loadStudents(selectedSchoolId, 1, studentQuery)
+    } catch {
+      setStudentApiError(
+        'Erro ao criar aluno. Verifique os dados e tente novamente.'
+      )
+    }
   }
 
   return (
@@ -192,6 +282,7 @@ export default function SchoolPage() {
       data-testid="escola-view"
       sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}
     >
+      {/* Schools section */}
       <Box
         sx={{
           backgroundColor: 'background.paper',
@@ -258,7 +349,7 @@ export default function SchoolPage() {
             onQueryChange={setQuery}
             query={query}
             resultsSummary={{
-              count: filteredSchools.length,
+              count: schoolTotal ?? filteredSchools.length,
               singularLabel: 'resultado',
               pluralLabel: 'resultado(s)',
             }}
@@ -269,105 +360,179 @@ export default function SchoolPage() {
           />
         </Box>
 
-        <Box
-          data-testid="schools-section"
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-            gap: 2,
-          }}
-        >
-          {filteredSchools.map(school => {
-            const isSelected = school.id === selectedSchoolId
-            return (
-              <Box
-                key={school.id}
-                data-testid={`school-item-${school.id}`}
-                onClick={() => setSelectedSchoolId(school.id)}
-                sx={{
-                  backgroundColor: isSelected
-                    ? alpha(AppColors.role.admin.secondary, 0.07)
-                    : 'background.paper',
-                  border: '1px solid',
-                  borderColor: isSelected
-                    ? alpha(AppColors.role.admin.secondary, 0.3)
-                    : 'background.border',
-                  borderRadius: '16px',
-                  cursor: 'pointer',
-                  p: 2.5,
-                  transition: 'all 0.18s',
-                  '&:hover': {
-                    borderColor: alpha(AppColors.role.admin.secondary, 0.4),
-                    backgroundColor: alpha(
-                      AppColors.role.admin.secondary,
-                      0.05
-                    ),
-                  },
-                }}
-              >
+        {isLoadingSchools && schools.length === 0 ? (
+          <Box sx={{ py: 4, textAlign: 'center' }}>
+            <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
+              Carregando escolas...
+            </Typography>
+          </Box>
+        ) : !isLoadingSchools && filteredSchools.length === 0 ? (
+          <Box sx={{ py: 4, textAlign: 'center' }}>
+            <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
+              Nenhuma escola encontrada.
+            </Typography>
+          </Box>
+        ) : (
+          <Box
+            data-testid="schools-section"
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+              gap: 2,
+            }}
+          >
+            {filteredSchools.map(school => {
+              const isSelected = school.id === selectedSchoolId
+              const status: 'ativa' | 'inativa' = school.isActive
+                ? 'ativa'
+                : 'inativa'
+              return (
                 <Box
+                  key={school.id}
+                  data-testid={`school-item-${school.id}`}
+                  onClick={() => setSelectedSchoolId(school.id)}
                   sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1.5,
-                    mb: 1.25,
+                    backgroundColor: isSelected
+                      ? alpha(AppColors.role.admin.secondary, 0.07)
+                      : 'background.paper',
+                    border: '1px solid',
+                    borderColor: isSelected
+                      ? alpha(AppColors.role.admin.secondary, 0.3)
+                      : 'background.border',
+                    borderRadius: '16px',
+                    cursor: 'pointer',
+                    p: 2.5,
+                    transition: 'all 0.18s',
+                    '&:hover': {
+                      borderColor: alpha(AppColors.role.admin.secondary, 0.4),
+                      backgroundColor: alpha(
+                        AppColors.role.admin.secondary,
+                        0.05
+                      ),
+                    },
                   }}
                 >
                   <Box
                     sx={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: '10px',
-                      backgroundColor: alpha(
-                        AppColors.role.admin.secondary,
-                        0.12
-                      ),
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
+                      gap: 1.5,
+                      mb: 1.25,
                     }}
                   >
-                    <SchoolRoundedIcon
+                    <Box
                       sx={{
-                        color: AppColors.role.admin.secondary,
-                        fontSize: 20,
+                        width: 36,
+                        height: 36,
+                        borderRadius: '10px',
+                        backgroundColor: alpha(
+                          AppColors.role.admin.secondary,
+                          0.12
+                        ),
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <SchoolRoundedIcon
+                        sx={{
+                          color: AppColors.role.admin.secondary,
+                          fontSize: 20,
+                        }}
+                      />
+                    </Box>
+                    <Box>
+                      <Typography
+                        sx={{ fontWeight: 700, fontSize: 15, lineHeight: 1.2 }}
+                      >
+                        {school.name}
+                      </Typography>
+                      <Typography
+                        sx={{ color: 'text.secondary', fontSize: 12 }}
+                      >
+                        {school.isPrivate ? 'Privada' : 'Pública'} &bull;{' '}
+                        {school.email}
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  <Box
+                    sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}
+                  >
+                    <AppTag
+                      size="sm"
+                      tag={{
+                        label: `${school.studentCount} aluno(s)`,
+                        color: theme.palette.info?.main ?? '#0ea5e9',
                       }}
                     />
-                  </Box>
-                  <Box>
-                    <Typography
-                      sx={{ fontWeight: 700, fontSize: 15, lineHeight: 1.2 }}
-                    >
-                      {school.name}
-                    </Typography>
-                    <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
-                      {school.city}, {school.state}
-                      {school.type ? ` • ${school.type}` : ''}
-                    </Typography>
+                    <AppTag
+                      size="sm"
+                      tag={{ label: status, color: STATUS_COLORS[status] }}
+                    />
                   </Box>
                 </Box>
+              )
+            })}
+          </Box>
+        )}
 
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
-                  <AppTag
-                    size="sm"
-                    tag={{
-                      label: `${school.students} aluno(s)`,
-                      color: theme.palette.info?.main ?? '#0ea5e9',
-                    }}
-                  />
-                  <AppTag
-                    size="sm"
-                    tag={{
-                      label: school.status,
-                      color: STATUS_COLORS[school.status],
-                    }}
-                  />
-                </Box>
-              </Box>
-            )
-          })}
-        </Box>
+        {schoolTotalPages > 1 && (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 1,
+            }}
+          >
+            <IconButton
+              size="small"
+              disabled={schoolPage <= 1 || isLoadingSchools}
+              onClick={() => setSchoolPage(p => Math.max(1, p - 1))}
+              sx={{ border: '1px solid', borderColor: 'background.border' }}
+            >
+              <NavigateBeforeRoundedIcon fontSize="small" />
+            </IconButton>
+
+            {Array.from({ length: schoolTotalPages }, (_, i) => i + 1).map(
+              p => (
+                <Button
+                  key={p}
+                  size="small"
+                  variant={p === schoolPage ? 'contained' : 'outlined'}
+                  disableElevation
+                  onClick={() => setSchoolPage(p)}
+                  disabled={isLoadingSchools}
+                  sx={{
+                    minWidth: 36,
+                    height: 36,
+                    borderRadius: '8px',
+                    fontWeight: 700,
+                    ...(p === schoolPage && {
+                      backgroundColor: AppColors.role.admin.secondary,
+                      '&:hover': { backgroundColor: theme.palette.error.dark },
+                    }),
+                  }}
+                >
+                  {p}
+                </Button>
+              )
+            )}
+
+            <IconButton
+              size="small"
+              disabled={schoolPage >= schoolTotalPages || isLoadingSchools}
+              onClick={() =>
+                setSchoolPage(p => Math.min(schoolTotalPages, p + 1))
+              }
+              sx={{ border: '1px solid', borderColor: 'background.border' }}
+            >
+              <NavigateNextRoundedIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        )}
 
         {selectedSchool && (
           <Box
@@ -403,7 +568,8 @@ export default function SchoolPage() {
                 {selectedSchool.name}
               </Typography>
               <Typography sx={{ color: 'text.secondary', fontSize: 13 }}>
-                {selectedSchool.city}, {selectedSchool.state}
+                {selectedSchool.isPrivate ? 'Privada' : 'Pública'} &bull;{' '}
+                {selectedSchool.email}
               </Typography>
             </Box>
             <Box
@@ -428,13 +594,14 @@ export default function SchoolPage() {
                 ALUNOS
               </Typography>
               <Typography sx={{ fontWeight: 700, fontSize: 24 }}>
-                {selectedSchool.students}
+                {selectedSchool.studentCount}
               </Typography>
             </Box>
           </Box>
         )}
       </Box>
 
+      {/* Students section */}
       <Box
         sx={{
           backgroundColor: 'background.paper',
@@ -472,6 +639,7 @@ export default function SchoolPage() {
             variant="contained"
             disableElevation
             onClick={() => setIsNewStudentModalOpen(true)}
+            disabled={!selectedSchoolId}
             sx={{
               backgroundColor: AppColors.role.admin.secondary,
               borderRadius: '10px',
@@ -517,7 +685,7 @@ export default function SchoolPage() {
               ALUNOS VISÍVEIS
             </Typography>
             <Typography sx={{ fontWeight: 700, fontSize: 24 }}>
-              {filteredStudents.length}
+              {studentTotal ?? filteredStudents.length}
             </Typography>
           </Box>
           <Box
@@ -560,7 +728,7 @@ export default function SchoolPage() {
             onQueryChange={setStudentQuery}
             query={studentQuery}
             resultsSummary={{
-              count: filteredStudents.length,
+              count: studentTotal ?? filteredStudents.length,
               singularLabel: 'resultado',
               pluralLabel: 'resultado(s)',
             }}
@@ -590,7 +758,7 @@ export default function SchoolPage() {
               borderBottom: `1px solid ${theme.palette.divider}`,
             }}
           >
-            {['Aluno', 'Escola', 'Ano', 'Status'].map(col => (
+            {['Aluno', 'Responsável', 'Ano', 'Status'].map(col => (
               <Typography
                 key={col}
                 sx={{ color: 'text.secondary', fontSize: 14 }}
@@ -607,6 +775,12 @@ export default function SchoolPage() {
                 Selecione uma escola para ver os alunos.
               </Typography>
             </Box>
+          ) : isLoadingStudents && students.length === 0 ? (
+            <Box sx={{ py: 6, textAlign: 'center' }}>
+              <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
+                Carregando alunos...
+              </Typography>
+            </Box>
           ) : filteredStudents.length === 0 ? (
             <Box sx={{ py: 6, textAlign: 'center' }}>
               <Typography sx={{ color: 'text.secondary' }}>
@@ -614,104 +788,104 @@ export default function SchoolPage() {
               </Typography>
             </Box>
           ) : (
-            filteredStudents.map(student => (
-              <Box
-                key={student.id}
-                data-testid={`student-item-${student.id}`}
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: '2fr 1.5fr 1fr 1fr 40px',
-                  alignItems: 'center',
-                  px: 2.5,
-                  py: 1.75,
-                  borderBottom: `1px solid ${alpha(theme.palette.divider, 0.18)}`,
-                  '&:last-child': { borderBottom: 'none' },
-                  '&:hover': {
-                    backgroundColor: alpha(theme.palette.background.hover, 0.6),
-                  },
-                }}
-              >
-                <Box>
-                  <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
-                    {student.name}
-                  </Typography>
-                  <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
-                    Responsável: {student.parent}
-                  </Typography>
-                </Box>
-                <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
-                  {selectedSchool?.name}
-                </Typography>
-                <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
-                  {student.year}
-                </Typography>
-                <Box>
-                  <Box
-                    sx={{
-                      display: 'inline-flex',
-                      backgroundColor:
-                        student.status === 'Ativo'
-                          ? alpha('#22C55E', 0.12)
-                          : alpha('#F59E0B', 0.12),
-                      color: student.status === 'Ativo' ? '#22C55E' : '#F59E0B',
-                      borderRadius: '999px',
-                      px: 1.5,
-                      py: 0.5,
-                      fontSize: 12,
-                      fontWeight: 700,
-                    }}
-                  >
-                    {student.status}
+            <>
+              {filteredStudents.map(student => (
+                <Box
+                  key={student.id}
+                  data-testid={`student-item-${student.id}`}
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: '2fr 1.5fr 1fr 1fr 40px',
+                    alignItems: 'center',
+                    px: 2.5,
+                    py: 1.75,
+                    borderBottom: `1px solid ${alpha(theme.palette.divider, 0.18)}`,
+                    '&:last-child': { borderBottom: 'none' },
+                    '&:hover': {
+                      backgroundColor: alpha(
+                        theme.palette.background.hover,
+                        0.6
+                      ),
+                    },
+                  }}
+                >
+                  <Box>
+                    <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+                      {student.name}
+                    </Typography>
+                    <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
+                      {student.email}
+                    </Typography>
                   </Box>
+                  <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
+                    {student.guardian ?? '—'}
+                  </Typography>
+                  <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
+                    {student.year ?? '—'}
+                  </Typography>
+                  <Box>
+                    <Box
+                      sx={{
+                        display: 'inline-flex',
+                        backgroundColor:
+                          student.status === 'ativo'
+                            ? alpha('#22C55E', 0.12)
+                            : alpha('#F59E0B', 0.12),
+                        color:
+                          student.status === 'ativo' ? '#22C55E' : '#F59E0B',
+                        borderRadius: '999px',
+                        px: 1.5,
+                        py: 0.5,
+                        fontSize: 12,
+                        fontWeight: 700,
+                        textTransform: 'capitalize',
+                      }}
+                    >
+                      {student.status}
+                    </Box>
+                  </Box>
+                  <Box />
                 </Box>
+              ))}
+              <Box ref={studentSentinelRef} sx={{ height: 4 }} />
+              {isLoadingStudents && (
                 <Typography
                   sx={{
                     color: 'text.secondary',
+                    fontSize: 13,
                     textAlign: 'center',
-                    cursor: 'pointer',
+                    py: 1.5,
                   }}
                 >
-                  ...
+                  Carregando...
                 </Typography>
-              </Box>
-            ))
+              )}
+            </>
           )}
         </Box>
       </Box>
 
+      {/* New school modal */}
       <AppActionModal
         open={isNewSchoolModalOpen}
-        onClose={() => setIsNewSchoolModalOpen(false)}
+        onClose={() => {
+          setIsNewSchoolModalOpen(false)
+          setNewSchool({
+            name: '',
+            email: '',
+            password: '',
+            confirmPassword: '',
+            isPrivate: false,
+          })
+        }}
         title="Criar nova escola"
         description="Cadastre uma escola para iniciar processo de ativação."
-        onConfirm={() => {
-          if (newSchoolName && newSchoolLocation) {
-            const newId = `new-${Date.now()}`
-            const parts = newSchoolLocation.split(',')
-            const city = parts[0]?.trim() || newSchoolLocation
-            const state = parts[1]?.trim() || ''
-
-            const newSchool: School = {
-              id: newId,
-              name: newSchoolName,
-              city: city,
-              state: state,
-              students: 0,
-              status: 'pendente',
-              progress: 0,
-              atRisk: 0,
-              type: newSchoolType as 'Pública' | 'Privada',
-            }
-
-            setSchools([newSchool, ...schools])
-            setNewSchoolName('')
-            setNewSchoolLocation('')
-            setNewSchoolType('Pública')
-          }
-          setIsNewSchoolModalOpen(false)
-        }}
+        onConfirm={handleCreateSchool}
         confirmLabel="Criar escola"
         cancelLabel="Cancelar"
+        confirmColor={AppColors.role.admin.secondary}
+        confirmHoverColor={theme.palette.error.dark}
+        disableConfirm={!canCreateSchool}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
           <Box>
@@ -728,8 +902,10 @@ export default function SchoolPage() {
             <AppInput
               data-testid="new-school-name"
               placeholder="Ex: Escola São Paulo"
-              value={newSchoolName}
-              onChange={e => setNewSchoolName(e.target.value)}
+              value={newSchool.name}
+              onChange={e =>
+                setNewSchool(prev => ({ ...prev, name: e.target.value }))
+              }
             />
           </Box>
           <Box>
@@ -741,13 +917,22 @@ export default function SchoolPage() {
                 color: 'text.primary',
               }}
             >
-              Estado/cidade
+              E-mail
             </Typography>
             <AppInput
-              data-testid="new-school-location"
-              placeholder="Ex: São Paulo, SP"
-              value={newSchoolLocation}
-              onChange={e => setNewSchoolLocation(e.target.value)}
+              data-testid="new-school-email"
+              placeholder="Ex: contato@escola.edu.br"
+              type="email"
+              value={newSchool.email}
+              onChange={e =>
+                setNewSchool(prev => ({ ...prev, email: e.target.value }))
+              }
+              error={Boolean(newSchool.email && !emailIsValid)}
+              helperText={
+                newSchool.email && !emailIsValid
+                  ? 'Digite um e-mail válido com @ e domínio.'
+                  : undefined
+              }
             />
           </Box>
           <Box>
@@ -764,29 +949,91 @@ export default function SchoolPage() {
             <AppDropdown
               data-testid="new-school-type"
               options={[
-                { label: 'Pública', value: 'Pública' },
-                { label: 'Privada', value: 'Privada' },
+                { label: 'Pública', value: 'false' },
+                { label: 'Privada', value: 'true' },
               ]}
-              value={newSchoolType}
-              onChange={e => setNewSchoolType(String(e.target.value))}
+              value={String(newSchool.isPrivate)}
+              onChange={e =>
+                setNewSchool(prev => ({
+                  ...prev,
+                  isPrivate: e.target.value === 'true',
+                }))
+              }
               fullWidth
+            />
+          </Box>
+          <Box>
+            <Typography
+              sx={{
+                fontWeight: 600,
+                fontSize: 14,
+                mb: 1,
+                color: 'text.primary',
+              }}
+            >
+              Senha
+            </Typography>
+            <AppInput
+              data-testid="new-school-password"
+              placeholder="Mínimo 8 caracteres"
+              type="password"
+              value={newSchool.password}
+              onChange={e =>
+                setNewSchool(prev => ({ ...prev, password: e.target.value }))
+              }
+              error={Boolean(newSchool.password && !passwordIsValid)}
+              helperText="Use no mínimo 8 caracteres, uma letra maiúscula, uma minúscula e um número."
+            />
+          </Box>
+          <Box>
+            <Typography
+              sx={{
+                fontWeight: 600,
+                fontSize: 14,
+                mb: 1,
+                color: 'text.primary',
+              }}
+            >
+              Confirmar senha
+            </Typography>
+            <AppInput
+              data-testid="new-school-confirm-password"
+              placeholder="Digite a senha novamente"
+              type="password"
+              value={newSchool.confirmPassword}
+              onChange={e =>
+                setNewSchool(prev => ({
+                  ...prev,
+                  confirmPassword: e.target.value,
+                }))
+              }
+              error={Boolean(newSchool.confirmPassword && !passwordsMatch)}
+              helperText={
+                newSchool.confirmPassword && !passwordsMatch
+                  ? 'As senhas não coincidem.'
+                  : undefined
+              }
             />
           </Box>
         </Box>
       </AppActionModal>
 
-      <AppActionModal
+      {/* New student modal */}
+      <CreateStudentModal
+        key={selectedSchool?.id ?? 'no-selected-school'}
         open={isNewStudentModalOpen}
-        onClose={() => setIsNewStudentModalOpen(false)}
-        title="Novo Aluno"
-        description="Preencha os dados do aluno e o associe a uma turma."
-        onConfirm={() => setIsNewStudentModalOpen(false)}
-        confirmLabel="Cadastrar aluno"
-      >
-        <Typography sx={{ color: 'text.secondary' }}>
-          O formulário completo de cadastro do aluno será exibido aqui.
-        </Typography>
-      </AppActionModal>
+        onClose={() => {
+          setIsNewStudentModalOpen(false)
+          setStudentApiError(null)
+        }}
+        onConfirm={handleCreateStudent}
+        apiError={studentApiError}
+        defaultSchool={
+          selectedSchool
+            ? { label: selectedSchool.name, value: selectedSchool.id }
+            : null
+        }
+      />
     </Box>
   )
 }
