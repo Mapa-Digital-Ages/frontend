@@ -1,6 +1,7 @@
 import { test, expect } from '@jest/globals'
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { buildStudentTrailRoute } from '@/app/router/paths'
 import StudentAdaptiveTrailPage from '@/modules/student/adaptivetrail/page/Page'
 import { renderWithProviders } from '@/tests/helpers/render'
 
@@ -33,6 +34,16 @@ test('StudentAdaptiveTrailPage renders trail metrics and all available trails', 
   expect(screen.getByText('Interpretacao de Textos')).toBeInTheDocument()
   expect(screen.getByText('Ecossistemas e Meio Ambiente')).toBeInTheDocument()
   expect(screen.getByText('Brasil Colonia')).toBeInTheDocument()
+})
+
+test('StudentAdaptiveTrailPage exposes trail cards as links to the trail flow', () => {
+  renderPage()
+
+  expect(
+    screen.getByRole('link', {
+      name: /abrir trilha fundamentos de algebra/i,
+    })
+  ).toHaveAttribute('href', buildStudentTrailRoute('math'))
 })
 
 test('StudentAdaptiveTrailPage filters trails by search and subject chip', async () => {

@@ -6,6 +6,7 @@ import type {
   ParentApprovalItem,
   ParentApprovalStatus,
 } from '@/modules/admin/shared/types/types'
+import { invalidateStudentListCache } from '@/modules/admin/student/services/listCache'
 import {
   buildGuardianListQuery,
   mapGuardianResponseToParentApprovalItem,
@@ -88,6 +89,7 @@ export function createParentApprovalRepository({
         buildGuardianRegistrationPayload(input),
         { skipAuth: true }
       )
+      invalidateStudentListCache()
     },
 
     async updateParentRegistration(
@@ -98,10 +100,12 @@ export function createParentApprovalRepository({
         buildGuardianPath(guardianId),
         buildGuardianUpdatePayload(input)
       )
+      invalidateStudentListCache()
     },
 
     async removeParentRegistration(guardianId: string): Promise<void> {
       await client.delete<unknown>(buildGuardianPath(guardianId))
+      invalidateStudentListCache()
     },
 
     async updateParentStatus(
@@ -112,6 +116,7 @@ export function createParentApprovalRepository({
         `admin/users/${encodeURIComponent(guardianId)}/status`,
         { status: mapParentStatusToGuardianStatusDto(status) }
       )
+      invalidateStudentListCache()
       const refreshed = await client.get<GuardianResponseDto>(
         buildGuardianPath(guardianId)
       )
