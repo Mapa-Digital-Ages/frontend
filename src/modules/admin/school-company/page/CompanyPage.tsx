@@ -23,6 +23,8 @@ const companyTypeOptions = [
   { label: 'Tecnologia', value: 'Tecnologia' },
 ]
 
+const PAGE_SIZE = 10
+
 export default function CompanyPage() {
   const theme = useTheme()
 
@@ -32,8 +34,8 @@ export default function CompanyPage() {
   const [isLoadingCompanies, setIsLoadingCompanies] = useState(false)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
-  const PAGE_SIZE = 10
   const sentinelRef = useRef<HTMLDivElement | null>(null)
+  const isLoadingCompaniesRef = useRef(false)
   const [query, setQuery] = useState('')
   const [isNewPartnerOpen, setIsNewPartnerOpen] = useState(false)
   const [companyToDeleteId, setCompanyToDeleteId] = useState<string | null>(
@@ -49,8 +51,9 @@ export default function CompanyPage() {
 
   const loadCompanies = useCallback(
     async (pageToLoad: number, search: string) => {
-      if (isLoadingCompanies) return
+      if (isLoadingCompaniesRef.current) return
       try {
+        isLoadingCompaniesRef.current = true
         setIsLoadingCompanies(true)
         const data = await adminCompanyService.listCompanies(
           pageToLoad,
@@ -68,6 +71,7 @@ export default function CompanyPage() {
       } catch (error) {
         console.error('Erro ao carregar empresas:', error)
       } finally {
+        isLoadingCompaniesRef.current = false
         setIsLoadingCompanies(false)
       }
     },
