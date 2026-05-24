@@ -1039,7 +1039,7 @@ export default function Page() {
                 '&:hover': { backgroundColor: theme.palette.error.dark },
               }}
             >
-              Nova parceria
+              Nova empresa
             </Button>
           </Box>
 
@@ -1433,7 +1433,7 @@ export default function Page() {
             >
               <Box>
                 <Typography sx={{ fontSize: 26, fontWeight: 700 }}>
-                  Criar parceria
+                  Criar empresa
                 </Typography>
                 <Typography sx={{ color: 'text.secondary', mt: 0.5 }}>
                   Cadastre uma nova empresa parceira.
@@ -1696,7 +1696,7 @@ export default function Page() {
                   '&:hover': { backgroundColor: theme.palette.error.dark },
                 }}
               >
-                Criar parceria
+                Criar empresa
               </Button>
             </Box>
           </Box>
