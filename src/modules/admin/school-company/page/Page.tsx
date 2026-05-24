@@ -171,6 +171,9 @@ export default function Page() {
   const [isNewPartnerOpen, setIsNewPartnerOpen] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [companyToDeleteId, setCompanyToDeleteId] = useState<string | null>(
+    null
+  )
 
   const [newPartner, setNewPartner] = useState({
     name: '',
@@ -1266,7 +1269,7 @@ export default function Page() {
                       }}
                     >
                       <IconButton
-                        onClick={() => handleDeleteCompany(selectedCompany.id)}
+                        onClick={() => setCompanyToDeleteId(selectedCompany.id)}
                         sx={{
                           position: 'absolute',
                           top: 16,
@@ -1701,6 +1704,20 @@ export default function Page() {
           </Box>
         </Box>
       )}
+
+      <AppActionModal
+        mode="confirm"
+        open={companyToDeleteId !== null}
+        onClose={() => setCompanyToDeleteId(null)}
+        onConfirm={() => {
+          if (companyToDeleteId) handleDeleteCompany(companyToDeleteId)
+          setCompanyToDeleteId(null)
+        }}
+        title="Excluir empresa"
+        description="Essa ação não pode ser desfeita. A empresa será removida permanentemente."
+        confirmLabel="Excluir"
+        confirmTone="error.main"
+      />
     </AppPageContainer>
   )
 }
