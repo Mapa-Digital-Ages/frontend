@@ -19,10 +19,8 @@ import { Box, Button, IconButton, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import { useEffect, useState } from 'react'
 
-import {
-  adminCompanyService,
-  type Company,
-} from '@/modules/admin/school-company/services/adminCompanyService'
+import { adminCompanyService } from '@/modules/admin/school-company/services/service'
+import { Company } from '../types/types'
 
 interface School {
   id: string
