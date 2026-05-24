@@ -1,19 +1,27 @@
 import { AppColors } from '@/app/theme/core/colors'
 import AppActionModal from '@/shared/ui/AppActionModal'
+import AppDropdown from '@/shared/ui/AppDropdown'
+import AppInput from '@/shared/ui/AppInput'
 import { SearchBarAndFilter } from '@/shared/ui/SearchBarAndFilter'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import BusinessTwoToneIcon from '@mui/icons-material/BusinessTwoTone'
 import CancelRoundedIcon from '@mui/icons-material/CancelRounded'
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded'
-import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded'
-import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded'
 import { Box, Button, IconButton, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import { useEffect, useState } from 'react'
 
 import { adminCompanyService } from '@/modules/admin/school-company/services/service'
 import { Company } from '../types/types'
+
+const companyTypeOptions = [
+  { label: 'Empresa parceira', value: 'Empresa parceira' },
+  { label: 'Patrocínio', value: 'Patrocínio' },
+  { label: 'Mentoria', value: 'Mentoria' },
+  { label: 'Vagas', value: 'Vagas' },
+  { label: 'Tecnologia', value: 'Tecnologia' },
+]
 
 export default function CompanyPage() {
   const theme = useTheme()
@@ -23,8 +31,6 @@ export default function CompanyPage() {
   const [isLoadingCompanies, setIsLoadingCompanies] = useState(false)
   const [query, setQuery] = useState('')
   const [isNewPartnerOpen, setIsNewPartnerOpen] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [companyToDeleteId, setCompanyToDeleteId] = useState<string | null>(
     null
   )
@@ -102,8 +108,6 @@ export default function CompanyPage() {
         confirmPassword: '',
         type: '',
       })
-      setShowPassword(false)
-      setShowConfirmPassword(false)
       setIsNewPartnerOpen(false)
     } catch (error) {
       console.error('Erro ao criar empresa:', error)
@@ -505,300 +509,159 @@ export default function CompanyPage() {
         </Box>
       )}
 
-      {isNewPartnerOpen && (
-        <Box
-          sx={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.45)',
-            zIndex: 999,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            p: 2,
-          }}
-        >
-          <Box
-            sx={{
-              width: '100%',
-              maxWidth: 520,
-              backgroundColor: 'background.paper',
-              borderRadius: '24px',
-              p: 3,
-            }}
-          >
-            <Box
+      <AppActionModal
+        open={isNewPartnerOpen}
+        onClose={() => setIsNewPartnerOpen(false)}
+        title="Criar empresa"
+        description="Cadastre uma nova empresa parceira."
+        onConfirm={handleCreatePartner}
+        confirmLabel="Criar empresa"
+        cancelLabel="Cancelar"
+        confirmColor={AppColors.role.admin.secondary}
+        confirmHoverColor={theme.palette.error.dark}
+        disableConfirm={!canCreatePartner}
+      >
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          <Box>
+            <Typography
               sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                mb: 2.5,
+                fontWeight: 600,
+                fontSize: 14,
+                mb: 1,
+                color: 'text.primary',
               }}
             >
-              <Box>
-                <Typography sx={{ fontSize: 26, fontWeight: 700 }}>
-                  Criar empresa
-                </Typography>
-                <Typography sx={{ color: 'text.secondary', mt: 0.5 }}>
-                  Cadastre uma nova empresa parceira.
-                </Typography>
-              </Box>
+              Nome da empresa
+            </Typography>
+            <AppInput
+              data-testid="new-company-name"
+              placeholder="Ex: Instituto Futuro"
+              value={newPartner.name}
+              onChange={event =>
+                setNewPartner(prev => ({
+                  ...prev,
+                  name: event.target.value,
+                }))
+              }
+            />
+          </Box>
 
-              <Button
-                onClick={() => setIsNewPartnerOpen(false)}
-                sx={{
-                  minWidth: 'auto',
-                  color: 'text.secondary',
-                  fontSize: 22,
-                  fontWeight: 700,
-                }}
-              >
-                ×
-              </Button>
-            </Box>
-
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.6 }}>
-              <Box>
-                <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 0.6 }}>
-                  Nome da empresa
-                </Typography>
-                <input
-                  value={newPartner.name}
-                  onChange={event =>
-                    setNewPartner(prev => ({
-                      ...prev,
-                      name: event.target.value,
-                    }))
-                  }
-                  placeholder="Ex.: Instituto Futuro"
-                  type="text"
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    borderRadius: '12px',
-                    border: '1px solid #d9dee7',
-                    fontSize: 14,
-                    outline: 'none',
-                  }}
-                />
-              </Box>
-
-              <Box>
-                <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 0.6 }}>
-                  E-mail
-                </Typography>
-                <input
-                  value={newPartner.email}
-                  onChange={event =>
-                    setNewPartner(prev => ({
-                      ...prev,
-                      email: event.target.value,
-                    }))
-                  }
-                  placeholder="Ex.: contato@empresa.com"
-                  type="email"
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    borderRadius: '12px',
-                    border: `1px solid ${
-                      newPartner.email && !emailIsValid ? '#ef4444' : '#d9dee7'
-                    }`,
-                    fontSize: 14,
-                    outline: 'none',
-                  }}
-                />
-                {newPartner.email && !emailIsValid && (
-                  <Typography
-                    sx={{ color: '#ef4444', fontSize: 11.5, mt: 0.6 }}
-                  >
-                    Digite um e-mail válido com @ e domínio.
-                  </Typography>
-                )}
-              </Box>
-
-              <Box>
-                <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 0.6 }}>
-                  Tipo de parceria
-                </Typography>
-                <input
-                  value={newPartner.type}
-                  onChange={event =>
-                    setNewPartner(prev => ({
-                      ...prev,
-                      type: event.target.value,
-                    }))
-                  }
-                  placeholder="Ex.: Patrocínio"
-                  type="text"
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    borderRadius: '12px',
-                    border: '1px solid #d9dee7',
-                    fontSize: 14,
-                    outline: 'none',
-                  }}
-                />
-              </Box>
-
-              <Box>
-                <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 0.6 }}>
-                  Senha
-                </Typography>
-                <Box sx={{ position: 'relative' }}>
-                  <input
-                    value={newPartner.password}
-                    onChange={event =>
-                      setNewPartner(prev => ({
-                        ...prev,
-                        password: event.target.value,
-                      }))
-                    }
-                    placeholder="Mínimo 8 caracteres"
-                    type={showPassword ? 'text' : 'password'}
-                    style={{
-                      width: '100%',
-                      padding: '12px 44px 12px 16px',
-                      borderRadius: '12px',
-                      border: `1px solid ${
-                        newPartner.password && !passwordIsValid
-                          ? '#ef4444'
-                          : '#d9dee7'
-                      }`,
-                      fontSize: 14,
-                      outline: 'none',
-                    }}
-                  />
-                  <IconButton
-                    onClick={() => setShowPassword(prev => !prev)}
-                    sx={{
-                      position: 'absolute',
-                      right: 6,
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      color: 'text.secondary',
-                    }}
-                  >
-                    {showPassword ? (
-                      <VisibilityOffRoundedIcon fontSize="small" />
-                    ) : (
-                      <VisibilityRoundedIcon fontSize="small" />
-                    )}
-                  </IconButton>
-                </Box>
-                <Typography
-                  sx={{
-                    color:
-                      newPartner.password && !passwordIsValid
-                        ? '#ef4444'
-                        : 'text.secondary',
-                    fontSize: 11.5,
-                    mt: 0.6,
-                  }}
-                >
-                  Use no mínimo 8 caracteres, uma letra maiúscula, uma minúscula
-                  e um número.
-                </Typography>
-              </Box>
-
-              <Box>
-                <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 0.6 }}>
-                  Confirmar senha
-                </Typography>
-                <Box sx={{ position: 'relative' }}>
-                  <input
-                    value={newPartner.confirmPassword}
-                    onChange={event =>
-                      setNewPartner(prev => ({
-                        ...prev,
-                        confirmPassword: event.target.value,
-                      }))
-                    }
-                    placeholder="Digite a senha novamente"
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    style={{
-                      width: '100%',
-                      padding: '12px 44px 12px 16px',
-                      borderRadius: '12px',
-                      border: `1px solid ${
-                        newPartner.confirmPassword && !passwordsMatch
-                          ? '#ef4444'
-                          : '#d9dee7'
-                      }`,
-                      fontSize: 14,
-                      outline: 'none',
-                    }}
-                  />
-                  <IconButton
-                    onClick={() => setShowConfirmPassword(prev => !prev)}
-                    sx={{
-                      position: 'absolute',
-                      right: 6,
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      color: 'text.secondary',
-                    }}
-                  >
-                    {showConfirmPassword ? (
-                      <VisibilityOffRoundedIcon fontSize="small" />
-                    ) : (
-                      <VisibilityRoundedIcon fontSize="small" />
-                    )}
-                  </IconButton>
-                </Box>
-                {newPartner.confirmPassword && !passwordsMatch && (
-                  <Typography
-                    sx={{ color: '#ef4444', fontSize: 11.5, mt: 0.6 }}
-                  >
-                    As senhas não coincidem.
-                  </Typography>
-                )}
-              </Box>
-            </Box>
-
-            <Box
+          <Box>
+            <Typography
               sx={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-                gap: 1.5,
-                mt: 3,
+                fontWeight: 600,
+                fontSize: 14,
+                mb: 1,
+                color: 'text.primary',
               }}
             >
-              <Button
-                variant="outlined"
-                onClick={() => setIsNewPartnerOpen(false)}
-                sx={{
-                  borderRadius: '12px',
-                  fontWeight: 700,
-                  px: 3,
-                  py: 1,
-                  textTransform: 'none',
-                }}
-              >
-                Cancelar
-              </Button>
+              E-mail
+            </Typography>
+            <AppInput
+              data-testid="new-company-email"
+              placeholder="Ex: contato@empresa.com"
+              type="email"
+              value={newPartner.email}
+              onChange={event =>
+                setNewPartner(prev => ({
+                  ...prev,
+                  email: event.target.value,
+                }))
+              }
+              error={Boolean(newPartner.email && !emailIsValid)}
+              helperText={
+                newPartner.email && !emailIsValid
+                  ? 'Digite um e-mail válido com @ e domínio.'
+                  : undefined
+              }
+            />
+          </Box>
 
-              <Button
-                variant="contained"
-                onClick={handleCreatePartner}
-                disabled={!canCreatePartner}
-                sx={{
-                  backgroundColor: AppColors.role.admin.secondary,
-                  borderRadius: '12px',
-                  fontWeight: 700,
-                  px: 3,
-                  py: 1,
-                  textTransform: 'none',
-                  '&:hover': { backgroundColor: theme.palette.error.dark },
-                }}
-              >
-                Criar empresa
-              </Button>
-            </Box>
+          <Box>
+            <Typography
+              sx={{
+                fontWeight: 600,
+                fontSize: 14,
+                mb: 1,
+                color: 'text.primary',
+              }}
+            >
+              Tipo de parceria
+            </Typography>
+            <AppDropdown
+              data-testid="new-company-type"
+              options={companyTypeOptions}
+              value={newPartner.type}
+              onChange={event =>
+                setNewPartner(prev => ({
+                  ...prev,
+                  type: String(event.target.value),
+                }))
+              }
+              placeholder="Selecione o tipo de parceria"
+              fullWidth
+            />
+          </Box>
+
+          <Box>
+            <Typography
+              sx={{
+                fontWeight: 600,
+                fontSize: 14,
+                mb: 1,
+                color: 'text.primary',
+              }}
+            >
+              Senha
+            </Typography>
+            <AppInput
+              data-testid="new-company-password"
+              placeholder="Mínimo 8 caracteres"
+              type="password"
+              value={newPartner.password}
+              onChange={event =>
+                setNewPartner(prev => ({
+                  ...prev,
+                  password: event.target.value,
+                }))
+              }
+              error={Boolean(newPartner.password && !passwordIsValid)}
+              helperText="Use no mínimo 8 caracteres, uma letra maiúscula, uma minúscula e um número."
+            />
+          </Box>
+
+          <Box>
+            <Typography
+              sx={{
+                fontWeight: 600,
+                fontSize: 14,
+                mb: 1,
+                color: 'text.primary',
+              }}
+            >
+              Confirmar senha
+            </Typography>
+            <AppInput
+              data-testid="new-company-confirm-password"
+              placeholder="Digite a senha novamente"
+              type="password"
+              value={newPartner.confirmPassword}
+              onChange={event =>
+                setNewPartner(prev => ({
+                  ...prev,
+                  confirmPassword: event.target.value,
+                }))
+              }
+              error={Boolean(newPartner.confirmPassword && !passwordsMatch)}
+              helperText={
+                newPartner.confirmPassword && !passwordsMatch
+                  ? 'As senhas não coincidem.'
+                  : undefined
+              }
+            />
           </Box>
         </Box>
-      )}
+      </AppActionModal>
 
       <AppActionModal
         mode="confirm"
