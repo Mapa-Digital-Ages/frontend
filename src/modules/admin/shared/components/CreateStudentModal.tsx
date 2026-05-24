@@ -55,6 +55,7 @@ interface CreateStudentModalProps extends BoxProps {
   onClose: () => void
   onConfirm: (values: StudentFormValues) => void
   apiError?: string | null
+  defaultSchool?: SchoolOption | null
 }
 
 export interface StudentFormValues {
@@ -70,12 +71,12 @@ export interface StudentFormValues {
 
 type FormErrors = Partial<Record<keyof StudentFormValues, string>>
 
-function getDefaultValues(): StudentFormValues {
+function getDefaultValues(defaultSchoolId?: string | null): StudentFormValues {
   return {
     name: '',
     email: '',
     password: '',
-    school: NONE_VALUE,
+    school: defaultSchoolId || NONE_VALUE,
     guardian: NONE_VALUE,
     year: yearOptions[0].value,
     status: 'ativo',
@@ -88,10 +89,14 @@ export default function CreateStudentModal({
   onClose,
   onConfirm,
   apiError,
+  defaultSchool = null,
   ...props
 }: CreateStudentModalProps) {
   const theme = useTheme()
-  const [values, setValues] = useState<StudentFormValues>(getDefaultValues())
+  const defaultSchoolId = defaultSchool?.value ?? null
+  const [values, setValues] = useState<StudentFormValues>(() =>
+    getDefaultValues(defaultSchoolId)
+  )
   const [errors, setErrors] = useState<FormErrors>({})
 
   const [schools, setSchools] = useState<SchoolOption[]>([])
@@ -143,19 +148,24 @@ export default function CreateStudentModal({
   function handleConfirm() {
     if (!validate() || !isLinked) return
     onConfirm(values)
-    setValues(getDefaultValues())
+    setValues(getDefaultValues(defaultSchoolId))
     setErrors({})
   }
 
   function handleClose() {
-    setValues(getDefaultValues())
+    setValues(getDefaultValues(defaultSchoolId))
     setErrors({})
     onClose()
   }
 
+  const resolvedSchools =
+    defaultSchool && !schools.some(s => s.value === defaultSchool.value)
+      ? [defaultSchool, ...schools]
+      : schools
+
   const schoolDropdownOptions = [
     NONE_OPTION,
-    ...schools.map(s => ({ label: s.label, value: s.value })),
+    ...resolvedSchools.map(s => ({ label: s.label, value: s.value })),
   ]
 
   const guardianDropdownOptions = [
