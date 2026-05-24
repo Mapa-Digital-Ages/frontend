@@ -39,8 +39,13 @@ function mapCompany(company: CompanyApi): Company {
 }
 
 export const adminCompanyService = {
-  async listCompanies(): Promise<Company[]> {
-    const response = await httpClient.get<CompanyApi[]>('company')
+  async listCompanies(page = 1, size = 10, name?: string): Promise<Company[]> {
+    const params = new URLSearchParams({
+      page: String(page),
+      size: String(size),
+    })
+    if (name) params.set('name', name)
+    const response = await httpClient.get<CompanyApi[]>(`company?${params}`)
     return response.data.map(mapCompany)
   },
 
@@ -56,6 +61,16 @@ export const adminCompanyService = {
     })
 
     return mapCompany(response.data)
+  },
+
+  async countCompanies(name?: string): Promise<number> {
+    const params = new URLSearchParams()
+    if (name) params.set('name', name)
+    const qs = params.toString()
+    const response = await httpClient.get<{ total: number }>(
+      `company/count${qs ? `?${qs}` : ''}`
+    )
+    return response.data.total
   },
 
   async deleteCompany(companyId: string): Promise<void> {

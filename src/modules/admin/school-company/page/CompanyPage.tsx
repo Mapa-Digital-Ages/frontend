@@ -10,7 +10,7 @@ import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded'
 import { Box, Button, IconButton, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { adminCompanyService } from '@/modules/admin/school-company/services/service'
 import { Company } from '../types/types'
@@ -27,8 +27,13 @@ export default function CompanyPage() {
   const theme = useTheme()
 
   const [companies, setCompanies] = useState<Company[]>([])
+  const [totalCount, setTotalCount] = useState<number | null>(null)
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('')
   const [isLoadingCompanies, setIsLoadingCompanies] = useState(false)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const PAGE_SIZE = 10
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
   const [query, setQuery] = useState('')
   const [isNewPartnerOpen, setIsNewPartnerOpen] = useState(false)
   const [companyToDeleteId, setCompanyToDeleteId] = useState<string | null>(
@@ -42,26 +47,79 @@ export default function CompanyPage() {
     type: '',
   })
 
-  useEffect(() => {
-    async function loadCompanies() {
+  const loadCompanies = useCallback(
+    async (pageToLoad: number, search: string) => {
+      if (isLoadingCompanies) return
       try {
         setIsLoadingCompanies(true)
-        const data = await adminCompanyService.listCompanies()
-        setCompanies(data)
-        setSelectedCompanyId(data.length > 0 ? data[0].id : '')
+        const data = await adminCompanyService.listCompanies(
+          pageToLoad,
+          PAGE_SIZE,
+          search || undefined
+        )
+        if (data.length < PAGE_SIZE) setHasMore(false)
+        setCompanies(prev => {
+          const merged = pageToLoad === 1 ? data : [...prev, ...data]
+          if (pageToLoad === 1 && merged.length > 0) {
+            setSelectedCompanyId(id => id || merged[0].id)
+          }
+          return merged
+        })
       } catch (error) {
         console.error('Erro ao carregar empresas:', error)
       } finally {
         setIsLoadingCompanies(false)
       }
-    }
-
-    loadCompanies()
-  }, [])
-
-  const filteredCompanies = companies.filter(company =>
-    company.name.toLowerCase().includes(query.toLowerCase())
+    },
+    []
   )
+
+  useEffect(() => {
+    setPage(1)
+    setHasMore(true)
+    setCompanies([])
+    loadCompanies(1, '')
+    adminCompanyService
+      .countCompanies()
+      .then(setTotalCount)
+      .catch(() => {})
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    setPage(1)
+    setHasMore(true)
+    setCompanies([])
+    const timer = setTimeout(() => {
+      loadCompanies(1, query)
+      adminCompanyService
+        .countCompanies(query || undefined)
+        .then(setTotalCount)
+        .catch(() => {})
+    }, 350)
+    return () => clearTimeout(timer)
+  }, [query]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (page === 1) return
+    loadCompanies(page, query)
+  }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasMore && !isLoadingCompanies) {
+          setPage(prev => prev + 1)
+        }
+      },
+      { threshold: 0.1 }
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [hasMore, isLoadingCompanies])
+
+  const filteredCompanies = companies
 
   const selectedCompany =
     companies.find(company => company.id === selectedCompanyId) ??
@@ -188,7 +246,7 @@ export default function CompanyPage() {
           query={query}
           onQueryChange={setQuery}
           resultsSummary={{
-            count: filteredCompanies.length,
+            count: totalCount ?? filteredCompanies.length,
             singularLabel: 'resultado',
             pluralLabel: 'resultado(s)',
           }}
@@ -196,7 +254,7 @@ export default function CompanyPage() {
         />
       </Box>
 
-      {isLoadingCompanies ? (
+      {isLoadingCompanies && companies.length === 0 ? (
         <Box
           sx={{
             backgroundColor: 'background.paper',
@@ -211,7 +269,7 @@ export default function CompanyPage() {
             Carregando empresas...
           </Typography>
         </Box>
-      ) : filteredCompanies.length === 0 ? (
+      ) : !isLoadingCompanies && filteredCompanies.length === 0 ? (
         <Box
           sx={{
             backgroundColor: 'background.paper',
@@ -371,6 +429,20 @@ export default function CompanyPage() {
                 </Box>
               )
             })}
+
+            <Box ref={sentinelRef} sx={{ height: 4 }} />
+            {isLoadingCompanies && (
+              <Typography
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: 13,
+                  textAlign: 'center',
+                  py: 1,
+                }}
+              >
+                Carregando...
+              </Typography>
+            )}
           </Box>
 
           {selectedCompany && (
