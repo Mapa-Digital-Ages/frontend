@@ -2,7 +2,7 @@ import AccountBalanceRoundedIcon from '@mui/icons-material/AccountBalanceRounded
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded'
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded'
-import { Box, Chip, IconButton, Typography } from '@mui/material'
+import { Box, IconButton, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import { useEffect, useState } from 'react'
 import LoadingScreen from '@/shared/ui/LoadingScreen'
@@ -10,29 +10,27 @@ import AppCard from '@/shared/ui/AppCard'
 import AppPageContainer from '@/shared/ui/AppPageContainer'
 import MetricsCard from '@/shared/ui/MetricsCard'
 import PageHeader from '@/shared/ui/PageHeader'
+import { AppTag } from '@/shared/ui/AppTags'
 import { companyDashboardService } from '../services/service'
-import type { CompanyStat } from '@/shared/types/common'
+import type { CompanyStat, TagContext } from '@/shared/types/common'
 import type { IconVariantName } from '@/app/theme/core/palette'
 import type { SupportedSchool, SupportRequest } from '../types/types'
 
-const STATUS_MAP: Record<
-  string,
-  { label: string; color: string; bgColor: string }
-> = {
+const STATUS_MAP: Record<string, TagContext> = {
   aguardando: {
+    id: 'aguardando',
     label: 'Aguardando Retorno',
     color: '#e65100',
-    bgColor: '#fff3e0',
   },
   apoiada: {
+    id: 'apoiada',
     label: 'Apoiada',
     color: '#1b5e20',
-    bgColor: '#e8f5e9',
   },
   recusada: {
+    id: 'recusada',
     label: 'Recusada',
     color: '#b71c1c',
-    bgColor: '#ffebee',
   },
 }
 
@@ -149,16 +147,12 @@ export default function Page() {
           title="Solicitações de Apoio"
           titleClassName="text-2xl font-bold md:text-3xl"
           action={
-            <Chip
-              label={supportRequests.length}
-              size="small"
-              sx={{
-                backgroundColor: alpha('#7c3aed', 0.1),
+            <AppTag
+              size="sm"
+              tag={{
+                id: 'support-requests-count',
+                label: String(supportRequests.length),
                 color: '#7c3aed',
-                fontWeight: 700,
-                fontSize: 14,
-                height: 28,
-                minWidth: 28,
               }}
             />
           }
@@ -191,19 +185,17 @@ export default function Page() {
                 >
                   {request.description}
                 </Typography>
-                <Chip
-                  label={STATUS_MAP[request.status]?.label ?? request.status}
-                  size="small"
-                  sx={{
-                    backgroundColor:
-                      STATUS_MAP[request.status]?.bgColor ?? '#f5f5f5',
-                    color: STATUS_MAP[request.status]?.color ?? '#616161',
-                    fontSize: 12,
-                    fontWeight: 600,
-                    height: 24,
-                    mt: 0.5,
-                  }}
-                />
+                <Box sx={{ mt: 0.5 }}>
+                  <AppTag
+                    size="sm"
+                    tag={
+                      STATUS_MAP[request.status] ?? {
+                        id: request.status,
+                        label: request.status,
+                      }
+                    }
+                  />
+                </Box>
               </Box>
               <Box className="flex items-center gap-1 shrink-0 ml-2">
                 <IconButton
@@ -236,16 +228,12 @@ export default function Page() {
           title="Escolas Apoiadas"
           titleClassName="text-2xl font-bold md:text-3xl"
           action={
-            <Chip
-              label={supportedSchools.length}
-              size="small"
-              sx={{
-                backgroundColor: alpha('#7c3aed', 0.1),
+            <AppTag
+              size="sm"
+              tag={{
+                id: 'supported-schools-count',
+                label: String(supportedSchools.length),
                 color: '#7c3aed',
-                fontWeight: 700,
-                fontSize: 14,
-                height: 28,
-                minWidth: 28,
               }}
             />
           }
@@ -278,19 +266,17 @@ export default function Page() {
                 >
                   {school.description}
                 </Typography>
-                <Chip
-                  label={STATUS_MAP[school.status]?.label ?? school.status}
-                  size="small"
-                  sx={{
-                    backgroundColor:
-                      STATUS_MAP[school.status]?.bgColor ?? '#f5f5f5',
-                    color: STATUS_MAP[school.status]?.color ?? '#616161',
-                    fontSize: 12,
-                    fontWeight: 600,
-                    height: 24,
-                    mt: 0.5,
-                  }}
-                />
+                <Box sx={{ mt: 0.5 }}>
+                  <AppTag
+                    size="sm"
+                    tag={
+                      STATUS_MAP[school.status] ?? {
+                        id: school.status,
+                        label: school.status,
+                      }
+                    }
+                  />
+                </Box>
               </Box>
             </Box>
           ))}
