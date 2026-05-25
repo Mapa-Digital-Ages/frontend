@@ -11,6 +11,7 @@ import {
   Typography,
 } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
+import { getRoleHoverStyle, getRoleSelectedStyle } from '@/app/theme/core/roles'
 import { useEffect, useMemo, useState } from 'react'
 import LoadingScreen from '@/shared/ui/LoadingScreen'
 import AppCard from '@/shared/ui/AppCard'
@@ -124,24 +125,26 @@ export default function Page() {
               data-testid={`school-card-${school.id}`}
               key={school.id}
               onClick={() => setSelectedSchoolId(school.id)}
-              sx={{
-                backgroundColor:
-                  selectedSchoolId === school.id
-                    ? alpha(theme.palette.primary.main, 0.06)
+              sx={(() => {
+                const isSelected = selectedSchoolId === school.id
+                const hoverStyle = getRoleHoverStyle(theme, 'empresa')
+                const selectedStyle = getRoleSelectedStyle(theme, 'empresa')
+
+                return {
+                  backgroundColor: isSelected
+                    ? selectedStyle.backgroundColor
                     : theme.palette.background.paper,
-                border: `1px solid ${
-                  selectedSchoolId === school.id
-                    ? alpha(theme.palette.role.empresa.primary, 0.4)
-                    : alpha(theme.palette.divider, 0.5)
-                }`,
-                '&:hover': {
-                  borderColor: alpha(theme.palette.role.empresa.primary, 0.3),
-                  backgroundColor: alpha(
-                    theme.palette.role.empresa.primary,
-                    0.04
-                  ),
-                },
-              }}
+                  border: `1px solid ${
+                    isSelected
+                      ? selectedStyle.borderColor
+                      : alpha(theme.palette.divider, 0.5)
+                  }`,
+                  '&:hover': {
+                    backgroundColor: hoverStyle.backgroundColor,
+                    borderColor: hoverStyle.borderColor,
+                  },
+                }
+              })()}
             >
               <Box className="flex items-center justify-between">
                 <Box className="flex items-center gap-3 min-w-0">
