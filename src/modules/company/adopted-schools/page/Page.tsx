@@ -3,6 +3,8 @@ import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded'
 import {
   Box,
   IconButton,
+  Menu,
+  MenuItem,
   Table,
   TableBody,
   TableCell,
@@ -11,7 +13,11 @@ import {
   Typography,
 } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
-import { getRoleHoverStyle, getRoleSelectedStyle } from '@/app/theme/core/roles'
+import {
+  getRoleHoverStyle,
+  getRolePalette,
+  getRoleSelectedStyle,
+} from '@/app/theme/core/roles'
 import { useEffect, useMemo, useState } from 'react'
 import LoadingScreen from '@/shared/ui/LoadingScreen'
 import AppCard from '@/shared/ui/AppCard'
@@ -21,6 +27,9 @@ import { SearchBarAndFilter } from '@/shared/ui/SearchBarAndFilter'
 import { adoptedSchoolsService } from '../services/service'
 import type { AdoptedSchool } from '../types/types'
 import type { DropdownOption } from '@/shared/ui/AppDropdown'
+import { useCompanyRole } from '@/modules/company/shared/hooks/useCompanyRole'
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
+import AppActionModal from '@/shared/ui/AppActionModal'
 
 const FILTER_OPTIONS: DropdownOption[] = [
   { label: 'Todos', value: 'all' },
@@ -38,6 +47,16 @@ export default function Page() {
   const [query, setQuery] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
   const [isLoading, setIsLoading] = useState(true)
+  const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null)
+  const [menuSchoolId, setMenuSchoolId] = useState<string | null>(null)
+  const [gradeMenuAnchorEl, setGradeMenuAnchorEl] =
+    useState<HTMLElement | null>(null)
+  const [gradeMenuKey, setGradeMenuKey] = useState<string | null>(null)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const role = useCompanyRole()
+  const accent = getRolePalette(theme, role)
+  const hoverStyle = getRoleHoverStyle(theme, role)
+  const selectedStyle = getRoleSelectedStyle(theme, role)
 
   useEffect(() => {
     let isActive = true
@@ -62,6 +81,15 @@ export default function Page() {
       isActive = false
     }
   }, [])
+
+  async function handleRemoveSchool() {
+    if (!menuSchoolId) return
+    await adoptedSchoolsService.removeSchool(menuSchoolId)
+    setSchools(current => current.filter(s => s.id !== menuSchoolId))
+    if (selectedSchoolId === menuSchoolId) setSelectedSchoolId(null)
+    setIsDeleteModalOpen(false)
+    setMenuSchoolId(null)
+  }
 
   const filteredSchools = useMemo(() => {
     return schools.filter(school => {
@@ -119,144 +147,223 @@ export default function Page() {
           contentSx={{ maxHeight: 500, overflowY: 'auto' }}
           data-testid="adopted-schools-list"
         >
-          {filteredSchools.map(school => (
-            <Box
-              className="cursor-pointer rounded-2xl px-4 py-3 transition-all"
-              data-testid={`school-card-${school.id}`}
-              key={school.id}
-              onClick={() => setSelectedSchoolId(school.id)}
-              sx={(() => {
-                const isSelected = selectedSchoolId === school.id
-                const hoverStyle = getRoleHoverStyle(theme, 'empresa')
-                const selectedStyle = getRoleSelectedStyle(theme, 'empresa')
-
-                return {
+          {filteredSchools.map(school => {
+            const isSelected = selectedSchoolId === school.id
+            return (
+              <Box
+                className="cursor-pointer rounded-2xl px-4 py-3 transition-all"
+                data-testid={`school-card-${school.id}`}
+                key={school.id}
+                onClick={() => setSelectedSchoolId(school.id)}
+                sx={{
                   backgroundColor: isSelected
                     ? selectedStyle.backgroundColor
                     : theme.palette.background.paper,
                   border: `1px solid ${
                     isSelected
                       ? selectedStyle.borderColor
-                      : alpha(theme.palette.divider, 0.5)
+                      : theme.palette.background.border
                   }`,
                   '&:hover': {
                     backgroundColor: hoverStyle.backgroundColor,
                     borderColor: hoverStyle.borderColor,
                   },
-                }
-              })()}
-            >
-              <Box className="flex items-center justify-between">
-                <Box className="flex items-center gap-3 min-w-0">
-                  <Box
-                    className="flex items-center justify-center rounded-xl"
-                    sx={{
-                      backgroundColor: alpha(
-                        theme.palette.role.empresa.primary,
-                        0.1
-                      ),
-                      color: theme.palette.role.empresa.primary,
-                      height: 40,
-                      width: 40,
-                      flexShrink: 0,
-                    }}
-                  >
-                    <AccountBalanceRoundedIcon fontSize="small" />
-                  </Box>
-                  <Box className="min-w-0">
-                    <Typography
+                }}
+              >
+                <Box className="flex items-center justify-between">
+                  <Box className="flex items-center gap-3 min-w-0">
+                    <Box
+                      className="flex items-center justify-center rounded-xl"
                       sx={{
-                        color: 'text.primary',
-                        fontSize: { md: 16, xs: 14 },
-                        fontWeight: 600,
+                        backgroundColor: alpha(
+                          theme.palette.role.empresa.primary,
+                          0.1
+                        ),
+                        border: `1px solid ${alpha(theme.palette.role.empresa.primary, 0.3)}`,
+                        color: theme.palette.role.empresa.primary,
+                        height: 40,
+                        width: 40,
+                        flexShrink: 0,
                       }}
                     >
-                      {school.schoolName}
-                    </Typography>
+                      <AccountBalanceRoundedIcon fontSize="small" />
+                    </Box>
+                    <Box className="min-w-0">
+                      <Typography
+                        sx={{
+                          color: 'text.primary',
+                          fontSize: { md: 16, xs: 14 },
+                          fontWeight: 600,
+                        }}
+                      >
+                        {school.schoolName}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          color: 'text.secondary',
+                          fontSize: 13,
+                        }}
+                      >
+                        {school.city}, {school.state} · {school.students} alunos
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <IconButton
+                    aria-label="Mais opções"
+                    data-testid={`school-card-menu-${school.id}`}
+                    size="small"
+                    onClick={e => {
+                      e.stopPropagation()
+                      setMenuAnchorEl(e.currentTarget)
+                      setMenuSchoolId(school.id)
+                    }}
+                    sx={{
+                      color: isSelected ? accent.primary : 'text.secondary',
+                      backgroundColor: isSelected
+                        ? selectedStyle.backgroundColor
+                        : 'transparent',
+                      '&:hover': {
+                        backgroundColor: hoverStyle.backgroundColor,
+                        color: accent.primary,
+                      },
+                    }}
+                  >
+                    <MoreHorizRoundedIcon />
+                  </IconButton>
+                </Box>
+
+                <Box className="mt-3 flex gap-3">
+                  <Box
+                    className="flex-1 rounded-xl px-3 py-2"
+                    sx={{
+                      backgroundColor: isSelected
+                        ? selectedStyle.backgroundColor
+                        : alpha(theme.palette.background.border, 0.3),
+                      border: `1px solid`,
+                      borderColor: isSelected
+                        ? selectedStyle.borderColor
+                        : alpha(theme.palette.background.border, 0.3),
+                    }}
+                  >
                     <Typography
                       sx={{
                         color: 'text.secondary',
-                        fontSize: 13,
+                        fontSize: 12,
+                        fontWeight: 500,
                       }}
                     >
-                      {school.city}, {school.state} · {school.students} alunos ·
-                      Coordenação: {school.coordinator}
+                      Coordenação
+                    </Typography>
+                    <Typography
+                      sx={{
+                        color: 'text.primary',
+                        fontSize: 15,
+                        fontWeight: 600,
+                      }}
+                    >
+                      {school.coordinator}
+                    </Typography>
+                  </Box>
+                  <Box
+                    className="flex-1 rounded-xl px-3 py-2"
+                    sx={{
+                      backgroundColor: isSelected
+                        ? selectedStyle.backgroundColor
+                        : alpha(theme.palette.background.border, 0.3),
+                      border: `1px solid`,
+                      borderColor: isSelected
+                        ? selectedStyle.borderColor
+                        : alpha(theme.palette.background.border, 0.3),
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        color: 'text.secondary',
+                        fontSize: 12,
+                        fontWeight: 500,
+                      }}
+                    >
+                      Alunos
+                    </Typography>
+                    <Typography
+                      sx={{
+                        color: 'text.primary',
+                        fontSize: 15,
+                        fontWeight: 600,
+                      }}
+                    >
+                      {school.students}
                     </Typography>
                   </Box>
                 </Box>
-                <IconButton
-                  aria-label="Mais opções"
-                  data-testid={`school-card-menu-${school.id}`}
-                  size="small"
-                  sx={{ color: 'text.secondary' }}
-                >
-                  <MoreHorizRoundedIcon />
-                </IconButton>
               </Box>
-
-              <Box className="mt-3 flex gap-3">
-                <Box
-                  className="flex-1 rounded-xl px-3 py-2"
-                  sx={{
-                    backgroundColor: alpha(
-                      theme.palette.background.default,
-                      0.8
-                    ),
-                    border: `1px solid ${alpha(theme.palette.divider, 0.3)}`,
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      color: 'text.secondary',
-                      fontSize: 12,
-                      fontWeight: 500,
-                    }}
-                  >
-                    Coordenação
-                  </Typography>
-                  <Typography
-                    sx={{
-                      color: 'text.primary',
-                      fontSize: 15,
-                      fontWeight: 600,
-                    }}
-                  >
-                    {school.coordinator}
-                  </Typography>
-                </Box>
-                <Box
-                  className="flex-1 rounded-xl px-3 py-2"
-                  sx={{
-                    backgroundColor: alpha(
-                      theme.palette.background.default,
-                      0.8
-                    ),
-                    border: `1px solid ${alpha(theme.palette.divider, 0.3)}`,
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      color: 'text.secondary',
-                      fontSize: 12,
-                      fontWeight: 500,
-                    }}
-                  >
-                    Alunos
-                  </Typography>
-                  <Typography
-                    sx={{
-                      color: 'text.primary',
-                      fontSize: 15,
-                      fontWeight: 600,
-                    }}
-                  >
-                    {school.students}
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
-          ))}
+            )
+          })}
         </AppCard>
+
+        <Menu
+          anchorEl={menuAnchorEl}
+          open={Boolean(menuAnchorEl)}
+          onClose={() => setMenuAnchorEl(null)}
+          slotProps={{
+            paper: {
+              sx: {
+                border: '1px solid',
+                borderColor: 'background.border',
+                borderRadius: '16px',
+                minWidth: 200,
+                mt: 1,
+              },
+            },
+          }}
+        >
+          <MenuItem
+            data-testid="remove-school-action"
+            onClick={() => {
+              setMenuAnchorEl(null)
+              setIsDeleteModalOpen(true)
+            }}
+            sx={{ color: 'error.main', gap: 1.25, py: 1.1 }}
+          >
+            <DeleteOutlineRoundedIcon sx={{ fontSize: 18 }} />
+            <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+              Remover escola
+            </Typography>
+          </MenuItem>
+        </Menu>
+
+        <Menu
+          anchorEl={gradeMenuAnchorEl}
+          open={Boolean(gradeMenuAnchorEl)}
+          onClose={() => {
+            setGradeMenuAnchorEl(null)
+            setGradeMenuKey(null)
+          }}
+          slotProps={{
+            paper: {
+              sx: {
+                border: '1px solid',
+                borderColor: 'background.border',
+                borderRadius: '16px',
+                minWidth: 200,
+                mt: 1,
+              },
+            },
+          }}
+        >
+          <MenuItem
+            data-testid="view-grade-trails-action"
+            onClick={() => {
+              setGradeMenuAnchorEl(null)
+              setGradeMenuKey(null)
+            }}
+            sx={{ gap: 1.25, py: 1.1 }}
+          >
+            <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+              Ver trilhas
+            </Typography>
+          </MenuItem>
+        </Menu>
 
         {/* School Details Panel */}
         {selectedSchool && (
@@ -298,7 +405,7 @@ export default function Page() {
               data-testid="school-details-table"
               sx={{
                 '& .MuiTableCell-root': {
-                  borderColor: alpha(theme.palette.divider, 0.3),
+                  borderColor: theme.palette.background.border,
                   py: 1.5,
                 },
               }}
@@ -389,7 +496,24 @@ export default function Page() {
                         aria-label={`Opções ${grade.year}`}
                         data-testid={`grade-menu-${grade.year}`}
                         size="small"
-                        sx={{ color: 'text.secondary' }}
+                        onClick={e => {
+                          setGradeMenuAnchorEl(e.currentTarget)
+                          setGradeMenuKey(grade.year)
+                        }}
+                        sx={{
+                          color:
+                            gradeMenuKey === grade.year
+                              ? accent.primary
+                              : 'text.secondary',
+                          backgroundColor:
+                            gradeMenuKey === grade.year
+                              ? selectedStyle.backgroundColor
+                              : 'transparent',
+                          '&:hover': {
+                            backgroundColor: hoverStyle.backgroundColor,
+                            color: accent.primary,
+                          },
+                        }}
                       >
                         <MoreHorizRoundedIcon fontSize="small" />
                       </IconButton>
@@ -400,6 +524,25 @@ export default function Page() {
             </Table>
           </AppCard>
         )}
+
+        <AppActionModal
+          confirmLabel="Confirmar remoção"
+          description="Essa ação remove a escola da sua lista de escolas adotadas."
+          mode="confirm"
+          onClose={() => setIsDeleteModalOpen(false)}
+          onConfirm={() => {
+            void handleRemoveSchool()
+          }}
+          open={isDeleteModalOpen}
+          title="Remover escola"
+          confirmColor={theme.palette.error.main}
+        >
+          <Typography color="text.secondary">
+            Deseja remover "
+            {schools.find(s => s.id === menuSchoolId)?.schoolName ?? ''}" da
+            lista?
+          </Typography>
+        </AppActionModal>
       </Box>
     </AppPageContainer>
   )

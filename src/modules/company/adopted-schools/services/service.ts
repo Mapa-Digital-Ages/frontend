@@ -131,4 +131,8 @@ export const adoptedSchoolsService = {
   async getSchools(): Promise<AdoptedSchool[]> {
     return Promise.resolve(adoptedSchools)
   },
+
+  async removeSchool(_schoolId: string): Promise<void> {
+    return Promise.resolve()
+  },
 }
