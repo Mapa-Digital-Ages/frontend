@@ -1,5 +1,13 @@
-export type SchoolDashboardMetric = {
+export type SchoolClassCard = {
   id: string
-  label: string
-  value: string
+  grade: string
+  studentCount: number
+  tutorName: string
+  progress: number
+}
+
+export type SchoolDashboardData = {
+  totalStudents: number
+  activeClasses: number
+  classes: SchoolClassCard[]
 }

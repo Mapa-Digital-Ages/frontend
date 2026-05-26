@@ -1,5 +1,5 @@
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded'
-import { Box, Button, Typography } from '@mui/material'
+import { Box, Button, Collapse, IconButton, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
@@ -25,6 +25,8 @@ import type {
 } from '../../types/types'
 import { getSubjectTheme } from '@/shared/utils/themes'
 import ProgressBar from '@/shared/ui/ProgressBar'
+import { Chat } from '@mui/icons-material'
+import TrailChatPanel from '../components/TrailChatPanel'
 
 function getActiveStepId(session: AdaptiveTrailSession): string | null {
   return session.steps.find(s => s.status === 'available')?.id ?? null
@@ -88,6 +90,8 @@ function applySubStepCompletion(
 export default function Page() {
   const theme = useTheme()
   const { trailId } = useParams<{ trailId: string }>()
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [isLocked] = useState(false)
   const [session, setSession] = useState<AdaptiveTrailSession | null>(null)
   const [questionFlow, setQuestionFlow] =
     useState<TrailStepQuestionFlow | null>(null)
@@ -259,6 +263,8 @@ export default function Page() {
     )
   }
 
+  const chatPanelWidth = 440
+
   return (
     <AppPageContainer sx={{ maxWidth: 'none' }}>
       <Button
@@ -277,84 +283,155 @@ export default function Page() {
         Voltar para trilhas
       </Button>
 
-      <AppCard
-        contentSx={{
-          display: 'grid',
-          gap: { md: 3, xs: 2 },
-          p: { md: 3, xs: 1.5 },
-        }}
-      >
-        <Box className="grid gap-2">
-          <AppSubjectsTags
-            subjects={session.subject ? [session.subject] : []}
-            size="sm"
-          />
-          <Typography
-            component="h1"
-            sx={{
-              color: 'text.primary',
-              fontSize: { md: 30, xs: 22 },
-              fontWeight: 900,
-              lineHeight: 1.15,
+      <Box sx={{ display: 'flex', gap: 2, alignItems: 'stretch' }}>
+        <Box
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <AppCard
+            sx={{ flex: 1 }}
+            contentSx={{
+              display: 'grid',
+              gap: { md: 3, xs: 2 },
+              p: { md: 3, xs: 1.5 },
             }}
           >
-            {session.title}
-          </Typography>
-          <Typography
-            sx={{
-              color: 'text.secondary',
-              fontSize: { md: 15, xs: 14 },
-              maxWidth: 860,
-            }}
-          >
-            {session.description}
-          </Typography>
-        </Box>
-        <Box>
-          <ProgressBar
-            subject={session.subject}
-            thickness={10}
-            showValueLabel
-            value={progressValue}
-            valueLabelVariant="plain"
-          />
-        </Box>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { md: 'row', xs: 'column' },
+                alignItems: { md: 'center', xs: 'flex-start' },
+                justifyContent: 'space-between',
+                gap: { md: 0, xs: 2 },
+              }}
+            >
+              <Box className="grid gap-2">
+                <AppSubjectsTags
+                  subjects={session.subject ? [session.subject] : []}
+                  size="sm"
+                />
+                <Typography
+                  component="h1"
+                  sx={{
+                    color: 'text.primary',
+                    fontSize: { md: 30, xs: 22 },
+                    fontWeight: 900,
+                    lineHeight: 1.15,
+                  }}
+                >
+                  {session.title}
+                </Typography>
+                <Typography
+                  sx={{
+                    color: 'text.secondary',
+                    fontSize: { md: 15, xs: 14 },
+                    maxWidth: 860,
+                  }}
+                >
+                  {session.description}
+                </Typography>
+              </Box>
+              <IconButton
+                onClick={() => setIsExpanded(prev => !prev)}
+                sx={{
+                  color: isExpanded ? '#fff' : subjectTheme.color,
+                  height: 32,
+                  width: 32,
+                  borderRadius: 'var(--app-radius-control)',
+                  textTransform: 'none',
+                  flexShrink: 0,
+                  border: '1px solid',
+                  borderColor: subjectTheme.color,
+                  backgroundColor: isExpanded
+                    ? subjectTheme.color
+                    : 'transparent',
+                  '&:hover': {
+                    backgroundColor: isExpanded
+                      ? subjectTheme.color
+                      : subjectTheme.softSurface.backgroundColor,
+                  },
+                  '& .MuiSvgIcon-root': {
+                    fontSize: 18,
+                  },
+                }}
+              >
+                <Chat />
+              </IconButton>
+            </Box>
 
-        <TrailSearchBar
-          onChange={setQuery}
-          query={query}
-          subjectColor={subjectTheme.color}
-        />
+            <Box>
+              <ProgressBar
+                subject={session.subject}
+                thickness={10}
+                showValueLabel
+                value={progressValue}
+                valueLabelVariant="plain"
+              />
+            </Box>
 
-        <Box sx={{ display: 'grid' }}>
-          {filteredSteps.map((step, index) => (
-            <TrailStepItem
-              key={step.id}
-              isExpanded={
-                query.trim()
-                  ? expandedBySearch.has(step.id)
-                  : expandedStepId === step.id
-              }
-              isFirst={index === 0}
-              isLast={index === filteredSteps.length - 1}
-              prevStatus={
-                index > 0 ? filteredSteps[index - 1].status : undefined
-              }
-              onAnswerSubStep={handleAnswerSubStep}
-              onExpand={handleExpandStep}
-              searchQuery={query}
-              step={step}
+            <TrailSearchBar
+              onChange={setQuery}
+              query={query}
               subjectColor={subjectTheme.color}
             />
-          ))}
-          {query.trim() && filteredSteps.length === 0 && (
-            <EmptyState
-              description="Tente outros termos de busca."
-              title="Nenhuma etapa encontrada"
-            />
-          )}
+
+            <Box sx={{ display: 'grid' }}>
+              {filteredSteps.map((step, index) => (
+                <TrailStepItem
+                  key={step.id}
+                  isExpanded={
+                    query.trim()
+                      ? expandedBySearch.has(step.id)
+                      : expandedStepId === step.id
+                  }
+                  isFirst={index === 0}
+                  isLast={index === filteredSteps.length - 1}
+                  prevStatus={
+                    index > 0 ? filteredSteps[index - 1].status : undefined
+                  }
+                  onAnswerSubStep={handleAnswerSubStep}
+                  onExpand={handleExpandStep}
+                  searchQuery={query}
+                  step={step}
+                  subjectColor={subjectTheme.color}
+                />
+              ))}
+              {query.trim() && filteredSteps.length === 0 && (
+                <EmptyState
+                  description="Tente outros termos de busca."
+                  title="Nenhuma etapa encontrada"
+                />
+              )}
+            </Box>
+          </AppCard>
         </Box>
-      </AppCard>
+
+        <Collapse
+          in={isExpanded && !isLocked}
+          orientation="horizontal"
+          unmountOnExit
+          sx={{
+            '& .MuiCollapse-wrapperInner': { height: '100%' },
+            '& .MuiCollapse-wrapper': { height: '100%' },
+          }}
+        >
+          <Box
+            sx={{
+              width: chatPanelWidth,
+              height: '100%',
+            }}
+          >
+            <TrailChatPanel
+              subjectTheme={subjectTheme}
+              subjectLabel={session.subject?.label ?? 'Trilha'}
+            />
+          </Box>
+        </Collapse>
+      </Box>
     </AppPageContainer>
   )
 }

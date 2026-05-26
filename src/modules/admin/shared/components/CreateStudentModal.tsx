@@ -56,6 +56,7 @@ interface CreateStudentModalProps extends BoxProps {
   onConfirm: (values: StudentFormValues) => void
   apiError?: string | null
   defaultSchool?: SchoolOption | null
+  confirmColor?: string
 }
 
 export interface StudentFormValues {
@@ -90,9 +91,11 @@ export default function CreateStudentModal({
   onConfirm,
   apiError,
   defaultSchool = null,
+  confirmColor: confirmColorProp,
   ...props
 }: CreateStudentModalProps) {
   const theme = useTheme()
+  const confirmColor = confirmColorProp ?? theme.palette.error.main
   const defaultSchoolId = defaultSchool?.value ?? null
   const [values, setValues] = useState<StudentFormValues>(() =>
     getDefaultValues(defaultSchoolId)
@@ -187,7 +190,7 @@ export default function CreateStudentModal({
       onConfirm={handleConfirm}
       open={open}
       title="Criar aluno"
-      confirmColor={theme.palette.error.main}
+      confirmColor={confirmColor}
     >
       <Box className="grid gap-3">
         <AppInput

@@ -31,6 +31,7 @@ export const APP_ROUTES = {
   school: {
     dashboard: '/school/dashboard',
     classes: '/school/classes',
+    students: '/school/students',
     partners: '/school/partners',
     requestPartner: '/school/request-partner',
   },
