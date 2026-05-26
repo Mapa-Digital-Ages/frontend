@@ -7,6 +7,7 @@ import {
   FormHelperText,
   ListItemIcon,
   ListItemText,
+  ListSubheader,
   MenuItem,
   Select,
   type SelectProps,
@@ -18,6 +19,8 @@ import type { ReactNode } from 'react'
 export interface DropdownOption {
   label: string
   value: string | number
+  groupLabel?: string
+  disabled?: boolean
 }
 
 type TriggerVariant = 'filled' | 'ghost'
@@ -33,11 +36,14 @@ export interface AppDropdownProps extends Omit<
   fullWidth?: boolean
   leadingIcon?: ReactNode
   menuWidth?: string | number
+  menuMaxHeight?: number
+  selectedValues?: Array<string | number>
   options: DropdownOption[]
   value: string | number | Array<string | number>
   onChange: SelectProps['onChange']
   placeholder?: string
   dropdownPlacement?: 'bottom' | 'top'
+  menuAlign?: 'left' | 'right'
   width?: string | number
   borderRadius?: string | number
   backgroundColor?: string
@@ -54,11 +60,14 @@ function AppDropdown({
   fullWidth = false,
   leadingIcon,
   menuWidth,
+  menuMaxHeight = 320,
+  selectedValues,
   options = [],
   value,
   onChange,
   placeholder = 'Selecione uma opção',
   dropdownPlacement = 'bottom',
+  menuAlign = 'left',
   width = 240,
   borderRadius = 'var(--dropdown-radius)',
   backgroundColor = 'background.paper',
@@ -75,8 +84,11 @@ function AppDropdown({
     error,
     MenuProps,
     sx,
+    inputProps,
+    ['aria-label']: ariaLabel,
     ...selectProps
   } = props
+
   const isGhostTrigger = triggerVariant === 'ghost'
   const resolvedMenuWidth = menuWidth ?? (width === 'auto' ? 220 : width)
   const neutralBorder = theme.palette.background.border
@@ -108,8 +120,8 @@ function AppDropdown({
           ? 'transparent'
           : alpha(theme.palette.background.border, 0.8),
       ...(neutralOutline && {
-        borderWidth: 1,
         borderStyle: 'solid',
+        borderWidth: 1,
       }),
     },
     '& .MuiSelect-select': {
@@ -180,7 +192,6 @@ function AppDropdown({
         alignItems: 'center',
         display: 'flex',
         justifyContent: 'center',
-        padding: 0,
       },
     }),
   }
@@ -280,6 +291,7 @@ function AppDropdown({
             {leadingIcon}
           </Box>
         )}
+
         <Typography
           className="truncate"
           sx={{
@@ -313,25 +325,37 @@ function AppDropdown({
           {label}
         </Typography>
       )}
+
       <Select
         {...selectProps}
         error={error}
         value={value}
         onChange={onChange}
+        inputProps={{
+          ...inputProps,
+          ...(ariaLabel ? { 'aria-label': ariaLabel } : {}),
+        }}
         displayEmpty
         renderValue={renderValue}
         IconComponent={hideIndicator || hideLabel ? () => null : ExpandMoreIcon}
         sx={selectSx}
         MenuProps={{
           ...MenuProps,
+          MenuListProps: {
+            ...MenuProps?.MenuListProps,
+            sx: {
+              boxSizing: 'border-box',
+              ...(MenuProps?.MenuListProps?.sx as object),
+            },
+          },
           anchorOrigin:
             dropdownPlacement === 'top'
-              ? { vertical: 'top', horizontal: 'left' }
-              : { vertical: 'bottom', horizontal: 'left' },
+              ? { vertical: 'top', horizontal: menuAlign }
+              : { vertical: 'bottom', horizontal: menuAlign },
           transformOrigin:
             dropdownPlacement === 'top'
-              ? { vertical: 'bottom', horizontal: 'left' }
-              : { vertical: 'top', horizontal: 'left' },
+              ? { vertical: 'bottom', horizontal: menuAlign }
+              : { vertical: 'top', horizontal: menuAlign },
           PaperProps: {
             ...MenuProps?.PaperProps,
             sx: {
@@ -343,36 +367,62 @@ function AppDropdown({
                   ? '0 18px 45px rgba(8, 17, 31, 0.42)'
                   : '0 16px 40px rgba(16, 42, 67, 0.12)',
               color: theme.palette.text.primary,
-              minWidth: resolvedMenuWidth,
-              '& .MuiList-root': {
-                padding: '8px',
+              maxHeight: { sm: menuMaxHeight, xs: 'min(60vh, 360px)' },
+              maxWidth: { sm: 'unset', xs: 'calc(100vw - 32px)' },
+              minWidth: { sm: resolvedMenuWidth, xs: 'min(260px, 90vw)' },
+              width: { sm: resolvedMenuWidth, xs: 'min(280px, 92vw)' },
+              overflowY: 'auto',
+              '& .MuiListItemText-primary': {
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
               },
               ...(MenuProps?.PaperProps?.sx as object),
             },
           },
         }}
       >
-        {options.map(option => {
-          const isSelected = multiple
-            ? Array.isArray(value) && value.includes(option.value)
-            : value === option.value
+        {options.flatMap(option => {
+          const isSelected = selectedValues
+            ? selectedValues.includes(option.value)
+            : multiple
+              ? Array.isArray(value) && value.includes(option.value)
+              : value === option.value
+          const optionBackgroundColor = isSelected
+            ? roleSelectedBackground
+            : 'transparent'
+          const optionNodes = []
+          if (option.groupLabel) {
+            optionNodes.push(
+              <ListSubheader
+                key={`${option.value}-group`}
+                disableSticky
+                sx={{
+                  backgroundColor: 'transparent',
+                  color: theme.palette.text.secondary,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                }}
+              >
+                {option.groupLabel}
+              </ListSubheader>
+            )
+          }
 
-          return (
+          optionNodes.push(
             <MenuItem
               key={option.value}
+              disabled={option.disabled}
               selected={isSelected}
               value={option.value}
               sx={{
-                backgroundColor: isSelected
-                  ? roleSelectedBackground
-                  : 'transparent',
+                backgroundColor: optionBackgroundColor,
                 border: '1px solid transparent',
+                boxSizing: 'border-box',
                 borderRadius,
                 color: theme.palette.text.primary,
-                marginBlock: '2px',
-                minWidth: resolvedMenuWidth,
-                paddingInline: 1.5,
-                paddingY: 1,
+                mx: 1,
                 '&:hover': {
                   backgroundColor: roleHoverBackground,
                   borderColor: roleHoverBorder,
@@ -382,8 +432,18 @@ function AppDropdown({
                   borderColor: roleSelectedBorder,
                 },
                 '&.Mui-selected:hover': {
-                  backgroundColor: roleSelectedBackground,
-                  borderColor: roleSelectedBorder,
+                  backgroundColor: `${roleHoverBackground} !important`,
+                  borderColor: roleHoverBorder,
+                },
+                '&.Mui-focusVisible': {
+                  backgroundColor: `${roleHoverBackground} !important`,
+                  borderColor: roleHoverBorder,
+                },
+                '&.Mui-focusVisible:hover': {
+                  backgroundColor: `${roleHoverBackground} !important`,
+                },
+                '&.Mui-disabled': {
+                  opacity: 0.55,
                 },
               }}
             >
@@ -415,11 +475,14 @@ function AppDropdown({
                 ) : null}
               </ListItemIcon>
 
-              <ListItemText primary={option.label} />
+              <ListItemText primary={option.label} sx={{ minWidth: 0 }} />
             </MenuItem>
           )
+
+          return optionNodes
         })}
       </Select>
+
       {helperText && <FormHelperText>{helperText}</FormHelperText>}
     </FormControl>
   )

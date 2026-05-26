@@ -13,7 +13,7 @@ import type { SxProps, Theme } from '@mui/material/styles'
 
 type InputSize = 'small' | 'medium' | 'large'
 
-type InputType = 'text' | 'password' | 'email' | 'search' | 'name'
+type InputType = 'text' | 'password' | 'email' | 'search' | 'name' | 'date'
 
 type BackgroundColor = 'background.paper' | 'background.default' | string
 
@@ -37,6 +37,7 @@ export default function AppInput({
   inputSize = 'medium',
   customSize,
   icon,
+  id,
   className,
   InputProps,
   type = 'text',
@@ -46,6 +47,8 @@ export default function AppInput({
   ...props
 }: AppInputProps) {
   const [showPassword, setShowPassword] = React.useState(false)
+  const generatedId = React.useId()
+  const inputId = id ?? generatedId
 
   const isPasswordField = type === 'password'
 
@@ -111,6 +114,8 @@ export default function AppInput({
     <Stack spacing={0.5} className={className}>
       {label ? (
         <Typography
+          component="label"
+          htmlFor={inputId}
           variant="body2"
           sx={[
             { color: error ? 'error.main' : undefined },
@@ -123,6 +128,7 @@ export default function AppInput({
 
       <TextField
         {...props}
+        id={inputId}
         error={error}
         type={inputType}
         size={muiSize}
@@ -138,6 +144,7 @@ export default function AppInput({
           endAdornment: isPasswordField ? (
             <InputAdornment position="end">
               <IconButton
+                aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
                 onClick={() => setShowPassword(prev => !prev)}
                 edge="end"
               >

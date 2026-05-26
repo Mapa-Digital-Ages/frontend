@@ -1,7 +1,6 @@
 import AutoStoriesIcon from '@mui/icons-material/AutoStories'
-import ClassRoundedIcon from '@mui/icons-material/ClassRounded'
+import PeopleAltRoundedIcon from '@mui/icons-material/PeopleAltRounded'
 import HandshakeRoundedIcon from '@mui/icons-material/HandshakeRounded'
-import PersonAddRoundedIcon from '@mui/icons-material/PersonAddRounded'
 import type { SidebarItem } from '@/shared/types/common'
 import { APP_ROUTES } from '@/app/router/paths'
 
@@ -12,18 +11,13 @@ export const schoolNavigation: SidebarItem[] = [
     icon: <AutoStoriesIcon fontSize="medium" />,
   },
   {
-    label: 'Turmas',
-    path: APP_ROUTES.school.classes,
-    icon: <ClassRoundedIcon fontSize="medium" />,
-  },
-  {
-    label: 'Parceiras',
-    path: APP_ROUTES.school.partners,
-    icon: <HandshakeRoundedIcon fontSize="medium" />,
+    label: 'Alunos',
+    path: APP_ROUTES.school.students,
+    icon: <PeopleAltRoundedIcon fontSize="medium" />,
   },
   {
     label: 'Solicitar Parceiro',
     path: APP_ROUTES.school.requestPartner,
-    icon: <PersonAddRoundedIcon fontSize="medium" />,
+    icon: <HandshakeRoundedIcon fontSize="medium" />,
   },
 ]

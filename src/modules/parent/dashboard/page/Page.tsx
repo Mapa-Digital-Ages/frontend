@@ -1,119 +1,143 @@
-import AddRoundedIcon from '@mui/icons-material/AddRounded'
-import { Box, Stack, Typography } from '@mui/material'
-import { useState } from 'react'
-import AppActionModal from '@/shared/ui/AppActionModal'
-import AppButton from '@/shared/ui/AppButton'
-import AppCard from '@/shared/ui/AppCard'
-import AppInput from '@/shared/ui/AppInput'
+import { Box, IconButton, Tooltip } from '@mui/material'
 import AppPageContainer from '@/shared/ui/AppPageContainer'
+import LoadingScreen from '@/shared/ui/LoadingScreen'
+import EmptyState from '@/shared/ui/EmptyState'
+import MetricsCard from '@/shared/ui/MetricsCard'
 import PageHeader from '@/shared/ui/PageHeader'
-interface ChildRegistrationForm {
-  grade: string
-  name: string
-  school: string
-}
-
-const emptyChildRegistrationForm: ChildRegistrationForm = {
-  grade: '',
-  name: '',
-  school: '',
-}
-
-const inputSx = {
-  '& .MuiOutlinedInput-root': {
-    borderRadius: 'var(--app-radius-control)',
-  },
-}
+import AppCard from '@/shared/ui/AppCard'
+import ProgressBar from '@/shared/ui/ProgressBar'
+import { AppSubjectTag } from '@/shared/ui/AppSubjectsTags'
+import Planner from '@/modules/student/shared/components/Planner'
+import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded'
+import TrackChangesRoundedIcon from '@mui/icons-material/TrackChangesRounded'
+import { useParentDashboard } from '../hooks/useParentDashboard'
+import { SUBJECTS, getSubjectTagContextByLabel } from '@/shared/utils/themes'
+import ChildSwitcher from '@/modules/parent/shared/components/ChildSwitcher'
+import ParentEmotionalSummary from '@/modules/parent/shared/components/ParentEmotionalSummary'
 
 export default function Page() {
-  const [parentChildModalOpen, setParentChildModalOpen] = useState(false)
-  const [childRegistrationForm, setChildRegistrationForm] =
-    useState<ChildRegistrationForm>(emptyChildRegistrationForm)
+  const {
+    child,
+    children,
+    metrics,
+    disciplines,
+    tasks,
+    wellBeing,
+    isLoading,
+    selectedChildId,
+    selectChild,
+  } = useParentDashboard()
 
-  function updateChildRegistrationField(
-    field: keyof ChildRegistrationForm,
-    value: string
-  ) {
-    setChildRegistrationForm(current => ({
-      ...current,
-      [field]: value,
-    }))
+  if (isLoading) {
+    return <LoadingScreen />
   }
 
-  function closeParentChildModal() {
-    setParentChildModalOpen(false)
-  }
+  const streak = metrics[0]
+  const complete = metrics[1]
+  const cards = [
+    {
+      id: 'streak',
+      title: streak?.title ?? 'Sequência do Aluno',
+      value: streak ? `${streak.value}` : '—',
+      icon: <TrendingUpRoundedIcon />,
+      iconVariant: 'green' as const,
+    },
+    {
+      id: 'activity',
+      title: complete?.title ?? 'Atividades Feitas',
+      value: complete ? `${complete.value}` : '—',
+      icon: <TrackChangesRoundedIcon />,
+      iconVariant: 'purple' as const,
+    },
+  ]
 
-  function confirmParentChildRegistration() {
-    setParentChildModalOpen(false)
-    setChildRegistrationForm(emptyChildRegistrationForm)
+  const childActions = (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <ChildSwitcher
+        children={children}
+        selectedChildId={selectedChildId}
+        onSelect={selectChild}
+      />
+    </Box>
+  )
+
+  if (!child) {
+    return (
+      <AppPageContainer className="gap-4 md:gap-5">
+        <PageHeader
+          subtitle="Acompanhe o progresso dos alunos vinculados a você."
+          title="Dashboard do Responsável"
+          variant="responsavel"
+          actions={childActions}
+        />
+        <EmptyState
+          title="Nenhum aluno vinculado"
+          description="Você ainda não possui alunos vinculados ao seu perfil."
+        />
+      </AppPageContainer>
+    )
   }
 
   return (
     <AppPageContainer className="gap-4 md:gap-5">
       <PageHeader
-        subtitle="Cadastre e acompanhe os filhos vinculados ao seu perfil."
-        title="Dashboard do Responsável"
+        eyebrow="Relatório Geral"
+        subtitle="Resumo consolidado do progresso do aluno"
+        title={`Aluno(a): ${child.name} - ${child.grade}`}
         variant="responsavel"
+        actions={childActions}
       />
 
-      <AppCard
-        contentClassName="gap-4"
-        sx={{
-          maxWidth: 720,
-        }}
-      >
-        <Box className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <Box className="min-w-0 space-y-1">
-            <Typography
-              sx={{ color: 'text.primary', fontSize: 22, fontWeight: 700 }}
-            >
-              Cadastro de filho
-            </Typography>
-            <Typography sx={{ color: 'text.secondary', fontSize: 15 }}>
-              Informe os dados do aluno para iniciar a vinculação ao seu perfil.
-            </Typography>
-          </Box>
-          <AppButton
-            onClick={() => setParentChildModalOpen(true)}
-            sx={{ alignSelf: { md: 'center', xs: 'stretch' } }}
-          >
-            <Stack alignItems="center" direction="row" gap={1}>
-              <AddRoundedIcon fontSize="small" />
-              Cadastrar filho
-            </Stack>
-          </AppButton>
+      <Box className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+        {cards.map(card => (
+          <MetricsCard contentClassName="p-5" key={card.id} {...card} />
+        ))}
+      </Box>
+
+      <Box className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+        <AppCard
+          contentClassName="gap-4 p-5"
+          title="Desempenho por Disciplina"
+          titleClassName="text-2xl font-bold md:text-3xl"
+        >
+          {disciplines.map(item => {
+            const subject = getSubjectTagContextByLabel(item.subjectLabel) ??
+              SUBJECTS[item.subjectId] ?? {
+                label: item.subjectLabel,
+              }
+            return (
+              <Box
+                key={item.subjectId}
+                sx={{
+                  backgroundColor: 'var(--app-surface-muted)',
+                  border: '1px solid var(--app-border)',
+                  borderRadius: '16px',
+                  p: 1.5,
+                }}
+              >
+                <ProgressBar
+                  headerSlot={<AppSubjectTag size="sm" subject={subject} />}
+                  subject={subject}
+                  value={item.progress}
+                  valueLabelVariant="subject"
+                  valueLabel={`Progresso: ${item.progress}%`}
+                />
+              </Box>
+            )
+          })}
+          {disciplines.length === 0 && (
+            <EmptyState
+              title="Sem dados de disciplinas"
+              description="Nenhum progresso registrado ainda."
+            />
+          )}
+        </AppCard>
+
+        <Box className="flex flex-col gap-4">
+          <ParentEmotionalSummary wellBeing={wellBeing} />
+          <Planner tasks={tasks} hideStatus />
         </Box>
-      </AppCard>
-      <AppActionModal
-        confirmLabel="Salvar cadastro"
-        description="Preencha os dados iniciais do aluno."
-        onClose={closeParentChildModal}
-        onConfirm={confirmParentChildRegistration}
-        open={parentChildModalOpen}
-        title="Cadastrar filho"
-      >
-        <Stack gap={2}>
-          <AppInput
-            label="Nome do filho"
-            onChange={event =>
-              updateChildRegistrationField('name', event.target.value)
-            }
-            placeholder="Ex.: Lucas Silva"
-            sx={inputSx}
-            value={childRegistrationForm.name}
-          />
-          <AppInput
-            label="Ano escolar"
-            onChange={event =>
-              updateChildRegistrationField('grade', event.target.value)
-            }
-            placeholder="Ex.: 7º ano"
-            sx={inputSx}
-            value={childRegistrationForm.grade}
-          />
-        </Stack>
-      </AppActionModal>
+      </Box>
     </AppPageContainer>
   )
 }

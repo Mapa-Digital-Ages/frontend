@@ -6,6 +6,13 @@ export function formatRole(role: UserRole) {
 }
 
 export function formatDate(date: string) {
+  const calendarDateMatch = date.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+
+  if (calendarDateMatch) {
+    const [, year, month, day] = calendarDateMatch
+    return `${day}/${month}/${year}`
+  }
+
   return new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
     month: '2-digit',

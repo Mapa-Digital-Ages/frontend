@@ -22,6 +22,9 @@ import BarChart from '@/modules/student/shared/components/BarChart'
 import dayjs from 'dayjs'
 import OnboardingQuestionCard from '@/modules/student/shared/components/OnboardingQuestionCard'
 import type { QuestionFlowPayload } from '@/modules/student/shared/types/types'
+import EmotionalContainer from '@/shared/ui/EmotionalContainer'
+import UploadActivityModal from '@/modules/student/shared/components/UploadActivityModal'
+import TaskList from '../../shared/components/TaskList'
 
 const mockChartData = [
   { label: 'Seg', value: 2 },
@@ -119,10 +122,38 @@ const dropdownOptions: DropdownOption[] = [
   { label: '9º Ano', value: '9' },
 ]
 
+const uploadTasks = [
+  {
+    id: '1',
+    title: 'Lista de Exercícios - Equações',
+    subject: SUBJECTS.matematica,
+    type: 'Exercício',
+  },
+  {
+    id: '2',
+    title: 'Redação Dissertativa',
+    subject: SUBJECTS.portugues,
+    type: 'Revisão',
+  },
+  {
+    id: '3',
+    title: 'Relatório de Experiência',
+    subject: SUBJECTS.ciencias,
+    type: 'Trabalho',
+  },
+  {
+    id: '4',
+    title: 'Redação',
+    subject: SUBJECTS.portugues,
+    type: 'Pré-prova',
+  },
+]
+
 export default function Page() {
   const [tasks, setTasks] = useState<Task[]>(initialTasks)
   const [singleValue, setSingleValue] = useState<string | number>('7')
   const [multiValue, setMultiValue] = useState<Array<string | number>>(['7'])
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
   const theme = useTheme()
 
   return (
@@ -147,6 +178,9 @@ export default function Page() {
         title="Painel Administrativo"
         subtitle="Visão consolidada da operação MAPA DIGITAL"
       />
+
+      <Typography variant="h6">Atividades de upload</Typography>
+      <TaskList tasks={uploadTasks} />
 
       <Box className="grid grid-cols-2 md:grid-cols-2 gap-5">
         <Box
@@ -227,6 +261,7 @@ export default function Page() {
             border: `1px solid ${theme.palette.divider}`,
           }}
         >
+          <EmotionalContainer />
           <Planner tasks={tasks} />
           <Typography variant="h6">Testes de Input</Typography>
 
@@ -345,8 +380,20 @@ export default function Page() {
         </Box>
       </Box>
 
+      <AppButton
+        label="Abrir Modal Upload"
+        backgroundColor="primary.main"
+        data-testid="upload-activity-button"
+        onClick={() => setIsUploadModalOpen(true)}
+      />
+
       <AppLink to="/student/dashboard">Ir para dashboard</AppLink>
       <AppLink href="https://google.com">Ir para o Google</AppLink>
+      <UploadActivityModal
+        open={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        onAddTask={() => Promise.resolve()}
+      />
     </AppPageContainer>
   )
 }

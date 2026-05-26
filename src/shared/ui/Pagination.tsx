@@ -1,6 +1,11 @@
 import NavigateBeforeRoundedIcon from '@mui/icons-material/NavigateBeforeRounded'
 import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded'
-import { Box, ButtonBase, Typography } from '@mui/material'
+import {
+  Box,
+  Pagination as MuiPagination,
+  PaginationItem,
+  Typography,
+} from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { getRoleAccentColor, getSelectedStyle } from '@/app/theme/core/roles'
 import type { UserRole } from '@/shared/types/user'
@@ -21,7 +26,41 @@ function Pagination({
   const theme = useTheme()
   const accentColor = getRoleAccentColor(theme, role)
   const pageCount = Math.max(1, totalPages)
-  const pages = Array.from({ length: pageCount }, (_, index) => index + 1)
+  const selectedStyle = getSelectedStyle(theme, accentColor)
+
+  function PreviousLabel() {
+    return (
+      <>
+        <NavigateBeforeRoundedIcon fontSize="small" />
+        <Typography
+          component="span"
+          sx={{
+            display: { sm: 'block', xs: 'none' },
+            fontWeight: 600,
+          }}
+        >
+          Anterior
+        </Typography>
+      </>
+    )
+  }
+
+  function NextLabel() {
+    return (
+      <>
+        <Typography
+          component="span"
+          sx={{
+            display: { sm: 'block', xs: 'none' },
+            fontWeight: 600,
+          }}
+        >
+          Próxima
+        </Typography>
+        <NavigateNextRoundedIcon fontSize="small" />
+      </>
+    )
+  }
 
   return (
     <Box
@@ -32,85 +71,58 @@ function Pagination({
         paddingBottom: 0,
       }}
     >
-      <ButtonBase
-        disabled={currentPage === 1}
-        onClick={() => onPageChange(currentPage - 1)}
-        sx={{
-          borderRadius: '999px',
-          color: 'text.secondary',
-          gap: 0.5,
-          minHeight: 40,
-          px: { md: 1.5, xs: 1 },
-          '&:disabled': {
-            color: 'text.disabled',
-          },
-        }}
-      >
-        <NavigateBeforeRoundedIcon fontSize="small" />
-        <Typography
-          sx={{
-            display: { sm: 'block', xs: 'none' },
-            fontWeight: 600,
-          }}
-        >
-          Anterior
-        </Typography>
-      </ButtonBase>
-
-      {pages.map(page => {
-        const selected = page === currentPage
-        const selectedStyle = selected
-          ? getSelectedStyle(theme, accentColor)
-          : null
-
-        return (
-          <ButtonBase
-            key={page}
-            onClick={() => onPageChange(page)}
-            sx={{
-              backgroundColor: selectedStyle
-                ? selectedStyle.backgroundColor
-                : 'transparent',
-              border: '1px solid',
-              borderColor: selectedStyle
-                ? selectedStyle.borderColor
-                : 'transparent',
-              borderRadius: 'var(--app-radius-control)',
-              color: selected ? accentColor : 'text.secondary',
-              fontWeight: selected ? 700 : 600,
-              minHeight: 32,
-              minWidth: 32,
+      <MuiPagination
+        count={pageCount}
+        onChange={(_, page) => onPageChange(page)}
+        page={Math.min(Math.max(currentPage, 1), pageCount)}
+        renderItem={item => (
+          <PaginationItem
+            {...item}
+            slots={{
+              next: NextLabel,
+              previous: PreviousLabel,
             }}
-          >
-            {page}
-          </ButtonBase>
-        )
-      })}
-
-      <ButtonBase
-        disabled={currentPage === pageCount}
-        onClick={() => onPageChange(currentPage + 1)}
+            sx={{
+              border: '1px solid',
+              borderColor: 'transparent',
+              borderRadius:
+                item.type === 'page' ? 'var(--app-radius-control)' : '999px',
+              color: 'text.secondary',
+              fontWeight: 600,
+              gap: 0.5,
+              margin: 0,
+              minHeight: item.type === 'page' ? 32 : 40,
+              minWidth: item.type === 'page' ? 32 : undefined,
+              px: item.type === 'page' ? 0 : { md: 1.5, xs: 1 },
+              '&.Mui-selected': {
+                backgroundColor: selectedStyle.backgroundColor,
+                borderColor: selectedStyle.borderColor,
+                color: accentColor,
+                fontWeight: 700,
+              },
+              '&.Mui-selected:hover': {
+                backgroundColor: selectedStyle.backgroundColor,
+              },
+              '&.Mui-disabled': {
+                color: 'text.disabled',
+                opacity: 1,
+              },
+            }}
+          />
+        )}
+        shape="rounded"
+        showFirstButton={false}
+        showLastButton={false}
+        siblingCount={pageCount > 7 ? 1 : pageCount}
         sx={{
-          borderRadius: '999px',
-          color: 'text.secondary',
-          gap: 0.5,
-          minHeight: 40,
-          px: { md: 1.5, xs: 1 },
-          '&:disabled': {
-            color: 'text.disabled',
+          '& .MuiPagination-ul': {
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 1,
+            justifyContent: 'center',
           },
         }}
-      >
-        <Typography
-          sx={{
-            display: { sm: 'block', xs: 'none' },
-            fontWeight: 600,
-          }}
-        >
-          Próxima
-        </Typography>
-        <NavigateNextRoundedIcon fontSize="small" />
-      </ButtonBase>
+      />
     </Box>
   )
 }

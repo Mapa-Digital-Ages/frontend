@@ -1,5 +1,7 @@
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded'
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import { Box } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import {
@@ -12,28 +14,29 @@ import {
 } from 'react'
 import { useUserRole } from '@/app/access/hook'
 import { parentApprovalService } from '@/modules/admin/parent/services/runtime'
-import { getParentApprovalEligibility } from '@/modules/admin/parent/utils/utils'
 import type {
+  ApprovalActionFormValues,
+  ApprovalActionModalMode,
   ApprovalCardAction,
   ApprovalQueueQuery,
   ApprovalQueueResult,
   ApprovalResultsSummary,
+  ContentApprovalActionFormValues,
+  ContentApprovalResourceType,
+  GuardianApprovalActionFormValues,
   ParentApprovalDraftInput,
   ParentApprovalItem,
   ParentApprovalStatus,
 } from '@/modules/admin/shared/types/types'
-import ApprovalActionModal, {
-  type ApprovalActionFormValues,
-  type ApprovalActionModalMode,
-} from '../../shared/components/ApprovalActionModal'
+import ApprovalActionModal from '../../shared/components/ApprovalActionModal'
 import ApprovalCard from '../../shared/components/ApprovalCard'
 import ApprovalComponent, {
   type ApprovalStatusOption,
 } from '../../shared/components/ApprovalComponent'
 import AppPageContainer from '@/shared/ui/AppPageContainer'
 import LoadingScreen from '@/shared/ui/LoadingScreen'
-import PageHeader from '@/shared/ui/PageHeader'
 import { PARENT_APPROVAL_CARD_STATUS } from '@/shared/utils/themes'
+import OrdinaryHeader from '@/shared/ui/OrdinaryHeader'
 
 const DEFAULT_PAGE_INDEX = 1
 
@@ -82,13 +85,13 @@ function getTodayRequestDate() {
 
 function getDefaultFormValues(): ApprovalActionFormValues {
   return {
+    type: 'parent',
     childName: '',
     email: '',
+    first_name: '',
+    last_name: '',
     password: '',
-    requestedAt: getTodayRequestDate(),
-    resourceType: 'task',
-    subjectId: 'default',
-    title: '',
+    phone_number: '',
   }
 }
 
@@ -111,10 +114,9 @@ export default function Page() {
     getDefaultFormValues()
   )
   const [isModalSubmitting, setIsModalSubmitting] = useState(false)
-  const [selectionMode, setSelectionMode] = useState<{
-    action: 'edit' | 'delete'
-    type: 'parent'
-  } | null>(null)
+  const [selectionMode, setSelectionMode] = useState<'edit' | 'delete' | null>(
+    null
+  )
 
   const deferredParentSearch = useDeferredValue(parentQuery.query)
 
@@ -134,47 +136,54 @@ export default function Page() {
     setSelectionMode(null)
   }, [])
 
-  const toggleSelectionMode = useCallback((action: 'edit' | 'delete') => {
-    setSelectionMode(current =>
-      current?.action === action ? null : { action, type: 'parent' }
-    )
-  }, [])
-
-  const handleParentItemSelect = useCallback(
-    (item: ParentApprovalItem) => {
-      if (!selectionMode || selectionMode.type !== 'parent') return
-
-      setSelectionMode(null)
-      setModalState({ action: selectionMode.action, item, type: 'parent' })
-      setModalValues({
-        childName: item.childName ?? '',
-        email: '',
-        password: '',
-        requestedAt: item.requestedAt ?? getTodayRequestDate(),
-        resourceType: 'task',
-        subjectId: 'default',
-        title: item.title ?? '',
-      })
-    },
-    [selectionMode]
-  )
-
   const openModal = useCallback((nextMode: ApprovalActionModalMode) => {
+    setSelectionMode(null)
     setModalState(nextMode)
+
+    if (nextMode.type === 'parent') {
+      const guardian =
+        nextMode.item?.kind === 'parent' ? nextMode.item.guardian : undefined
+
+      setModalValues({
+        type: 'parent',
+        childName:
+          nextMode.item?.kind === 'parent'
+            ? (nextMode.item.childName ?? '')
+            : '',
+        email: guardian?.email ?? '',
+        first_name: guardian?.first_name ?? '',
+        last_name: guardian?.last_name ?? '',
+        password: '',
+        phone_number: guardian?.phone_number ?? '',
+      })
+
+      return
+    }
+
     setModalValues({
-      childName:
-        nextMode.item?.kind === 'parent' ? (nextMode.item.childName ?? '') : '',
-      email: '',
-      password: '',
+      type: 'content',
+      description: '',
       requestedAt:
         nextMode.action === 'create'
           ? getTodayRequestDate()
           : (nextMode.item?.requestedAt ?? getTodayRequestDate()),
-      resourceType: 'task',
       subjectId: 'default',
-      title: nextMode.item?.title ?? '',
+      title: nextMode.item?.kind === 'content' ? nextMode.item.title : '',
     })
   }, [])
+
+  const toggleSelectionMode = useCallback((action: 'edit' | 'delete') => {
+    setSelectionMode(current => (current === action ? null : action))
+  }, [])
+
+  const handleParentItemSelect = useCallback(
+    (item: ParentApprovalItem) => {
+      if (!selectionMode) return
+
+      openModal({ action: selectionMode, item, type: 'parent' })
+    },
+    [openModal, selectionMode]
+  )
 
   const handleParentStatusUpdate = useCallback(
     async (id: string, status: ParentApprovalStatus) => {
@@ -188,21 +197,39 @@ export default function Page() {
     (item: ParentApprovalItem): ApprovalCardAction[] => {
       const success = theme.palette.success.main
       const error = theme.palette.error.main
-      const eligibility = getParentApprovalEligibility(item)
 
       return [
         {
+          accentColor: theme.palette.warning.main,
+          icon: <EditOutlinedIcon />,
+          id: `${item.id}-edit`,
+          label: 'Editar responsável',
+          onClick: () => {
+            openModal({ action: 'edit', item, type: 'parent' })
+          },
+          priority: 'secondary',
+          tooltip: 'Editar responsável',
+        },
+        {
+          accentColor: error,
+          icon: <DeleteOutlineRoundedIcon />,
+          id: `${item.id}-delete`,
+          label: 'Excluir responsável',
+          onClick: () => {
+            openModal({ action: 'delete', item, type: 'parent' })
+          },
+          priority: 'secondary',
+          tooltip: 'Excluir responsável',
+        },
+        {
           accentColor: success,
-          disabled: item.status === 'approved' || !eligibility.canApprove,
           icon: <CheckRoundedIcon />,
           id: `${item.id}-approve`,
           label: 'Validar cadastro',
           onClick: () => {
             void handleParentStatusUpdate(item.id, 'approved')
           },
-          tooltip: eligibility.canApprove
-            ? 'Validar cadastro'
-            : `Pendências: ${eligibility.missingRequirements.join(', ')}`,
+          tooltip: 'Validar cadastro',
         },
         {
           accentColor: error,
@@ -218,14 +245,21 @@ export default function Page() {
     },
     [
       handleParentStatusUpdate,
+      openModal,
       theme.palette.error.main,
       theme.palette.success.main,
+      theme.palette.warning.main,
     ]
   )
 
   const handleModalChange = useCallback(
-    (field: keyof ApprovalActionFormValues, value: string) => {
-      setModalValues(current => ({
+    (
+      field:
+        | keyof ContentApprovalActionFormValues
+        | keyof GuardianApprovalActionFormValues,
+      value: string | ContentApprovalResourceType
+    ) => {
+      setModalValues((current: ApprovalActionFormValues) => ({
         ...current,
         [field]: value,
       }))
@@ -241,11 +275,26 @@ export default function Page() {
     setIsModalSubmitting(true)
 
     try {
+      if (modalState.action === 'delete' && modalState.item) {
+        await parentApprovalService.removeParentRegistration(modalState.item.id)
+        setParentRefreshKey(current => current + 1)
+        resetModal()
+        return
+      }
+
       if (modalState.action === 'create') {
+        if (modalValues.type !== 'parent') {
+          return
+        }
+
         const payload: ParentApprovalDraftInput = {
-          email: modalValues.email.trim(),
-          password: modalValues.password,
-          title: modalValues.title.trim(),
+          guardian: {
+            email: modalValues.email.trim(),
+            first_name: modalValues.first_name.trim(),
+            last_name: modalValues.last_name.trim(),
+            password: modalValues.password,
+            phone_number: modalValues.phone_number.trim(),
+          },
         }
 
         await parentApprovalService.createParentRegistration(payload)
@@ -255,19 +304,23 @@ export default function Page() {
       }
 
       if (modalState.action === 'edit' && modalState.item) {
+        if (modalValues.type !== 'parent') {
+          return
+        }
+
+        const payload: ParentApprovalDraftInput = {
+          guardian: {
+            email: modalValues.email.trim(),
+            first_name: modalValues.first_name.trim(),
+            last_name: modalValues.last_name.trim(),
+            phone_number: modalValues.phone_number.trim(),
+          },
+        }
+
         await parentApprovalService.updateParentRegistration(
           modalState.item.id,
-          {
-            title: modalValues.title.trim(),
-          }
+          payload
         )
-        setParentRefreshKey(current => current + 1)
-        resetModal()
-        return
-      }
-
-      if (modalState.action === 'delete' && modalState.item) {
-        await parentApprovalService.removeParentRegistration(modalState.item.id)
         setParentRefreshKey(current => current + 1)
         resetModal()
         return
@@ -284,16 +337,25 @@ export default function Page() {
       return false
     }
 
-    if (!modalValues.title.trim()) {
+    if (modalValues.type !== 'parent') {
+      return true
+    }
+
+    if (
+      !modalValues.first_name.trim() ||
+      !modalValues.last_name.trim() ||
+      !modalValues.email.trim() ||
+      !modalValues.phone_number.trim()
+    ) {
       return true
     }
 
     if (modalState.action === 'create') {
-      return !modalValues.email.trim() || !modalValues.password.trim()
+      return !modalValues.password.trim()
     }
 
     return false
-  }, [modalState, modalValues.email, modalValues.password, modalValues.title])
+  }, [modalState, modalValues])
 
   useEffect(() => {
     let isActive = true
@@ -338,8 +400,7 @@ export default function Page() {
 
   return (
     <AppPageContainer className="gap-4 md:gap-5">
-      <PageHeader
-        variant="admin"
+      <OrdinaryHeader
         title="Centro de Responsáveis"
         subtitle="Revise e valide responsáveis antes de liberar o acesso na plataforma."
       />
@@ -368,7 +429,7 @@ export default function Page() {
           onEdit={() => toggleSelectionMode('edit')}
           onDelete={() => toggleSelectionMode('delete')}
           onItemSelect={handleParentItemSelect}
-          selectionMode={selectionMode?.action ?? null}
+          selectionMode={selectionMode}
           onPageChange={page => {
             startTransition(() => {
               setParentQuery(currentQuery => ({
@@ -421,7 +482,6 @@ export default function Page() {
         onClose={resetModal}
         onConfirm={handleModalConfirm}
         open={modalState !== null}
-        resourceTypeOptions={[]}
         role={role}
         subjectOptions={[]}
         values={modalValues}

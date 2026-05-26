@@ -9,6 +9,7 @@ export const APP_ROUTES = {
   student: {
     dashboard: '/student/dashboard',
     adaptiveTrail: '/student/adaptive-trail',
+    adaptiveTrailDetail: '/student/adaptive-trail/:trailId',
     contents: '/student/contents',
     uploads: '/student/uploads',
     routine: '/student/routine',
@@ -17,6 +18,7 @@ export const APP_ROUTES = {
   },
   parent: {
     dashboard: '/parent/dashboard',
+    settings: '/parent/settings',
   },
   admin: {
     dashboard: '/admin/dashboard',
@@ -29,6 +31,7 @@ export const APP_ROUTES = {
   school: {
     dashboard: '/school/dashboard',
     classes: '/school/classes',
+    students: '/school/students',
     partners: '/school/partners',
     requestPartner: '/school/request-partner',
   },
@@ -49,11 +52,15 @@ export const APP_ROUTES = {
 } as const
 
 export function buildAdminCorrectionRoute(contentId: string) {
-  return `/admin/corrections/${contentId}`
+  return `/admin/corrections/${encodeURIComponent(contentId)}`
+}
+
+export function buildStudentTrailRoute(trailId: string) {
+  return `/student/adaptive-trail/${encodeURIComponent(trailId)}`
 }
 
 export function buildParentStudentDetailsRoute(studentId: string) {
-  return `/parent/students/${studentId}`
+  return `/parent/students/${encodeURIComponent(studentId)}`
 }
 
 export const DEFAULT_ROUTE_BY_ROLE: Record<UserRole, string> = {

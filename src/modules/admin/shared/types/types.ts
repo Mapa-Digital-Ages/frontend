@@ -55,6 +55,7 @@ interface BaseApprovalItem {
   id: string
   requestedAt?: string
   title: string
+  description?: string
   subtitle?: string
   badges: ApprovalBadge[]
 }
@@ -70,6 +71,7 @@ export type ContentApprovalStatus =
 export interface ContentApprovalItem extends BaseApprovalItem {
   id: string
   kind: 'content'
+  description: string
   resourceType?: ContentApprovalResourceType
   status: ContentApprovalStatus
   subject?: SubjectContext
@@ -88,7 +90,12 @@ export interface ParentApprovalItem extends BaseApprovalItem {
   kind: 'parent'
   roleLabel?: string
   status: ParentApprovalStatus
-  childName: string
+  guardian?: GuardianItem
+  childName?: string
+  name?: {
+    firstName: string
+    lastName: string
+  }
   validation: ParentApprovalValidation
 }
 
@@ -119,17 +126,29 @@ export interface ApprovalQueueResult<TItem> {
 
 export interface ContentApprovalDraftInput {
   requestedAt?: string
-  resourceType: ContentApprovalResourceType
   subject?: SubjectContext
   title: string
+  description: string
+}
+
+export interface GuardianItem {
+  email: string
+  first_name: string
+  last_name: string
+  password?: string
+  phone_number: string
 }
 
 export interface ParentApprovalDraftInput {
-  childName?: string
+  student?: string
   email?: string
+  first_name?: string
+  last_name?: string
   password?: string
+  phone_number?: string
+  guardian?: GuardianItem
   requestedAt?: string
-  title: string
+  title?: string
 }
 
 export interface ApprovalCorrectionInput {
@@ -163,4 +182,44 @@ export interface ContentCorrectionSession {
 
 export interface ContentCorrectionMessageInput {
   body: string
+}
+
+export type ApprovalActionModalMode = {
+  action: Exclude<ApprovalModalAction, 'correct'>
+  item?: ApprovalItem
+  type: ApprovalType
+}
+
+export interface ContentApprovalActionFormValues {
+  type: 'content'
+  requestedAt: string
+  subjectId: string
+  title: string
+  description: string
+}
+
+export interface GuardianApprovalActionFormValues {
+  type: 'parent'
+  childName?: string
+  email: string
+  first_name: string
+  last_name: string
+  password: string
+  phone_number: string
+}
+
+export type ApprovalActionFormValues =
+  | ContentApprovalActionFormValues
+  | GuardianApprovalActionFormValues
+
+export interface SubjectItem {
+  id: string
+  slug?: string
+  name: string
+  color?: string
+  contentCount: number
+  tasksCount: number
+  uploadsCount: number
+  trailsCount: number
+  questionnaireCount: number
 }

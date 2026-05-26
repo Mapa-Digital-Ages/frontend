@@ -1,8 +1,7 @@
-import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded'
 import { Box, IconButton, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { useEffect, useMemo, useState, type CSSProperties } from 'react'
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
 import AppSidebar from '@/shared/ui/AppSidebar'
 import AppTopbar from '@/shared/ui/AppTopbar'
 import ThemeModeToggle from '@/shared/ui/ThemeMode'
@@ -21,11 +20,17 @@ import {
 
 function DashboardLayout() {
   const theme = useTheme()
-  const { isMobile } = useBreakpoint()
+  const { isMobile, isTablet, isDesktop } = useBreakpoint()
   const { logout, user } = useAuth()
   const { role } = useUserRole()
-  const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [desktopCollapsed, setDesktopCollapsed] = useState(false)
+  const [tabletCollapsed, setTabletCollapsed] = useState(true)
+  const collapsed = isMobile
+    ? false
+    : isTablet
+      ? tabletCollapsed
+      : desktopCollapsed
   const currentRole = role ?? APP_CONFIG.defaultRole
   const sidebarItems = NAVIGATION_BY_ROLE[currentRole]
   const userInitial = user?.name?.charAt(0).toUpperCase() ?? 'M'
@@ -34,6 +39,7 @@ function DashboardLayout() {
   const roleHover = getRoleHoverStyle(theme, currentRole)
   const roleSelected = getRoleSelectedStyle(theme, currentRole)
   const roleSolidHoverColor = getRoleSolidHoverColor(theme, currentRole)
+  const useOverlay = isMobile || (isTablet && !collapsed)
   const roleStyleProperties = useMemo(
     () => ({
       '--app-role-current-primary': rolePalette.primary,
@@ -85,6 +91,14 @@ function DashboardLayout() {
     }
   }, [roleStyleProperties])
 
+  const contentMarginLeft = (() => {
+    if (isMobile) return 0
+    if (isTablet && collapsed) return 80
+    if (isTablet && !collapsed) return 0
+    if (isDesktop && collapsed) return 80
+    return APP_CONFIG.drawerWidth
+  })()
+
   return (
     <Box
       className="fixed inset-0 z-50 flex h-screen w-screen overflow-hidden"
@@ -93,16 +107,37 @@ function DashboardLayout() {
     >
       <AppSidebar
         isMobile={isMobile}
+        useOverlay={useOverlay}
         items={sidebarItems}
         mobileOpen={mobileOpen}
-        onClose={() => setMobileOpen(false)}
+        onClose={() => {
+          setMobileOpen(false)
+          if (isTablet) setTabletCollapsed(true)
+        }}
         onLogout={logout}
         role={currentRole}
+        collapsed={collapsed}
+        onToggleCollapse={() => {
+          if (isTablet) {
+            if (tabletCollapsed) {
+              setTabletCollapsed(false)
+              setMobileOpen(true)
+            } else {
+              setTabletCollapsed(true)
+              setMobileOpen(false)
+            }
+          } else {
+            setDesktopCollapsed(prev => !prev)
+          }
+        }}
       />
 
       <Box
-        className="ml-0 flex min-w-0 flex-1 flex-col"
-        style={{ marginLeft: isMobile ? 0 : APP_CONFIG.drawerWidth }}
+        className="flex min-w-0 flex-1 flex-col"
+        style={{
+          marginLeft: contentMarginLeft,
+          transition: 'margin-left 0.2s ease',
+        }}
       >
         <AppTopbar
           actions={
@@ -123,18 +158,8 @@ function DashboardLayout() {
               </Typography>
             </Box>
           }
-          leading={
-            <IconButton
-              aria-label="Voltar"
-              onClick={() => navigate(-1)}
-              size="small"
-              sx={{ color: theme.palette.text.secondary }}
-            >
-              <ChevronLeftRoundedIcon />
-            </IconButton>
-          }
           onMenuClick={() => setMobileOpen(true)}
-          showMenuButton
+          showMenuButton={isMobile}
         />
 
         <Box

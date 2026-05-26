@@ -1,11 +1,13 @@
-import { Box, Typography } from '@mui/material'
 import AppPageContainer from '@/shared/ui/AppPageContainer'
-import PageHeader from '@/shared/ui/PageHeader'
+import OrdinaryHeader from '@/shared/ui/OrdinaryHeader'
 
 export default function Page() {
   return (
     <AppPageContainer className="gap-4">
-      <PageHeader title="Conteúdos" subtitle="..." variant="aluno" />
+      <OrdinaryHeader
+        title="Conteúdos"
+        subtitle="Misture descoberta de conteúdos com jornadas por matéria: o aluno pode manter várias trilhas ativas ao mesmo tempo, cada uma com progresso próprio."
+      />
     </AppPageContainer>
   )
 }

@@ -1,19 +1,21 @@
 import { Box, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { getRoleActionTone } from '@/app/theme/core/roles'
-import type { DropdownOption } from '@/shared/ui/AppDropdown'
 import AppActionModal, {
   type AppActionModalMode,
 } from '@/shared/ui/AppActionModal'
 import AppDropdown from '@/shared/ui/AppDropdown'
 import AppInput from '@/shared/ui/AppInput'
 import type {
+  ApprovalActionFormValues,
   ApprovalItem,
   ApprovalModalAction,
   ApprovalType,
-  ContentApprovalResourceType,
+  ContentApprovalActionFormValues,
+  GuardianApprovalActionFormValues,
 } from '@/modules/admin/shared/types/types'
 import type { UserRole } from '@/shared/types/user'
+import type { DropdownOption } from '@/shared/ui/AppDropdown'
 
 export type ApprovalActionModalMode = {
   action: Exclude<ApprovalModalAction, 'correct'>
@@ -23,26 +25,17 @@ export type ApprovalActionModalMode = {
 
 type ApprovalActionModalUsage = 'confirm' | 'content-form' | 'parent-form'
 
-export interface ApprovalActionFormValues {
-  childName: string
-  email: string
-  password: string
-  requestedAt: string
-  resourceType: ContentApprovalResourceType
-  subjectId: string
-  title: string
-}
-
 interface ApprovalActionModalProps {
   mode: ApprovalActionModalMode | null
   onChange: (
-    field: keyof ApprovalActionFormValues,
-    value: string | ContentApprovalResourceType
+    field:
+      | keyof ContentApprovalActionFormValues
+      | keyof GuardianApprovalActionFormValues,
+    value: string
   ) => void
   onClose: () => void
   onConfirm: () => void
   open: boolean
-  resourceTypeOptions: DropdownOption[]
   subjectOptions: DropdownOption[]
   values: ApprovalActionFormValues
   role: UserRole
@@ -78,20 +71,42 @@ const selectSx = {
   },
 }
 
+function isGuardianFormValues(
+  values: ApprovalActionFormValues
+): values is GuardianApprovalActionFormValues {
+  return values.type === 'parent'
+}
+
+function isContentFormValues(
+  values: ApprovalActionFormValues
+): values is ContentApprovalActionFormValues {
+  return values.type === 'content'
+}
+
+function resolveItemTitle(item?: ApprovalItem) {
+  if (!item) {
+    return ''
+  }
+
+  if (item.kind === 'content') {
+    return item.title
+  }
+
+  const firstName = item.guardian?.first_name ?? ''
+  const lastName = item.guardian?.last_name ?? ''
+  const fullName = `${firstName} ${lastName}`.trim()
+
+  return fullName || item.title || ''
+}
+
 function resolveUsageMode(
   mode: ApprovalActionModalMode
 ): ApprovalActionModalUsage {
-  const isContentMode = mode.type === 'content'
-
   if (mode.action === 'delete') {
     return 'confirm'
   }
 
-  return mode.type === 'parent'
-    ? 'parent-form'
-    : isContentMode
-      ? 'content-form'
-      : 'parent-form'
+  return mode.type === 'content' ? 'content-form' : 'parent-form'
 }
 
 function resolveDialogMode(
@@ -130,8 +145,7 @@ function resolveModalCopy(mode: ApprovalActionModalMode) {
   return {
     confirmLabel:
       mode.action === 'create' ? 'Salvar cadastro' : 'Salvar alterações',
-    description:
-      'Preencha os dados da tarefa ou prova usada no fluxo de aprovação.',
+    description: 'Preencha os dados do conteúdo usado no fluxo de revisão.',
     title: mode.action === 'create' ? 'Cadastrar conteúdo' : 'Editar conteúdo',
   }
 }
@@ -142,7 +156,6 @@ function ApprovalActionModal({
   onClose,
   onConfirm,
   open,
-  resourceTypeOptions,
   subjectOptions,
   values,
   role,
@@ -159,7 +172,9 @@ function ApprovalActionModal({
   const usage = resolveUsageMode(mode)
   const dialogMode = resolveDialogMode(usage)
   const copy = resolveModalCopy(mode)
-  const currentItem = mode.item
+  const currentItemTitle = resolveItemTitle(mode.item)
+  const isParentForm = usage === 'parent-form' && isGuardianFormValues(values)
+  const isContentForm = usage === 'content-form' && isContentFormValues(values)
 
   return (
     <AppActionModal
@@ -177,65 +192,64 @@ function ApprovalActionModal({
     >
       {usage === 'confirm' ? (
         <Typography color="text.secondary">
-          {currentItem
-            ? `Deseja remover "${currentItem.title}" desta fila?`
+          {currentItemTitle
+            ? `Deseja remover "${currentItemTitle}" desta fila?`
             : 'Deseja remover este item desta fila?'}
         </Typography>
       ) : null}
 
-      {usage === 'parent-form' ? (
+      {isParentForm ? (
         <Box className="grid gap-3">
-          <AppInput
-            label="Nome do responsável"
-            labelSx={fieldLabelSx}
-            onChange={event => onChange('title', event.target.value)}
-            placeholder="Ex.: Mariana Souza"
-            sx={inputSx}
-            value={values.title}
-          />
+          <Box className="grid grid-cols-2 gap-3">
+            <AppInput
+              label="Nome"
+              labelSx={fieldLabelSx}
+              onChange={event => onChange('first_name', event.target.value)}
+              placeholder="Ex.: Mariana"
+              sx={inputSx}
+              value={values.first_name}
+            />
+            <AppInput
+              label="Sobrenome"
+              labelSx={fieldLabelSx}
+              onChange={event => onChange('last_name', event.target.value)}
+              placeholder="Ex.: Souza"
+              sx={inputSx}
+              value={values.last_name}
+            />
+            <AppInput
+              label="E-mail do responsável"
+              labelSx={fieldLabelSx}
+              onChange={event => onChange('email', event.target.value)}
+              placeholder="Ex.: m.souza@email.com"
+              sx={inputSx}
+              value={values.email}
+            />
+            <AppInput
+              label="Telefone"
+              labelSx={fieldLabelSx}
+              onChange={event => onChange('phone_number', event.target.value)}
+              placeholder="Ex.: +55 51 98765-4321"
+              sx={inputSx}
+              value={values.phone_number}
+            />
+          </Box>
           {mode.action === 'create' ? (
-            <>
-              <AppInput
-                label="E-mail do responsável"
-                labelSx={fieldLabelSx}
-                onChange={event => onChange('email', event.target.value)}
-                placeholder="responsavel@exemplo.com"
-                sx={inputSx}
-                type="email"
-                value={values.email}
-              />
-              <AppInput
-                label="Senha provisória"
-                labelSx={fieldLabelSx}
-                onChange={event => onChange('password', event.target.value)}
-                placeholder="Defina uma senha inicial"
-                sx={inputSx}
-                type="password"
-                value={values.password}
-              />
-            </>
+            <AppInput
+              label="Senha provisória"
+              labelSx={fieldLabelSx}
+              onChange={event => onChange('password', event.target.value)}
+              placeholder="Defina uma senha inicial"
+              sx={inputSx}
+              type="password"
+              value={values.password}
+            />
           ) : null}
-          <AppInput
-            disabled
-            label="Data da solicitação"
-            labelSx={fieldLabelSx}
-            placeholder="DD/MM/AAAA"
-            sx={inputSx}
-            value={values.requestedAt}
-          />
         </Box>
       ) : null}
 
-      {usage === 'content-form' ? (
+      {isContentForm ? (
         <Box className="grid gap-3">
-          <AppInput
-            label="Título"
-            labelSx={fieldLabelSx}
-            onChange={event => onChange('title', event.target.value)}
-            placeholder="Ex.: Lista de Equações do 7º ano"
-            sx={inputSx}
-            value={values.title}
-          />
           <Box
             sx={{
               display: 'grid',
@@ -247,19 +261,13 @@ function ApprovalActionModal({
             }}
           >
             <Box className="grid gap-1">
-              <Typography sx={fieldLabelSx}>Tipo</Typography>
-              <AppDropdown
-                fullWidth
-                onChange={event =>
-                  onChange(
-                    'resourceType',
-                    String(event.target.value) as ContentApprovalResourceType
-                  )
-                }
-                options={resourceTypeOptions}
-                placeholder="Selecione o tipo"
-                sx={selectSx}
-                value={values.resourceType}
+              <AppInput
+                label="Título"
+                labelSx={fieldLabelSx}
+                onChange={event => onChange('title', event.target.value)}
+                placeholder="Ex.: Lista de Equações do 7º ano"
+                sx={inputSx}
+                value={values.title}
               />
             </Box>
             <Box className="grid gap-1">
@@ -278,12 +286,12 @@ function ApprovalActionModal({
           </Box>
           <AppInput
             disabled={mode.action === 'create'}
-            label="Data da solicitação"
+            label="Descrição"
             labelSx={fieldLabelSx}
-            onChange={event => onChange('requestedAt', event.target.value)}
-            placeholder="DD/MM/AAAA"
+            onChange={event => onChange('description', event.target.value)}
+            placeholder="Ex.: Lista de Equações do 7º ano"
             sx={inputSx}
-            value={values.requestedAt}
+            value={values.description}
           />
         </Box>
       ) : null}

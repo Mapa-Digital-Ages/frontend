@@ -1,4 +1,4 @@
-import type { PaletteMode, ThemeOptions } from '@mui/material'
+import type { PaletteMode, Theme, ThemeOptions } from '@mui/material'
 import type { UserRole } from '@/shared/types/user'
 import { AppColors, type RoleColorPalette } from './colors'
 

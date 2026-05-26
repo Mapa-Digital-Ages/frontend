@@ -3,7 +3,7 @@ import { test } from '@jest/globals'
 import {
   getParentStatusModalCopy,
   shouldOpenParentStatusModal,
-} from '../../../../modules/parent/students/components/parentStatusModal.utils'
+} from '@/modules/parent/students/components/parentStatusModal.utils'
 
 test('parent status modal opens only for actionable registration states', () => {
   assert.equal(shouldOpenParentStatusModal('AGUARDANDO'), true)

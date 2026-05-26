@@ -14,13 +14,10 @@ interface AppTopbarProps extends AppBarProps {
   leading?: ReactNode
   onMenuClick?: () => void
   showMenuButton?: boolean
-  subtitle?: string
-  title?: string
 }
 
 function AppTopbar({
   actions,
-  leading,
   onMenuClick,
   showMenuButton = false,
   ...appBarProps
@@ -44,18 +41,11 @@ function AppTopbar({
       <Toolbar className="min-h-18 items-center justify-between gap-2 md:gap-4">
         <Box className="flex items-center gap-2">
           {showMenuButton && (
-            <IconButton
-              aria-label="Abrir menu lateral"
-              onClick={onMenuClick}
-              size="small"
-              sx={{ display: { md: 'none' } }}
-            >
+            <IconButton onClick={onMenuClick}>
               <MenuRoundedIcon />
             </IconButton>
           )}
-          {leading && <Box className="hidden md:flex">{leading}</Box>}
         </Box>
-
         {actions && (
           <Box className="ml-auto flex items-center justify-end">{actions}</Box>
         )}

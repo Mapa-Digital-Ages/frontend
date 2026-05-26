@@ -1,4 +1,6 @@
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
+import MenuRoundedIcon from '@mui/icons-material/MenuRounded'
+import FirstPageIcon from '@mui/icons-material/FirstPage'
 import {
   Box,
   Divider,
@@ -15,39 +17,52 @@ import {
   getRoleAccentColor,
   getRoleGradient,
   getRoleHoverStyle,
+  getRoleSelectedStyle,
 } from '@/app/theme/core/roles'
 import type { SidebarItem } from '@/shared/types/common'
 import type { UserRole } from '@/shared/types/user'
 import { useTheme } from '@mui/material/styles'
+import { IconButton } from '@mui/material'
 
 interface AppSidebarProps {
   isMobile: boolean
+  useOverlay: boolean
   items: SidebarItem[]
   mobileOpen: boolean
   onClose: () => void
   onLogout?: () => void
   role: UserRole
+  collapsed: boolean
+  onToggleCollapse: () => void
 }
 
 function AppSidebar({
   isMobile,
+  useOverlay,
   items,
   mobileOpen,
   onClose,
   onLogout,
   role,
+  collapsed,
+  onToggleCollapse,
 }: AppSidebarProps) {
   const theme = useTheme()
   const accentColor = getRoleAccentColor(theme, role)
   const roleHover = getRoleHoverStyle(theme, role)
+  const roleSelected = getRoleSelectedStyle(theme, role)
   const location = useLocation()
   const navigate = useNavigate()
+
+  const isCollapsed = !isMobile && collapsed
 
   const paperSx = {
     backgroundColor: 'var(--app-surface)',
     borderRight: '2px solid var(--app-border)',
     color: 'var(--app-foreground)',
-    width: APP_CONFIG.drawerWidth,
+    width: isCollapsed ? 80 : APP_CONFIG.drawerWidth,
+    transition: 'width 0.2s ease',
+    overflowX: 'hidden',
   }
 
   const drawerContent = (
@@ -58,22 +73,38 @@ function AppSidebar({
     >
       <Box
         className="-mx-3 -mt-3 mb-4 px-6 py-5 text-white"
-        style={{
-          background: getRoleGradient(theme, role, '150deg'),
-        }}
+        style={{ background: getRoleGradient(theme, role, '150deg') }}
       >
-        <Box className="flex items-center gap-3">
-          <Box className="grid size-9 shrink-0 place-items-center rounded-xl bg-white/20 text-sm font-bold">
-            M
-          </Box>
-          <Box className="min-w-0">
-            <Typography className="truncate text-2xl font-bold uppercase leading-none">
-              {APP_CONFIG.name}
-            </Typography>
-            <Typography className="truncate text-sm text-white/85">
-              {ROLE_DASHBOARD_TITLE[role]}
-            </Typography>
-          </Box>
+        <Box className="flex items-center justify-between gap-3 min-w-[60px]">
+          {!isCollapsed && (
+            <Box className="flex items-center gap-3 min-w-0">
+              <Box className="grid size-9 shrink-0 place-items-center rounded-xl bg-white/20 text-sm font-bold">
+                M
+              </Box>
+              <Box className="min-w-0">
+                <Typography className="truncate text-2xl font-bold uppercase leading-none">
+                  {APP_CONFIG.name}
+                </Typography>
+                <Typography className="truncate text-sm text-white/85">
+                  {ROLE_DASHBOARD_TITLE[role]}
+                </Typography>
+              </Box>
+            </Box>
+          )}
+          <IconButton
+            data-testid="toggle-sidebar"
+            onClick={() => {
+              if (isMobile) {
+                onClose()
+              } else {
+                onToggleCollapse()
+              }
+            }}
+            size="small"
+            sx={{ color: 'white', p: 0.5, flexShrink: 0 }}
+          >
+            {isCollapsed ? <MenuRoundedIcon /> : <FirstPageIcon />}
+          </IconButton>
         </Box>
       </Box>
 
@@ -93,14 +124,14 @@ function AppSidebar({
               data-testid={`menu-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
               className="rounded-xl px-3 py-2 transition-all duration-200 ease-out"
               onClick={() => {
-                if (canNavigate) {
-                  navigate(item.path)
-                }
+                if (canNavigate) navigate(item.path)
                 onClose()
               }}
               selected={selected}
               sx={{
                 borderRadius: '18px',
+                border: '1px solid transparent',
+                justifyContent: isCollapsed ? 'center' : 'flex-start',
                 '& .MuiListItemText-primary': {
                   backgroundColor: 'transparent',
                   color: theme.palette.text.secondary,
@@ -110,7 +141,12 @@ function AppSidebar({
                   color: theme.palette.text.secondary,
                 },
                 '&.Mui-selected': {
-                  backgroundColor: roleHover.backgroundColor,
+                  backgroundColor: roleSelected.backgroundColor,
+                  borderColor: roleSelected.borderColor,
+                },
+                '&.Mui-selected:hover': {
+                  backgroundColor: roleSelected.backgroundColor,
+                  borderColor: roleSelected.borderColor,
                 },
                 '&.Mui-selected .MuiListItemIcon-root, &.Mui-selected .MuiListItemText-primary':
                   {
@@ -119,6 +155,7 @@ function AppSidebar({
                   },
                 '&:hover': {
                   backgroundColor: roleHover.backgroundColor,
+                  borderColor: roleHover.borderColor,
                 },
                 '&:hover .MuiListItemIcon-root, &:hover .MuiListItemText-primary':
                   {
@@ -129,8 +166,10 @@ function AppSidebar({
                 },
               }}
             >
-              <ListItemIcon className="min-w-9">{item.icon}</ListItemIcon>
-              <ListItemText primary={item.label} />
+              <ListItemIcon sx={{ minWidth: isCollapsed ? 0 : 36 }}>
+                {item.icon}
+              </ListItemIcon>
+              {!isCollapsed && <ListItemText primary={item.label} />}
             </ListItemButton>
           )
         })}
@@ -140,11 +179,12 @@ function AppSidebar({
         <Box className="mt-auto pt-3">
           <Divider sx={{ borderColor: 'var(--app-border)', mb: 1.5 }} />
           <ListItemButton
-            className="rounded-full px-2 py-1.5 transition-all duration-200 ease-out"
             data-testid="logout-button"
             onClick={onLogout}
             sx={{
               borderRadius: '18px',
+              border: '1px solid transparent',
+              justifyContent: isCollapsed ? 'center' : 'flex-start',
               transition: 'all 0.2s ease',
               '& .MuiListItemText-primary': {
                 color: theme.palette.text.secondary,
@@ -156,6 +196,7 @@ function AppSidebar({
               '&:hover': {
                 borderRadius: 'var(--app-radius-control)',
                 bgcolor: roleHover.backgroundColor,
+                borderColor: roleHover.borderColor,
                 color: accentColor,
               },
               '&:hover .MuiListItemIcon-root, &:hover .MuiListItemText-primary':
@@ -164,10 +205,10 @@ function AppSidebar({
                 },
             }}
           >
-            <ListItemIcon className="min-w-9">
+            <ListItemIcon sx={{ minWidth: isCollapsed ? 0 : 36 }}>
               <LogoutRoundedIcon />
             </ListItemIcon>
-            <ListItemText primary="Sair" />
+            {!isCollapsed && <ListItemText primary="Sair" />}
           </ListItemButton>
         </Box>
       )}
@@ -178,9 +219,9 @@ function AppSidebar({
     <Drawer
       ModalProps={{ keepMounted: true }}
       onClose={onClose}
-      open={isMobile ? mobileOpen : true}
+      open={useOverlay ? mobileOpen : true}
       slotProps={{ paper: { sx: paperSx } }}
-      variant={isMobile ? 'temporary' : 'permanent'}
+      variant={useOverlay ? 'temporary' : 'permanent'}
     >
       {drawerContent}
     </Drawer>

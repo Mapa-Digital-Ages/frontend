@@ -1,8 +1,8 @@
+import BusinessRoundedIcon from '@mui/icons-material/BusinessRounded'
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded'
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded'
-import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded'
 import NotificationsActiveRoundedIcon from '@mui/icons-material/NotificationsActiveRounded'
-import PlaylistAddCheckRoundedIcon from '@mui/icons-material/PlaylistAddCheckRounded'
+import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded'
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
 import { Box, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
@@ -12,7 +12,7 @@ import AppCard from '@/shared/ui/AppCard'
 import AppPageContainer from '@/shared/ui/AppPageContainer'
 import { adminService } from '../services/service'
 import type { IconVariantName } from '@/app/theme/core/palette'
-import type { AdminStat } from '@/shared/types/common'
+import type { Stat } from '@/shared/types/common'
 import PageHeader from '@/shared/ui/PageHeader'
 import MetricsCard from '@/shared/ui/MetricsCard'
 
@@ -52,7 +52,7 @@ const QUICK_ACTIONS = [
 
 export default function Page() {
   const theme = useTheme()
-  const [stats, setStats] = useState<AdminStat[]>([])
+  const [stats, setStats] = useState<Stat[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -80,50 +80,51 @@ export default function Page() {
     return <LoadingScreen />
   }
 
-  const getStatById = (id: AdminStat['id']) =>
-    stats.find(stat => stat.id === id)
+  const getStatById = (id: Stat['id']) => stats.find(stat => stat.id === id)
 
-  const usersActiveStat = getStatById('users-active')
-  const criticalAlertsStat = getStatById('critical-alerts')
-  const pendingActionsStat = getStatById('pending-actions')
-  const uptimeStat = getStatById('uptime')
+  const studentsCountStat = getStatById('students-count')
+  const companiesCountStat = getStatById('companies-count')
+  const schoolsCountStat = getStatById('schools-count')
+  const pendingGuardiansStat = getStatById('pending-guardians')
 
   const cards = [
     {
-      helper: usersActiveStat?.description ?? 'últimas 24h',
+      helper: studentsCountStat?.description ?? 'total de alunos cadastrados',
       helperColor: theme.palette.text.secondary,
       icon: <GroupsRoundedIcon />,
       iconVariant: 'blue' as IconVariantName,
-      id: 'users-active',
-      title: 'Usuários Ativos',
-      value: usersActiveStat?.value ?? '1.248',
+      id: 'students-count',
+      title: 'Alunos Cadastrados',
+      value: studentsCountStat?.value ?? '—',
     },
     {
-      helper: criticalAlertsStat?.description ?? 'monitoramento em tempo real',
-      helperColor: theme.palette.error.main,
-      icon: <NotificationsActiveRoundedIcon />,
-      iconVariant: 'red' as IconVariantName,
-      id: 'critical-alerts',
-      title: 'Alertas Críticos',
-      value: criticalAlertsStat?.value ?? '12',
-    },
-    {
-      helper: pendingActionsStat?.description ?? 'fila de revisão',
+      helper: companiesCountStat?.description ?? 'empresas cadastradas',
       helperColor: theme.palette.text.secondary,
-      icon: <PlaylistAddCheckRoundedIcon />,
-      iconVariant: 'orange' as IconVariantName,
-      id: 'pending-actions',
-      title: 'Ações Pendentes',
-      value: pendingActionsStat?.value ?? '34',
+      icon: <BusinessRoundedIcon />,
+      iconVariant: 'purple' as IconVariantName,
+      id: 'companies-count',
+      title: 'Empresas',
+      value: companiesCountStat?.value ?? '—',
     },
     {
-      helper: uptimeStat?.description ?? 'últimos 30 dias',
-      helperColor: theme.palette.success.main,
-      icon: <InsightsRoundedIcon />,
+      helper: schoolsCountStat?.description ?? 'escolas cadastradas',
+      helperColor: theme.palette.text.secondary,
+      icon: <SchoolRoundedIcon />,
       iconVariant: 'green' as IconVariantName,
-      id: 'uptime',
-      title: 'Disponibilidade',
-      value: uptimeStat?.value ?? '99,9%',
+      id: 'schools-count',
+      title: 'Escolas',
+      value: schoolsCountStat?.value ?? '—',
+    },
+    {
+      helper:
+        pendingGuardiansStat?.description ??
+        'responsáveis aguardando aprovação',
+      helperColor: theme.palette.warning.main,
+      icon: <NotificationsActiveRoundedIcon />,
+      iconVariant: 'orange' as IconVariantName,
+      id: 'pending-guardians',
+      title: 'Responsáveis Pendentes',
+      value: pendingGuardiansStat?.value ?? '—',
     },
   ]
 

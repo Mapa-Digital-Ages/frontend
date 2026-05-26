@@ -119,9 +119,9 @@ export default function AppCalendar({
             width: '100%',
             maxWidth: '100%',
             height: 'auto',
-            minHeight: '30rem',
+            minHeight: '34rem',
             '& .MuiDayCalendar-slideTransition': {
-              minHeight: '26rem',
+              minHeight: '30rem',
             },
             '& .MuiDayCalendar-monthContainer': {
               overflow: 'visible',
