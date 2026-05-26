@@ -1,5 +1,17 @@
-export type CompanyKpi = {
+export type { CompanyStat } from '@/shared/types/common'
+
+export type SupportRequestStatus = 'aguardando' | 'apoiada' | 'recusada'
+
+export interface SupportRequest {
   id: string
-  label: string
-  value: string
+  schoolName: string
+  description: string
+  status: SupportRequestStatus
+}
+
+export interface SupportedSchool {
+  id: string
+  schoolName: string
+  description: string
+  status: SupportRequestStatus
 }
