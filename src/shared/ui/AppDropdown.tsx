@@ -14,7 +14,7 @@ import {
   Typography,
 } from '@mui/material'
 import { alpha, useTheme, type SxProps, type Theme } from '@mui/material/styles'
-import type { ReactNode } from 'react'
+import { useRef, type ReactNode } from 'react'
 
 export interface DropdownOption {
   label: string
@@ -77,6 +77,7 @@ function AppDropdown({
   ...props
 }: AppDropdownProps) {
   const theme = useTheme()
+  const containerRef = useRef<HTMLDivElement>(null)
   const {
     multiple = false,
     disabled,
@@ -90,7 +91,9 @@ function AppDropdown({
   } = props
 
   const isGhostTrigger = triggerVariant === 'ghost'
-  const resolvedMenuWidth = menuWidth ?? (width === 'auto' ? 220 : width)
+  const isFullWidthMode = fullWidth || width === '100%'
+  const resolvedMenuWidth =
+    menuWidth ?? (isFullWidthMode ? undefined : width === 'auto' ? 220 : width)
   const neutralBorder = theme.palette.background.border
   const roleAccentColor = 'var(--app-role-current-primary, var(--app-primary))'
   const roleHoverBackground = 'var(--app-role-action-hover-bg)'
@@ -310,6 +313,7 @@ function AppDropdown({
 
   return (
     <FormControl
+      ref={containerRef}
       className={className}
       disabled={disabled}
       error={error}
@@ -369,8 +373,12 @@ function AppDropdown({
               color: theme.palette.text.primary,
               maxHeight: { sm: menuMaxHeight, xs: 'min(60vh, 360px)' },
               maxWidth: { sm: 'unset', xs: 'calc(100vw - 32px)' },
-              minWidth: { sm: resolvedMenuWidth, xs: 'min(260px, 90vw)' },
-              width: { sm: resolvedMenuWidth, xs: 'min(280px, 92vw)' },
+              minWidth: isFullWidthMode
+                ? undefined
+                : { sm: resolvedMenuWidth, xs: 'min(260px, 90vw)' },
+              width: isFullWidthMode
+                ? (containerRef.current?.clientWidth ?? 'auto')
+                : { sm: resolvedMenuWidth, xs: 'min(280px, 92vw)' },
               overflowY: 'auto',
               '& .MuiListItemText-primary': {
                 overflow: 'hidden',
