@@ -4,7 +4,6 @@ import PlayCircleFilledWhiteOutlinedIcon from '@mui/icons-material/PlayCircleFil
 import UploadFileOutlinedIcon from '@mui/icons-material/UploadFileOutlined'
 import FavoriteBorderRoundedIcon from '@mui/icons-material/FavoriteBorderRounded'
 import ChatBubbleOutlineRoundedIcon from '@mui/icons-material/ChatBubbleOutlineRounded'
-import WidgetsRoundedIcon from '@mui/icons-material/WidgetsRounded'
 import type { SidebarItem } from '@/shared/types/common'
 import { APP_ROUTES } from '@/app/router/paths'
 
@@ -38,10 +37,5 @@ export const studentNavigation: SidebarItem[] = [
     label: 'Chat AI',
     path: APP_ROUTES.student.chat,
     icon: <ChatBubbleOutlineRoundedIcon fontSize="medium" />,
-  },
-  {
-    label: 'Componentes',
-    path: APP_ROUTES.student.components,
-    icon: <WidgetsRoundedIcon fontSize="medium" />,
   },
 ]
