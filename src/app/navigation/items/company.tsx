@@ -9,9 +9,9 @@ export const companyNavigation: SidebarItem[] = [
     path: APP_ROUTES.company.dashboard,
     icon: <AutoStoriesIcon fontSize="medium" />,
   },
-  {
-    label: 'Escolas Apadrinhadas',
-    path: APP_ROUTES.company.adoptedSchools,
-    icon: <SchoolRoundedIcon fontSize="medium" />,
-  },
+  // {
+  //   label: 'Escolas Apadrinhadas',
+  //   path: APP_ROUTES.company.adoptedSchools,
+  //   icon: <SchoolRoundedIcon fontSize="medium" />,
+  // },
 ]
