@@ -93,9 +93,11 @@ export const adminCompanyService = {
 }
 
 function mapSchool(api: SchoolApi): School {
+  const fullName =
+    [api.first_name, api.last_name].filter(Boolean).join(' ') || api.name
   return {
     id: api.user_id,
-    name: api.name,
+    name: fullName,
     email: api.email,
     isPrivate: api.is_private,
     requestedSpots: api.requested_spots,
@@ -127,9 +129,11 @@ export const adminSchoolService = {
   },
 
   async createSchool(payload: CreateSchoolPayload): Promise<School> {
-    const [firstName] = payload.name.trim().split(' ')
+    const [firstName, ...lastNameParts] = payload.name.trim().split(' ')
+    const lastName = lastNameParts.join(' ') || undefined
     const response = await httpClient.post<SchoolApi>('school', {
       first_name: firstName,
+      last_name: lastName,
       email: payload.email,
       password: payload.password,
       is_private: payload.isPrivate,

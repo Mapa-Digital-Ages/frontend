@@ -61,6 +61,8 @@ export type SchoolApi = {
   user_id: string
   email: string
   name: string
+  first_name: string
+  last_name: string | null
   is_private: boolean
   requested_spots: number | null
   is_active: boolean
