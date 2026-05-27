@@ -688,7 +688,7 @@ export default function CompanyPage() {
             </Typography>
             <AppInput
               data-testid="new-company-password"
-              placeholder="Mínimo 8 caracteres"
+              placeholder="Digite a senha"
               type="password"
               value={newPartner.password}
               onChange={event =>

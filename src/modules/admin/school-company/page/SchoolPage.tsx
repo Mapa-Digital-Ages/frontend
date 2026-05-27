@@ -968,7 +968,7 @@ export default function SchoolPage() {
             </Typography>
             <AppInput
               data-testid="new-school-password"
-              placeholder="Mínimo 8 caracteres"
+              placeholder="Digite a senha"
               type="password"
               value={newSchool.password}
               onChange={e =>
