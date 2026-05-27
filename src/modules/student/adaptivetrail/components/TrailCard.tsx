@@ -51,7 +51,7 @@ export default function TrailCard({ trail }: TrailCardProps) {
       icon={getSubjectIcon(trail.subject?.id)}
       progress={trail.progress}
       subject={trail.subject}
-      title={trail.name}
+      title={trail.subject?.label ?? trail.name}
       progressLabel={`${trail.progress}% concluído`}
       sx={{
         cursor: 'pointer',
