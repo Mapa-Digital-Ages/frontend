@@ -209,11 +209,7 @@ export default function SchoolPage() {
       : students.filter(s => s.status === studentFilter)
 
   const emailIsValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newSchool.email.trim())
-  const passwordIsValid =
-    newSchool.password.length >= 8 &&
-    /[A-Z]/.test(newSchool.password) &&
-    /[a-z]/.test(newSchool.password) &&
-    /[0-9]/.test(newSchool.password)
+  const passwordIsValid = newSchool.password.length >= 8
   const passwordsMatch =
     newSchool.password.length > 0 &&
     newSchool.password === newSchool.confirmPassword
@@ -979,7 +975,7 @@ export default function SchoolPage() {
                 setNewSchool(prev => ({ ...prev, password: e.target.value }))
               }
               error={Boolean(newSchool.password && !passwordIsValid)}
-              helperText="Use no mínimo 8 caracteres, uma letra maiúscula, uma minúscula e um número."
+              helperText="A senha deve ter pelo menos 8 caracteres."
             />
           </Box>
           <Box>

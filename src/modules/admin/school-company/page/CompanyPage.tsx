@@ -133,11 +133,7 @@ export default function CompanyPage() {
     newPartner.email.trim()
   )
 
-  const passwordIsValid =
-    newPartner.password.length >= 8 &&
-    /[A-Z]/.test(newPartner.password) &&
-    /[a-z]/.test(newPartner.password) &&
-    /[0-9]/.test(newPartner.password)
+  const passwordIsValid = newPartner.password.length >= 8
 
   const passwordsMatch =
     newPartner.password.length > 0 &&
@@ -702,7 +698,7 @@ export default function CompanyPage() {
                 }))
               }
               error={Boolean(newPartner.password && !passwordIsValid)}
-              helperText="Use no mínimo 8 caracteres, uma letra maiúscula, uma minúscula e um número."
+              helperText="A senha deve ter pelo menos 8 caracteres."
             />
           </Box>
 
