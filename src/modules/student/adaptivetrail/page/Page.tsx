@@ -1,26 +1,12 @@
 import { Box, Stack } from '@mui/material'
 import { useMemo, useState } from 'react'
-import { SUBJECTS } from '@/shared/utils/themes'
 import AppPageContainer from '@/shared/ui/AppPageContainer'
 import OrdinaryHeader from '@/shared/ui/OrdinaryHeader'
 import Pagination from '@/shared/ui/Pagination'
 import { SearchBarAndFilter } from '@/shared/ui/SearchBarAndFilter'
 import { trails, getTrailMetrics } from '../data/trails'
-import TrailFilterBar from '../components/TrailFilterBar'
 import TrailList from '../components/TrailList'
-import type { FilterOption } from '../types/types'
 import MetricsCard from '@/shared/ui/MetricsCard'
-
-const filterOptions: FilterOption[] = [
-  { label: 'Todos', value: 'all', subject: null },
-  { label: 'Matemática', value: 'mathematics', subject: SUBJECTS.matematica },
-  { label: 'Português', value: 'portuguese', subject: SUBJECTS.portugues },
-  { label: 'Ciências', value: 'science', subject: SUBJECTS.ciencias },
-  { label: 'História', value: 'history', subject: SUBJECTS.historia },
-  { label: 'Biologia', value: 'biology', subject: SUBJECTS.biologia },
-  { label: 'Geografia', value: 'geography', subject: SUBJECTS.geografia },
-  { label: 'Inglês', value: 'english', subject: SUBJECTS.ingles },
-]
 
 const TRAILS_PER_PAGE = 10
 
@@ -30,7 +16,6 @@ function normalizeText(value: string) {
 
 export default function Page() {
   const [query, setQuery] = useState('')
-  const [selectedSubject, setSelectedSubject] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
   const metricCards = useMemo(() => getTrailMetrics(), [])
 
@@ -41,14 +26,11 @@ export default function Page() {
       const searchableText = normalizeText(
         [trail.name, trail.subject?.label, trail.description].join(' ')
       )
-      const matchesQuery =
+      return (
         normalizedQuery.length === 0 || searchableText.includes(normalizedQuery)
-      const matchesSubject =
-        selectedSubject === 'all' || trail.subject?.id === selectedSubject
-
-      return matchesQuery && matchesSubject
+      )
     })
-  }, [query, selectedSubject])
+  }, [query])
 
   const totalPages = Math.max(
     1,
@@ -60,19 +42,9 @@ export default function Page() {
     pageStartIndex,
     pageStartIndex + TRAILS_PER_PAGE
   )
-  const resultsSummary = {
-    count: filteredTrails.length,
-    singularLabel: 'resultado',
-    pluralLabel: 'resultados',
-  }
 
   function handleQueryChange(nextQuery: string) {
     setQuery(nextQuery)
-    setCurrentPage(1)
-  }
-
-  function handleSubjectChange(subject: string) {
-    setSelectedSubject(subject)
     setCurrentPage(1)
   }
 
@@ -106,14 +78,12 @@ export default function Page() {
           <SearchBarAndFilter
             onQueryChange={handleQueryChange}
             query={query}
-            resultsSummary={resultsSummary}
-            searchPlaceholder="Pesquisar conteúdos..."
-          />
-
-          <TrailFilterBar
-            options={filterOptions}
-            selectedValue={selectedSubject}
-            onSelect={handleSubjectChange}
+            resultsSummary={{
+              count: filteredTrails.length,
+              singularLabel: 'resultado',
+              pluralLabel: 'resultados',
+            }}
+            searchPlaceholder="Pesquisar trilhas..."
           />
 
           <TrailList trails={visibleTrails} />

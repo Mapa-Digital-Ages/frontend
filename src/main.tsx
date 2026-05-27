@@ -1,4 +1,3 @@
-import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
 import { STORAGE_KEYS } from '@/shared/constants/storage'
@@ -23,8 +22,4 @@ if (resolvedMode === 'dark' || resolvedMode === 'light') {
   document.documentElement.classList.toggle('dark', resolvedMode === 'dark')
 }
 
-createRoot(rootElement).render(
-  <StrictMode>
-    <App />
-  </StrictMode>
-)
+createRoot(rootElement).render(<App />)

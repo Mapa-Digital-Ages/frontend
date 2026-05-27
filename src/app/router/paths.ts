@@ -9,6 +9,7 @@ export const APP_ROUTES = {
   student: {
     dashboard: '/student/dashboard',
     adaptiveTrail: '/student/adaptive-trail',
+    adaptiveTrailDetail: '/student/adaptive-trail/:trailId',
     contents: '/student/contents',
     uploads: '/student/uploads',
     routine: '/student/routine',
@@ -30,6 +31,7 @@ export const APP_ROUTES = {
   school: {
     dashboard: '/school/dashboard',
     classes: '/school/classes',
+    students: '/school/students',
     partners: '/school/partners',
     requestPartner: '/school/request-partner',
   },
@@ -51,6 +53,10 @@ export const APP_ROUTES = {
 
 export function buildAdminCorrectionRoute(contentId: string) {
   return `/admin/corrections/${encodeURIComponent(contentId)}`
+}
+
+export function buildStudentTrailRoute(trailId: string) {
+  return `/student/adaptive-trail/${encodeURIComponent(trailId)}`
 }
 
 export function buildParentStudentDetailsRoute(studentId: string) {

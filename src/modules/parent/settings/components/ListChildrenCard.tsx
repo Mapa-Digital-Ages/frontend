@@ -28,6 +28,7 @@ import type { ParentDashboardChild } from '@/modules/parent/settings/types/types
 interface ListChildrenCardProps {
   child: ParentDashboardChild
   selected: boolean
+  onChangePassword?: (child: ParentDashboardChild) => void | Promise<void>
   onDelete?: (child: ParentDashboardChild) => void | Promise<void>
   onEdit?: (child: ParentDashboardChild) => void | Promise<void>
   onSelect: (id: string) => void
@@ -49,6 +50,7 @@ function getInitials(name: string): string {
 function ListChildrenCard({
   child,
   selected,
+  onChangePassword,
   onDelete,
   onEdit,
   onSelect,
@@ -243,7 +245,10 @@ function ListChildrenCard({
           <EditOutlinedIcon fontSize="small" />
           <Typography sx={{ fontSize: 14, fontWeight: 600 }}>Editar</Typography>
         </MenuItem>
-        <MenuItem onClick={() => handleAction(onEdit)} sx={{ gap: 1.25 }}>
+        <MenuItem
+          onClick={() => handleAction(onChangePassword)}
+          sx={{ gap: 1.25 }}
+        >
           <LockOutlinedIcon fontSize="small" />
           <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
             Alterar senha

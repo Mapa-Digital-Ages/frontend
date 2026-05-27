@@ -13,6 +13,7 @@ const uploadFixtures = [
   {
     id: '1',
     student_id: 'student-1',
+    subject_id: null,
     file_name: 'Lista de Exercícios - Equações',
     download_url: '/uploads/1',
     file_type: 'application/pdf',
@@ -22,6 +23,7 @@ const uploadFixtures = [
   {
     id: '2',
     student_id: 'student-1',
+    subject_id: null,
     file_name: 'Mapa mental de biologia',
     download_url: '/uploads/2',
     file_type: 'image/png',
@@ -31,6 +33,7 @@ const uploadFixtures = [
   {
     id: '3',
     student_id: 'student-1',
+    subject_id: null,
     file_name: 'Relatório de Experiência',
     download_url: '/uploads/3',
     file_type:
@@ -53,11 +56,23 @@ const authValue: AuthContextValue = {
   },
 }
 
+const subjectFixtures = [
+  {
+    id: 1,
+    slug: 'mathematics',
+    name: 'Matemática',
+    color: 'rgba(173, 68, 248, 1)',
+  },
+  { id: 2, slug: 'science', name: 'Ciências', color: 'rgba(0, 210, 237, 1)' },
+  { id: 3, slug: 'biology', name: 'Biologia', color: 'rgba(20, 184, 166, 1)' },
+]
+
 function renderPage() {
   jest.spyOn(authService, 'getUserId').mockReturnValue('student-1')
   jest
     .spyOn(uploadService, 'listStudentUploads')
     .mockResolvedValue(uploadFixtures)
+  jest.spyOn(uploadService, 'listSubjects').mockResolvedValue(subjectFixtures)
 
   renderWithProviders(
     <AuthContext.Provider value={authValue}>

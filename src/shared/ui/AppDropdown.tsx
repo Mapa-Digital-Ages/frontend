@@ -14,7 +14,7 @@ import {
   Typography,
 } from '@mui/material'
 import { alpha, useTheme, type SxProps, type Theme } from '@mui/material/styles'
-import type { ReactNode } from 'react'
+import { useRef, type ReactNode } from 'react'
 
 export interface DropdownOption {
   label: string
@@ -43,6 +43,7 @@ export interface AppDropdownProps extends Omit<
   onChange: SelectProps['onChange']
   placeholder?: string
   dropdownPlacement?: 'bottom' | 'top'
+  menuAlign?: 'left' | 'right'
   width?: string | number
   borderRadius?: string | number
   backgroundColor?: string
@@ -66,6 +67,7 @@ function AppDropdown({
   onChange,
   placeholder = 'Selecione uma opção',
   dropdownPlacement = 'bottom',
+  menuAlign = 'left',
   width = 240,
   borderRadius = 'var(--dropdown-radius)',
   backgroundColor = 'background.paper',
@@ -75,6 +77,7 @@ function AppDropdown({
   ...props
 }: AppDropdownProps) {
   const theme = useTheme()
+  const containerRef = useRef<HTMLDivElement>(null)
   const {
     multiple = false,
     disabled,
@@ -88,7 +91,9 @@ function AppDropdown({
   } = props
 
   const isGhostTrigger = triggerVariant === 'ghost'
-  const resolvedMenuWidth = menuWidth ?? (width === 'auto' ? 220 : width)
+  const isFullWidthMode = fullWidth || width === '100%'
+  const resolvedMenuWidth =
+    menuWidth ?? (isFullWidthMode ? undefined : width === 'auto' ? 220 : width)
   const neutralBorder = theme.palette.background.border
   const roleAccentColor = 'var(--app-role-current-primary, var(--app-primary))'
   const roleHoverBackground = 'var(--app-role-action-hover-bg)'
@@ -308,6 +313,7 @@ function AppDropdown({
 
   return (
     <FormControl
+      ref={containerRef}
       className={className}
       disabled={disabled}
       error={error}
@@ -348,12 +354,12 @@ function AppDropdown({
           },
           anchorOrigin:
             dropdownPlacement === 'top'
-              ? { vertical: 'top', horizontal: 'left' }
-              : { vertical: 'bottom', horizontal: 'left' },
+              ? { vertical: 'top', horizontal: menuAlign }
+              : { vertical: 'bottom', horizontal: menuAlign },
           transformOrigin:
             dropdownPlacement === 'top'
-              ? { vertical: 'bottom', horizontal: 'left' }
-              : { vertical: 'top', horizontal: 'left' },
+              ? { vertical: 'bottom', horizontal: menuAlign }
+              : { vertical: 'top', horizontal: menuAlign },
           PaperProps: {
             ...MenuProps?.PaperProps,
             sx: {
@@ -365,9 +371,14 @@ function AppDropdown({
                   ? '0 18px 45px rgba(8, 17, 31, 0.42)'
                   : '0 16px 40px rgba(16, 42, 67, 0.12)',
               color: theme.palette.text.primary,
-              maxHeight: menuMaxHeight,
-              minWidth: resolvedMenuWidth,
-              width: resolvedMenuWidth,
+              maxHeight: { sm: menuMaxHeight, xs: 'min(60vh, 360px)' },
+              maxWidth: { sm: 'unset', xs: 'calc(100vw - 32px)' },
+              minWidth: isFullWidthMode
+                ? undefined
+                : { sm: resolvedMenuWidth, xs: 'min(260px, 90vw)' },
+              width: isFullWidthMode
+                ? (containerRef.current?.clientWidth ?? 'auto')
+                : { sm: resolvedMenuWidth, xs: 'min(280px, 92vw)' },
               overflowY: 'auto',
               '& .MuiListItemText-primary': {
                 overflow: 'hidden',

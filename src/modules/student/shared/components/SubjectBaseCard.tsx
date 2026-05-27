@@ -1,4 +1,5 @@
-import { Box, Typography, type CardProps } from '@mui/material'
+import { Box, Typography, Card } from '@mui/material'
+import type { CardProps } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import type { ReactNode } from 'react'
 import type { SubjectContext } from '@/shared/types/common'
@@ -6,15 +7,18 @@ import { getSubjectTheme } from '@/shared/utils/themes'
 import ProgressBar from '@/shared/ui/ProgressBar'
 import AppCard from '@/shared/ui/AppCard'
 
-type SubjectBaseCardProps = CardProps & {
-  icon: ReactNode
-  progress: number
-  progressLabel?: string
-  subject?: SubjectContext
-  title: string
-}
+type SubjectBaseCardProps<C extends React.ElementType = React.ElementType> =
+  CardProps<C, { component?: C }> & {
+    children?: ReactNode
+    icon: ReactNode
+    progress: number
+    progressLabel?: string
+    subject?: SubjectContext
+    title: string
+  }
 
-function SubjectBaseCard({
+function SubjectBaseCard<C extends React.ElementType = React.ElementType>({
+  children,
   icon,
   progress,
   progressLabel,
@@ -123,6 +127,7 @@ function SubjectBaseCard({
         >
           {resolvedLabel}
         </Typography>
+        {children && <Box>{children}</Box>}
       </Box>
     </AppCard>
   )

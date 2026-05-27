@@ -120,17 +120,25 @@ function ApprovalComponent<TItem extends { id: string }>({
             minWidth: 0,
           }}
         >
-          <Box className="space-y-1">
+          <Box
+            sx={{
+              flex: '1 1 auto',
+              minWidth: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 0.5,
+            }}
+          >
             <Typography
               sx={{
                 color: 'text.primary',
-                flex: '1 1 auto',
-                fontSize: { md: 20, xs: 18 },
+                fontSize: { md: 20, xs: 17 },
                 fontWeight: 700,
                 minWidth: 0,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
+                width: '100%',
               }}
               title={title}
             >
@@ -139,45 +147,35 @@ function ApprovalComponent<TItem extends { id: string }>({
             <Typography
               sx={{
                 color: 'text.secondary',
-                fontSize: { md: 15, xs: 14 },
+                fontSize: { md: 15, xs: 13 },
                 maxWidth: 720,
               }}
             >
               {description}
             </Typography>
           </Box>
-          <Box
-            sx={{
-              alignItems: 'flex-start',
-              display: 'flex',
-              gap: 1.5,
-              justifyContent: 'space-between',
-              minWidth: 0,
-            }}
-          >
-            {onCreate ? (
-              <IconButton
-                aria-label="Adicionar"
-                onClick={onCreate}
-                sx={{
-                  backgroundColor: 'background.paper',
-                  border: '1px solid',
-                  borderColor: 'background.border',
-                  borderRadius: 'var(--app-radius-control)',
-                  color: 'text.primary',
-                  flexShrink: 0,
-                  height: 32,
-                  width: 32,
-                  '&:hover': {
-                    backgroundColor: accentHover.backgroundColor,
-                    borderColor: accentHover.borderColor,
-                  },
-                }}
-              >
-                <AddRoundedIcon fontSize="small" />
-              </IconButton>
-            ) : null}
-          </Box>
+          {onCreate ? (
+            <IconButton
+              aria-label="Adicionar"
+              onClick={onCreate}
+              sx={{
+                backgroundColor: 'background.paper',
+                border: '1px solid',
+                borderColor: 'background.border',
+                borderRadius: 'var(--app-radius-control)',
+                color: 'text.primary',
+                flexShrink: 0,
+                height: 32,
+                width: 32,
+                '&:hover': {
+                  backgroundColor: accentHover.backgroundColor,
+                  borderColor: accentHover.borderColor,
+                },
+              }}
+            >
+              <AddRoundedIcon fontSize="small" />
+            </IconButton>
+          ) : null}
         </Box>
       </Box>
 

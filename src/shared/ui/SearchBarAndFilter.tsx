@@ -89,7 +89,7 @@ export function SearchBarAndFilter({
         type="search"
         value={query}
         InputProps={{
-          endAdornment: (
+          endAdornment: isMobileLayout ? null : (
             <InputAdornment position="end">
               <Typography
                 sx={{
@@ -135,6 +135,9 @@ export function SearchBarAndFilter({
               }}
             />
           }
+          menuAlign={isMobileLayout ? 'right' : 'left'}
+          menuMaxHeight={240}
+          menuWidth={isMobileLayout ? 220 : 200}
           MenuProps={{
             PaperProps: {
               sx: {
@@ -193,6 +196,24 @@ export function SearchBarAndFilter({
           width={isMobileLayout ? 44 : 'auto'}
         />
       ) : null}
+      <Box
+        sx={{
+          display: { xs: 'flex', sm: 'none' },
+          gridColumn: showFilter ? '1 / -1' : '1',
+          justifyContent: 'flex-end',
+        }}
+      >
+        <Typography
+          sx={{
+            color: 'text.secondary',
+            fontSize: 12,
+            fontWeight: 600,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {resultLabel}
+        </Typography>
+      </Box>
     </Box>
   )
 }

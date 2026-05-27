@@ -8,6 +8,7 @@ import {
   type StudentDetail,
 } from '../services/service'
 import AccountSettings from '../components/AccountSettings'
+import ChangePasswordModal from '../components/ChangePasswordModal'
 import ChildSettingsModal, {
   type ChildSettingsForm,
   type ChildSettingsModalMode,
@@ -35,6 +36,11 @@ const EMPTY_CHILD_FORM: ChildSettingsForm = {
 interface ChildActionState {
   child: ParentDashboardChild | null
   mode: ChildSettingsModalMode
+}
+
+interface ChildPasswordState {
+  child: ParentDashboardChild
+  email: string
 }
 
 function buildResultsSummary(count: number): ResultsSummary {
@@ -128,6 +134,9 @@ export default function Page() {
   const [childFeedback, setChildFeedback] = useState<string | null>(null)
   const [isSubmittingChild, setIsSubmittingChild] = useState(false)
   const [isLoadingChildDetails, setIsLoadingChildDetails] = useState(false)
+  const [childPasswordTarget, setChildPasswordTarget] =
+    useState<ChildPasswordState | null>(null)
+  const [isLoadingChildPassword, setIsLoadingChildPassword] = useState(false)
 
   const filteredChildren = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
@@ -171,6 +180,19 @@ export default function Page() {
       // keep partial form data if fetch fails
     } finally {
       setIsLoadingChildDetails(false)
+    }
+  }
+
+  async function openChildPasswordModal(child: ParentDashboardChild) {
+    if (isLoadingChildPassword) return
+    setIsLoadingChildPassword(true)
+    try {
+      const details = await parentService.getStudentById(child.id)
+      setChildPasswordTarget({ child, email: details.email ?? '' })
+    } catch {
+      setChildPasswordTarget({ child, email: '' })
+    } finally {
+      setIsLoadingChildPassword(false)
     }
   }
 
@@ -228,9 +250,13 @@ export default function Page() {
         subtitle="Configure sua conta"
       />
       <Box
-        className="grid grid-cols-2 md:grid-cols-2 gap-5"
         sx={{
           display: 'grid',
+          gap: 2.5,
+          gridTemplateColumns: {
+            lg: 'minmax(0, 1fr) minmax(0, 1fr)',
+            xs: 'minmax(0, 1fr)',
+          },
         }}
       >
         <ListChildren
@@ -239,6 +265,7 @@ export default function Page() {
           description="Gerencie os alunos vinculados a este responsável."
           emptyStateDescription="Nenhum aluno corresponde à busca atual."
           emptyStateTitle="Nenhum aluno encontrado"
+          onChangePassword={openChildPasswordModal}
           onCreate={openCreateModal}
           onDelete={openDeleteModal}
           onEdit={openEditModal}
@@ -280,6 +307,17 @@ export default function Page() {
           onConfirm={handleChildActionConfirm}
           open={childAction != null}
           submitting={isSubmittingChild || isLoadingChildDetails}
+        />
+        <ChangePasswordModal
+          initialEmail={childPasswordTarget?.email ?? ''}
+          onClose={() => setChildPasswordTarget(null)}
+          open={childPasswordTarget != null}
+          subjectLabel={childPasswordTarget?.child.name}
+          title={
+            childPasswordTarget
+              ? `Alterar senha de ${childPasswordTarget.child.name}`
+              : 'Alterar senha'
+          }
         />
       </Box>
     </AppPageContainer>
