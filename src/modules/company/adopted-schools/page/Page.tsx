@@ -204,7 +204,7 @@ export default function Page() {
                           fontSize: 13,
                         }}
                       >
-                        {school.city}, {school.state} · {school.students} alunos
+                        {school.students} alunos
                       </Typography>
                     </Box>
                   </Box>
@@ -230,71 +230,6 @@ export default function Page() {
                   >
                     <MoreHorizRoundedIcon />
                   </IconButton>
-                </Box>
-
-                <Box className="mt-3 flex gap-3">
-                  <Box
-                    className="flex-1 rounded-xl px-3 py-2"
-                    sx={{
-                      backgroundColor: isSelected
-                        ? selectedStyle.backgroundColor
-                        : alpha(theme.palette.background.border, 0.3),
-                      border: `1px solid`,
-                      borderColor: isSelected
-                        ? selectedStyle.borderColor
-                        : alpha(theme.palette.background.border, 0.3),
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        color: 'text.secondary',
-                        fontSize: 12,
-                        fontWeight: 500,
-                      }}
-                    >
-                      Coordenação
-                    </Typography>
-                    <Typography
-                      sx={{
-                        color: 'text.primary',
-                        fontSize: 15,
-                        fontWeight: 600,
-                      }}
-                    >
-                      {school.coordinator}
-                    </Typography>
-                  </Box>
-                  <Box
-                    className="flex-1 rounded-xl px-3 py-2"
-                    sx={{
-                      backgroundColor: isSelected
-                        ? selectedStyle.backgroundColor
-                        : alpha(theme.palette.background.border, 0.3),
-                      border: `1px solid`,
-                      borderColor: isSelected
-                        ? selectedStyle.borderColor
-                        : alpha(theme.palette.background.border, 0.3),
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        color: 'text.secondary',
-                        fontSize: 12,
-                        fontWeight: 500,
-                      }}
-                    >
-                      Alunos
-                    </Typography>
-                    <Typography
-                      sx={{
-                        color: 'text.primary',
-                        fontSize: 15,
-                        fontWeight: 600,
-                      }}
-                    >
-                      {school.students}
-                    </Typography>
-                  </Box>
                 </Box>
               </Box>
             )
@@ -394,9 +329,7 @@ export default function Page() {
                   fontSize: 14,
                 }}
               >
-                {selectedSchool.city}, {selectedSchool.state} ·{' '}
-                {selectedSchool.students} alunos · Coordenação:{' '}
-                {selectedSchool.coordinator}
+                {selectedSchool.students} alunos
               </Typography>
             </Box>
 
@@ -459,14 +392,6 @@ export default function Page() {
                         }}
                       >
                         {grade.year}
-                      </Typography>
-                      <Typography
-                        sx={{
-                          color: 'text.secondary',
-                          fontSize: 12,
-                        }}
-                      >
-                        Responsável: {grade.responsible}
                       </Typography>
                     </TableCell>
                     <TableCell align="center">

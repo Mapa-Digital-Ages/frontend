@@ -8,7 +8,6 @@ const adoptedSchools: AdoptedSchool[] = [
     state: 'SP',
     coordinator: 'Ana Lima',
     students: 125,
-    progress: 0,
     grades: [
       {
         year: '7º',
@@ -26,12 +25,11 @@ const adoptedSchools: AdoptedSchool[] = [
   },
   {
     id: 'school-2',
-    schoolName: 'Escola Rio Branco',
-    city: 'Rio de Janeiro',
-    state: 'RJ',
-    coordinator: 'Bruno Dias',
-    students: 89,
-    progress: 72,
+    schoolName: 'Escola Horizonte',
+    city: 'Belo Horizonte',
+    state: 'MG',
+    coordinator: 'Carla Souza',
+    students: 156,
     grades: [
       {
         year: '6º',
@@ -49,12 +47,11 @@ const adoptedSchools: AdoptedSchool[] = [
   },
   {
     id: 'school-3',
-    schoolName: 'Escola Horizonte',
-    city: 'Belo Horizonte',
-    state: 'MG',
-    coordinator: 'Carla Souza',
-    students: 156,
-    progress: 100,
+    schoolName: 'Escola Rio de Janeiro',
+    city: 'Rio de Janeiro',
+    state: 'RJ',
+    coordinator: 'Lucas Martins',
+    students: 200,
     grades: [
       {
         year: '7º',
@@ -83,7 +80,6 @@ const adoptedSchools: AdoptedSchool[] = [
     state: 'PE',
     coordinator: 'Beatriz Ferreira',
     students: 180,
-    progress: 45,
     grades: [
       {
         year: '6º',
@@ -106,7 +102,6 @@ const adoptedSchools: AdoptedSchool[] = [
     state: 'PR',
     coordinator: 'Rafael Mendes',
     students: 140,
-    progress: 88,
     grades: [
       {
         year: '8º',
@@ -126,14 +121,18 @@ const adoptedSchools: AdoptedSchool[] = [
 
 export const adoptedSchoolsService = {
   getTitle(): string {
-    return 'Parceiras | Escolas Adotadas'
+    return 'Gestão de Escolas Adotadas'
   },
 
   getSubtitle(): string {
-    return 'Status de implementação das escolas atendidas.'
+    return 'Status operacional das escolas parceiras'
   },
 
   async getSchools(): Promise<AdoptedSchool[]> {
     return Promise.resolve(adoptedSchools)
+  },
+
+  async removeSchool(_schoolId: string): Promise<void> {
+    return Promise.resolve()
   },
 }

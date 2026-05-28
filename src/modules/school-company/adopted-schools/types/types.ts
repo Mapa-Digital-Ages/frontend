@@ -12,6 +12,5 @@ export interface AdoptedSchool {
   state: string
   coordinator: string
   students: number
-  progress: number
   grades: AdoptedSchoolGrade[]
 }

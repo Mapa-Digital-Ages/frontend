@@ -34,18 +34,19 @@ test('adopted schools page applies data-testid to all major components', () => {
   assert.match(source, /data-testid="adopted-schools-list"/)
   assert.match(source, /data-testid="adopted-schools-content"/)
   assert.match(source, /data-testid={`school-card-\${school\.id}`}/)
+  assert.match(source, /data-testid={`school-card-menu-\${school\.id}`}/)
   assert.match(source, /data-testid="school-details-panel"/)
   assert.match(source, /data-testid="school-details-table"/)
   assert.match(source, /data-testid={`school-details-grade-\${grade\.year}`}/)
+  assert.match(source, /data-testid="remove-school-action"/)
+  assert.match(source, /data-testid="view-grade-trails-action"/)
 })
 
-test('adopted schools page renders school cards with coordinator and students info', () => {
+test('adopted schools page renders school cards with school and students info', () => {
   const source = readSource('modules/company/adopted-schools/page/Page.tsx')
 
   assert.match(source, /school\.schoolName/)
-  assert.match(source, /school\.coordinator/)
   assert.match(source, /school\.students/)
-  assert.match(source, /school\.city/)
   assert.match(source, /school\.state/)
   assert.match(source, /filteredSchools\.map/)
 })
@@ -56,7 +57,6 @@ test('adopted schools page renders school details panel with grades table', () =
   assert.match(source, /Dados da Escola/)
   assert.match(source, /selectedSchool\.grades\.map/)
   assert.match(source, /grade\.year/)
-  assert.match(source, /grade\.responsible/)
   assert.match(source, /grade\.trails/)
   assert.match(source, /grade\.subject/)
   assert.match(source, /TableHead/)
@@ -71,6 +71,7 @@ test('adopted schools service exposes getTitle, getSubtitle and getSchools', () 
   assert.match(source, /getTitle/)
   assert.match(source, /getSubtitle/)
   assert.match(source, /getSchools/)
+  assert.match(source, /removeSchool/)
   assert.match(source, /AdoptedSchool/)
 })
 
@@ -139,4 +140,19 @@ test('adopted schools page supports selecting a school card', () => {
   assert.match(source, /selectedSchoolId/)
   assert.match(source, /setSelectedSchoolId/)
   assert.match(source, /onClick/)
+})
+
+test('adopted schools page supports school and grade actions', () => {
+  const source = readSource('modules/company/adopted-schools/page/Page.tsx')
+
+  assert.match(source, /Menu/)
+  assert.match(source, /MenuItem/)
+  assert.match(source, /setMenuAnchorEl/)
+  assert.match(source, /setMenuSchoolId/)
+  assert.match(source, /handleRemoveSchool/)
+  assert.match(source, /adoptedSchoolsService\.removeSchool/)
+  assert.match(source, /AppActionModal/)
+  assert.match(source, /setGradeMenuAnchorEl/)
+  assert.match(source, /setGradeMenuKey/)
+  assert.match(source, /Ver trilhas/)
 })
