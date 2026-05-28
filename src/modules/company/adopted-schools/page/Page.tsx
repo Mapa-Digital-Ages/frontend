@@ -5,8 +5,8 @@ function AdoptedSchoolsPage() {
   return (
     <AppPageContainer>
       <PageHeader
-        title="Escolas Apadrinhadas"
-        subtitle="Gerencie as escolas apadrinhadas pela sua empresa"
+        title="Escolas Apoiadas"
+        subtitle="Gerencie as escolas apoiadas pela sua empresa"
         variant="company"
       />
     </AppPageContainer>
