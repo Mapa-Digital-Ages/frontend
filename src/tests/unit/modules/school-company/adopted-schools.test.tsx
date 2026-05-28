@@ -1,0 +1,188 @@
+import { assert } from '@/tests/helpers/assert'
+import { test } from '@jest/globals'
+import { readSource, sourceExists } from '@/tests/helpers/source'
+
+test('sc adopted schools page exists and uses the enterpriseSchool variant header', () => {
+  const source = readSource(
+    'modules/school-company/adopted-schools/page/Page.tsx'
+  )
+  const serviceSource = readSource(
+    'modules/school-company/adopted-schools/services/service.ts'
+  )
+
+  assert.match(source, /variant="enterpriseSchool"/)
+  assert.match(source, /PageHeader/)
+  assert.match(source, /adoptedSchoolsService\.getTitle\(\)/)
+  assert.match(source, /adoptedSchoolsService\.getSubtitle\(\)/)
+  assert.match(serviceSource, /Gestão de Escolas Adotadas/)
+  assert.match(serviceSource, /Status operacional das escolas parceiras/)
+})
+
+test('sc adopted schools page uses SearchBarAndFilter for search and filtering', () => {
+  const source = readSource(
+    'modules/school-company/adopted-schools/page/Page.tsx'
+  )
+
+  assert.match(source, /SearchBarAndFilter/)
+  assert.match(source, /onQueryChange/)
+  assert.match(source, /onStatusChange/)
+  assert.match(source, /filterOptions/)
+  assert.match(source, /Pesquisar empresas/)
+})
+
+test('sc adopted schools page applies data-testid to all major components', () => {
+  const source = readSource(
+    'modules/school-company/adopted-schools/page/Page.tsx'
+  )
+
+  assert.match(source, /data-testid="sc-adopted-schools-page"/)
+  assert.match(source, /data-testid="sc-adopted-schools-search"/)
+  assert.match(source, /data-testid="sc-adopted-schools-list"/)
+  assert.match(source, /data-testid="sc-adopted-schools-content"/)
+  assert.match(source, /data-testid={`sc-school-card-\${school\.id}`}/)
+  assert.match(source, /data-testid={`sc-school-card-menu-\${school\.id}`}/)
+  assert.match(source, /data-testid="sc-school-details-panel"/)
+  assert.match(source, /data-testid="sc-school-details-table"/)
+  assert.match(
+    source,
+    /data-testid={`sc-school-details-grade-\${grade\.year}`}/
+  )
+  assert.match(source, /data-testid="sc-remove-school-action"/)
+  assert.match(source, /data-testid="sc-view-grade-trails-action"/)
+})
+
+test('sc adopted schools page renders school cards with school and students info', () => {
+  const source = readSource(
+    'modules/school-company/adopted-schools/page/Page.tsx'
+  )
+
+  assert.match(source, /school\.schoolName/)
+  assert.match(source, /school\.students/)
+  assert.match(source, /school\.state/)
+  assert.match(source, /filteredSchools\.map/)
+})
+
+test('sc adopted schools page renders school details panel with grades table', () => {
+  const source = readSource(
+    'modules/school-company/adopted-schools/page/Page.tsx'
+  )
+
+  assert.match(source, /Dados da Escola/)
+  assert.match(source, /selectedSchool\.grades\.map/)
+  assert.match(source, /grade\.year/)
+  assert.match(source, /grade\.trails/)
+  assert.match(source, /grade\.subject/)
+  assert.match(source, /TableHead/)
+  assert.match(source, /TableBody/)
+})
+
+test('sc adopted schools service exposes getTitle, getSubtitle and getSchools', () => {
+  const source = readSource(
+    'modules/school-company/adopted-schools/services/service.ts'
+  )
+
+  assert.match(source, /getTitle/)
+  assert.match(source, /getSubtitle/)
+  assert.match(source, /getSchools/)
+  assert.match(source, /removeSchool/)
+  assert.match(source, /AdoptedSchool/)
+})
+
+test('sc adopted schools types define AdoptedSchool and AdoptedSchoolGrade', () => {
+  assert.ok(
+    sourceExists('modules/school-company/adopted-schools/types/types.ts')
+  )
+  const source = readSource(
+    'modules/school-company/adopted-schools/types/types.ts'
+  )
+
+  assert.match(source, /AdoptedSchool/)
+  assert.match(source, /AdoptedSchoolGrade/)
+  assert.match(source, /schoolName/)
+  assert.match(source, /coordinator/)
+  assert.match(source, /students/)
+  assert.doesNotMatch(source, /progress/)
+  assert.match(source, /grades/)
+})
+
+test('sc adopted schools route points to SchoolCompanyAdoptedSchoolsPage', () => {
+  const source = readSource('modules/school-company/route.tsx')
+
+  assert.match(source, /SchoolCompanyAdoptedSchoolsPage/)
+  assert.match(source, /adopted-schools\/page\/Page/)
+  assert.match(source, /schoolCompany\.adoptedSchools/)
+})
+
+test('sc adopted schools page uses theme-aware styling with escola_empresa role', () => {
+  const source = readSource(
+    'modules/school-company/adopted-schools/page/Page.tsx'
+  )
+
+  assert.match(source, /useTheme/)
+  assert.match(source, /theme\.palette/)
+  assert.match(source, /const role = 'escola_empresa' as const/)
+  assert.match(source, /getRolePalette\(theme, role\)/)
+  assert.doesNotMatch(source, /theme\.palette\.role\.empresa\./)
+  assert.doesNotMatch(source, /text-slate-900/)
+  assert.doesNotMatch(source, /bg-slate/)
+})
+
+test('sc adopted schools page uses AppCard and AppPageContainer', () => {
+  const source = readSource(
+    'modules/school-company/adopted-schools/page/Page.tsx'
+  )
+
+  assert.match(source, /AppCard/)
+  assert.match(source, /AppPageContainer/)
+})
+
+test('sc adopted schools page follows the same loading pattern as dashboard', () => {
+  const source = readSource(
+    'modules/school-company/adopted-schools/page/Page.tsx'
+  )
+
+  assert.match(source, /useState\(true\)/)
+  assert.match(source, /isLoading/)
+  assert.match(source, /LoadingScreen/)
+  assert.match(source, /useEffect/)
+  assert.match(source, /let isActive = true/)
+  assert.match(source, /isActive = false/)
+})
+
+test('sc adopted schools service contains mock data for schools', () => {
+  const source = readSource(
+    'modules/school-company/adopted-schools/services/service.ts'
+  )
+
+  assert.match(source, /Escola São Paulo/)
+  assert.match(source, /Escola Horizonte/)
+  assert.match(source, /Ana Lima/)
+  assert.match(source, /Carla Souza/)
+})
+
+test('sc adopted schools page supports selecting a school card', () => {
+  const source = readSource(
+    'modules/school-company/adopted-schools/page/Page.tsx'
+  )
+
+  assert.match(source, /selectedSchoolId/)
+  assert.match(source, /setSelectedSchoolId/)
+  assert.match(source, /onClick/)
+})
+
+test('sc adopted schools page supports school and grade actions', () => {
+  const source = readSource(
+    'modules/school-company/adopted-schools/page/Page.tsx'
+  )
+
+  assert.match(source, /Menu/)
+  assert.match(source, /MenuItem/)
+  assert.match(source, /setMenuAnchorEl/)
+  assert.match(source, /setMenuSchoolId/)
+  assert.match(source, /handleRemoveSchool/)
+  assert.match(source, /adoptedSchoolsService\.removeSchool/)
+  assert.match(source, /AppActionModal/)
+  assert.match(source, /setGradeMenuAnchorEl/)
+  assert.match(source, /setGradeMenuKey/)
+  assert.match(source, /Ver trilhas/)
+})

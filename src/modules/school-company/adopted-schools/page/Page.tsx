@@ -1,4 +1,5 @@
 import AccountBalanceRoundedIcon from '@mui/icons-material/AccountBalanceRounded'
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded'
 import {
   Box,
@@ -24,12 +25,10 @@ import AppCard from '@/shared/ui/AppCard'
 import AppPageContainer from '@/shared/ui/AppPageContainer'
 import PageHeader from '@/shared/ui/PageHeader'
 import { SearchBarAndFilter } from '@/shared/ui/SearchBarAndFilter'
+import AppActionModal from '@/shared/ui/AppActionModal'
 import { adoptedSchoolsService } from '../services/service'
 import type { AdoptedSchool } from '../types/types'
 import type { DropdownOption } from '@/shared/ui/AppDropdown'
-import { useCompanyRole } from '@/modules/company/shared/hooks/useCompanyRole'
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
-import AppActionModal from '@/shared/ui/AppActionModal'
 
 const FILTER_OPTIONS: DropdownOption[] = [
   { label: 'Todos', value: 'all' },
@@ -53,7 +52,7 @@ export default function Page() {
     useState<HTMLElement | null>(null)
   const [gradeMenuKey, setGradeMenuKey] = useState<string | null>(null)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-  const role = useCompanyRole()
+  const role = 'escola_empresa' as const
   const accent = getRolePalette(theme, role)
   const hoverStyle = getRoleHoverStyle(theme, role)
   const selectedStyle = getRoleSelectedStyle(theme, role)
@@ -113,15 +112,15 @@ export default function Page() {
   return (
     <AppPageContainer
       className="gap-4 md:gap-5"
-      data-testid="adopted-schools-page"
+      data-testid="sc-adopted-schools-page"
     >
       <PageHeader
-        title="Escolas Apoiadas"
-        subtitle="Gerencie as escolas apoiadas pela sua empresa"
-        variant="company"
+        title={adoptedSchoolsService.getTitle()}
+        subtitle={adoptedSchoolsService.getSubtitle()}
+        variant="enterpriseSchool"
       />
 
-      <Box data-testid="adopted-schools-search">
+      <Box data-testid="sc-adopted-schools-search">
         <SearchBarAndFilter
           filterOptions={FILTER_OPTIONS}
           onQueryChange={setQuery}
@@ -139,20 +138,20 @@ export default function Page() {
 
       <Box
         className="grid grid-cols-1 gap-4 xl:grid-cols-2"
-        data-testid="adopted-schools-content"
+        data-testid="sc-adopted-schools-content"
       >
         {/* School Cards List */}
         <AppCard
           contentClassName="gap-3 p-5"
           contentSx={{ maxHeight: 500, overflowY: 'auto' }}
-          data-testid="adopted-schools-list"
+          data-testid="sc-adopted-schools-list"
         >
           {filteredSchools.map(school => {
             const isSelected = selectedSchoolId === school.id
             return (
               <Box
                 className="cursor-pointer rounded-2xl px-4 py-3 transition-all"
-                data-testid={`school-card-${school.id}`}
+                data-testid={`sc-school-card-${school.id}`}
                 key={school.id}
                 onClick={() => setSelectedSchoolId(school.id)}
                 sx={{
@@ -175,12 +174,9 @@ export default function Page() {
                     <Box
                       className="flex items-center justify-center rounded-xl"
                       sx={{
-                        backgroundColor: alpha(
-                          theme.palette.role.empresa.primary,
-                          0.1
-                        ),
-                        border: `1px solid ${alpha(theme.palette.role.empresa.primary, 0.3)}`,
-                        color: theme.palette.role.empresa.primary,
+                        backgroundColor: alpha(accent.primary, 0.1),
+                        border: `1px solid ${alpha(accent.primary, 0.3)}`,
+                        color: accent.primary,
                         height: 40,
                         width: 40,
                         flexShrink: 0,
@@ -210,7 +206,7 @@ export default function Page() {
                   </Box>
                   <IconButton
                     aria-label="Mais opções"
-                    data-testid={`school-card-menu-${school.id}`}
+                    data-testid={`sc-school-card-menu-${school.id}`}
                     size="small"
                     onClick={e => {
                       e.stopPropagation()
@@ -253,7 +249,7 @@ export default function Page() {
           }}
         >
           <MenuItem
-            data-testid="remove-school-action"
+            data-testid="sc-remove-school-action"
             onClick={() => {
               setMenuAnchorEl(null)
               setIsDeleteModalOpen(true)
@@ -287,7 +283,7 @@ export default function Page() {
           }}
         >
           <MenuItem
-            data-testid="view-grade-trails-action"
+            data-testid="sc-view-grade-trails-action"
             onClick={() => {
               setGradeMenuAnchorEl(null)
               setGradeMenuKey(null)
@@ -302,11 +298,11 @@ export default function Page() {
 
         {/* School Details Panel */}
         {selectedSchool && (
-          <AppCard contentClassName="p-5" data-testid="school-details-panel">
+          <AppCard contentClassName="p-5" data-testid="sc-school-details-panel">
             <Box className="mb-4">
               <Typography
                 sx={{
-                  color: theme.palette.role.empresa.primary,
+                  color: accent.primary,
                   fontSize: 14,
                   fontWeight: 600,
                   mb: 0.5,
@@ -335,7 +331,7 @@ export default function Page() {
 
             <Table
               size="small"
-              data-testid="school-details-table"
+              data-testid="sc-school-details-table"
               sx={{
                 '& .MuiTableCell-root': {
                   borderColor: theme.palette.background.border,
@@ -381,7 +377,7 @@ export default function Page() {
                 {selectedSchool.grades.map(grade => (
                   <TableRow
                     key={grade.year}
-                    data-testid={`school-details-grade-${grade.year}`}
+                    data-testid={`sc-school-details-grade-${grade.year}`}
                   >
                     <TableCell>
                       <Typography
@@ -419,7 +415,7 @@ export default function Page() {
                     <TableCell align="center">
                       <IconButton
                         aria-label={`Opções ${grade.year}`}
-                        data-testid={`grade-menu-${grade.year}`}
+                        data-testid={`sc-grade-menu-${grade.year}`}
                         size="small"
                         onClick={e => {
                           setGradeMenuAnchorEl(e.currentTarget)
