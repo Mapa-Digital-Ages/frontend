@@ -116,8 +116,8 @@ export default function Page() {
       data-testid="adopted-schools-page"
     >
       <PageHeader
-        title={adoptedSchoolsService.getTitle()}
-        subtitle={adoptedSchoolsService.getSubtitle()}
+        title="Escolas Apoiadas"
+        subtitle="Gerencie as escolas apoiadas pela sua empresa"
         variant="company"
       />
 

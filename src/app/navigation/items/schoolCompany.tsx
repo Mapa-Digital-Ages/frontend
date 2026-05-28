@@ -28,7 +28,7 @@ export const schoolCompanyNavigation: SidebarItem[] = [
     icon: <PersonAddRoundedIcon fontSize="medium" />,
   },
   {
-    label: 'Escolas Apadrinhadas',
+    label: 'Escolas Apoiadas',
     path: APP_ROUTES.schoolCompany.adoptedSchools,
     icon: <SchoolRoundedIcon fontSize="medium" />,
   },
