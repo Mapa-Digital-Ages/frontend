@@ -1,20 +1,19 @@
 import BusinessRoundedIcon from '@mui/icons-material/BusinessRounded'
-import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded'
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded'
 import NotificationsActiveRoundedIcon from '@mui/icons-material/NotificationsActiveRounded'
 import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded'
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
 import { Box, Typography } from '@mui/material'
-import { alpha, useTheme } from '@mui/material/styles'
+import { useTheme } from '@mui/material/styles'
 import { useEffect, useState } from 'react'
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
 import LoadingScreen from '@/shared/ui/LoadingScreen'
-import AppCard from '@/shared/ui/AppCard'
 import AppPageContainer from '@/shared/ui/AppPageContainer'
 import { adminService } from '../services/service'
 import type { IconVariantName } from '@/app/theme/core/palette'
 import type { Stat } from '@/shared/types/common'
 import PageHeader from '@/shared/ui/PageHeader'
 import MetricsCard from '@/shared/ui/MetricsCard'
+import AppCard from '@/shared/ui/AppCard'
 
 const RECENT_ACTIVITY = [
   {
@@ -41,13 +40,6 @@ const RECENT_ACTIVITY = [
     tone: 'green' as const,
     time: 'há 6h',
   },
-]
-
-const QUICK_ACTIONS = [
-  'Revisar alertas críticos',
-  'Publicar conteúdos em fila',
-  'Ajustar permissões de acesso',
-  'Atualizar parâmetros da IA',
 ]
 
 export default function Page() {
@@ -183,34 +175,6 @@ export default function Page() {
               </Box>
             )
           })}
-        </AppCard>
-
-        <AppCard
-          contentClassName="gap-3 p-5"
-          title="Ações rápidas"
-          titleClassName="text-2xl font-bold md:text-3xl"
-        >
-          {QUICK_ACTIONS.map(action => (
-            <Box
-              className="flex items-center justify-between rounded-2xl px-3 py-3"
-              key={action}
-              sx={{
-                backgroundColor: alpha(theme.palette.background.hover, 0.8),
-                border: `1px solid ${alpha(theme.palette.divider, 0.7)}`,
-              }}
-            >
-              <Typography
-                sx={{
-                  color: 'text.primary',
-                  fontSize: { md: 18, xs: 16 },
-                  fontWeight: 600,
-                }}
-              >
-                {action}
-              </Typography>
-              <ChevronRightRoundedIcon sx={{ color: 'text.secondary' }} />
-            </Box>
-          ))}
         </AppCard>
       </Box>
     </AppPageContainer>

@@ -250,9 +250,13 @@ export default function Page() {
         subtitle="Configure sua conta"
       />
       <Box
-        className="grid grid-cols-2 md:grid-cols-2 gap-5"
         sx={{
           display: 'grid',
+          gap: 2.5,
+          gridTemplateColumns: {
+            lg: 'minmax(0, 1fr) minmax(0, 1fr)',
+            xs: 'minmax(0, 1fr)',
+          },
         }}
       >
         <ListChildren

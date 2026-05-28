@@ -65,6 +65,7 @@ export interface StudentFormValues {
   password: string
   school: string
   guardian: string
+  guardianName: string
   year: string
   status: string
   birthDate: string
@@ -79,6 +80,7 @@ function getDefaultValues(defaultSchoolId?: string | null): StudentFormValues {
     password: '',
     school: defaultSchoolId || NONE_VALUE,
     guardian: NONE_VALUE,
+    guardianName: '',
     year: yearOptions[0].value,
     status: 'ativo',
     birthDate: '',
@@ -150,7 +152,9 @@ export default function CreateStudentModal({
 
   function handleConfirm() {
     if (!validate() || !isLinked) return
-    onConfirm(values)
+    const guardianLabel =
+      guardians.find(g => g.value === values.guardian)?.label ?? ''
+    onConfirm({ ...values, guardianName: guardianLabel })
     setValues(getDefaultValues(defaultSchoolId))
     setErrors({})
   }
