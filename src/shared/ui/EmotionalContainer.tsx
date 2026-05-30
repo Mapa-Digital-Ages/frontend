@@ -134,25 +134,33 @@ export default function EmotionalContainer() {
   useEffect(() => {
     if (!studentUserId) return
     let active = true
+
+    const from = startOfWeek.format('YYYY-MM-DD')
+    const to = startOfWeek.add(6, 'day').format('YYYY-MM-DD')
     const today = dayjs().format('YYYY-MM-DD')
+
     void wellBeingService
-      .getStudentDay(studentUserId, today)
-      .then(record => {
-        if (!active || !record?.humor) return
+      .getStudentHistory(studentUserId, from, to)
+      .then(entries => {
+        if (!active) return
         setWeeklyMood(prev =>
-          prev.map(day =>
-            day.date.format('YYYY-MM-DD') === today
-              ? { ...day, mood: record.humor }
-              : day
-          )
+          prev.map(day => {
+            const dateStr = day.date.format('YYYY-MM-DD')
+            const entry = entries.find(e => e.date === dateStr)
+            return entry?.mood ? { ...day, mood: entry.mood } : day
+          })
         )
-        setSelectedEmotion(HUMOR_TO_LABEL[record.humor])
+        const todayEntry = entries.find(e => e.date === today)
+        if (todayEntry?.mood) {
+          setSelectedEmotion(HUMOR_TO_LABEL[todayEntry.mood])
+        }
       })
       .catch(() => undefined)
+
     return () => {
       active = false
     }
-  }, [studentUserId])
+  }, [studentUserId, startOfWeek])
 
   async function handleEmotionSelect(emotionLabel: string) {
     const humor = LABEL_TO_HUMOR[emotionLabel]
