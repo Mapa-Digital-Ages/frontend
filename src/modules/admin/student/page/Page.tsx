@@ -216,12 +216,6 @@ export default function Page() {
   }, [])
 
   useEffect(() => {
-    void studentService.countStudents().then(total => {
-      setMetrics(m => ({ ...m, total }))
-    })
-  }, [])
-
-  useEffect(() => {
     activePageRef.current = 1
 
     const fetchFirstPage = async () => {
@@ -239,6 +233,7 @@ export default function Page() {
         setFilteredTotal(result.total)
         setMetrics(m => ({
           ...m,
+          total: result.total,
           schools: new Set(items.map(s => s.school).filter(Boolean)).size,
         }))
       } finally {
