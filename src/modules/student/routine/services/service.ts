@@ -28,4 +28,45 @@ export const studentService = {
     )
     return response.data
   },
+
+  async getTasksForDate(studentId: string, dateStr: string) {
+    const response = await httpClient.get<Task[]>(
+      `student/${studentId}/calendar/${dateStr}`
+    )
+    return response.data
+  },
+
+  async syncCalendarDay(
+    studentId: string,
+    dateStr: string,
+    tasks: Array<{
+      id?: number | null
+      title: string
+      task_status?: string | null
+      subject_id: number | null
+    }>
+  ) {
+    const response = await httpClient.put<Task[]>(
+      `student/${studentId}/calendar/${dateStr}`,
+      { tasks }
+    )
+    return response.data
+  },
+
+  async listSubjects() {
+    const response =
+      await httpClient.get<
+        Array<{
+          id: number | string
+          slug?: string | null
+          name: string
+          color?: string | null
+        }>
+      >('subjects')
+    return response.data.map(dto => ({
+      id: Number(dto.id),
+      slug: dto.slug ?? null,
+      name: dto.name,
+    }))
+  },
 }
