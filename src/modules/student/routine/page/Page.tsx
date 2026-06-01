@@ -5,9 +5,11 @@ import Planner from '../../shared/components/Planner'
 import AppCalendar from '../../shared/components/AppCalendar'
 import dayjs from 'dayjs'
 import { SUBJECTS } from '@/shared/utils/themes'
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Task } from '@/modules/student/shared/components/Planner'
 import OrdinaryHeader from '@/shared/ui/OrdinaryHeader'
+import { studentService } from '../services/service'
+import { authService } from '@/app/auth/core/service'
 
 const initialTasks: Task[] = [
   {
@@ -56,6 +58,31 @@ const initialTasks: Task[] = [
 
 export default function Page() {
   const [tasks, setTasks] = useState<Task[]>(initialTasks)
+  const [isLoadingTasks, setIsLoadingTasks] = useState(false)
+  const isLoadingTasksRef = useRef(false)
+
+  const studentId = authService.getUserId()
+
+  const loadPlanner = useCallback(async (id: string) => {
+    if (isLoadingTasksRef.current) return
+    try {
+      isLoadingTasksRef.current = true
+      setIsLoadingTasks(true)
+      const data = await studentService.getTasks(id)
+      setTasks(data)
+    } catch (error) {
+      console.error('Erro ao carregar tarefas:', error)
+    } finally {
+      isLoadingTasksRef.current = false
+      setIsLoadingTasks(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (studentId) {
+      loadPlanner(studentId)
+    }
+  }, [studentId, loadPlanner])
 
   return (
     <AppPageContainer className="gap-4 md:gap-5">
@@ -85,7 +112,7 @@ export default function Page() {
           <AppCalendar tasks={tasks} onTasksChange={setTasks} />
         </Box>
 
-        <Planner tasks={tasks} />
+        <Planner tasks={tasks} loading={isLoadingTasks} />
       </Box>
     </AppPageContainer>
   )
