@@ -2,6 +2,7 @@ import { COOKIE_KEYS } from '@/shared/constants/storage'
 import { httpClient } from '@/shared/lib/http/client'
 import type { StudentTask, SummaryMetric } from '@/shared/types/common'
 import { getCookie } from '@/shared/lib/storage/cookies'
+import { Task } from '../../shared/components/Planner'
 
 export const studentService = {
   getName(): string | null {
@@ -21,8 +22,10 @@ export const studentService = {
     return response.data
   },
 
-  async getTasks() {
-    const response = await httpClient.get<StudentTask[]>('student/tasks')
+  async getTasks(studentId: string) {
+    const response = await httpClient.get<Task[]>(
+      `student/${studentId}/calendar`
+    )
     return response.data
   },
 }
