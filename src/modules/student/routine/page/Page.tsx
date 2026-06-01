@@ -184,9 +184,10 @@ export default function Page() {
         ])
 
         await loadPlanner(studentId)
-      } catch (error: any) {
+      } catch (error: unknown) {
         setHasError(true)
-        const msg = error?.response?.data ?? error?.message ?? error
+        const err = error as { response?: { data?: unknown }; message?: string }
+        const msg = err?.response?.data ?? err?.message ?? String(error)
         console.error('Erro ao sincronizar tarefas do calendário:', msg)
       } finally {
         setIsLoadingTasks(false)

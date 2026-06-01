@@ -2,7 +2,6 @@ import CalculateRoundedIcon from '@mui/icons-material/CalculateRounded'
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded'
 import PublicRoundedIcon from '@mui/icons-material/PublicRounded'
 import { Box } from '@mui/material'
-import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
 import Planner from '@/modules/student/shared/components/Planner'
 import type { Task } from '@/modules/student/shared/components/Planner'
@@ -57,7 +56,7 @@ function mapApiTask(t: Task): Task {
 
 export default function Page() {
   const [tasks, setTasks] = useState<Task[]>([])
-  const [loadingTasks, setLoadingTasks] = useState(false)
+  const [loadingTasks, setLoadingTasks] = useState(true)
   const [studentClassLabel, setStudentClassLabel] = useState<string>()
 
   useEffect(() => {
@@ -65,7 +64,6 @@ export default function Page() {
 
     const studentId = authService.getUserId()
     if (studentId) {
-      setLoadingTasks(true)
       routineService
         .getTasks(studentId)
         .then(data => {
