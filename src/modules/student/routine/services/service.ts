@@ -54,15 +54,14 @@ export const studentService = {
   },
 
   async listSubjects() {
-    const response =
-      await httpClient.get<
-        Array<{
-          id: number | string
-          slug?: string | null
-          name: string
-          color?: string | null
-        }>
-      >('subjects')
+    const response = await httpClient.get<
+      Array<{
+        id: number | string
+        slug?: string | null
+        name: string
+        color?: string | null
+      }>
+    >('subjects')
     return response.data.map(dto => ({
       id: Number(dto.id),
       slug: dto.slug ?? null,
