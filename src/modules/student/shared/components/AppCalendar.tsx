@@ -14,6 +14,11 @@ import type { Task } from './Planner'
 interface AppCalendarProps {
   tasks: Task[]
   onTasksChange: (tasks: Task[]) => void
+  onConfirmTasksForDate?: (
+    date: string,
+    updatedDayTasks: Task[]
+  ) => Promise<void>
+  onFetchTasksForDate?: (dateStr: string) => Promise<Task[]>
 }
 
 function CustomDay(props: PickersDayProps) {
@@ -73,15 +78,33 @@ function CustomDay(props: PickersDayProps) {
 export default function AppCalendar({
   tasks,
   onTasksChange,
+  onConfirmTasksForDate,
+  onFetchTasksForDate,
 }: AppCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [view, setView] = useState<'year' | 'month' | 'day'>('day')
+  const [dateTasks, setDateTasks] = useState<Task[]>([])
 
-  function handleDaySelect(date: Dayjs | null) {
+  async function handleDaySelect(date: Dayjs | null) {
     if (!date) return
     setSelectedDate(date)
     if (view === 'day') {
+      if (onFetchTasksForDate) {
+        try {
+          const fetched = await onFetchTasksForDate(date.format('YYYY-MM-DD'))
+          // Fallback to local state when API returns empty (endpoint may not exist for past dates)
+          setDateTasks(
+            fetched.length > 0
+              ? fetched
+              : tasks.filter(t => dayjs(t.date).isSame(date, 'day'))
+          )
+        } catch {
+          setDateTasks(tasks.filter(t => dayjs(t.date).isSame(date, 'day')))
+        }
+      } else {
+        setDateTasks(tasks.filter(t => dayjs(t.date).isSame(date, 'day')))
+      }
       setModalOpen(true)
     } else {
       setSelectedDate(null)
@@ -91,19 +114,28 @@ export default function AppCalendar({
   function handleModalClose() {
     setSelectedDate(null)
     setModalOpen(false)
+    setDateTasks([])
   }
 
-  function handleConfirm(updatedDayTasks: Task[]) {
+  async function handleConfirm(updatedDayTasks: Task[]) {
     if (!selectedDate) return
-    const otherTasks = tasks.filter(
-      t => !dayjs(t.date).isSame(selectedDate, 'day')
-    )
-    onTasksChange([...otherTasks, ...updatedDayTasks])
+
+    if (onConfirmTasksForDate) {
+      const dateStr = selectedDate.format('YYYY-MM-DD')
+      await onConfirmTasksForDate(dateStr, updatedDayTasks)
+    } else {
+      const otherTasks = tasks.filter(
+        t => !dayjs(t.date).isSame(selectedDate, 'day')
+      )
+      onTasksChange([...otherTasks, ...updatedDayTasks])
+    }
   }
 
-  const dayTasks = selectedDate
-    ? tasks.filter(t => dayjs(t.date).isSame(selectedDate, 'day'))
-    : []
+  const dayTasksForModal = onFetchTasksForDate
+    ? dateTasks
+    : selectedDate
+      ? tasks.filter(t => dayjs(t.date).isSame(selectedDate, 'day'))
+      : []
 
   return (
     <>
@@ -160,7 +192,7 @@ export default function AppCalendar({
       <DayDetailModal
         open={modalOpen}
         date={selectedDate}
-        tasks={dayTasks}
+        tasks={dayTasksForModal}
         onClose={handleModalClose}
         onConfirm={handleConfirm}
       />
