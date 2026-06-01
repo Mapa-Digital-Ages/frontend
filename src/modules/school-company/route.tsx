@@ -4,6 +4,7 @@ import { APP_ROUTES } from '@/app/router/paths'
 import DashboardLayout from '@/app/layout/DashboardLayout'
 import SchoolCompanyDashboardPage from '@/modules/school-company/dashboard/page/Page'
 import SchoolCompanyAdoptedSchoolsPage from '@/modules/school-company/adopted-schools/page/Page'
+import PartnersPage from '@/modules/school-company/partners/page/Page'
 
 export const schoolCompanyRoutes: RouteObject[] = [
   {
@@ -25,7 +26,7 @@ export const schoolCompanyRoutes: RouteObject[] = [
               },
               {
                 path: APP_ROUTES.schoolCompany.partners,
-                element: <SchoolCompanyDashboardPage />,
+                element: <PartnersPage />,
               },
               {
                 path: APP_ROUTES.schoolCompany.requestPartner,
