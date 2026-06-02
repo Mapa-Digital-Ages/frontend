@@ -26,7 +26,13 @@
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
 //
 
-type PerfisSuportados = 'aluno'
+type PerfisSuportados =
+  | 'aluno'
+  | 'responsavel'
+  | 'admin'
+  | 'empresa'
+  | 'escola'
+  | 'escola_empresa'
 
 export {}
 
@@ -48,12 +54,41 @@ Cypress.Commands.add('getBySel', (selector: string, ...args: unknown[]) => {
   return cy.get(`[data-testid="${selector}"]`, ...args)
 })
 Cypress.Commands.add('login', (perfil: PerfisSuportados) => {
-  const email = Cypress.env('EMAIL_LOGIN_ALUNO')
-  const senha = Cypress.env('PASSWORD_LOGIN_ALUNO')
+  const credentials: Record<
+    PerfisSuportados,
+    { email: string | undefined; senha: string | undefined }
+  > = {
+    aluno: {
+      email: Cypress.env('EMAIL_LOGIN_ALUNO'),
+      senha: Cypress.env('PASSWORD_LOGIN_ALUNO'),
+    },
+    responsavel: {
+      email: Cypress.env('EMAIL_LOGIN_RESPONSAVEL'),
+      senha: Cypress.env('PASSWORD_LOGIN_RESPONSAVEL'),
+    },
+    admin: {
+      email: Cypress.env('EMAIL_LOGIN_ADMIN'),
+      senha: Cypress.env('PASSWORD_LOGIN_ADMIN'),
+    },
+    empresa: {
+      email: Cypress.env('EMAIL_LOGIN_EMPRESA'),
+      senha: Cypress.env('PASSWORD_LOGIN_EMPRESA'),
+    },
+    escola: {
+      email: Cypress.env('EMAIL_LOGIN_ESCOLA'),
+      senha: Cypress.env('PASSWORD_LOGIN_ESCOLA'),
+    },
+    escola_empresa: {
+      email: Cypress.env('EMAIL_LOGIN_ESCOLA_EMPRESA'),
+      senha: Cypress.env('PASSWORD_LOGIN_ESCOLA_EMPRESA'),
+    },
+  }
+
+  const { email, senha } = credentials[perfil]
 
   if (!email || !senha) {
     throw new Error(
-      `Configuração não encontrada para o perfil: ${perfil}. EMAIL_LOGIN_ALUNO ou PASSWORD_LOGIN_ALUNO estão undefined.`
+      `Configuração não encontrada para o perfil: ${perfil}. Variáveis de ambiente não correspondem.`
     )
   }
 
