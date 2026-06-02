@@ -192,7 +192,7 @@ export const parentService = {
   async getStudentTasks(studentId: string) {
     try {
       const response = await httpClient.get<Task[]>(
-        `student/${studentId}/tasks`
+        `student/${studentId}/calendar`
       )
       if (response.data?.length) return response.data
     } catch {

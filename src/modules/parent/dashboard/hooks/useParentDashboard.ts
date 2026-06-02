@@ -7,6 +7,7 @@ import type {
 } from '../types/types'
 import type { SummaryMetric, WeeklyMoodEntry } from '@/shared/types/common'
 import type { Task } from '@/modules/student/shared/components/Planner'
+import { getSubjectTagContextByLabel } from '@/shared/utils/themes'
 
 const WELL_BEING_HISTORY_DAYS = 28
 const WELL_BEING_POLL_INTERVAL_MS = 15_000
@@ -59,6 +60,46 @@ const ERROR_STATE: DashboardState = {
   error: true,
 }
 
+function mapApiTask(t: Task): Task {
+  const resolvedSubject =
+    getSubjectTagContextByLabel(t.subject?.label) ||
+    (t.subject?.id != null
+      ? getSubjectTagContextByLabel(String(t.subject.id))
+      : undefined) ||
+    t.subject
+
+  const rawDate = t.date as unknown
+  let parsedDate: Date
+  if (typeof rawDate === 'string') {
+    const dateOnly = (rawDate as string).substring(0, 10)
+    parsedDate = new Date(`${dateOnly}T00:00:00`)
+  } else if (t.date instanceof Date) {
+    parsedDate = t.date
+  } else {
+    parsedDate = new Date()
+  }
+
+  const mapped = {
+    ...t,
+    id: String(t.id),
+    date: parsedDate,
+    subject: resolvedSubject,
+  }
+
+  if (mapped.id && (!mapped.subject || !mapped.subject.label)) {
+    const cached = localStorage.getItem(`task-subj-${mapped.id}`)
+    if (cached) {
+      try {
+        mapped.subject = JSON.parse(cached)
+      } catch (e) {
+        console.error('Error parsing cached subject:', e)
+      }
+    }
+  }
+
+  return mapped
+}
+
 export function useParentDashboard(): UseParentDashboardResult {
   const [state, setState] = useState<DashboardState>(LOADING_STATE)
 
@@ -102,12 +143,13 @@ export function useParentDashboard(): UseParentDashboardResult {
     async (childId: string, children: ParentDashboardChild[]) => {
       const { from, to } = wellBeingDateRange()
       try {
-        const [metrics, disciplines, tasks, wellBeing] = await Promise.all([
+        const [metrics, disciplines, tasksData, wellBeing] = await Promise.all([
           parentService.getStudentSummary(childId),
           parentService.getStudentDisciplines(childId),
           parentService.getStudentTasks(childId),
           parentService.getStudentWellBeing(childId, from, to),
         ])
+        const tasks = tasksData.map(mapApiTask)
         setState(prev => ({
           ...prev,
           child: children.find(c => c.id === childId) ?? prev.child,

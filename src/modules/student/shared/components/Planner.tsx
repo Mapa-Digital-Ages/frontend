@@ -10,6 +10,7 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  Skeleton,
 } from '@mui/material'
 import CheckIcon from '@mui/icons-material/Check'
 import HourglassBottomRoundedIcon from '@mui/icons-material/HourglassBottomRounded'
@@ -37,6 +38,7 @@ interface PlannerProps {
   tasks: Task[]
   sx?: SxProps<Theme>
   hideStatus?: boolean
+  loading?: boolean
 }
 
 const dayMap: Record<string, string> = {
@@ -118,7 +120,12 @@ function getTaskIcon(status: Task['status']) {
   return renderIconBox(current.icon, current.color, current.bg)
 }
 
-function Planner({ tasks, sx, hideStatus = false }: PlannerProps) {
+function Planner({
+  tasks,
+  sx,
+  loading = false,
+  hideStatus = false,
+}: PlannerProps) {
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
   const startOfWeek = dayjs().startOf('week').add(1, 'day')
   const endOfWeek = dayjs().endOf('week').add(1, 'day')
@@ -165,175 +172,237 @@ function Planner({ tasks, sx, hideStatus = false }: PlannerProps) {
         <Typography variant="h5">Planner da Semana</Typography>
       </Box>
 
-      {Object.keys(groupedTasks).length === 0 ? (
-        <EmptyState
-          title="Sem tarefas nesta semana"
-          description="Nenhuma tarefa agendada para os próximos dias."
-        />
-      ) : null}
-
-      <List disablePadding sx={{ display: 'grid', gap: 1 }}>
-        {Object.entries(groupedTasks)
-          .sort(([a], [b]) => (dayOrder[a] ?? 99) - (dayOrder[b] ?? 99))
-          .map(([day, dayTasks]) => (
-            <ListItemButton
-              component={dayTasks.length > 1 ? 'button' : 'div'}
-              disableRipple={dayTasks.length <= 1}
-              key={day}
-              onClick={
-                dayTasks.length > 1 ? () => setSelectedDay(day) : undefined
-              }
+      {loading ? (
+        <List disablePadding sx={{ display: 'grid', gap: 1 }}>
+          {Array.from({ length: 5 }).map((_, index) => (
+            <Box
+              key={index}
               sx={{
                 border: '1px solid',
-                borderColor:
-                  dayTasks.length === 1
-                    ? alpha(dayTasks[0].subject.color || '#ccc', 0.25)
-                    : 'divider',
+                borderColor: 'divider',
                 borderRadius: '12px',
-                cursor: dayTasks.length > 1 ? 'pointer' : 'default',
+                p: 1.5,
                 display: 'block',
                 flex: 1,
-                minWidth: 0,
-                p: 1.5,
-                transition: '0.2s',
-                '&:hover': { backgroundColor: 'action.hover' },
               }}
             >
-              {dayTasks.length === 1 ? (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  minWidth: 0,
+                  gap: 1,
+                }}
+              >
                 <Box
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
+                    gap: 1.5,
                     minWidth: 0,
-                    gap: 1,
+                    flex: '1 1 200px',
                   }}
                 >
+                  <Skeleton variant="circular" width={36} height={36} />
                   <Box
                     sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1.5,
                       minWidth: 0,
-                      flex: '1 1 200px',
+                      flex: '1 1 auto',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 0.5,
                     }}
                   >
-                    {getTaskIcon(dayTasks[0].status)}
-                    <Box sx={{ minWidth: 0, flex: '1 1 auto' }}>
-                      <Typography sx={{ fontWeight: 700, fontSize: '1rem' }}>
-                        {day}
-                      </Typography>
+                    <Skeleton variant="text" width={100} height={20} />
+                    <Skeleton variant="text" width="60%" height={16} />
+                  </Box>
+                </Box>
+                {!hideStatus && (
+                  <Skeleton variant="text" width={60} height={20} />
+                )}
+              </Box>
+            </Box>
+          ))}
+        </List>
+      ) : (
+        <>
+          {Object.keys(groupedTasks).length === 0 ? (
+            <EmptyState
+              title="Sem tarefas nesta semana"
+              description="Nenhuma tarefa agendada para os próximos dias."
+            />
+          ) : null}
+
+          <List disablePadding sx={{ display: 'grid', gap: 1 }}>
+            {Object.entries(groupedTasks)
+              .sort(([a], [b]) => (dayOrder[a] ?? 99) - (dayOrder[b] ?? 99))
+              .map(([day, dayTasks]) => (
+                <ListItemButton
+                  component={dayTasks.length > 1 ? 'button' : 'div'}
+                  disableRipple={dayTasks.length <= 1}
+                  key={day}
+                  onClick={
+                    dayTasks.length > 1 ? () => setSelectedDay(day) : undefined
+                  }
+                  sx={{
+                    border: '1px solid',
+                    borderColor:
+                      dayTasks.length === 1
+                        ? alpha(dayTasks[0].subject.color || '#ccc', 0.25)
+                        : 'divider',
+                    borderRadius: '12px',
+                    cursor: dayTasks.length > 1 ? 'pointer' : 'default',
+                    display: 'block',
+                    flex: 1,
+                    minWidth: 0,
+                    p: 1.5,
+                    transition: '0.2s',
+                    '&:hover': { backgroundColor: 'action.hover' },
+                  }}
+                >
+                  {dayTasks.length === 1 ? (
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        minWidth: 0,
+                        gap: 1,
+                      }}
+                    >
                       <Box
                         sx={{
                           display: 'flex',
                           alignItems: 'center',
-                          gap: 1,
+                          gap: 1.5,
                           minWidth: 0,
+                          flex: '1 1 200px',
                         }}
                       >
-                        <AppSubjectsTags
-                          subjects={[dayTasks[0].subject]}
-                          size="sm"
-                        />
+                        {getTaskIcon(dayTasks[0].status)}
+                        <Box sx={{ minWidth: 0, flex: '1 1 auto' }}>
+                          <Typography
+                            sx={{ fontWeight: 700, fontSize: '1rem' }}
+                          >
+                            {day}
+                          </Typography>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                              minWidth: 0,
+                            }}
+                          >
+                            <AppSubjectsTags
+                              subjects={[dayTasks[0].subject]}
+                              size="sm"
+                            />
+                            <Typography
+                              sx={{
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                minWidth: 0,
+                                flex: 1,
+                              }}
+                            >
+                              {dayTasks[0].title}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Box>
+                      {!hideStatus && (
                         <Typography
                           sx={{
+                            color: 'text.secondary',
+                            minWidth: 0,
+                            maxWidth: 100,
+                            flexShrink: 1,
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
-                            minWidth: 0,
-                            flex: 1,
+                            textAlign: 'right',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'flex-end',
+                            mt: { xs: 1, sm: 0 },
+                            width: { xs: '100%', sm: 'auto' },
                           }}
                         >
-                          {dayTasks[0].title}
+                          {dayTasks[0].status === 'done'
+                            ? 'Concluído'
+                            : dayTasks[0].status === 'adjust'
+                              ? 'Ajustar'
+                              : 'Pendente'}
                         </Typography>
+                      )}
+                    </Box>
+                  ) : (
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'stretch',
+                        justifyContent: 'space-between',
+                        minWidth: 0,
+                        gap: 1,
+                        flexWrap: 'wrap',
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 2,
+                          minWidth: 0,
+                          flex: '1 1 200px',
+                        }}
+                      >
+                        {getMoreThanOneTaskDayIcon(dayTasks)}
+                        <Box sx={{ minWidth: 0 }}>
+                          <Typography
+                            sx={{ fontWeight: 700, fontSize: '1rem' }}
+                          >
+                            {day}
+                          </Typography>
+                          <Typography color="text.secondary">
+                            {dayTasks.length} tarefas
+                          </Typography>
+                        </Box>
                       </Box>
-                    </Box>
-                  </Box>
-                  {!hideStatus && (
-                    <Typography
-                      sx={{
-                        color: 'text.secondary',
-                        minWidth: 0,
-                        maxWidth: 100,
-                        flexShrink: 1,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        textAlign: 'right',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'flex-end',
-                        mt: { xs: 1, sm: 0 },
-                        width: { xs: '100%', sm: 'auto' },
-                      }}
-                    >
-                      {dayTasks[0].status === 'done'
-                        ? 'Concluído'
-                        : dayTasks[0].status === 'adjust'
-                          ? 'Ajustar'
-                          : 'Pendente'}
-                    </Typography>
-                  )}
-                </Box>
-              ) : (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'stretch',
-                    justifyContent: 'space-between',
-                    minWidth: 0,
-                    gap: 1,
-                    flexWrap: 'wrap',
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 2,
-                      minWidth: 0,
-                      flex: '1 1 200px',
-                    }}
-                  >
-                    {getMoreThanOneTaskDayIcon(dayTasks)}
-                    <Box sx={{ minWidth: 0 }}>
-                      <Typography sx={{ fontWeight: 700, fontSize: '1rem' }}>
-                        {day}
-                      </Typography>
-                      <Typography color="text.secondary">
-                        {dayTasks.length} tarefas
-                      </Typography>
-                    </Box>
-                  </Box>
 
-                  {!hideStatus && (
-                    <Typography
-                      sx={{
-                        color: 'text.secondary',
-                        minWidth: 0,
-                        maxWidth: 110,
-                        textAlign: 'right',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'flex-end',
-                        flexShrink: 1,
-                        fontWeight: 500,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        width: { xs: '100%', sm: 'auto' },
-                        mt: { xs: 1, sm: 0 },
-                      }}
-                    >
-                      Ver tarefas →
-                    </Typography>
+                      {!hideStatus && (
+                        <Typography
+                          sx={{
+                            color: 'text.secondary',
+                            minWidth: 0,
+                            maxWidth: 110,
+                            textAlign: 'right',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'flex-end',
+                            flexShrink: 1,
+                            fontWeight: 500,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            width: { xs: '100%', sm: 'auto' },
+                            mt: { xs: 1, sm: 0 },
+                          }}
+                        >
+                          Ver tarefas →
+                        </Typography>
+                      )}
+                    </Box>
                   )}
-                </Box>
-              )}
-            </ListItemButton>
-          ))}
-      </List>
+                </ListItemButton>
+              ))}
+          </List>
+        </>
+      )}
 
       <Dialog
         open={!!selectedDay}
