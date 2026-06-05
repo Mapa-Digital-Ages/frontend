@@ -28,6 +28,7 @@ export interface StudentListQuery {
   status?: StudentStatus | 'all'
   page?: number
   pageSize?: number
+  schoolId?: string | null
 }
 
 export interface CreateStudentInput {

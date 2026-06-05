@@ -36,6 +36,7 @@ import type {
   StudentItem,
   StudentMetrics,
 } from '@/modules/admin/student/types/types'
+import { authService } from '@/app/auth/core/service'
 
 type SortField = 'name' | 'school' | 'year'
 type SortDirection = 'asc' | 'desc'
@@ -134,6 +135,7 @@ function SortableHeader({
 
 export default function Page() {
   const theme = useTheme()
+  const schoolId = authService.getUserId() ?? undefined
   const statusConfig: Record<string, TagContext> = {
     ativo: { label: 'Ativo', color: theme.palette.success.main },
     inativo: { label: 'Inativo', color: theme.palette.warning.main },
@@ -215,10 +217,10 @@ export default function Page() {
   }, [])
 
   useEffect(() => {
-    void studentService.countStudents().then(total => {
+    void studentService.countStudents(undefined, schoolId).then(total => {
       setMetrics(m => ({ ...m, total }))
     })
-  }, [])
+  }, [schoolId])
 
   useEffect(() => {
     activePageRef.current = 1
@@ -231,6 +233,7 @@ export default function Page() {
         const result = await studentService.getStudents({
           query: activeQuery,
           page: 1,
+          schoolId: schoolId ?? null,
         })
         const items = enrichItems(result.items)
         setStudents(items)
@@ -246,7 +249,7 @@ export default function Page() {
     }
 
     void fetchFirstPage()
-  }, [activeQuery, enrichItems])
+  }, [activeQuery, enrichItems, schoolId])
 
   useEffect(() => {
     const sentinel = sentinelRef.current
@@ -264,7 +267,11 @@ export default function Page() {
       setIsFetchingMore(true)
 
       void studentService
-        .getStudents({ query: activeQueryRef.current, page: nextPage })
+        .getStudents({
+          query: activeQueryRef.current,
+          page: nextPage,
+          schoolId: schoolId ?? null,
+        })
         .then(result => {
           const items = enrichItems(result.items)
           setStudents(prev => {
@@ -291,7 +298,7 @@ export default function Page() {
 
     observer.observe(sentinel)
     return () => observer.disconnect()
-  }, [enrichItems])
+  }, [enrichItems, schoolId])
 
   function handleSort(field: SortField) {
     setSort(current => ({

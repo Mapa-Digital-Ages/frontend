@@ -25,6 +25,7 @@ export function createStudentRepository({
       const page = query.page ?? 1
       const name = query.name ?? query.query
       const email = query.email
+      const schoolId = query.schoolId
 
       return getCachedStudentList(
         {
@@ -32,6 +33,7 @@ export function createStudentRepository({
           name,
           page,
           size: pageSize,
+          schoolId,
         },
         async () => {
           const params: Record<string, string | number> = {
@@ -43,6 +45,9 @@ export function createStudentRepository({
           }
           if (email) {
             params.email = email
+          }
+          if (schoolId) {
+            params.school_id = schoolId
           }
           const response = await client.get<StudentDto[] | StudentListDto>(
             'student',
@@ -81,9 +86,10 @@ export function createStudentRepository({
       invalidateStudentListCache()
     },
 
-    async countStudents(name?: string): Promise<number> {
+    async countStudents(name?: string, schoolId?: string): Promise<number> {
       const params: Record<string, string> = {}
       if (name) params.name = name
+      if (schoolId) params.school_id = schoolId
       const response = await client.get<{ total: number }>('student/count', {
         query: params,
       })
