@@ -111,6 +111,8 @@ export default function CreateStudentModal({
   useEffect(() => {
     if (!open) return
     // eslint-disable-next-line react-hooks/set-state-in-effect
+    setValues(getDefaultValues(defaultSchoolId))
+    setErrors({})
     setIsLoadingOptions(true)
     void Promise.all([
       studentFormOptionsService.getSchools(),
@@ -120,7 +122,7 @@ export default function CreateStudentModal({
       setGuardians(guardianList)
       setIsLoadingOptions(false)
     })
-  }, [open])
+  }, [open, defaultSchoolId])
 
   const hasSchool = values.school !== NONE_VALUE
   const hasGuardian = values.guardian !== NONE_VALUE
@@ -155,8 +157,6 @@ export default function CreateStudentModal({
     const guardianLabel =
       guardians.find(g => g.value === values.guardian)?.label ?? ''
     onConfirm({ ...values, guardianName: guardianLabel })
-    setValues(getDefaultValues(defaultSchoolId))
-    setErrors({})
   }
 
   function handleClose() {
