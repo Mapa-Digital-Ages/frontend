@@ -42,9 +42,14 @@ export const APP_ROUTES = {
   schoolCompany: {
     dashboard: '/school-company/dashboard',
     classes: '/school-company/classes',
+    students: '/school-company/students',
+    support: '/school-company/support',
     partners: '/school-company/partners',
     requestPartner: '/school-company/request-partner',
     adoptedSchools: '/school-company/adopted-schools',
+    partnerOverview: '/school-company/partner-overview',
+    evolution: '/school-company/evolution',
+    reports: '/school-company/reports',
   },
   common: {
     unauthorized: '/unauthorized',
