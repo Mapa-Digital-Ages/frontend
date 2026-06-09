@@ -129,8 +129,8 @@ npx cypress run         # Executa todos os testes E2E em modo headless
 npx cypress run --spec cypress/e2e/login.cy.ts  # Executa um teste específico
 ```
 
-> **Pré-requisito:** a aplicação deve estar rodando (`npm run dev` ou por Docker) e o arquivo `.env` deve conter as variáveis assim como no  `.env.example`:
-`VITE_EMAIL_LOGIN_(ADMIN, ALUNO, ESCOLA,etc.)` e `VITE_PASSWORD_LOGIN_...` configuradas.
+> **Pré-requisito:** a aplicação deve estar rodando (`npm run dev` ou por Docker) e o arquivo `.env` deve conter as variáveis assim como no `.env.example`:
+> `VITE_EMAIL_LOGIN_(ADMIN, ALUNO, ESCOLA,etc.)` e `VITE_PASSWORD_LOGIN_...` configuradas.
 
 ### Preview da Build
 
