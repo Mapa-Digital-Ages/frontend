@@ -1,3 +1,4 @@
+import React from 'react'
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded'
 import FirstPageIcon from '@mui/icons-material/FirstPage'
@@ -111,68 +112,102 @@ function AppSidebar({
       <Divider sx={{ borderColor: 'var(--app-border)', mb: 1.5 }} />
 
       <List className="grid gap-1">
-        {items.map(item => {
-          const canNavigate = !item.path.startsWith('#')
-          const selected =
-            canNavigate &&
-            (location.pathname === item.path ||
-              location.pathname.startsWith(`${item.path}/`))
+        {(() => {
+          const sections: { section: string | null; items: typeof items }[] = []
+          for (const item of items) {
+            const sec = item.section ?? null
+            const last = sections[sections.length - 1]
+            if (last && last.section === sec) {
+              last.items.push(item)
+            } else {
+              sections.push({ section: sec, items: [item] })
+            }
+          }
 
-          return (
-            <ListItemButton
-              key={`${item.label}-${item.path}`}
-              data-testid={`menu-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
-              className="rounded-xl px-3 py-2 transition-all duration-200 ease-out"
-              onClick={() => {
-                if (canNavigate) navigate(item.path)
-                onClose()
-              }}
-              selected={selected}
-              sx={{
-                borderRadius: '18px',
-                border: '1px solid transparent',
-                justifyContent: isCollapsed ? 'center' : 'flex-start',
-                '& .MuiListItemText-primary': {
-                  backgroundColor: 'transparent',
-                  color: theme.palette.text.secondary,
-                  transition: 'transform 180ms ease',
-                },
-                '& .MuiListItemIcon-root': {
-                  color: theme.palette.text.secondary,
-                },
-                '&.Mui-selected': {
-                  backgroundColor: roleSelected.backgroundColor,
-                  borderColor: roleSelected.borderColor,
-                },
-                '&.Mui-selected:hover': {
-                  backgroundColor: roleSelected.backgroundColor,
-                  borderColor: roleSelected.borderColor,
-                },
-                '&.Mui-selected .MuiListItemIcon-root, &.Mui-selected .MuiListItemText-primary':
-                  {
-                    color: accentColor,
-                    fontWeight: 600,
-                  },
-                '&:hover': {
-                  backgroundColor: roleHover.backgroundColor,
-                  borderColor: roleHover.borderColor,
-                },
-                '&:hover .MuiListItemIcon-root, &:hover .MuiListItemText-primary':
-                  {
-                    color: accentColor,
-                  },
-                '&:hover .MuiListItemText-primary': {
-                  fontWeight: 600,
-                },
-              }}
-            >
-              <ListItemIcon sx={{ minWidth: isCollapsed ? 0 : 36 }}>
-                {item.icon}
-              </ListItemIcon>
-              {!isCollapsed && <ListItemText primary={item.label} />}
-            </ListItemButton>
-          )
-        })}
+          return sections.map((group, groupIndex) => (
+            <React.Fragment key={group.section ?? `group-${groupIndex}`}>
+              {group.section && !isCollapsed && (
+                <Typography
+                  data-testid={`sidebar-section-${group.section.toLowerCase()}`}
+                  sx={{
+                    color: 'text.secondary',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: '0.08em',
+                    mt: groupIndex > 0 ? 2 : 0.5,
+                    mb: 0.5,
+                    px: 1.5,
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {group.section}
+                </Typography>
+              )}
+              {group.items.map(item => {
+                const canNavigate = !item.path.startsWith('#')
+                const selected =
+                  canNavigate &&
+                  (location.pathname === item.path ||
+                    location.pathname.startsWith(`${item.path}/`))
+
+                return (
+                  <ListItemButton
+                    key={`${item.label}-${item.path}`}
+                    data-testid={`menu-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+                    className="rounded-xl px-3 py-2 transition-all duration-200 ease-out"
+                    onClick={() => {
+                      if (canNavigate) navigate(item.path)
+                      onClose()
+                    }}
+                    selected={selected}
+                    sx={{
+                      borderRadius: '18px',
+                      border: '1px solid transparent',
+                      justifyContent: isCollapsed ? 'center' : 'flex-start',
+                      '& .MuiListItemText-primary': {
+                        backgroundColor: 'transparent',
+                        color: theme.palette.text.secondary,
+                        transition: 'transform 180ms ease',
+                      },
+                      '& .MuiListItemIcon-root': {
+                        color: theme.palette.text.secondary,
+                      },
+                      '&.Mui-selected': {
+                        backgroundColor: roleSelected.backgroundColor,
+                        borderColor: roleSelected.borderColor,
+                      },
+                      '&.Mui-selected:hover': {
+                        backgroundColor: roleSelected.backgroundColor,
+                        borderColor: roleSelected.borderColor,
+                      },
+                      '&.Mui-selected .MuiListItemIcon-root, &.Mui-selected .MuiListItemText-primary':
+                        {
+                          color: accentColor,
+                          fontWeight: 600,
+                        },
+                      '&:hover': {
+                        backgroundColor: roleHover.backgroundColor,
+                        borderColor: roleHover.borderColor,
+                      },
+                      '&:hover .MuiListItemIcon-root, &:hover .MuiListItemText-primary':
+                        {
+                          color: accentColor,
+                        },
+                      '&:hover .MuiListItemText-primary': {
+                        fontWeight: 600,
+                      },
+                    }}
+                  >
+                    <ListItemIcon sx={{ minWidth: isCollapsed ? 0 : 36 }}>
+                      {item.icon}
+                    </ListItemIcon>
+                    {!isCollapsed && <ListItemText primary={item.label} />}
+                  </ListItemButton>
+                )
+              })}
+            </React.Fragment>
+          ))
+        })()}
       </List>
 
       {onLogout && (

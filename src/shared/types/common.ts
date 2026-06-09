@@ -7,6 +7,7 @@ export interface SidebarItem {
   icon: ReactNode
   roles?: UserRole[]
   description?: string
+  section?: string
 }
 
 export interface RouteConfig {

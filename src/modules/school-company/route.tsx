@@ -5,6 +5,7 @@ import DashboardLayout from '@/app/layout/DashboardLayout'
 import SchoolCompanyDashboardPage from '@/modules/school-company/dashboard/page/Page'
 import SchoolCompanyAdoptedSchoolsPage from '@/modules/school-company/adopted-schools/page/Page'
 import PartnersPage from '@/modules/school-company/partners/page/Page'
+import UnderDevelopmentPage from '@/modules/school-company/shared/UnderDevelopmentPage'
 
 export const schoolCompanyRoutes: RouteObject[] = [
   {
@@ -22,7 +23,15 @@ export const schoolCompanyRoutes: RouteObject[] = [
               },
               {
                 path: APP_ROUTES.schoolCompany.classes,
-                element: <SchoolCompanyDashboardPage />,
+                element: <UnderDevelopmentPage title="Turmas" />,
+              },
+              {
+                path: APP_ROUTES.schoolCompany.students,
+                element: <UnderDevelopmentPage title="Alunos" />,
+              },
+              {
+                path: APP_ROUTES.schoolCompany.support,
+                element: <UnderDevelopmentPage title="Apoio" />,
               },
               {
                 path: APP_ROUTES.schoolCompany.partners,
@@ -30,11 +39,23 @@ export const schoolCompanyRoutes: RouteObject[] = [
               },
               {
                 path: APP_ROUTES.schoolCompany.requestPartner,
-                element: <SchoolCompanyDashboardPage />,
+                element: <UnderDevelopmentPage title="Solicitar Parceiro" />,
               },
               {
                 path: APP_ROUTES.schoolCompany.adoptedSchools,
                 element: <SchoolCompanyAdoptedSchoolsPage />,
+              },
+              {
+                path: APP_ROUTES.schoolCompany.partnerOverview,
+                element: <UnderDevelopmentPage title="Visão Parceiras" />,
+              },
+              {
+                path: APP_ROUTES.schoolCompany.evolution,
+                element: <UnderDevelopmentPage title="Evolução" />,
+              },
+              {
+                path: APP_ROUTES.schoolCompany.reports,
+                element: <UnderDevelopmentPage title="Relatórios" />,
               },
             ],
           },
