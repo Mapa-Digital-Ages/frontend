@@ -136,7 +136,20 @@ export default function Page() {
             data-testid="submit-button"
             label="Enviar solicitação"
             onClick={handleSubmit}
-            sx={{ width: 'fit-content' }}
+            sx={{
+              width: 'fit-content',
+              cursor: 'pointer',
+              ...(!isValid && {
+                opacity: 0.6,
+                backgroundColor: 'action.disabledBackground',
+                color: 'text.disabled',
+                boxShadow: 'none',
+                '&:hover': {
+                  backgroundColor: 'action.disabledBackground',
+                  borderColor: 'transparent',
+                },
+              }),
+            }}
           />
 
           <Box
