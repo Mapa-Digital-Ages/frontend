@@ -12,9 +12,7 @@ export interface FilterOption {
 export type AdaptiveTrailStepKind = 'video' | 'text' | 'question'
 export type AdaptiveTrailStepStatus = 'available' | 'completed' | 'locked'
 
-export interface AdaptiveTrailQuestion extends QuestionFlowPayload {
-  correctOptionId: string
-}
+export type AdaptiveTrailQuestion = QuestionFlowPayload
 
 export interface AdaptiveTrailSubStep {
   order: number

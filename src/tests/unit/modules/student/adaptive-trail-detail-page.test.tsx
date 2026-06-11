@@ -12,17 +12,31 @@ import { SUBJECTS } from '@/shared/utils/themes'
 
 const mockGetTrailSession =
   jest.fn<(id: string) => Promise<AdaptiveTrailSession | null>>()
-const mockSaveStepAnswer = jest.fn().mockResolvedValue(undefined)
-const mockGetSubStepQuestionFlow = jest.fn()
-const mockGetCompletionRecommendations = jest.fn().mockResolvedValue({
-  stepTitle: '',
-  correct: 0,
-  total: 0,
-  subject: { label: '' },
-  trailTitle: '',
-  recommendedTrails: [],
-  recommendedContent: [],
-})
+const mockSaveStepAnswer = jest
+  .fn<(...args: unknown[]) => Promise<void>>()
+  .mockResolvedValue()
+const mockGetSubStepQuestionFlow =
+  jest.fn<(...args: unknown[]) => Promise<unknown>>()
+const mockCompleteStep = jest
+  .fn<(...args: unknown[]) => Promise<unknown>>()
+  .mockResolvedValue({
+    correct: 1,
+    total: 1,
+    passed: true,
+    currentSubPath: 8,
+    pathStatus: 'on_going',
+  })
+const mockGetCompletionRecommendations = jest
+  .fn<(...args: unknown[]) => Promise<unknown>>()
+  .mockResolvedValue({
+    stepTitle: '',
+    correct: 0,
+    total: 0,
+    subject: { label: '' },
+    trailTitle: '',
+    recommendedTrails: [],
+    recommendedContent: [],
+  })
 
 jest.mock(
   '@/modules/student/adaptivetrail/services/trailDetailService',
@@ -33,6 +47,7 @@ jest.mock(
       saveStepAnswer: (...args: unknown[]) => mockSaveStepAnswer(...args),
       getSubStepQuestionFlow: (...args: unknown[]) =>
         mockGetSubStepQuestionFlow(...args),
+      completeStep: (...args: unknown[]) => mockCompleteStep(...args),
       getCompletionRecommendations: (...args: unknown[]) =>
         mockGetCompletionRecommendations(...args),
     },
@@ -161,5 +176,43 @@ test('StudentAdaptiveTrailDetailPage unlocks quiz sub-step after completing vide
         name: /responder etapa questões de equações do 1º grau/i,
       })
     ).toBeInTheDocument()
+  })
+})
+
+test('StudentAdaptiveTrailDetailPage fetches the question flow when opening the quiz', async () => {
+  mockGetSubStepQuestionFlow.mockResolvedValue({
+    assessmentId: 'eq-quiz',
+    trailId: 'math',
+    stepId: 'equacoes-grau1',
+    subStepId: 'eq-quiz',
+    stepTitle: 'Questões de Equações do 1º Grau',
+    questions: [
+      {
+        id: 'q1',
+        question: 'Quanto vale x em 2x + 4 = 10?',
+        options: [
+          { id: 'o1', label: 'x = 2' },
+          { id: 'o2', label: 'x = 3' },
+        ],
+        subject: SUBJECTS.matematica,
+      },
+    ],
+  })
+
+  const user = userEvent.setup()
+  renderPage()
+
+  const videoButton = await screen.findByRole('button', {
+    name: /responder etapa assistir: introdução às equações do 1º grau/i,
+  })
+  await user.click(videoButton)
+
+  const quizButton = await screen.findByRole('button', {
+    name: /responder etapa questões de equações do 1º grau/i,
+  })
+  await user.click(quizButton)
+
+  await waitFor(() => {
+    expect(mockGetSubStepQuestionFlow).toHaveBeenCalled()
   })
 })

@@ -169,6 +169,12 @@ export default function Page() {
         setSession(current =>
           current ? applySubStepCompletion(current, step.id, subStep.id) : null
         )
+        const isLastSubStep =
+          step.subSteps[step.subSteps.length - 1]?.id === subStep.id
+        const hasQuiz = step.subSteps.some(ss => ss.kind === 'question')
+        if (isLastSubStep && !hasQuiz) {
+          await adaptiveTrailDetailService.completeStep(trailId, step.id, [])
+        }
       }
     },
     [trailId]
@@ -183,9 +189,15 @@ export default function Page() {
       if (!trailId || !questionFlow) return
 
       const { questions, stepId, subStepId } = questionFlow
-      const correct = questions.filter(
-        q => answersByQuestionId[q.id] === q.correctOptionId
-      ).length
+      const answers = questions
+        .filter(q => answersByQuestionId[q.id])
+        .map(q => ({ exerciseId: q.id, optionId: answersByQuestionId[q.id] }))
+
+      const graded = await adaptiveTrailDetailService.completeStep(
+        trailId,
+        stepId,
+        answers
+      )
 
       setSession(current =>
         current ? applySubStepCompletion(current, stepId, subStepId) : null
@@ -195,8 +207,8 @@ export default function Page() {
         await adaptiveTrailDetailService.getCompletionRecommendations(
           trailId,
           questionFlow.stepTitle,
-          correct,
-          questions.length
+          graded.correct,
+          graded.total
         )
 
       setCompletionResult(result)
