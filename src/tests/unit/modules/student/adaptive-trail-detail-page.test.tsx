@@ -54,6 +54,21 @@ jest.mock(
   })
 )
 
+jest.mock('@/shared/lib/http/client', () => ({
+  httpClient: { get: jest.fn(), post: jest.fn() },
+}))
+
+const mockGetStudentId = jest.fn<() => string | null>(() => null)
+jest.mock('@/modules/student/adaptivetrail/services/service', () => ({
+  studentService: { getStudentId: () => mockGetStudentId() },
+}))
+
+function getHttpGet() {
+  return jest.requireMock<{ httpClient: { get: ReturnType<typeof jest.fn> } }>(
+    '@/shared/lib/http/client'
+  ).httpClient.get
+}
+
 const MOCK_SESSION: AdaptiveTrailSession = {
   completedSteps: 0,
   description: 'Trilha de reforço com foco em equações.',
@@ -117,6 +132,8 @@ const MOCK_SESSION: AdaptiveTrailSession = {
 
 beforeEach(() => {
   mockGetTrailSession.mockResolvedValue(MOCK_SESSION)
+  mockGetStudentId.mockReturnValue(null)
+  getHttpGet().mockReset()
 })
 
 function renderPage(trailId = 'math') {
@@ -215,4 +232,57 @@ test('StudentAdaptiveTrailDetailPage fetches the question flow when opening the 
   await waitFor(() => {
     expect(mockGetSubStepQuestionFlow).toHaveBeenCalled()
   })
+})
+
+test('StudentAdaptiveTrailDetailPage shows other trails of the same subject as a switcher', async () => {
+  mockGetStudentId.mockReturnValue('student-1')
+  getHttpGet().mockResolvedValue({
+    data: [
+      {
+        id: 'math',
+        name: 'Fundamentos de Algebra',
+        subject: SUBJECTS.matematica,
+        description: '',
+        progress: 33,
+        steps: 2,
+        completed: 0,
+        time_estimate: null,
+      },
+      {
+        id: 'math2',
+        name: 'Geometria Basica',
+        subject: SUBJECTS.matematica,
+        description: '',
+        progress: 100,
+        steps: 2,
+        completed: 2,
+        time_estimate: null,
+      },
+      {
+        id: 'port1',
+        name: 'Interpretacao de Textos',
+        subject: SUBJECTS.portugues,
+        description: '',
+        progress: 0,
+        steps: 2,
+        completed: 0,
+        time_estimate: null,
+      },
+    ],
+  })
+
+  renderPage()
+
+  // The sibling trail of the same subject is offered and links to its detail.
+  const link = await screen.findByRole('link', {
+    name: /abrir trilha geometria basica/i,
+  })
+  expect(link).toHaveAttribute('href', buildStudentTrailRoute('math2'))
+
+  // A trail from a different subject is not offered here.
+  expect(
+    screen.queryByRole('link', {
+      name: /abrir trilha interpretacao de textos/i,
+    })
+  ).not.toBeInTheDocument()
 })

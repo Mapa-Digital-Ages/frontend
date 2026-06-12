@@ -3,7 +3,7 @@ import { Box, Button, Collapse, IconButton, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { APP_ROUTES } from '@/app/router/paths'
+import { APP_ROUTES, buildStudentTrailRoute } from '@/app/router/paths'
 import AppCard from '@/shared/ui/AppCard'
 import AppPageContainer from '@/shared/ui/AppPageContainer'
 import AppSubjectsTags from '@/shared/ui/AppSubjectsTags'
@@ -15,6 +15,8 @@ import TrailSearchBar from '../../components/TrailSearchBar'
 import TrailStepItem from '../../components/TrailStepItem'
 import { useTrailSearch } from '../../hooks/useTrailSearch'
 import { adaptiveTrailDetailService } from '../../services/trailDetailService'
+import { fetchTrails, type Trail } from '../../data/trails'
+import { studentService } from '../../services/service'
 import type {
   AdaptiveTrailSession,
   AdaptiveTrailStep,
@@ -100,6 +102,7 @@ export default function Page() {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [expandedStepId, setExpandedStepId] = useState<string | null>(null)
+  const [otherTrails, setOtherTrails] = useState<Trail[]>([])
 
   useEffect(() => {
     let isActive = true
@@ -119,10 +122,31 @@ export default function Page() {
 
         setSession(nextSession)
         setError(nextSession ? null : 'A trilha solicitada não foi encontrada.')
+        setOtherTrails([])
 
         if (nextSession) {
           const activeId = getActiveStepId(nextSession)
           setExpandedStepId(activeId)
+
+          // Load the other trails of the same subject so the student can switch
+          // between them from this execution screen.
+          const studentId = studentService.getStudentId()
+          if (studentId) {
+            try {
+              const all = await fetchTrails(studentId)
+              if (isActive) {
+                setOtherTrails(
+                  all.filter(
+                    t =>
+                      t.id !== trailId &&
+                      t.subject?.id === nextSession.subject?.id
+                  )
+                )
+              }
+            } catch {
+              // sibling trails are a non-critical enhancement; ignore failures
+            }
+          }
         }
       } catch {
         if (isActive) setError('Não foi possível carregar esta trilha.')
@@ -384,6 +408,47 @@ export default function Page() {
                 valueLabelVariant="plain"
               />
             </Box>
+
+            {otherTrails.length > 0 && (
+              <Box sx={{ display: 'grid', gap: 1 }}>
+                <Typography
+                  sx={{
+                    color: 'text.secondary',
+                    fontSize: 13,
+                    fontWeight: 700,
+                  }}
+                >
+                  Outras trilhas de {session.subject?.label ?? 'matéria'}
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {otherTrails.map(trail => (
+                    <Button
+                      key={trail.id}
+                      component={Link}
+                      to={buildStudentTrailRoute(trail.id)}
+                      aria-label={`Abrir trilha ${trail.name}`}
+                      sx={{
+                        borderRadius: '999px',
+                        border: '1px solid',
+                        borderColor: subjectTheme.color,
+                        color: 'text.primary',
+                        fontSize: 13,
+                        fontWeight: 600,
+                        px: 1.5,
+                        py: 0.5,
+                        textTransform: 'none',
+                        '&:hover': {
+                          backgroundColor:
+                            subjectTheme.softSurface.backgroundColor,
+                        },
+                      }}
+                    >
+                      {trail.name} · {trail.progress}%
+                    </Button>
+                  ))}
+                </Box>
+              </Box>
+            )}
 
             <TrailSearchBar
               onChange={setQuery}

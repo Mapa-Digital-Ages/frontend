@@ -80,8 +80,7 @@ function renderPage() {
   renderWithProviders(<StudentAdaptiveTrailPage />)
 }
 
-test('StudentAdaptiveTrailPage renders one card per subject and reveals trails on expand', async () => {
-  const user = userEvent.setup()
+test('StudentAdaptiveTrailPage renders one clickable card per subject', async () => {
   renderPage()
 
   expect(
@@ -97,34 +96,18 @@ test('StudentAdaptiveTrailPage renders one card per subject and reveals trails o
   expect(screen.getByText('Ciências')).toBeInTheDocument()
   expect(screen.getByText('História')).toBeInTheDocument()
 
-  // Individual trails are hidden until the subject card is expanded.
-  expect(
-    screen.queryByRole('link', { name: /abrir trilha fundamentos de algebra/i })
-  ).not.toBeInTheDocument()
-
-  // Expanding Matemática reveals both of its trails.
-  await user.click(
-    screen.getByRole('button', { name: /ver trilhas de matemática/i })
-  )
-  expect(
-    await screen.findByRole('link', {
-      name: /abrir trilha fundamentos de algebra/i,
-    })
-  ).toBeInTheDocument()
-  expect(
-    screen.getByRole('link', { name: /abrir trilha geometria basica/i })
-  ).toBeInTheDocument()
+  // The subject card itself is a link into the subject's first trail.
+  const matCard = screen.getByRole('link', {
+    name: /abrir trilhas de matemática/i,
+  })
+  expect(matCard).toHaveAttribute('href', buildStudentTrailRoute('math'))
 })
 
-test('StudentAdaptiveTrailPage trail rows link to the trail detail', async () => {
-  const user = userEvent.setup()
+test('StudentAdaptiveTrailPage subject card links to the subject first trail', async () => {
   renderPage()
 
-  await user.click(
-    await screen.findByRole('button', { name: /ver trilhas de matemática/i })
-  )
   const link = await screen.findByRole('link', {
-    name: /abrir trilha fundamentos de algebra/i,
+    name: /abrir trilhas de matemática/i,
   })
   expect(link).toHaveAttribute('href', buildStudentTrailRoute('math'))
 })
