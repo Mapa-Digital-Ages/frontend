@@ -37,6 +37,7 @@ import AppPageContainer from '@/shared/ui/AppPageContainer'
 import LoadingScreen from '@/shared/ui/LoadingScreen'
 import { PARENT_APPROVAL_CARD_STATUS } from '@/shared/utils/themes'
 import OrdinaryHeader from '@/shared/ui/OrdinaryHeader'
+import { HttpRequestError } from '@/shared/lib/http/client'
 
 const DEFAULT_PAGE_INDEX = 1
 
@@ -113,6 +114,7 @@ export default function Page() {
   const [modalValues, setModalValues] = useState<ApprovalActionFormValues>(
     getDefaultFormValues()
   )
+  const [modalApiError, setModalApiError] = useState<string | null>(null)
   const [isModalSubmitting, setIsModalSubmitting] = useState(false)
   const [selectionMode, setSelectionMode] = useState<'edit' | 'delete' | null>(
     null
@@ -134,6 +136,7 @@ export default function Page() {
     setModalState(null)
     setModalValues(getDefaultFormValues())
     setSelectionMode(null)
+    setModalApiError(null)
   }, [])
 
   const openModal = useCallback((nextMode: ApprovalActionModalMode) => {
@@ -273,6 +276,7 @@ export default function Page() {
     }
 
     setIsModalSubmitting(true)
+    setModalApiError(null)
 
     try {
       if (modalState.action === 'delete' && modalState.item) {
@@ -327,6 +331,25 @@ export default function Page() {
       }
 
       resetModal()
+    } catch (err) {
+      let message = 'Não foi possível salvar o cadastro. Tente novamente.'
+      if (err instanceof HttpRequestError && err.response) {
+        try {
+          const body = (await err.response.json()) as {
+            detail?: string
+            message?: string
+          }
+          const apiMessage = (body.detail ?? body.message ?? '').toLowerCase()
+          if (apiMessage.includes('email')) {
+            message = 'Este e-mail já está cadastrado no sistema.'
+          } else if (apiMessage) {
+            message = apiMessage
+          }
+        } catch {
+          // ignora
+        }
+      }
+      setModalApiError(message)
     } finally {
       setIsModalSubmitting(false)
     }
@@ -478,6 +501,7 @@ export default function Page() {
         mode={modalState}
         disableConfirm={isModalConfirmDisabled}
         isSubmitting={isModalSubmitting}
+        errorMessage={modalApiError}
         onChange={handleModalChange}
         onClose={resetModal}
         onConfirm={handleModalConfirm}
