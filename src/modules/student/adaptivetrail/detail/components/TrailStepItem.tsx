@@ -11,8 +11,8 @@ import type {
   AdaptiveTrailStep,
   AdaptiveTrailStepStatus,
   AdaptiveTrailSubStep,
-} from '../types/types'
-import { highlightText } from '../hooks/useTrailSearch'
+} from '../../types/types'
+import { highlightText } from '../../hooks/useTrailSearch'
 
 interface TrailStepItemProps {
   isExpanded: boolean
@@ -76,7 +76,6 @@ const subStepKindLabel: Record<AdaptiveTrailSubStep['kind'], string> = {
   video: 'Vídeo',
 }
 
-// Dot sizes for the sub-step timeline indicator
 const DOT_SIZE = { md: 28, xs: 24 }
 const DOT_ICON = { md: 13, xs: 11 }
 

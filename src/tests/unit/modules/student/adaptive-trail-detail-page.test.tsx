@@ -6,7 +6,6 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { createAppTheme } from '@/app/theme/core/theme'
 import { APP_ROUTES, buildStudentTrailRoute } from '@/app/router/paths'
-import StudentAdaptiveTrailDetailPage from '@/modules/student/adaptivetrail/detail/page/Page'
 import type { AdaptiveTrailSession } from '@/modules/student/adaptivetrail/types/types'
 import { SUBJECTS } from '@/shared/utils/themes'
 
@@ -37,8 +36,9 @@ const mockGetCompletionRecommendations = jest
     recommendedTrails: [],
     recommendedContent: [],
   })
+const mockHttpGet = jest.fn<(...args: unknown[]) => Promise<unknown>>()
 
-jest.mock(
+await jest.unstable_mockModule(
   '@/modules/student/adaptivetrail/services/trailDetailService',
   () => ({
     adaptiveTrailDetailService: {
@@ -54,19 +54,23 @@ jest.mock(
   })
 )
 
-jest.mock('@/shared/lib/http/client', () => ({
-  httpClient: { get: jest.fn(), post: jest.fn() },
+await jest.unstable_mockModule('@/shared/lib/http/client', () => ({
+  httpClient: { get: mockHttpGet, post: jest.fn() },
 }))
 
 const mockGetStudentId = jest.fn<() => string | null>(() => null)
-jest.mock('@/modules/student/adaptivetrail/services/service', () => ({
-  studentService: { getStudentId: () => mockGetStudentId() },
-}))
+await jest.unstable_mockModule(
+  '@/modules/student/adaptivetrail/services/service',
+  () => ({
+    studentService: { getStudentId: () => mockGetStudentId() },
+  })
+)
+
+const { default: StudentAdaptiveTrailDetailPage } =
+  await import('@/modules/student/adaptivetrail/detail/page/Page')
 
 function getHttpGet() {
-  return jest.requireMock<{ httpClient: { get: ReturnType<typeof jest.fn> } }>(
-    '@/shared/lib/http/client'
-  ).httpClient.get
+  return mockHttpGet
 }
 
 const MOCK_SESSION: AdaptiveTrailSession = {
@@ -151,12 +155,39 @@ function renderPage(trailId = 'math') {
   )
 }
 
-test('StudentAdaptiveTrailDetailPage shows the trail title and all steps', async () => {
+async function expandTrailCard(
+  user: ReturnType<typeof userEvent.setup>,
+  name = /fundamentos de algebra/i
+) {
+  const summary = await screen.findByRole('button', { name })
+  expect(summary).toHaveAttribute('aria-expanded', 'false')
+
+  await user.click(summary)
+
+  await waitFor(() => {
+    expect(summary).toHaveAttribute('aria-expanded', 'true')
+  })
+}
+
+test('StudentAdaptiveTrailDetailPage starts trail cards collapsed', async () => {
   renderPage()
 
   expect(
     await screen.findByRole('heading', { name: /fundamentos de algebra/i })
   ).toBeInTheDocument()
+
+  expect(
+    screen.getByRole('button', { name: /fundamentos de algebra/i })
+  ).toHaveAttribute('aria-expanded', 'false')
+  expect(screen.queryByText('Equações do 1º Grau')).not.toBeInTheDocument()
+})
+
+test('StudentAdaptiveTrailDetailPage shows all steps after expanding the trail card', async () => {
+  const user = userEvent.setup()
+
+  renderPage()
+
+  await expandTrailCard(user)
 
   expect(screen.getByText('Equações do 1º Grau')).toBeInTheDocument()
   expect(screen.getByText('Frações e Decimais')).toBeInTheDocument()
@@ -167,9 +198,11 @@ test('StudentAdaptiveTrailDetailPage shows the trail title and all steps', async
 })
 
 test('StudentAdaptiveTrailDetailPage shows sub-steps when active step is expanded', async () => {
+  const user = userEvent.setup()
+
   renderPage()
 
-  await screen.findByRole('heading', { name: /fundamentos de algebra/i })
+  await expandTrailCard(user)
 
   expect(
     screen.getByText('Assistir: Introdução às Equações do 1º Grau')
@@ -180,6 +213,8 @@ test('StudentAdaptiveTrailDetailPage unlocks quiz sub-step after completing vide
   const user = userEvent.setup()
 
   renderPage()
+
+  await expandTrailCard(user)
 
   const videoButton = await screen.findByRole('button', {
     name: /responder etapa assistir: introdução às equações do 1º grau/i,
@@ -219,6 +254,8 @@ test('StudentAdaptiveTrailDetailPage fetches the question flow when opening the 
   const user = userEvent.setup()
   renderPage()
 
+  await expandTrailCard(user)
+
   const videoButton = await screen.findByRole('button', {
     name: /responder etapa assistir: introdução às equações do 1º grau/i,
   })
@@ -234,8 +271,21 @@ test('StudentAdaptiveTrailDetailPage fetches the question flow when opening the 
   })
 })
 
-test('StudentAdaptiveTrailDetailPage shows other trails of the same subject as a switcher', async () => {
+test('StudentAdaptiveTrailDetailPage paginates same-subject trail cards', async () => {
+  const user = userEvent.setup()
+  const geometrySession: AdaptiveTrailSession = {
+    ...MOCK_SESSION,
+    completedSteps: 2,
+    description: 'Trilha de reforço com foco em geometria.',
+    id: 'math2',
+    progress: 100,
+    title: 'Geometria Basica',
+  }
+
   mockGetStudentId.mockReturnValue('student-1')
+  mockGetTrailSession.mockImplementation(id =>
+    Promise.resolve(id === 'math2' ? geometrySession : MOCK_SESSION)
+  )
   getHttpGet().mockResolvedValue({
     data: [
       {
@@ -273,16 +323,26 @@ test('StudentAdaptiveTrailDetailPage shows other trails of the same subject as a
 
   renderPage()
 
-  // The sibling trail of the same subject is offered and links to its detail.
-  const link = await screen.findByRole('link', {
-    name: /abrir trilha geometria basica/i,
-  })
-  expect(link).toHaveAttribute('href', buildStudentTrailRoute('math2'))
-
-  // A trail from a different subject is not offered here.
   expect(
-    screen.queryByRole('link', {
-      name: /abrir trilha interpretacao de textos/i,
-    })
+    await screen.findByRole('heading', { name: /fundamentos de algebra/i })
+  ).toBeInTheDocument()
+  expect(
+    screen.queryByRole('heading', { name: /geometria basica/i })
   ).not.toBeInTheDocument()
+
+  expect(
+    screen.queryByRole('heading', { name: /interpretacao de textos/i })
+  ).not.toBeInTheDocument()
+
+  await user.click(screen.getByRole('button', { name: /go to page 2/i }))
+
+  expect(
+    await screen.findByRole('heading', { name: /geometria basica/i })
+  ).toBeInTheDocument()
+  expect(
+    screen.queryByRole('heading', { name: /fundamentos de algebra/i })
+  ).not.toBeInTheDocument()
+  expect(
+    screen.getByRole('button', { name: /geometria basica/i })
+  ).toHaveAttribute('aria-expanded', 'false')
 })

@@ -12,8 +12,6 @@ export default function SubjectTrailCard({ group }: SubjectTrailCardProps) {
   const label = group.subject?.label ?? 'Geral'
   const count = group.trails.length
   const countLabel = `${count} ${count === 1 ? 'trilha' : 'trilhas'}`
-  // The whole card is clickable and opens the subject's first trail; the user
-  // can switch to the subject's other trails from the execution screen.
   const firstTrailId = group.trails[0].id
 
   return (
