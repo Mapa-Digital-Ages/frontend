@@ -4,7 +4,12 @@ import AppPageContainer from '@/shared/ui/AppPageContainer'
 import OrdinaryHeader from '@/shared/ui/OrdinaryHeader'
 import Pagination from '@/shared/ui/Pagination'
 import { SearchBarAndFilter } from '@/shared/ui/SearchBarAndFilter'
-import { fetchTrails, getTrailMetrics, type Trail } from '../data/trails'
+import {
+  fetchTrails,
+  getTrailMetrics,
+  groupTrailsBySubject,
+  type Trail,
+} from '../data/trails'
 import { studentService } from '../services/service'
 import TrailList from '../components/TrailList'
 import MetricsCard from '@/shared/ui/MetricsCard'
@@ -64,13 +69,18 @@ export default function Page() {
     })
   }, [query, trails])
 
+  const subjectGroups = useMemo(
+    () => groupTrailsBySubject(filteredTrails),
+    [filteredTrails]
+  )
+
   const totalPages = Math.max(
     1,
-    Math.ceil(filteredTrails.length / TRAILS_PER_PAGE)
+    Math.ceil(subjectGroups.length / TRAILS_PER_PAGE)
   )
   const activePage = Math.min(currentPage, totalPages)
   const pageStartIndex = (activePage - 1) * TRAILS_PER_PAGE
-  const visibleTrails = filteredTrails.slice(
+  const visibleGroups = subjectGroups.slice(
     pageStartIndex,
     pageStartIndex + TRAILS_PER_PAGE
   )
@@ -121,13 +131,13 @@ export default function Page() {
             onQueryChange={handleQueryChange}
             query={query}
             resultsSummary={{
-              count: filteredTrails.length,
-              singularLabel: 'resultado',
-              pluralLabel: 'resultados',
+              count: subjectGroups.length,
+              singularLabel: 'matéria',
+              pluralLabel: 'matérias',
             }}
             searchPlaceholder="Pesquisar trilhas..."
           />
-          <TrailList trails={visibleTrails} />
+          <TrailList groups={visibleGroups} />
         </Stack>
 
         <Box sx={{ mt: 'auto', pt: { md: 2, xs: 1.5 }, width: '100%' }}>

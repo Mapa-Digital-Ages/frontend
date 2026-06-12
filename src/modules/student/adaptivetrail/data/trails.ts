@@ -70,3 +70,43 @@ export function getTrailMetrics(trails: Trail[]): TrailMetric[] {
     { id: 'subjects', title: 'Matérias', value: subjects },
   ]
 }
+
+export interface SubjectGroup {
+  subjectId: string
+  subject?: TagContext
+  trails: Trail[]
+  averageProgress: number
+}
+
+const NO_SUBJECT_KEY = '__no_subject__'
+
+/**
+ * Group trails by their subject so the UI can show one card per subject, each
+ * containing that subject's trails. Subject order follows first appearance.
+ */
+export function groupTrailsBySubject(trails: Trail[]): SubjectGroup[] {
+  const order: string[] = []
+  const bySubject = new Map<string, Trail[]>()
+
+  for (const trail of trails) {
+    const key = trail.subject?.id ?? NO_SUBJECT_KEY
+    if (!bySubject.has(key)) {
+      bySubject.set(key, [])
+      order.push(key)
+    }
+    bySubject.get(key)!.push(trail)
+  }
+
+  return order.map(key => {
+    const groupTrails = bySubject.get(key)!
+    const averageProgress = Math.round(
+      groupTrails.reduce((sum, t) => sum + t.progress, 0) / groupTrails.length
+    )
+    return {
+      subjectId: key,
+      subject: groupTrails[0].subject,
+      trails: groupTrails,
+      averageProgress,
+    }
+  })
+}

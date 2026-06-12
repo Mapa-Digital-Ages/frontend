@@ -54,6 +54,16 @@ const MOCK_TRAILS_API = [
     completed: 1,
     time_estimate: '23 min',
   },
+  {
+    id: 'math2',
+    name: 'Geometria Basica',
+    subject: { id: 'matematica', label: 'Matemática', color: '#F00' },
+    description: 'Trilha de geometria.',
+    progress: 100,
+    steps: 2,
+    completed: 2,
+    time_estimate: '15 min',
+  },
 ]
 
 function getHttpMock() {
@@ -70,50 +80,60 @@ function renderPage() {
   renderWithProviders(<StudentAdaptiveTrailPage />)
 }
 
-test('StudentAdaptiveTrailPage renders trail metrics and all available trails', async () => {
+test('StudentAdaptiveTrailPage renders one card per subject and reveals trails on expand', async () => {
+  const user = userEvent.setup()
   renderPage()
 
-  // Wait for loading to finish — heading and trail cards appear
   expect(
     await screen.findByRole('heading', { name: /trilhas adaptativas/i })
   ).toBeInTheDocument()
 
-  // TrailCard renders subject.label as title — check those visible texts
+  // One card per subject (subject label is the card title). The two Matemática
+  // trails collapse into a single Matemática card.
   await waitFor(() => {
-    expect(
-      screen.getByRole('link', { name: /abrir trilha fundamentos de algebra/i })
-    ).toBeInTheDocument()
+    expect(screen.getByText('Matemática')).toBeInTheDocument()
   })
+  expect(screen.getByText('Português')).toBeInTheDocument()
+  expect(screen.getByText('Ciências')).toBeInTheDocument()
+  expect(screen.getByText('História')).toBeInTheDocument()
+
+  // Individual trails are hidden until the subject card is expanded.
   expect(
-    screen.getByRole('link', { name: /abrir trilha interpretacao de textos/i })
-  ).toBeInTheDocument()
+    screen.queryByRole('link', { name: /abrir trilha fundamentos de algebra/i })
+  ).not.toBeInTheDocument()
+
+  // Expanding Matemática reveals both of its trails.
+  await user.click(
+    screen.getByRole('button', { name: /ver trilhas de matemática/i })
+  )
   expect(
-    screen.getByRole('link', {
-      name: /abrir trilha ecossistemas e meio ambiente/i,
+    await screen.findByRole('link', {
+      name: /abrir trilha fundamentos de algebra/i,
     })
   ).toBeInTheDocument()
   expect(
-    screen.getByRole('link', { name: /abrir trilha brasil colonia/i })
+    screen.getByRole('link', { name: /abrir trilha geometria basica/i })
   ).toBeInTheDocument()
 })
 
-test('StudentAdaptiveTrailPage exposes trail cards as links to the trail flow', async () => {
+test('StudentAdaptiveTrailPage trail rows link to the trail detail', async () => {
+  const user = userEvent.setup()
   renderPage()
 
+  await user.click(
+    await screen.findByRole('button', { name: /ver trilhas de matemática/i })
+  )
   const link = await screen.findByRole('link', {
     name: /abrir trilha fundamentos de algebra/i,
   })
   expect(link).toHaveAttribute('href', buildStudentTrailRoute('math'))
 })
 
-test('StudentAdaptiveTrailPage filters trails by search query', async () => {
+test('StudentAdaptiveTrailPage filters subjects by search query', async () => {
   const user = userEvent.setup()
   renderPage()
 
-  // Wait for cards to load
-  await screen.findByRole('link', {
-    name: /abrir trilha fundamentos de algebra/i,
-  })
+  await screen.findByText('Ciências')
 
   await user.type(
     screen.getByPlaceholderText('Pesquisar trilhas...'),
@@ -121,16 +141,8 @@ test('StudentAdaptiveTrailPage filters trails by search query', async () => {
   )
 
   await waitFor(() => {
-    expect(
-      screen.getByRole('link', {
-        name: /abrir trilha ecossistemas e meio ambiente/i,
-      })
-    ).toBeInTheDocument()
-    expect(
-      screen.queryByRole('link', {
-        name: /abrir trilha fundamentos de algebra/i,
-      })
-    ).not.toBeInTheDocument()
+    expect(screen.getByText('Ciências')).toBeInTheDocument()
+    expect(screen.queryByText('Matemática')).not.toBeInTheDocument()
   })
 })
 
@@ -138,9 +150,7 @@ test('StudentAdaptiveTrailPage shows empty state when no trails match search', a
   const user = userEvent.setup()
   renderPage()
 
-  await screen.findByRole('link', {
-    name: /abrir trilha fundamentos de algebra/i,
-  })
+  await screen.findByText('Matemática')
 
   await user.type(screen.getByPlaceholderText('Pesquisar trilhas...'), 'xyzabc')
 

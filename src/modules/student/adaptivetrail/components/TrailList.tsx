@@ -1,13 +1,13 @@
 import { Box, Typography } from '@mui/material'
-import TrailCard from './TrailCard'
-import type { Trail } from '../data/trails'
+import SubjectTrailCard from './SubjectTrailCard'
+import type { SubjectGroup } from '../data/trails'
 
 interface TrailListProps {
-  trails: Trail[]
+  groups: SubjectGroup[]
 }
 
-export default function TrailList({ trails }: TrailListProps) {
-  if (trails.length === 0) {
+export default function TrailList({ groups }: TrailListProps) {
+  if (groups.length === 0) {
     return (
       <Box
         sx={{
@@ -42,8 +42,8 @@ export default function TrailList({ trails }: TrailListProps) {
         width: '100%',
       }}
     >
-      {trails.map(trail => (
-        <TrailCard key={trail.id} trail={trail} />
+      {groups.map(group => (
+        <SubjectTrailCard key={group.subjectId} group={group} />
       ))}
     </Box>
   )
