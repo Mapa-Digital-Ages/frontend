@@ -1,10 +1,105 @@
-import { afterEach, expect, jest, test } from '@jest/globals'
-import { screen, within } from '@testing-library/react'
+import { afterEach, beforeEach, expect, jest, test } from '@jest/globals'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { renderWithProviders } from '@/tests/helpers/render'
-import SchoolCompanyPage from '@/modules/admin/school-company/page/Page'
 import { AuthContext } from '@/app/auth/context'
 import type { AuthContextValue } from '@/app/auth/core/types'
+import SchoolCompanyPage from '@/modules/admin/school-company/page/Page'
+import {
+  adminCompanyService,
+  adminSchoolService,
+} from '@/modules/admin/school-company/services/service'
+import type { School } from '@/modules/admin/school-company/types/types'
+import type { StudentItem } from '@/modules/admin/student/types/types'
+import { renderWithProviders } from '@/tests/helpers/render'
+
+const schools: School[] = [
+  {
+    id: '1',
+    name: 'Escola São Paulo',
+    email: 'contato@saopaulo.edu.br',
+    isPrivate: false,
+    requestedSpots: null,
+    isActive: true,
+    studentCount: 2,
+    deactivatedAt: null,
+    createdAt: '2026-01-01T00:00:00Z',
+  },
+  {
+    id: '2',
+    name: 'Escola Rio Branco',
+    email: 'contato@riobranco.edu.br',
+    isPrivate: true,
+    requestedSpots: null,
+    isActive: true,
+    studentCount: 1,
+    deactivatedAt: null,
+    createdAt: '2026-01-02T00:00:00Z',
+  },
+  {
+    id: '3',
+    name: 'Escola Horizonte',
+    email: 'contato@horizonte.edu.br',
+    isPrivate: false,
+    requestedSpots: null,
+    isActive: true,
+    studentCount: 1,
+    deactivatedAt: null,
+    createdAt: '2026-01-03T00:00:00Z',
+  },
+]
+
+const studentsBySchool: Record<string, StudentItem[]> = {
+  '1': [
+    {
+      id: 's1',
+      name: 'Lucas Silva',
+      email: 'lucas@mapa.com',
+      guardian: 'Marina Silva',
+      guardianId: 'guardian-1',
+      school: 'Escola São Paulo',
+      schoolId: '1',
+      year: '7º Ano',
+      status: 'ativo',
+    },
+    {
+      id: 's2',
+      name: 'Carlos Nunes',
+      email: 'carlos@mapa.com',
+      guardian: 'Paula Nunes',
+      guardianId: 'guardian-2',
+      school: 'Escola São Paulo',
+      schoolId: '1',
+      year: '8º Ano',
+      status: 'ativo',
+    },
+  ],
+  '2': [
+    {
+      id: 's3',
+      name: 'Marina Costa',
+      email: 'marina@mapa.com',
+      guardian: null,
+      guardianId: null,
+      school: 'Escola Rio Branco',
+      schoolId: '2',
+      year: '6º Ano',
+      status: 'ativo',
+    },
+  ],
+  '3': [
+    {
+      id: 's6',
+      name: 'Pedro Henrique',
+      email: 'pedro@mapa.com',
+      guardian: null,
+      guardianId: null,
+      school: 'Escola Horizonte',
+      schoolId: '3',
+      year: '9º Ano',
+      status: 'ativo',
+    },
+  ],
+}
 
 const authValue: AuthContextValue = {
   isAuthenticated: true,
@@ -27,6 +122,29 @@ function renderPage() {
   )
 }
 
+beforeEach(() => {
+  jest
+    .spyOn(adminSchoolService, 'listSchools')
+    .mockImplementation(async (_page, _size, name) => {
+      const normalizedName = name?.toLowerCase() ?? ''
+      const items = schools.filter(school =>
+        school.name.toLowerCase().includes(normalizedName)
+      )
+      return { items, total: items.length }
+    })
+  jest
+    .spyOn(adminSchoolService, 'listStudentsBySchool')
+    .mockImplementation(async (schoolId, _page, _size, name) => {
+      const normalizedName = name?.toLowerCase() ?? ''
+      const items = (studentsBySchool[schoolId] ?? []).filter(student =>
+        student.name.toLowerCase().includes(normalizedName)
+      )
+      return { items, total: items.length, hasMore: false }
+    })
+  jest.spyOn(adminCompanyService, 'listCompanies').mockResolvedValue([])
+  jest.spyOn(adminCompanyService, 'countCompanies').mockResolvedValue(0)
+})
+
 afterEach(() => {
   jest.restoreAllMocks()
 })
@@ -47,10 +165,10 @@ test('SchoolCompanyPage renders escola view by default with all action buttons',
   expect(screen.getByTestId('add-new-student')).toBeInTheDocument()
 })
 
-test('SchoolCompanyPage renders all school cards', () => {
+test('SchoolCompanyPage renders all school cards', async () => {
   renderPage()
 
-  expect(screen.getByTestId('school-item-1')).toBeInTheDocument()
+  expect(await screen.findByTestId('school-item-1')).toBeInTheDocument()
   expect(screen.getByTestId('school-item-2')).toBeInTheDocument()
   expect(screen.getByTestId('school-item-3')).toBeInTheDocument()
   expect(screen.getAllByText('Escola São Paulo').length).toBeGreaterThan(0)
@@ -58,18 +176,19 @@ test('SchoolCompanyPage renders all school cards', () => {
   expect(screen.getByText('Escola Horizonte')).toBeInTheDocument()
 })
 
-test('SchoolCompanyPage shows metrics for the initially selected school', () => {
+test('SchoolCompanyPage shows metrics for the initially selected school', async () => {
   renderPage()
 
-  const metrics = screen.getByTestId('school-metrics')
-  expect(metrics).toBeInTheDocument()
-  expect(within(metrics).getByText('3')).toBeInTheDocument()
+  const metrics = await screen.findByTestId('school-metrics')
+
+  expect(within(metrics).getByText('Escola São Paulo')).toBeInTheDocument()
+  expect(within(metrics).getByText('2')).toBeInTheDocument()
 })
 
-test('SchoolCompanyPage renders students for the initially selected school', () => {
+test('SchoolCompanyPage renders students for the initially selected school', async () => {
   renderPage()
 
-  expect(screen.getByTestId('student-item-s1')).toBeInTheDocument()
+  expect(await screen.findByTestId('student-item-s1')).toBeInTheDocument()
   expect(screen.getByTestId('student-item-s2')).toBeInTheDocument()
   expect(screen.getByText('Lucas Silva')).toBeInTheDocument()
   expect(screen.getByText('Carlos Nunes')).toBeInTheDocument()
@@ -79,9 +198,9 @@ test('SchoolCompanyPage changes students when another school is selected', async
   const user = userEvent.setup()
   renderPage()
 
-  await user.click(screen.getByTestId('school-item-3'))
+  await user.click(await screen.findByTestId('school-item-3'))
 
-  expect(screen.getByTestId('student-item-s6')).toBeInTheDocument()
+  expect(await screen.findByTestId('student-item-s6')).toBeInTheDocument()
   expect(screen.getByText('Pedro Henrique')).toBeInTheDocument()
 })
 
@@ -89,10 +208,13 @@ test('SchoolCompanyPage filters schools by search query', async () => {
   const user = userEvent.setup()
   renderPage()
 
+  await screen.findByTestId('school-item-1')
   await user.type(screen.getByPlaceholderText('Pesquisar escolas...'), 'Rio')
 
-  expect(screen.getByTestId('school-item-2')).toBeInTheDocument()
-  expect(screen.queryByTestId('school-item-1')).not.toBeInTheDocument()
+  await waitFor(() => {
+    expect(screen.getByTestId('school-item-2')).toBeInTheDocument()
+    expect(screen.queryByTestId('school-item-1')).not.toBeInTheDocument()
+  })
 })
 
 test('SchoolCompanyPage toggles to empresa view', async () => {
@@ -105,26 +227,28 @@ test('SchoolCompanyPage toggles to empresa view', async () => {
   expect(screen.queryByTestId('escola-view')).not.toBeInTheDocument()
 })
 
-test('SchoolCompanyPage opens new school modal and verifies fields', async () => {
+test('SchoolCompanyPage opens new school modal and verifies current fields', async () => {
   const user = userEvent.setup()
   renderPage()
 
   await user.click(screen.getByTestId('add-new-school'))
 
-  expect(screen.getByText('Criar nova escola')).toBeInTheDocument()
-
-  const nameInput = screen.getByPlaceholderText('Ex: Escola São Paulo')
-  const locationInput = screen.getByPlaceholderText('Ex: São Paulo, SP')
+  const dialog = screen.getByRole('dialog')
+  const nameInput = within(dialog).getByPlaceholderText('Ex: Escola São Paulo')
+  const emailInput = within(dialog).getByPlaceholderText(
+    'Ex: contato@escola.edu.br'
+  )
 
   await user.type(nameInput, 'Escola de Teste')
-  await user.type(locationInput, 'Testeville, TS')
+  await user.type(emailInput, 'contato@teste.edu.br')
 
   expect(nameInput).toHaveValue('Escola de Teste')
-  expect(locationInput).toHaveValue('Testeville, TS')
-  expect(screen.getByTestId('new-school-type')).toBeInTheDocument()
-
+  expect(emailInput).toHaveValue('contato@teste.edu.br')
+  expect(within(dialog).getByTestId('new-school-type')).toBeInTheDocument()
   expect(
-    screen.getByRole('button', { name: /Criar escola/i })
+    within(dialog).getByRole('button', { name: /Criar escola/i })
   ).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /Cancelar/i })).toBeInTheDocument()
+  expect(
+    within(dialog).getByRole('button', { name: /Cancelar/i })
+  ).toBeInTheDocument()
 })

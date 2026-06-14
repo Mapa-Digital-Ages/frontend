@@ -33,9 +33,7 @@ test('StudentAdaptiveTrailDetailPage shows the trail title and all steps', async
   expect(screen.getByText('Equações do 1º Grau')).toBeInTheDocument()
   expect(screen.getByText('Frações e Decimais')).toBeInTheDocument()
   expect(screen.getByText('Problemas Aplicados')).toBeInTheDocument()
-  expect(
-    screen.getAllByText('Libera ao concluir a etapa anterior').length
-  ).toBeGreaterThan(0)
+  expect(screen.getByText('Libera ao concluir o vídeo')).toBeInTheDocument()
 })
 
 test('StudentAdaptiveTrailDetailPage shows sub-steps when active step is expanded', async () => {

@@ -111,7 +111,10 @@ test('company dashboard uses AppCard for list sections', () => {
 
   assert.match(source, /AppCard/)
   assert.match(source, /AppPageContainer/)
-  assert.match(source, /contentClassName="gap-3 p-5"/)
+  assert.match(
+    source,
+    /contentSx=\{\{\s*maxHeight: 400,\s*overflowY: 'auto'\s*\}\}/
+  )
 })
 
 test('company shared types file re-exports CompanyStat from common', () => {

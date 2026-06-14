@@ -41,6 +41,7 @@ interface ApprovalActionModalProps {
   role: UserRole
   disableConfirm?: boolean
   isSubmitting?: boolean
+  errorMessage?: string | null
 }
 
 const fieldLabelSx = {
@@ -161,6 +162,7 @@ function ApprovalActionModal({
   role,
   disableConfirm = false,
   isSubmitting = false,
+  errorMessage = null,
 }: ApprovalActionModalProps) {
   const theme = useTheme()
 
@@ -247,6 +249,21 @@ function ApprovalActionModal({
           ) : null}
         </Box>
       ) : null}
+
+      {errorMessage && (
+        <Box
+          sx={{
+            borderRadius: '10px',
+            color: 'error.main',
+            fontSize: { md: 13, xs: 12 },
+            fontWeight: 600,
+            px: 1,
+            py: 0.5,
+          }}
+        >
+          ✕ {errorMessage}
+        </Box>
+      )}
 
       {isContentForm ? (
         <Box className="grid gap-3">

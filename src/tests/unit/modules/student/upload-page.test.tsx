@@ -163,12 +163,22 @@ test('StudentUploadPage filter toolbar uses a responsive grid and viewport-safe 
   expect(pageSource).not.toMatch(/lg:grid-cols-\[1fr_180px_320px\]/)
   expect(pageSource).toMatch(/gridTemplateColumns/)
   expect(pageSource).toMatch(/minmax\(0, 1fr\)/)
-  expect(pageSource).toMatch(/menuWidth=/)
-  expect(dropdownSource).toMatch(/maxWidth: 'calc\(100vw - 32px\)'/)
+  expect(pageSource).toMatch(/menuWidth="min\(320px, calc\(100vw - 32px\)\)"/)
+  expect(dropdownSource).toMatch(
+    /maxWidth:\s*\{\s*sm: 'unset',\s*xs: 'calc\(100vw - 32px\)'\s*\}/
+  )
+  expect(dropdownSource).toMatch(
+    /maxHeight:\s*\{\s*sm: menuMaxHeight,\s*xs: 'min\(60vh, 360px\)'\s*\}/
+  )
   expect(dropdownSource).toMatch(/MenuListProps/)
-  expect(dropdownSource).toMatch(/p: 1/)
+  expect(dropdownSource).toMatch(/boxSizing: 'border-box'/)
   expect(dropdownSource).toMatch(/mx: 1/)
-  expect(dropdownSource).toMatch(/width: 'auto'/)
+  expect(dropdownSource).toMatch(
+    /containerRef\.current\?\.clientWidth \?\? 'auto'/
+  )
+  expect(dropdownSource).toMatch(
+    /sm: resolvedMenuWidth,\s*xs: 'min\(280px, 92vw\)'/
+  )
   expect(dropdownSource).not.toMatch(/backgroundColor: isSelected/)
   expect(dropdownSource).not.toMatch(
     /maxWidth: '100%',\s+minWidth: resolvedMenuWidth/
