@@ -4,16 +4,14 @@ import { readSource, sourceExists } from '@/tests/helpers/source'
 
 test('adopted schools page exists and uses the company variant header', () => {
   const source = readSource('modules/company/adopted-schools/page/Page.tsx')
-  const serviceSource = readSource(
-    'modules/company/adopted-schools/services/service.ts'
-  )
 
   assert.match(source, /variant="company"/)
   assert.match(source, /PageHeader/)
-  assert.match(source, /adoptedSchoolsService\.getTitle\(\)/)
-  assert.match(source, /adoptedSchoolsService\.getSubtitle\(\)/)
-  assert.match(serviceSource, /Gestão de Escolas Adotadas/)
-  assert.match(serviceSource, /Status operacional das escolas parceiras/)
+  assert.match(source, /title="Escolas Apoiadas"/)
+  assert.match(
+    source,
+    /subtitle="Gerencie as escolas apoiadas pela sua empresa"/
+  )
 })
 
 test('adopted schools page uses SearchBarAndFilter for search and filtering', () => {

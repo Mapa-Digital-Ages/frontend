@@ -1,5 +1,5 @@
 import { test, expect } from '@jest/globals'
-import { screen, within } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { buildStudentTrailRoute } from '@/app/router/paths'
 import StudentAdaptiveTrailPage from '@/modules/student/adaptivetrail/page/Page'
@@ -28,12 +28,19 @@ test('StudentAdaptiveTrailPage renders trail metrics and all available trails', 
     screen.getByText('Matérias').closest('.MuiCard-root')
   ).toHaveTextContent('4')
 
-  const trailList = screen.getByRole('list', { name: /trilhas disponíveis/i })
-  expect(within(trailList).getAllByRole('listitem')).toHaveLength(4)
-  expect(screen.getByText('Fundamentos de Algebra')).toBeInTheDocument()
-  expect(screen.getByText('Interpretacao de Textos')).toBeInTheDocument()
-  expect(screen.getByText('Ecossistemas e Meio Ambiente')).toBeInTheDocument()
-  expect(screen.getByText('Brasil Colonia')).toBeInTheDocument()
+  expect(screen.getAllByRole('link', { name: /abrir trilha/i })).toHaveLength(4)
+  expect(
+    screen.getByRole('link', { name: /fundamentos de algebra/i })
+  ).toBeInTheDocument()
+  expect(
+    screen.getByRole('link', { name: /interpretacao de textos/i })
+  ).toBeInTheDocument()
+  expect(
+    screen.getByRole('link', { name: /ecossistemas e meio ambiente/i })
+  ).toBeInTheDocument()
+  expect(
+    screen.getByRole('link', { name: /brasil colonia/i })
+  ).toBeInTheDocument()
 })
 
 test('StudentAdaptiveTrailPage exposes trail cards as links to the trail flow', () => {
@@ -46,26 +53,20 @@ test('StudentAdaptiveTrailPage exposes trail cards as links to the trail flow', 
   ).toHaveAttribute('href', buildStudentTrailRoute('math'))
 })
 
-test('StudentAdaptiveTrailPage filters trails by search and subject chip', async () => {
+test('StudentAdaptiveTrailPage filters trails by search', async () => {
   const user = userEvent.setup()
 
   renderPage()
 
-  await user.type(
-    screen.getByPlaceholderText('Pesquisar conteúdos...'),
-    'ecossistemas'
-  )
+  await user.type(screen.getByPlaceholderText('Pesquisar trilhas...'), 'eco')
 
-  expect(screen.getByText('Ecossistemas e Meio Ambiente')).toBeInTheDocument()
-  expect(screen.queryByText('Fundamentos de Algebra')).not.toBeInTheDocument()
-  expect(screen.getByText('1 resultado')).toBeInTheDocument()
-
-  await user.clear(screen.getByPlaceholderText('Pesquisar conteúdos...'))
-  await user.click(screen.getByRole('button', { name: 'Português' }))
-
-  expect(screen.getByText('Interpretacao de Textos')).toBeInTheDocument()
-  expect(screen.queryByText('Brasil Colonia')).not.toBeInTheDocument()
-  expect(screen.getByText('1 resultado')).toBeInTheDocument()
+  expect(
+    screen.getByRole('link', { name: /ecossistemas e meio ambiente/i })
+  ).toBeInTheDocument()
+  expect(
+    screen.queryByRole('link', { name: /fundamentos de algebra/i })
+  ).not.toBeInTheDocument()
+  expect(screen.getAllByText('1 resultado').length).toBeGreaterThan(0)
 })
 
 test('StudentAdaptiveTrailPage shows empty state when no trails match', async () => {
@@ -73,39 +74,39 @@ test('StudentAdaptiveTrailPage shows empty state when no trails match', async ()
 
   renderPage()
 
-  await user.type(
-    screen.getByPlaceholderText('Pesquisar conteúdos...'),
-    'xyzabc'
-  )
+  await user.type(screen.getByPlaceholderText('Pesquisar trilhas...'), 'xyzabc')
 
   expect(screen.getByText('Nenhuma trilha encontrada.')).toBeInTheDocument()
-  expect(screen.getByText('0 resultados')).toBeInTheDocument()
+  expect(screen.getAllByText('0 resultados').length).toBeGreaterThan(0)
 })
 
-test('StudentAdaptiveTrailPage resets to all trails when Todos is clicked', async () => {
+test('StudentAdaptiveTrailPage resets to all trails when search is cleared', async () => {
   const user = userEvent.setup()
 
   renderPage()
 
-  await user.click(screen.getByRole('button', { name: 'Matemática' }))
-  expect(screen.queryByText('Brasil Colonia')).not.toBeInTheDocument()
+  const searchInput = screen.getByPlaceholderText('Pesquisar trilhas...')
 
-  await user.click(screen.getByRole('button', { name: 'Todos' }))
+  await user.type(searchInput, 'matemática')
+  expect(screen.getAllByRole('link', { name: /abrir trilha/i })).toHaveLength(1)
 
-  const trailList = screen.getByRole('list', { name: /trilhas disponíveis/i })
-  expect(within(trailList).getAllByRole('listitem')).toHaveLength(4)
+  await user.clear(searchInput)
+
+  expect(screen.getAllByRole('link', { name: /abrir trilha/i })).toHaveLength(4)
 })
 
-test('StudentAdaptiveTrailPage shows no results when search does not match filter', async () => {
+test('StudentAdaptiveTrailPage searches by subject name', async () => {
   const user = userEvent.setup()
 
   renderPage()
 
-  await user.click(screen.getByRole('button', { name: 'Matemática' }))
   await user.type(
-    screen.getByPlaceholderText('Pesquisar conteúdos...'),
-    'ecossistemas'
+    screen.getByPlaceholderText('Pesquisar trilhas...'),
+    'português'
   )
 
-  expect(screen.getByText('Nenhuma trilha encontrada.')).toBeInTheDocument()
+  expect(
+    screen.getByRole('link', { name: /interpretacao de textos/i })
+  ).toBeInTheDocument()
+  expect(screen.getAllByText('1 resultado').length).toBeGreaterThan(0)
 })
