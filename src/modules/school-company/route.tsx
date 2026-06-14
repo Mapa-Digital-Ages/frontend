@@ -5,6 +5,7 @@ import DashboardLayout from '@/app/layout/DashboardLayout'
 import SchoolCompanyDashboardPage from '@/modules/school-company/dashboard/page/Page'
 import SchoolCompanyAdoptedSchoolsPage from '@/modules/school-company/adopted-schools/page/Page'
 import PartnersPage from '@/modules/school-company/partners/page/Page'
+import SchoolCompanySupportPage from '@/modules/school-company/support/page/Page'
 import UnderDevelopmentPage from '@/modules/school-company/shared/UnderDevelopmentPage'
 
 export const schoolCompanyRoutes: RouteObject[] = [
@@ -31,7 +32,7 @@ export const schoolCompanyRoutes: RouteObject[] = [
               },
               {
                 path: APP_ROUTES.schoolCompany.support,
-                element: <UnderDevelopmentPage title="Apoio" />,
+                element: <SchoolCompanySupportPage />,
               },
               {
                 path: APP_ROUTES.schoolCompany.partners,
