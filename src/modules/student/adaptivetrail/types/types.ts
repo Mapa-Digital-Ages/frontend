@@ -19,6 +19,8 @@ export interface AdaptiveTrailSubStep {
   description: string
   duration?: string
   id: string
+  itemId?: string
+  itemIds?: string[]
   kind: AdaptiveTrailStepKind
   lockReason?: string
   questions: AdaptiveTrailQuestion[]
@@ -51,6 +53,7 @@ export interface AdaptiveTrailSession {
 export interface TrailStepQuestionFlow {
   assessmentId: string
   initialAnswersByQuestionId?: Record<string, string>
+  itemId: string
   questions: AdaptiveTrailQuestion[]
   stepId: string
   subStepId: string

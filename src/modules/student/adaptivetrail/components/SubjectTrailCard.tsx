@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { buildStudentTrailRoute } from '@/app/router/paths'
+import { buildStudentSubjectTrailRoute } from '@/app/router/paths'
 import { getSubjectIcon } from '@/shared/utils/subjectIcons'
 import SubjectBaseCard from '../../shared/components/SubjectBaseCard'
 import type { SubjectGroup } from '../data/trails'
@@ -12,13 +12,13 @@ export default function SubjectTrailCard({ group }: SubjectTrailCardProps) {
   const label = group.subject?.label ?? 'Geral'
   const count = group.trails.length
   const countLabel = `${count} ${count === 1 ? 'trilha' : 'trilhas'}`
-  const firstTrailId = group.trails[0].id
+  const subjectId = group.subject?.id ?? group.subjectId
 
   return (
     <SubjectBaseCard
       aria-label={`Abrir trilhas de ${label}`}
       component={Link}
-      to={buildStudentTrailRoute(firstTrailId)}
+      to={buildStudentSubjectTrailRoute(subjectId)}
       icon={getSubjectIcon(group.subject?.id)}
       progress={group.averageProgress}
       subject={group.subject}

@@ -8,9 +8,7 @@ import EmptyState from '@/shared/ui/EmptyState'
 import LoadingScreen from '@/shared/ui/LoadingScreen'
 import OnboardingQuestionCard from '@/modules/student/shared/components/OnboardingQuestionCard'
 import TrailCompletionScreen from '../../components/TrailCompletionScreen'
-import { fetchTrails } from '../../data/trails'
 import { adaptiveTrailDetailService } from '../../services/trailDetailService'
-import { studentService } from '../../services/service'
 import type {
   AdaptiveTrailSession,
   AdaptiveTrailStep,
@@ -21,93 +19,8 @@ import type {
 } from '../../types/types'
 import TrailComponent from '../components/TrailComponent'
 
-function applySubStepCompletion(
-  session: AdaptiveTrailSession,
-  stepId: string,
-  subStepId: string
-): AdaptiveTrailSession {
-  const steps = session.steps.map(step => {
-    if (step.id !== stepId) return step
-
-    const subStepIndex = step.subSteps.findIndex(ss => ss.id === subStepId)
-    if (subStepIndex === -1) return step
-
-    const subSteps = step.subSteps.map((ss, i) => {
-      if (i === subStepIndex) return { ...ss, status: 'completed' as const }
-      if (i === subStepIndex + 1) return { ...ss, status: 'available' as const }
-      return ss
-    })
-
-    const allSubStepsDone = subSteps.every(ss => ss.status === 'completed')
-    return {
-      ...step,
-      status: allSubStepsDone ? ('completed' as const) : step.status,
-      subSteps,
-    }
-  })
-
-  const updatedSteps = steps.map((step, i) => {
-    const prevStep = steps[i - 1]
-    if (prevStep?.status === 'completed' && step.status === 'locked') {
-      return {
-        ...step,
-        status: 'available' as const,
-        subSteps: step.subSteps.map((ss, j) =>
-          j === 0 ? { ...ss, status: 'available' as const } : ss
-        ),
-      }
-    }
-    return step
-  })
-
-  const completedCount = updatedSteps.filter(
-    s => s.status === 'completed'
-  ).length
-  const progress =
-    updatedSteps.length > 0
-      ? Math.round((completedCount / updatedSteps.length) * 100)
-      : 0
-
-  return {
-    ...session,
-    steps: updatedSteps,
-    completedSteps: completedCount,
-    progress,
-  }
-}
-
-async function loadSubjectTrailSessions(currentSession: AdaptiveTrailSession) {
-  const studentId = studentService.getStudentId()
-  if (!studentId) return [currentSession]
-
-  try {
-    const trails = await fetchTrails(studentId)
-    const subjectTrailIds = trails
-      .filter(trail => trail.subject?.id === currentSession.subject?.id)
-      .map(trail => trail.id)
-
-    const orderedTrailIds = Array.from(
-      new Set([currentSession.id, ...subjectTrailIds])
-    )
-
-    const sessions = await Promise.all(
-      orderedTrailIds.map(id =>
-        id === currentSession.id
-          ? Promise.resolve(currentSession)
-          : adaptiveTrailDetailService.getTrailSession(id)
-      )
-    )
-
-    return sessions.filter((session): session is AdaptiveTrailSession =>
-      Boolean(session)
-    )
-  } catch {
-    return [currentSession]
-  }
-}
-
 export default function Page() {
-  const { trailId } = useParams<{ trailId: string }>()
+  const { subjectId } = useParams<{ subjectId: string }>()
   const [sessions, setSessions] = useState<AdaptiveTrailSession[]>([])
   const [questionFlow, setQuestionFlow] =
     useState<TrailStepQuestionFlow | null>(null)
@@ -119,39 +32,38 @@ export default function Page() {
   useEffect(() => {
     let isActive = true
 
-    async function loadTrailSession() {
-      if (!trailId) {
-        setError('Trilha não informada.')
+    async function loadTrailSessions() {
+      if (!subjectId) {
+        setError('Matéria não informada.')
         setIsLoading(false)
         return
       }
 
       try {
-        const nextSession =
-          await adaptiveTrailDetailService.getTrailSession(trailId)
+        const nextSessions =
+          await adaptiveTrailDetailService.getSubjectTrailSessions(subjectId)
 
         if (!isActive) return
 
-        const nextSessions = nextSession
-          ? await loadSubjectTrailSessions(nextSession)
-          : []
-
-        if (!isActive) return
-
-        setError(nextSession ? null : 'A trilha solicitada não foi encontrada.')
+        setError(
+          nextSessions.length > 0
+            ? null
+            : 'Nenhuma trilha foi encontrada para esta matéria.'
+        )
         setSessions(nextSessions)
       } catch {
-        if (isActive) setError('Não foi possível carregar esta trilha.')
+        if (isActive)
+          setError('Não foi possível carregar as trilhas desta matéria.')
       } finally {
         if (isActive) setIsLoading(false)
       }
     }
 
-    void loadTrailSession()
+    void loadTrailSessions()
     return () => {
       isActive = false
     }
-  }, [trailId])
+  }, [subjectId])
 
   const handleAnswerSubStep = useCallback(
     async (
@@ -160,6 +72,7 @@ export default function Page() {
       subStep: AdaptiveTrailSubStep
     ) => {
       if (subStep.status === 'locked') return
+      if (!subStep.itemId) return
 
       if (subStep.kind === 'question') {
         const nextFlow =
@@ -168,26 +81,18 @@ export default function Page() {
             step.id,
             subStep.id
           )
-        setQuestionFlow(nextFlow)
+        setQuestionFlow({ ...nextFlow, itemId: subStep.itemId })
       } else {
-        // video/text: mark as done immediately
+        const result = await adaptiveTrailDetailService.completeItem(
+          actionTrailId,
+          subStep.itemId,
+          []
+        )
         setSessions(current =>
           current.map(session =>
-            session.id === actionTrailId
-              ? applySubStepCompletion(session, step.id, subStep.id)
-              : session
+            session.id === actionTrailId ? result.session : session
           )
         )
-        const isLastSubStep =
-          step.subSteps[step.subSteps.length - 1]?.id === subStep.id
-        const hasQuiz = step.subSteps.some(ss => ss.kind === 'question')
-        if (isLastSubStep && !hasQuiz) {
-          await adaptiveTrailDetailService.completeStep(
-            actionTrailId,
-            step.id,
-            []
-          )
-        }
       }
     },
     []
@@ -201,27 +106,20 @@ export default function Page() {
     async (answersByQuestionId: Record<string, string>) => {
       if (!questionFlow) return
 
-      const {
-        questions,
-        stepId,
-        subStepId,
-        trailId: activeTrailId,
-      } = questionFlow
+      const { questions, itemId, trailId: activeTrailId } = questionFlow
       const answers = questions
         .filter(q => answersByQuestionId[q.id])
         .map(q => ({ exerciseId: q.id, optionId: answersByQuestionId[q.id] }))
 
-      const graded = await adaptiveTrailDetailService.completeStep(
+      const completion = await adaptiveTrailDetailService.completeItem(
         activeTrailId,
-        stepId,
+        itemId,
         answers
       )
 
       setSessions(current =>
         current.map(session =>
-          session.id === activeTrailId
-            ? applySubStepCompletion(session, stepId, subStepId)
-            : session
+          session.id === activeTrailId ? completion.session : session
         )
       )
 
@@ -229,8 +127,8 @@ export default function Page() {
         await adaptiveTrailDetailService.getCompletionRecommendations(
           activeTrailId,
           questionFlow.stepTitle,
-          graded.correct,
-          graded.total
+          completion.correct,
+          completion.total
         )
 
       setCompletionResult(result)

@@ -1,17 +1,27 @@
 import { expect, jest, test, beforeEach } from '@jest/globals'
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { buildStudentTrailRoute } from '@/app/router/paths'
-import StudentAdaptiveTrailPage from '@/modules/student/adaptivetrail/page/Page'
+import { buildStudentSubjectTrailRoute } from '@/app/router/paths'
 import { renderWithProviders } from '@/tests/helpers/render'
 
-jest.mock('@/app/auth/core/service', () => ({
-  authService: { getUserId: jest.fn(() => 'student-123') },
+await jest.unstable_mockModule('@/app/auth/core/service', () => ({
+  authService: { getUserId: () => 'student-123' },
 }))
 
-jest.mock('@/shared/lib/http/client', () => ({
-  httpClient: { get: jest.fn() },
+await jest.unstable_mockModule(
+  '@/modules/student/adaptivetrail/services/service',
+  () => ({
+    studentService: { getStudentId: () => 'student-123' },
+  })
+)
+
+const mockHttpGet = jest.fn<(...args: unknown[]) => Promise<unknown>>()
+await jest.unstable_mockModule('@/shared/lib/http/client', () => ({
+  httpClient: { get: mockHttpGet },
 }))
+
+const { default: StudentAdaptiveTrailPage } =
+  await import('@/modules/student/adaptivetrail/page/Page')
 
 const MOCK_TRAILS_API = [
   {
@@ -67,9 +77,7 @@ const MOCK_TRAILS_API = [
 ]
 
 function getHttpMock() {
-  return jest.requireMock<{ httpClient: { get: ReturnType<typeof jest.fn> } }>(
-    '@/shared/lib/http/client'
-  ).httpClient.get
+  return mockHttpGet
 }
 
 beforeEach(() => {
@@ -96,20 +104,26 @@ test('StudentAdaptiveTrailPage renders one clickable card per subject', async ()
   expect(screen.getByText('Ciências')).toBeInTheDocument()
   expect(screen.getByText('História')).toBeInTheDocument()
 
-  // The subject card itself is a link into the subject's first trail.
+  // The subject card itself is a link into all trails from that subject.
   const matCard = screen.getByRole('link', {
     name: /abrir trilhas de matemática/i,
   })
-  expect(matCard).toHaveAttribute('href', buildStudentTrailRoute('math'))
+  expect(matCard).toHaveAttribute(
+    'href',
+    buildStudentSubjectTrailRoute('matematica')
+  )
 })
 
-test('StudentAdaptiveTrailPage subject card links to the subject first trail', async () => {
+test('StudentAdaptiveTrailPage subject card links to the subject trail collection', async () => {
   renderPage()
 
   const link = await screen.findByRole('link', {
     name: /abrir trilhas de matemática/i,
   })
-  expect(link).toHaveAttribute('href', buildStudentTrailRoute('math'))
+  expect(link).toHaveAttribute(
+    'href',
+    buildStudentSubjectTrailRoute('matematica')
+  )
 })
 
 test('StudentAdaptiveTrailPage filters subjects by search query', async () => {

@@ -5,12 +5,14 @@ import { render } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { createAppTheme } from '@/app/theme/core/theme'
-import { APP_ROUTES, buildStudentTrailRoute } from '@/app/router/paths'
+import { APP_ROUTES, buildStudentSubjectTrailRoute } from '@/app/router/paths'
 import type { AdaptiveTrailSession } from '@/modules/student/adaptivetrail/types/types'
 import { SUBJECTS } from '@/shared/utils/themes'
 
 const mockGetTrailSession =
   jest.fn<(id: string) => Promise<AdaptiveTrailSession | null>>()
+const mockGetSubjectTrailSessions =
+  jest.fn<(subjectId: string) => Promise<AdaptiveTrailSession[]>>()
 const mockSaveStepAnswer = jest
   .fn<(...args: unknown[]) => Promise<void>>()
   .mockResolvedValue()
@@ -25,6 +27,7 @@ const mockCompleteStep = jest
     currentSubPath: 8,
     pathStatus: 'on_going',
   })
+const mockCompleteItem = jest.fn<(...args: unknown[]) => Promise<unknown>>()
 const mockGetCompletionRecommendations = jest
   .fn<(...args: unknown[]) => Promise<unknown>>()
   .mockResolvedValue({
@@ -44,10 +47,13 @@ await jest.unstable_mockModule(
     adaptiveTrailDetailService: {
       getTrailSession: (...args: unknown[]) =>
         mockGetTrailSession(args[0] as string),
+      getSubjectTrailSessions: (...args: unknown[]) =>
+        mockGetSubjectTrailSessions(args[0] as string),
       saveStepAnswer: (...args: unknown[]) => mockSaveStepAnswer(...args),
       getSubStepQuestionFlow: (...args: unknown[]) =>
         mockGetSubStepQuestionFlow(...args),
       completeStep: (...args: unknown[]) => mockCompleteStep(...args),
+      completeItem: (...args: unknown[]) => mockCompleteItem(...args),
       getCompletionRecommendations: (...args: unknown[]) =>
         mockGetCompletionRecommendations(...args),
     },
@@ -92,6 +98,7 @@ const MOCK_SESSION: AdaptiveTrailSession = {
       subSteps: [
         {
           id: 'eq-video',
+          itemId: 'item-video',
           kind: 'video',
           title: 'Assistir: Introdução às Equações do 1º Grau',
           description: 'Vídeo explicativo.',
@@ -102,6 +109,7 @@ const MOCK_SESSION: AdaptiveTrailSession = {
         },
         {
           id: 'eq-quiz',
+          itemId: 'item-quiz',
           kind: 'question',
           title: 'Questões de Equações do 1º Grau',
           description: 'Resolva as questões.',
@@ -136,14 +144,33 @@ const MOCK_SESSION: AdaptiveTrailSession = {
 
 beforeEach(() => {
   mockGetTrailSession.mockResolvedValue(MOCK_SESSION)
+  mockGetSubjectTrailSessions.mockResolvedValue([MOCK_SESSION])
+  mockCompleteItem.mockResolvedValue({
+    correct: 0,
+    passed: true,
+    session: {
+      ...MOCK_SESSION,
+      steps: [
+        {
+          ...MOCK_SESSION.steps[0],
+          subSteps: [
+            { ...MOCK_SESSION.steps[0].subSteps[0], status: 'completed' },
+            { ...MOCK_SESSION.steps[0].subSteps[1], status: 'available' },
+          ],
+        },
+        ...MOCK_SESSION.steps.slice(1),
+      ],
+    },
+    total: 0,
+  })
   mockGetStudentId.mockReturnValue(null)
   getHttpGet().mockReset()
 })
 
-function renderPage(trailId = 'math') {
+function renderPage(subjectId = 'matematica') {
   render(
     <ThemeProvider theme={createAppTheme('light')}>
-      <MemoryRouter initialEntries={[buildStudentTrailRoute(trailId)]}>
+      <MemoryRouter initialEntries={[buildStudentSubjectTrailRoute(subjectId)]}>
         <Routes>
           <Route
             element={<StudentAdaptiveTrailDetailPage />}
@@ -180,6 +207,8 @@ test('StudentAdaptiveTrailDetailPage starts trail cards collapsed', async () => 
     screen.getByRole('button', { name: /fundamentos de algebra/i })
   ).toHaveAttribute('aria-expanded', 'false')
   expect(screen.queryByText('Equações do 1º Grau')).not.toBeInTheDocument()
+  expect(mockGetSubjectTrailSessions).toHaveBeenCalledWith('matematica')
+  expect(mockGetTrailSession).not.toHaveBeenCalled()
 })
 
 test('StudentAdaptiveTrailDetailPage shows all steps after expanding the trail card', async () => {
@@ -271,7 +300,7 @@ test('StudentAdaptiveTrailDetailPage fetches the question flow when opening the 
   })
 })
 
-test('StudentAdaptiveTrailDetailPage paginates same-subject trail cards', async () => {
+test('StudentAdaptiveTrailDetailPage paginates same-subject trail cards in groups', async () => {
   const user = userEvent.setup()
   const geometrySession: AdaptiveTrailSession = {
     ...MOCK_SESSION,
@@ -281,45 +310,20 @@ test('StudentAdaptiveTrailDetailPage paginates same-subject trail cards', async 
     progress: 100,
     title: 'Geometria Basica',
   }
+  const functionsSession: AdaptiveTrailSession = {
+    ...MOCK_SESSION,
+    completedSteps: 0,
+    description: 'Trilha de reforço com foco em funções.',
+    id: 'math3',
+    progress: 0,
+    title: 'Funções Afins',
+  }
 
-  mockGetStudentId.mockReturnValue('student-1')
-  mockGetTrailSession.mockImplementation(id =>
-    Promise.resolve(id === 'math2' ? geometrySession : MOCK_SESSION)
-  )
-  getHttpGet().mockResolvedValue({
-    data: [
-      {
-        id: 'math',
-        name: 'Fundamentos de Algebra',
-        subject: SUBJECTS.matematica,
-        description: '',
-        progress: 33,
-        steps: 2,
-        completed: 0,
-        time_estimate: null,
-      },
-      {
-        id: 'math2',
-        name: 'Geometria Basica',
-        subject: SUBJECTS.matematica,
-        description: '',
-        progress: 100,
-        steps: 2,
-        completed: 2,
-        time_estimate: null,
-      },
-      {
-        id: 'port1',
-        name: 'Interpretacao de Textos',
-        subject: SUBJECTS.portugues,
-        description: '',
-        progress: 0,
-        steps: 2,
-        completed: 0,
-        time_estimate: null,
-      },
-    ],
-  })
+  mockGetSubjectTrailSessions.mockResolvedValue([
+    MOCK_SESSION,
+    geometrySession,
+    functionsSession,
+  ])
 
   renderPage()
 
@@ -327,22 +331,29 @@ test('StudentAdaptiveTrailDetailPage paginates same-subject trail cards', async 
     await screen.findByRole('heading', { name: /fundamentos de algebra/i })
   ).toBeInTheDocument()
   expect(
-    screen.queryByRole('heading', { name: /geometria basica/i })
+    screen.getByRole('heading', { name: /geometria basica/i })
+  ).toBeInTheDocument()
+  expect(
+    screen.queryByRole('heading', { name: /funções afins/i })
   ).not.toBeInTheDocument()
 
   expect(
     screen.queryByRole('heading', { name: /interpretacao de textos/i })
   ).not.toBeInTheDocument()
+  expect(mockGetSubjectTrailSessions).toHaveBeenCalledWith('matematica')
+  expect(
+    screen.getByRole('button', { name: /geometria basica/i })
+  ).toHaveAttribute('aria-expanded', 'false')
+  expect(
+    screen.getByRole('button', { name: /go to page 2/i })
+  ).toBeInTheDocument()
 
   await user.click(screen.getByRole('button', { name: /go to page 2/i }))
 
   expect(
-    await screen.findByRole('heading', { name: /geometria basica/i })
+    await screen.findByRole('heading', { name: /funções afins/i })
   ).toBeInTheDocument()
   expect(
     screen.queryByRole('heading', { name: /fundamentos de algebra/i })
   ).not.toBeInTheDocument()
-  expect(
-    screen.getByRole('button', { name: /geometria basica/i })
-  ).toHaveAttribute('aria-expanded', 'false')
 })

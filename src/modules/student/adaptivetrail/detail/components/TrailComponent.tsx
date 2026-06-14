@@ -1,8 +1,10 @@
 import { Box, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import { useCallback, useMemo, useState } from 'react'
+import AppCard from '@/shared/ui/AppCard'
 import AppSubjectsTags from '@/shared/ui/AppSubjectsTags'
 import EmptyState from '@/shared/ui/EmptyState'
+import Pagination from '@/shared/ui/Pagination'
 import { getSubjectTheme } from '@/shared/utils/themes'
 import { filterTrailSteps } from '../../hooks/useTrailSearch'
 import type {
@@ -12,10 +14,8 @@ import type {
 } from '../../types/types'
 import TrailCard from './TrailCard'
 import TrailSearchBar from './TrailSearchBar'
-import AppCard from '@/shared/ui/AppCard'
-import Pagination from '@/shared/ui/Pagination'
 
-const TRAIL_CARDS_PER_PAGE = 1
+const TRAIL_CARDS_PER_PAGE = 2
 
 interface TrailComponentProps {
   emptyDescription?: string
@@ -209,6 +209,14 @@ export default function TrailComponent({
             session={session}
           />
         ))}
+        {visibleSessions.length > TRAIL_CARDS_PER_PAGE && (
+          <Pagination
+            currentPage={activePage}
+            onPageChange={setCurrentPage}
+            role="aluno"
+            totalPages={totalPages}
+          />
+        )}
         {visibleSessions.length === 0 && (
           <EmptyState
             description="Tente buscar por outro nome, etapa ou sub-etapa."
@@ -216,14 +224,6 @@ export default function TrailComponent({
           />
         )}
       </Box>
-      {totalPages > 1 && (
-        <Pagination
-          currentPage={activePage}
-          onPageChange={setCurrentPage}
-          totalPages={totalPages}
-          role="aluno"
-        />
-      )}
     </AppCard>
   )
 }

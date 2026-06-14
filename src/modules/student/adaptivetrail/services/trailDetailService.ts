@@ -49,7 +49,9 @@ export interface StepCompletionApiResult {
 
 interface SubStepApiResponse {
   id: string
-  kind: 'resource' | 'question'
+  item_id?: string
+  item_ids?: string[]
+  kind: 'video' | 'text' | 'question'
   title: string
   order: number
   status: 'available' | 'completed' | 'locked'
@@ -77,10 +79,20 @@ interface TrailDetailApiResponse {
   steps: StepApiResponse[]
 }
 
+interface ItemCompletionApiResponse extends TrailDetailApiResponse {
+  last_completion?: {
+    correct: number
+    total: number
+    passed: boolean
+  }
+}
+
 function mapSubStep(raw: SubStepApiResponse): AdaptiveTrailSubStep {
   return {
     id: raw.id,
-    kind: raw.kind === 'question' ? 'question' : 'video',
+    itemId: raw.item_id,
+    itemIds: raw.item_ids,
+    kind: raw.kind,
     title: raw.title,
     description: '',
     order: raw.order,
@@ -134,6 +146,18 @@ export const adaptiveTrailDetailService = {
     }
   },
 
+  async getSubjectTrailSessions(
+    subjectId: string
+  ): Promise<AdaptiveTrailSession[]> {
+    const studentId = authService.getUserId()
+    if (!studentId) return []
+
+    const response = await httpClient.get<TrailDetailApiResponse[]>(
+      `student/${studentId}/trails/subjects/${subjectId}`
+    )
+    return response.data.map(mapSession)
+  },
+
   async getSubStepQuestionFlow(
     trailId: string,
     stepId: string,
@@ -148,6 +172,7 @@ export const adaptiveTrailDetailService = {
     const raw = response.data
     return {
       assessmentId: raw.assessmentId,
+      itemId: raw.subStepId,
       trailId: raw.trailId,
       stepId: raw.stepId,
       subStepId: raw.subStepId,
@@ -193,6 +218,41 @@ export const adaptiveTrailDetailService = {
       passed: d.passed,
       currentSubPath: d.current_sub_path,
       pathStatus: d.path_status,
+    }
+  },
+
+  async completeItem(
+    trailId: string,
+    itemId: string,
+    answers: StepAnswerPayload[]
+  ): Promise<{
+    correct: number
+    passed: boolean
+    session: AdaptiveTrailSession
+    total: number
+  }> {
+    const studentId = authService.getUserId()
+    if (!studentId) throw new Error('Usuário não autenticado.')
+
+    const response = await httpClient.post<ItemCompletionApiResponse>(
+      `student/${studentId}/trails/${trailId}/items/${itemId}/complete`,
+      {
+        answers: answers.map(a => ({
+          exercise_id: a.exerciseId,
+          option_id: a.optionId,
+        })),
+      }
+    )
+    const completion = response.data.last_completion ?? {
+      correct: 0,
+      passed: false,
+      total: 0,
+    }
+    return {
+      correct: completion.correct,
+      passed: completion.passed,
+      session: mapSession(response.data),
+      total: completion.total,
     }
   },
 

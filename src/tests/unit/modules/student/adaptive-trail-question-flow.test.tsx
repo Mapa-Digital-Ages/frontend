@@ -1,22 +1,24 @@
 import { expect, jest, test, beforeEach, describe } from '@jest/globals'
 
-jest.mock('@/app/auth/core/service', () => ({
-  authService: { getUserId: jest.fn(() => 'student-1') },
+await jest.unstable_mockModule('@/app/auth/core/service', () => ({
+  authService: { getUserId: () => 'student-1' },
 }))
 
-jest.mock('@/shared/lib/http/client', () => ({
-  httpClient: { get: jest.fn(), post: jest.fn() },
+const mockHttpGet = jest.fn<(...args: unknown[]) => Promise<unknown>>()
+const mockHttpPost = jest.fn<(...args: unknown[]) => Promise<unknown>>()
+
+await jest.unstable_mockModule('@/shared/lib/http/client', () => ({
+  httpClient: { get: mockHttpGet, post: mockHttpPost },
 }))
 
-import { adaptiveTrailDetailService } from '@/modules/student/adaptivetrail/services/trailDetailService'
+const { adaptiveTrailDetailService } =
+  await import('@/modules/student/adaptivetrail/services/trailDetailService')
 
 function getHttp() {
-  return jest.requireMock<{
-    httpClient: {
-      get: ReturnType<typeof jest.fn>
-      post: ReturnType<typeof jest.fn>
-    }
-  }>('@/shared/lib/http/client').httpClient
+  return {
+    get: mockHttpGet,
+    post: mockHttpPost,
+  }
 }
 
 beforeEach(() => {
@@ -59,6 +61,52 @@ describe('adaptiveTrailDetailService.getSubStepQuestionFlow', () => {
     expect(flow.subStepId).toBe('quiz-5')
     expect(flow.questions).toHaveLength(1)
     expect(flow.questions[0].options).toHaveLength(2)
+  })
+})
+
+describe('adaptiveTrailDetailService.getSubjectTrailSessions', () => {
+  test('fetches all detailed trail sessions for one subject', async () => {
+    getHttp().get.mockResolvedValue({
+      data: [
+        {
+          id: '3',
+          title: 'Álgebra',
+          description: 'Equações.',
+          subject: { id: '1', label: 'Mat', color: '#000' },
+          progress: 50,
+          completed_steps: 1,
+          level_label: null,
+          time_estimate: null,
+          steps: [
+            {
+              id: '5',
+              title: 'Etapa 1',
+              order: 1,
+              status: 'available',
+              sub_steps: [
+                {
+                  id: 'r1',
+                  kind: 'text',
+                  title: 'Ler resumo',
+                  order: 1,
+                  status: 'available',
+                  questions: [],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+
+    const sessions =
+      await adaptiveTrailDetailService.getSubjectTrailSessions('1')
+
+    expect(getHttp().get).toHaveBeenCalledWith(
+      'student/student-1/trails/subjects/1'
+    )
+    expect(sessions).toHaveLength(1)
+    expect(sessions[0].steps[0].subSteps[0].kind).toBe('text')
   })
 })
 
