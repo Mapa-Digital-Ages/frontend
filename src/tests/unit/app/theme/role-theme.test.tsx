@@ -47,16 +47,16 @@ test('chat history hover uses role action tokens instead of fixed role soft colo
   assert.doesNotMatch(chatHistorySource, /--app-role-current-soft/)
 })
 
-test('chat suggestion chips use dark-mode action tokens with readable text', () => {
+test('chat messages use role colors and readable dark-mode surfaces', () => {
   const messageHistorySource = readSource(
     'modules/student/chat/components/ChatMessageHistory.tsx'
   )
 
-  assert.match(messageHistorySource, /suggestionChipBackgroundColor/)
-  assert.match(messageHistorySource, /--app-role-action-selected-bg/)
-  assert.match(messageHistorySource, /--app-role-action-selected-border/)
-  assert.match(messageHistorySource, /--app-role-action-hover-bg/)
-  assert.match(messageHistorySource, /theme\.palette\.primary\.main/)
+  assert.match(messageHistorySource, /isDarkMode/)
+  assert.match(messageHistorySource, /--app-role-current-primary/)
+  assert.match(messageHistorySource, /--app-role-current-contrast/)
+  assert.match(messageHistorySource, /rgba\(255,255,255,0\.06\)/)
+  assert.match(messageHistorySource, /theme\.palette\.text\.primary/)
 })
 
 test('PageHeader derives the user greeting when an explicit eyebrow is not provided', () => {
