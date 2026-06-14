@@ -157,7 +157,7 @@ npm run format:check  # Verifica se o código está formatado
 ### Validação Completa
 
 ```bash
-npm run validate      # Executa lint, format:check e typecheck
+npm run validate      # Executa lint, format:check, typecheck e testes
 ```
 
 ## 🧭 Objetivo da arquitetura

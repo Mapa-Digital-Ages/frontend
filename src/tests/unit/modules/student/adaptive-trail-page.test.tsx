@@ -1,4 +1,4 @@
-import { expect, jest, test, beforeEach } from '@jest/globals'
+import { beforeEach, expect, jest, test } from '@jest/globals'
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { buildStudentSubjectTrailRoute } from '@/app/router/paths'
@@ -95,23 +95,27 @@ test('StudentAdaptiveTrailPage renders one clickable card per subject', async ()
     await screen.findByRole('heading', { name: /trilhas adaptativas/i })
   ).toBeInTheDocument()
 
-  // One card per subject (subject label is the card title). The two Matemática
-  // trails collapse into a single Matemática card.
-  await waitFor(() => {
-    expect(screen.getByText('Matemática')).toBeInTheDocument()
-  })
+  expect(
+    screen.getByText(/em andamento/i).closest('.MuiCard-root')
+  ).toHaveTextContent('2')
+  expect(
+    screen.getByText('Concluídas').closest('.MuiCard-root')
+  ).toHaveTextContent('1')
+  expect(
+    screen.getByText('Disponíveis').closest('.MuiCard-root')
+  ).toHaveTextContent('2')
+  expect(
+    screen.getByText('Matérias').closest('.MuiCard-root')
+  ).toHaveTextContent('4')
+
+  expect(
+    screen.getAllByRole('link', { name: /abrir trilhas de/i })
+  ).toHaveLength(4)
+  expect(screen.getByText('Matemática')).toBeInTheDocument()
   expect(screen.getByText('Português')).toBeInTheDocument()
   expect(screen.getByText('Ciências')).toBeInTheDocument()
   expect(screen.getByText('História')).toBeInTheDocument()
-
-  // The subject card itself is a link into all trails from that subject.
-  const matCard = screen.getByRole('link', {
-    name: /abrir trilhas de matemática/i,
-  })
-  expect(matCard).toHaveAttribute(
-    'href',
-    buildStudentSubjectTrailRoute('matematica')
-  )
+  expect(screen.getByText('2 trilhas')).toBeInTheDocument()
 })
 
 test('StudentAdaptiveTrailPage subject card links to the subject trail collection', async () => {
@@ -126,21 +130,19 @@ test('StudentAdaptiveTrailPage subject card links to the subject trail collectio
   )
 })
 
-test('StudentAdaptiveTrailPage filters subjects by search query', async () => {
+test('StudentAdaptiveTrailPage filters subject cards by trail search', async () => {
   const user = userEvent.setup()
   renderPage()
 
   await screen.findByText('Ciências')
 
-  await user.type(
-    screen.getByPlaceholderText('Pesquisar trilhas...'),
-    'ecossistemas'
-  )
+  await user.type(screen.getByPlaceholderText('Pesquisar trilhas...'), 'eco')
 
   await waitFor(() => {
     expect(screen.getByText('Ciências')).toBeInTheDocument()
     expect(screen.queryByText('Matemática')).not.toBeInTheDocument()
   })
+  expect(screen.getAllByText('1 matéria').length).toBeGreaterThan(0)
 })
 
 test('StudentAdaptiveTrailPage shows empty state when no trails match search', async () => {
@@ -154,6 +156,41 @@ test('StudentAdaptiveTrailPage shows empty state when no trails match search', a
   await waitFor(() => {
     expect(screen.getByText('Nenhuma trilha encontrada.')).toBeInTheDocument()
   })
+  expect(screen.getAllByText('0 matérias').length).toBeGreaterThan(0)
+})
+
+test('StudentAdaptiveTrailPage resets to all subject cards when search is cleared', async () => {
+  const user = userEvent.setup()
+  renderPage()
+
+  const searchInput = await screen.findByPlaceholderText('Pesquisar trilhas...')
+
+  await user.type(searchInput, 'matemática')
+  expect(
+    screen.getAllByRole('link', { name: /abrir trilhas de/i })
+  ).toHaveLength(1)
+
+  await user.clear(searchInput)
+
+  expect(
+    screen.getAllByRole('link', { name: /abrir trilhas de/i })
+  ).toHaveLength(4)
+})
+
+test('StudentAdaptiveTrailPage searches by subject name', async () => {
+  const user = userEvent.setup()
+  renderPage()
+
+  await user.type(
+    await screen.findByPlaceholderText('Pesquisar trilhas...'),
+    'português'
+  )
+
+  await waitFor(() => {
+    expect(screen.getByText('Português')).toBeInTheDocument()
+    expect(screen.queryByText('Matemática')).not.toBeInTheDocument()
+  })
+  expect(screen.getAllByText('1 matéria').length).toBeGreaterThan(0)
 })
 
 test('StudentAdaptiveTrailPage shows error state when fetch fails', async () => {

@@ -73,6 +73,24 @@ export interface StudentFormValues {
 
 type FormErrors = Partial<Record<keyof StudentFormValues, string>>
 
+function getStudentNameError(name: string): string | undefined {
+  const nameParts = name.trim().split(/\s+/).filter(Boolean)
+
+  if (nameParts.length === 0) {
+    return 'Informe o nome do aluno.'
+  }
+
+  if (nameParts.length === 1) {
+    return 'Informe o sobrenome do aluno.'
+  }
+
+  return undefined
+}
+
+function getStudentEmailError(email: string): string | undefined {
+  return isValidEmail(email) ? undefined : 'Informe um e-mail válido.'
+}
+
 function getDefaultValues(defaultSchoolId?: string | null): StudentFormValues {
   return {
     name: '',
@@ -111,6 +129,8 @@ export default function CreateStudentModal({
   useEffect(() => {
     if (!open) return
     // eslint-disable-next-line react-hooks/set-state-in-effect
+    setValues(getDefaultValues(defaultSchoolId))
+    setErrors({})
     setIsLoadingOptions(true)
     void Promise.all([
       studentFormOptionsService.getSchools(),
@@ -120,7 +140,7 @@ export default function CreateStudentModal({
       setGuardians(guardianList)
       setIsLoadingOptions(false)
     })
-  }, [open])
+  }, [open, defaultSchoolId])
 
   const hasSchool = values.school !== NONE_VALUE
   const hasGuardian = values.guardian !== NONE_VALUE
@@ -128,18 +148,28 @@ export default function CreateStudentModal({
 
   function handleChange(field: keyof StudentFormValues, value: string) {
     setValues(current => ({ ...current, [field]: value }))
-    setErrors(current => ({ ...current, [field]: undefined }))
+    setErrors(current => ({
+      ...current,
+      [field]:
+        field === 'name'
+          ? getStudentNameError(value)
+          : field === 'email'
+            ? getStudentEmailError(value)
+            : undefined,
+    }))
   }
 
   function validate(): boolean {
     const next: FormErrors = {}
+    const nameError = getStudentNameError(values.name)
 
-    if (!values.name.trim()) {
-      next.name = 'Informe o nome do aluno.'
+    if (nameError) {
+      next.name = nameError
     }
 
-    if (!isValidEmail(values.email)) {
-      next.email = 'Informe um e-mail válido.'
+    const emailError = getStudentEmailError(values.email)
+    if (emailError) {
+      next.email = emailError
     }
 
     if (!hasMinLength(values.password, 8)) {
@@ -155,8 +185,6 @@ export default function CreateStudentModal({
     const guardianLabel =
       guardians.find(g => g.value === values.guardian)?.label ?? ''
     onConfirm({ ...values, guardianName: guardianLabel })
-    setValues(getDefaultValues(defaultSchoolId))
-    setErrors({})
   }
 
   function handleClose() {

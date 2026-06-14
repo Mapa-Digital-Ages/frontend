@@ -17,6 +17,7 @@ import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded'
 import { Box, Button, IconButton, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { HttpRequestError } from '@/shared/lib/http/client'
 
 const SCHOOL_PAGE_SIZE = 6
 const STUDENT_PAGE_SIZE = 10
@@ -65,6 +66,9 @@ export default function SchoolPage() {
   const [isNewSchoolModalOpen, setIsNewSchoolModalOpen] = useState(false)
   const [isNewStudentModalOpen, setIsNewStudentModalOpen] = useState(false)
   const [studentApiError, setStudentApiError] = useState<string | null>(null)
+  const [newSchoolApiError, setNewSchoolApiError] = useState<string | null>(
+    null
+  )
   const [newSchool, setNewSchool] = useState({
     name: '',
     email: '',
@@ -221,6 +225,7 @@ export default function SchoolPage() {
 
   async function handleCreateSchool() {
     if (!canCreateSchool) return
+    setNewSchoolApiError(null)
     try {
       const created = await adminSchoolService.createSchool({
         name: newSchool.name.trim(),
@@ -238,9 +243,27 @@ export default function SchoolPage() {
         confirmPassword: '',
         isPrivate: false,
       })
+      setNewSchoolApiError(null)
       setIsNewSchoolModalOpen(false)
-    } catch (error) {
-      console.error('Erro ao criar escola:', error)
+    } catch (err) {
+      let message = 'Não foi possível criar a escola. Tente novamente.'
+      if (err instanceof HttpRequestError && err.response) {
+        try {
+          const body = (await err.response.json()) as {
+            detail?: string
+            message?: string
+          }
+          const apiMessage = (body.detail ?? body.message ?? '').toLowerCase()
+          if (apiMessage.includes('email')) {
+            message = 'Este e-mail já está cadastrado no sistema.'
+          } else if (apiMessage) {
+            message = apiMessage
+          }
+        } catch {
+          /* ignora */
+        }
+      }
+      setNewSchoolApiError(message)
     }
   }
 
@@ -263,10 +286,40 @@ export default function SchoolPage() {
       setStudentPage(1)
       setHasMoreStudents(false)
       if (selectedSchoolId) loadStudents(selectedSchoolId, 1, studentQuery)
-    } catch {
-      setStudentApiError(
-        'Erro ao criar aluno. Verifique os dados e tente novamente.'
-      )
+    } catch (err) {
+      let message = 'Não foi possível criar o aluno. Tente novamente.'
+      if (err instanceof HttpRequestError && err.response) {
+        try {
+          const body = (await err.response.json()) as {
+            detail?: unknown
+            message?: string
+          }
+          const apiMessage =
+            typeof body.detail === 'string'
+              ? body.detail
+              : typeof body.message === 'string'
+                ? body.message
+                : ''
+          const searchableApiMessage =
+            `${apiMessage} ${JSON.stringify(body.detail ?? '')}`.toLowerCase()
+
+          if (searchableApiMessage.includes('email')) {
+            message = 'Este e-mail já está cadastrado no sistema.'
+          } else if (
+            searchableApiMessage.includes('last_name') ||
+            searchableApiMessage.includes('last name') ||
+            searchableApiMessage.includes('surname') ||
+            searchableApiMessage.includes('sobrenome')
+          ) {
+            message = 'Informe o nome e o sobrenome do aluno.'
+          } else if (apiMessage) {
+            message = apiMessage
+          }
+        } catch {
+          /* ignora */
+        }
+      }
+      setStudentApiError(message)
     }
   }
 
@@ -863,6 +916,7 @@ export default function SchoolPage() {
         open={isNewSchoolModalOpen}
         onClose={() => {
           setIsNewSchoolModalOpen(false)
+          setNewSchoolApiError(null)
           setNewSchool({
             name: '',
             email: '',
@@ -1008,6 +1062,20 @@ export default function SchoolPage() {
               }
             />
           </Box>
+          {newSchoolApiError && (
+            <Box
+              sx={{
+                borderRadius: '10px',
+                color: 'error.main',
+                fontSize: { md: 13, xs: 12 },
+                fontWeight: 600,
+                px: 1,
+                py: 0.5,
+              }}
+            >
+              ✕ {newSchoolApiError}
+            </Box>
+          )}
         </Box>
       </AppActionModal>
 

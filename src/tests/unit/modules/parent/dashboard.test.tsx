@@ -26,23 +26,19 @@ test('parent dashboard has child selector in PageHeader actions', () => {
   assert.match(source, /children=\{children\}/)
 })
 
-test('parent dashboard delegates child registration to ChildRegistrationModal', () => {
+test('parent dashboard keeps child selection read-only', () => {
   const source = readSource('modules/parent/dashboard/page/Page.tsx')
   const serviceSource = readSource(
     'modules/parent/dashboard/services/service.ts'
   )
 
-  assert.match(source, /ChildRegistrationModal/)
-  assert.match(source, /registerChild/)
-  assert.match(source, /setModalOpen\(true\)/)
-  assert.match(source, /first_name/)
-  assert.match(source, /last_name/)
-  assert.match(source, /birth_date/)
-  assert.match(source, /student_class/)
+  assert.match(source, /ChildSwitcher/)
+  assert.doesNotMatch(source, /ChildRegistrationModal/)
+  assert.doesNotMatch(source, /registerChild/)
   assert.match(serviceSource, /post<RegisterStudentApiResponse>\(\s*'student'/)
   assert.match(serviceSource, /`student\/\$\{studentId\}\/summary`/)
   assert.match(serviceSource, /`student\/\$\{studentId\}\/disciplines`/)
-  assert.match(serviceSource, /`student\/\$\{studentId\}\/tasks`/)
+  assert.match(serviceSource, /`student\/\$\{studentId\}\/calendar`/)
   assert.doesNotMatch(serviceSource, /register\/student/)
   assert.doesNotMatch(serviceSource, /parent\/student/)
   assert.doesNotMatch(source, /ApprovalActionModal/)
@@ -68,15 +64,15 @@ test('parent settings uses real student endpoints and no local mock fallback', (
   assert.doesNotMatch(hookSource, /localChildFrom/)
 })
 
-test('ChildRegistrationModal handles feedback and uses system components', () => {
+test('ChildSettingsModal handles feedback and uses system components', () => {
   const source = readSource(
-    'modules/parent/shared/components/ChildRegistrationModal.tsx'
+    'modules/parent/settings/components/ChildSettingsModal.tsx'
   )
 
   assert.match(source, /AppActionModal/)
   assert.match(source, /AppInput/)
   assert.match(source, /AppDropdown/)
-  assert.match(source, /aprovação/)
-  assert.match(source, /RegisterChildRequest/)
+  assert.match(source, /feedbackMessage/)
+  assert.match(source, /ChildSettingsForm/)
   assert.match(source, /CLASS_OPTIONS/)
 })
