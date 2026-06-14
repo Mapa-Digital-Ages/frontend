@@ -32,6 +32,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Test
+        run: npm test
+
       - name: Build
         run: |
           echo "VITE_API_BASE_URL=https://d3nxp30caidv33.cloudfront.net/api" > .env
