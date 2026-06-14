@@ -291,12 +291,27 @@ export default function SchoolPage() {
       if (err instanceof HttpRequestError && err.response) {
         try {
           const body = (await err.response.json()) as {
-            detail?: string
+            detail?: unknown
             message?: string
           }
-          const apiMessage = (body.detail ?? body.message ?? '').toLowerCase()
-          if (apiMessage.includes('email')) {
+          const apiMessage =
+            typeof body.detail === 'string'
+              ? body.detail
+              : typeof body.message === 'string'
+                ? body.message
+                : ''
+          const searchableApiMessage =
+            `${apiMessage} ${JSON.stringify(body.detail ?? '')}`.toLowerCase()
+
+          if (searchableApiMessage.includes('email')) {
             message = 'Este e-mail já está cadastrado no sistema.'
+          } else if (
+            searchableApiMessage.includes('last_name') ||
+            searchableApiMessage.includes('last name') ||
+            searchableApiMessage.includes('surname') ||
+            searchableApiMessage.includes('sobrenome')
+          ) {
+            message = 'Informe o nome e o sobrenome do aluno.'
           } else if (apiMessage) {
             message = apiMessage
           }
