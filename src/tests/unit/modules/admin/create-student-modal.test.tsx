@@ -56,6 +56,32 @@ test('CreateStudentModal validates the surname while the user types', async () =
   expect(screen.getByText('Informe o nome do aluno.')).toBeInTheDocument()
 })
 
+test('CreateStudentModal renders the batch button when provided', async () => {
+  const user = userEvent.setup()
+  const onBatchClick = jest.fn()
+
+  jest.spyOn(studentFormOptionsService, 'getSchools').mockResolvedValue([])
+  jest.spyOn(studentFormOptionsService, 'getGuardians').mockResolvedValue([])
+
+  renderWithProviders(
+    <CreateStudentModal
+      defaultSchool={{ label: 'Escola Mapa', value: 'school-1' }}
+      onClose={jest.fn()}
+      onConfirm={jest.fn()}
+      open
+      batchButton={<button onClick={onBatchClick}>Cadastrar em lote</button>}
+    />
+  )
+
+  await user.click(
+    within(screen.getByRole('dialog')).getByRole('button', {
+      name: /cadastrar em lote/i,
+    })
+  )
+
+  expect(onBatchClick).toHaveBeenCalledTimes(1)
+})
+
 test('CreateStudentModal rejects an invalid email while the user types', async () => {
   const user = userEvent.setup()
   const onConfirm = jest.fn()
