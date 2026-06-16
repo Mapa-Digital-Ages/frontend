@@ -29,7 +29,7 @@ export const schoolCompanyNavigation: SidebarItem[] = [
   },
   {
     label: 'Visão Parceiras',
-    path: APP_ROUTES.schoolCompany.partnerOverview,
+    path: APP_ROUTES.schoolCompany.partners,
     icon: <VisibilityRoundedIcon fontSize="medium" />,
     section: 'PARCEIRAS',
   },
@@ -37,18 +37,6 @@ export const schoolCompanyNavigation: SidebarItem[] = [
     label: 'Escolas Adotadas',
     path: APP_ROUTES.schoolCompany.adoptedSchools,
     icon: <SchoolRoundedIcon fontSize="medium" />,
-    section: 'PARCEIRAS',
-  },
-  {
-    label: 'Evolução',
-    path: APP_ROUTES.schoolCompany.evolution,
-    icon: <TrendingUpRoundedIcon fontSize="medium" />,
-    section: 'PARCEIRAS',
-  },
-  {
-    label: 'Relatórios',
-    path: APP_ROUTES.schoolCompany.reports,
-    icon: <AssessmentRoundedIcon fontSize="medium" />,
     section: 'PARCEIRAS',
   },
 ]

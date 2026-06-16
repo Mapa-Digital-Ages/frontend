@@ -47,9 +47,6 @@ export const APP_ROUTES = {
     partners: '/school-company/partners',
     requestPartner: '/school-company/request-partner',
     adoptedSchools: '/school-company/adopted-schools',
-    partnerOverview: '/school-company/partner-overview',
-    evolution: '/school-company/evolution',
-    reports: '/school-company/reports',
   },
   common: {
     unauthorized: '/unauthorized',
