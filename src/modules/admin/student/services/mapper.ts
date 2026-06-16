@@ -80,9 +80,10 @@ export function mapStudentListDto(
 
 export function mapCreateStudentInput(input: CreateStudentInput) {
   const [firstName, ...rest] = input.name.trim().split(' ')
+  const lastName = rest.join(' ')
   return {
     first_name: firstName ?? '',
-    last_name: rest.join(' '),
+    last_name: lastName || null,
     email: input.email.trim(),
     password: input.password,
     school_id: input.schoolId ?? null,

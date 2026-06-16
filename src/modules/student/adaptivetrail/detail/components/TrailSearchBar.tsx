@@ -7,11 +7,13 @@ interface TrailSearchBarProps {
   onChange: (query: string) => void
   query: string
   subjectColor: string
+  placeholder: string
 }
 
 export default function TrailSearchBar({
   onChange,
   query,
+  placeholder,
   subjectColor,
 }: TrailSearchBarProps) {
   return (
@@ -20,7 +22,7 @@ export default function TrailSearchBar({
         <SearchRoundedIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
       }
       onChange={e => onChange(e.target.value)}
-      placeholder="Pesquisar etapas e sub-etapas..."
+      placeholder={placeholder}
       value={query}
       InputProps={{
         endAdornment: query ? (

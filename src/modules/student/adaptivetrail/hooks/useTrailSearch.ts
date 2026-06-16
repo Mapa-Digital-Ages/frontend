@@ -18,40 +18,45 @@ export function highlightText(text: string, query: string): HighlightPart[] {
   }))
 }
 
+export function filterTrailSteps(steps: AdaptiveTrailStep[], query: string) {
+  const q = query.trim().toLowerCase()
+
+  if (!q) return { filteredSteps: steps, expandedBySearch: new Set<string>() }
+
+  const expandedBySearch = new Set<string>()
+  const result: AdaptiveTrailStep[] = []
+
+  for (const step of steps) {
+    const stepMatches =
+      step.title.toLowerCase().includes(q) ||
+      (step.description?.toLowerCase().includes(q) ?? false)
+
+    const matchingSubSteps = step.subSteps.filter(
+      ss =>
+        ss.title.toLowerCase().includes(q) ||
+        ss.description.toLowerCase().includes(q)
+    )
+
+    if (!stepMatches && matchingSubSteps.length === 0) continue
+
+    if (matchingSubSteps.length > 0) expandedBySearch.add(step.id)
+
+    result.push({
+      ...step,
+      subSteps: stepMatches ? step.subSteps : matchingSubSteps,
+    })
+  }
+
+  return { filteredSteps: result, expandedBySearch }
+}
+
 export function useTrailSearch(steps: AdaptiveTrailStep[]) {
   const [query, setQuery] = useState('')
 
-  const { filteredSteps, expandedBySearch } = useMemo(() => {
-    const q = query.trim().toLowerCase()
-
-    if (!q) return { filteredSteps: steps, expandedBySearch: new Set<string>() }
-
-    const expandedBySearch = new Set<string>()
-    const result: AdaptiveTrailStep[] = []
-
-    for (const step of steps) {
-      const stepMatches =
-        step.title.toLowerCase().includes(q) ||
-        (step.description?.toLowerCase().includes(q) ?? false)
-
-      const matchingSubSteps = step.subSteps.filter(
-        ss =>
-          ss.title.toLowerCase().includes(q) ||
-          ss.description.toLowerCase().includes(q)
-      )
-
-      if (!stepMatches && matchingSubSteps.length === 0) continue
-
-      if (matchingSubSteps.length > 0) expandedBySearch.add(step.id)
-
-      result.push({
-        ...step,
-        subSteps: stepMatches ? step.subSteps : matchingSubSteps,
-      })
-    }
-
-    return { filteredSteps: result, expandedBySearch }
-  }, [steps, query])
+  const { filteredSteps, expandedBySearch } = useMemo(
+    () => filterTrailSteps(steps, query),
+    [steps, query]
+  )
 
   return { query, setQuery, filteredSteps, expandedBySearch }
 }

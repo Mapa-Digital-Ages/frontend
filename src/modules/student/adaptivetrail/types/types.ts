@@ -12,15 +12,15 @@ export interface FilterOption {
 export type AdaptiveTrailStepKind = 'video' | 'text' | 'question'
 export type AdaptiveTrailStepStatus = 'available' | 'completed' | 'locked'
 
-export interface AdaptiveTrailQuestion extends QuestionFlowPayload {
-  correctOptionId: string
-}
+export type AdaptiveTrailQuestion = QuestionFlowPayload
 
 export interface AdaptiveTrailSubStep {
   order: number
   description: string
   duration?: string
   id: string
+  itemId?: string
+  itemIds?: string[]
   kind: AdaptiveTrailStepKind
   lockReason?: string
   questions: AdaptiveTrailQuestion[]
@@ -53,6 +53,7 @@ export interface AdaptiveTrailSession {
 export interface TrailStepQuestionFlow {
   assessmentId: string
   initialAnswersByQuestionId?: Record<string, string>
+  itemId: string
   questions: AdaptiveTrailQuestion[]
   stepId: string
   subStepId: string
