@@ -14,6 +14,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { adminCompanyService } from '@/modules/admin/school-company/services/service'
 import { Company } from '../types/types'
+import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded'
 
 const companyTypeOptions = [
   { label: 'Empresa parceira', value: 'Empresa parceira' },
@@ -48,6 +49,10 @@ export default function CompanyPage() {
     confirmPassword: '',
     type: '',
   })
+
+  const [isBatchCompanyOpen, setIsBatchCompanyOpen] = useState(false)
+  const [batchCompanyFile, setBatchCompanyFile] = useState<File | null>(null)
+  const [batchCompanySuccess, setBatchCompanySuccess] = useState(false)
 
   const loadCompanies = useCallback(
     async (pageToLoad: number, search: string) => {
@@ -594,6 +599,37 @@ export default function CompanyPage() {
         disableConfirm={!canCreatePartner}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          <Button
+            fullWidth
+            variant="outlined"
+            startIcon={<UploadFileRoundedIcon />}
+            onClick={() => {
+              setIsNewPartnerOpen(false)
+              setIsBatchCompanyOpen(true)
+            }}
+            sx={{
+              borderColor: alpha(AppColors.role.admin.secondary, 0.4),
+              color: AppColors.role.admin.secondary,
+              borderRadius: '10px',
+              fontWeight: 700,
+              textTransform: 'none',
+              py: 1,
+              '&:hover': {
+                borderColor: AppColors.role.admin.secondary,
+                backgroundColor: alpha(AppColors.role.admin.secondary, 0.05),
+              },
+            }}
+          >
+            Cadastrar em lote
+          </Button>
+
+          <Box
+            sx={{
+              borderTop: '1px solid',
+              borderColor: 'background.border',
+              mt: 0.5,
+            }}
+          />
           <Box>
             <Typography
               sx={{
@@ -733,6 +769,91 @@ export default function CompanyPage() {
             />
           </Box>
         </Box>
+      </AppActionModal>
+
+      {/* Batch company upload modal */}
+      <AppActionModal
+        open={isBatchCompanyOpen}
+        onClose={() => {
+          setIsBatchCompanyOpen(false)
+          setBatchCompanyFile(null)
+          setBatchCompanySuccess(false)
+        }}
+        title="Cadastrar empresas em lote"
+        description="Envie um arquivo .csv com os dados das empresas."
+        onConfirm={() => {
+          // TODO: enviar batchCompanyFile para o backend
+          setBatchCompanySuccess(true)
+        }}
+        confirmLabel="Enviar arquivo"
+        cancelLabel="Cancelar"
+        confirmColor={AppColors.role.admin.secondary}
+        confirmHoverColor={theme.palette.error.dark}
+        disableConfirm={!batchCompanyFile}
+      >
+        <Box
+          component="label"
+          sx={{
+            border: '1px dashed',
+            borderColor: alpha(AppColors.role.admin.secondary, 0.4),
+            borderRadius: '14px',
+            p: 3,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 1,
+            cursor: 'pointer',
+            textAlign: 'center',
+            backgroundColor: alpha(AppColors.role.admin.secondary, 0.04),
+            '&:hover': {
+              backgroundColor: alpha(AppColors.role.admin.secondary, 0.08),
+            },
+          }}
+        >
+          <UploadFileRoundedIcon
+            sx={{ color: AppColors.role.admin.secondary, fontSize: 32 }}
+          />
+          <Typography sx={{ fontWeight: 700, fontSize: 14 }}>
+            {batchCompanyFile
+              ? batchCompanyFile.name
+              : 'Clique para selecionar um arquivo .csv'}
+          </Typography>
+          <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
+            Apenas arquivos .csv são aceitos.
+          </Typography>
+          <input
+            type="file"
+            accept=".csv,text/csv"
+            hidden
+            onChange={e => {
+              const file = e.target.files?.[0] ?? null
+              if (file && !file.name.toLowerCase().endsWith('.csv')) {
+                e.target.value = ''
+                return
+              }
+              setBatchCompanyFile(file)
+            }}
+          />
+        </Box>
+        {batchCompanySuccess && (
+          <Box
+            sx={{
+              mt: 2,
+              borderRadius: '10px',
+              border: '1px solid',
+              borderColor: alpha('#22C55E', 0.35),
+              backgroundColor: alpha('#22C55E', 0.08),
+              color: '#22C55E',
+              fontSize: 13,
+              fontWeight: 600,
+              px: 1.5,
+              py: 1,
+            }}
+          >
+            ✓ Arquivo enviado com sucesso! As empresas serão cadastradas em
+            instantes.
+          </Box>
+        )}
       </AppActionModal>
 
       <AppActionModal

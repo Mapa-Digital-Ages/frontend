@@ -1,336 +1,405 @@
-import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
-import CheckRoundedIcon from '@mui/icons-material/CheckRounded'
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
-import { Box } from '@mui/material'
-import { useTheme } from '@mui/material/styles'
-import {
-  startTransition,
-  useCallback,
-  useDeferredValue,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react'
+import { HttpRequestError } from '@/shared/lib/http/client'
 import { useUserRole } from '@/app/access/hook'
+import { AppColors } from '@/app/theme/core/colors'
+import AppPageContainer from '@/shared/ui/AppPageContainer'
+import PageHeader from '@/shared/ui/PageHeader'
+import OrdinaryHeader from '@/shared/ui/OrdinaryHeader'
+import MetricsCard from '@/shared/ui/MetricsCard'
+import LoadingScreen from '@/shared/ui/LoadingScreen'
+import AppActionModal from '@/shared/ui/AppActionModal'
+import AppInput from '@/shared/ui/AppInput'
+import { SearchBarAndFilter } from '@/shared/ui/SearchBarAndFilter'
+import { AppTag } from '@/shared/ui/AppTags'
+import type { TagContext } from '@/shared/types/common'
+import AddRoundedIcon from '@mui/icons-material/AddRounded'
+import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded'
+import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded'
+import EditRoundedIcon from '@mui/icons-material/EditRounded'
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded'
+import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
+import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded'
+import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded'
+import UnfoldMoreRoundedIcon from '@mui/icons-material/UnfoldMoreRounded'
+import {
+  Box,
+  Button,
+  Typography,
+  IconButton,
+  Menu,
+  MenuItem,
+  CircularProgress,
+} from '@mui/material'
+import { alpha, useTheme } from '@mui/material/styles'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { parentApprovalService } from '@/modules/admin/parent/services/runtime'
 import type {
-  ApprovalActionFormValues,
-  ApprovalActionModalMode,
-  ApprovalCardAction,
   ApprovalQueueQuery,
-  ApprovalQueueResult,
-  ApprovalResultsSummary,
-  ContentApprovalActionFormValues,
-  ContentApprovalResourceType,
-  GuardianApprovalActionFormValues,
   ParentApprovalDraftInput,
   ParentApprovalItem,
   ParentApprovalStatus,
 } from '@/modules/admin/shared/types/types'
-import ApprovalActionModal from '../../shared/components/ApprovalActionModal'
-import ApprovalCard from '../../shared/components/ApprovalCard'
-import ApprovalComponent, {
-  type ApprovalStatusOption,
-} from '../../shared/components/ApprovalComponent'
-import AppPageContainer from '@/shared/ui/AppPageContainer'
-import LoadingScreen from '@/shared/ui/LoadingScreen'
-import { PARENT_APPROVAL_CARD_STATUS } from '@/shared/utils/themes'
-import OrdinaryHeader from '@/shared/ui/OrdinaryHeader'
-import { HttpRequestError } from '@/shared/lib/http/client'
 
-const DEFAULT_PAGE_INDEX = 1
+type SortField = 'name' | 'child'
+type SortDirection = 'asc' | 'desc'
 
-const DEFAULT_QUERY: ApprovalQueueQuery = {
-  page: DEFAULT_PAGE_INDEX,
-  pageSize: 10,
-  query: '',
-  status: 'all',
+interface SortState {
+  field: SortField | null
+  direction: SortDirection
 }
 
-const parentFilterOptions: ApprovalStatusOption[] = [
+const PAGE_SIZE = 10
+
+const labelSx = {
+  fontWeight: 600,
+  fontSize: 14,
+  mb: 1,
+  color: 'text.primary',
+}
+
+const headerTextSx = {
+  color: 'text.secondary',
+  fontSize: 12,
+  fontWeight: 700,
+  letterSpacing: '0.05em',
+  textTransform: 'uppercase',
+} as const
+
+const parentFilterOptions = [
   { label: 'Todos', value: 'all' },
   { label: 'Aguardando validação', value: 'pendingValidation' },
   { label: 'Cadastro liberado', value: 'approved' },
   { label: 'Cadastro recusado', value: 'rejected' },
 ]
 
-function emptyQueueResult<TItem>(pageSize: number): ApprovalQueueResult<TItem> {
+function getEmptyParentForm() {
   return {
-    currentPage: DEFAULT_PAGE_INDEX,
-    items: [],
-    pageSize,
-    totalItems: 0,
-    totalPages: 1,
-  }
-}
-
-function buildResolvedQuery(query: ApprovalQueueQuery, deferredQuery: string) {
-  return {
-    ...query,
-    query: deferredQuery,
-  }
-}
-
-function buildResultsSummary(count: number): ApprovalResultsSummary {
-  return {
-    count,
-    pluralLabel: 'resultados',
-    singularLabel: 'resultado',
-  }
-}
-
-function getTodayRequestDate() {
-  return new Intl.DateTimeFormat('pt-BR').format(new Date())
-}
-
-function getDefaultFormValues(): ApprovalActionFormValues {
-  return {
-    type: 'parent',
-    childName: '',
-    email: '',
     first_name: '',
     last_name: '',
-    password: '',
+    email: '',
     phone_number: '',
+    password: '',
   }
+}
+
+function getParentName(item: ParentApprovalItem): string {
+  const guardian = item.guardian
+  return (
+    [guardian?.first_name, guardian?.last_name].filter(Boolean).join(' ') || '—'
+  )
+}
+
+function sortParents(items: ParentApprovalItem[], sort: SortState) {
+  if (!sort.field) return items
+  return [...items].sort((a, b) => {
+    let comparison = 0
+    if (sort.field === 'name') {
+      comparison = getParentName(a).localeCompare(getParentName(b), 'pt-BR')
+    } else if (sort.field === 'child') {
+      comparison = (a.childName ?? '').localeCompare(b.childName ?? '', 'pt-BR')
+    }
+    return sort.direction === 'asc' ? comparison : -comparison
+  })
+}
+
+function SortableHeader({
+  label,
+  field,
+  sort,
+  onSort,
+}: {
+  label: string
+  field: SortField
+  sort: SortState
+  onSort: (field: SortField) => void
+}) {
+  const isActive = sort.field === field
+  const theme = useTheme()
+
+  return (
+    <Box
+      onClick={() => onSort(field)}
+      sx={{
+        alignItems: 'center',
+        cursor: 'pointer',
+        display: 'flex',
+        gap: 0.5,
+        userSelect: 'none',
+        '&:hover .sort-label': { color: 'text.primary' },
+      }}
+    >
+      <Typography
+        className="sort-label"
+        sx={{
+          color: isActive ? 'text.primary' : 'text.secondary',
+          fontSize: 12,
+          fontWeight: 700,
+          letterSpacing: '0.05em',
+          textTransform: 'uppercase',
+          transition: 'color 0.15s',
+        }}
+      >
+        {label}
+      </Typography>
+      <Box
+        sx={{
+          color: isActive ? theme.palette.error.main : 'text.disabled',
+          display: 'flex',
+          fontSize: 14,
+        }}
+      >
+        {!isActive ? (
+          <UnfoldMoreRoundedIcon sx={{ fontSize: 14 }} />
+        ) : sort.direction === 'asc' ? (
+          <ArrowUpwardRoundedIcon sx={{ fontSize: 14 }} />
+        ) : (
+          <ArrowDownwardRoundedIcon sx={{ fontSize: 14 }} />
+        )}
+      </Box>
+    </Box>
+  )
 }
 
 export default function Page() {
   const theme = useTheme()
   const { role, isAdmin } = useUserRole()
+  const canView = isAdmin && role === 'admin'
 
-  const [parentQuery, setParentQuery] =
-    useState<ApprovalQueueQuery>(DEFAULT_QUERY)
-  const [parentQueue, setParentQueue] = useState<
-    ApprovalQueueResult<ParentApprovalItem>
-  >(emptyQueueResult(DEFAULT_QUERY.pageSize))
-  const [parentError, setParentError] = useState<string | null>(null)
-  const [hasLoadedParents, setHasLoadedParents] = useState(false)
-  const [parentRefreshKey, setParentRefreshKey] = useState(0)
-  const [modalState, setModalState] = useState<ApprovalActionModalMode | null>(
-    null
-  )
-  const [modalValues, setModalValues] = useState<ApprovalActionFormValues>(
-    getDefaultFormValues()
-  )
-  const [modalApiError, setModalApiError] = useState<string | null>(null)
-  const [isModalSubmitting, setIsModalSubmitting] = useState(false)
-  const [selectionMode, setSelectionMode] = useState<'edit' | 'delete' | null>(
-    null
-  )
+  const statusConfig: Record<string, TagContext> = {
+    pendingValidation: {
+      label: 'Aguardando validação',
+      color: theme.palette.warning.main,
+    },
+    approved: { label: 'Cadastro liberado', color: theme.palette.success.main },
+    rejected: { label: 'Cadastro recusado', color: theme.palette.error.main },
+  }
 
-  const deferredParentSearch = useDeferredValue(parentQuery.query)
+  const [parents, setParents] = useState<ParentApprovalItem[]>([])
+  const [total, setTotal] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isFetchingMore, setIsFetchingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
 
-  const resolvedParentQuery = useMemo(
-    () => buildResolvedQuery(parentQuery, deferredParentSearch),
-    [parentQuery, deferredParentSearch]
-  )
+  const [inputQuery, setInputQuery] = useState('')
+  const [activeQuery, setActiveQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [refreshKey, setRefreshKey] = useState(0)
+  const [sort, setSort] = useState<SortState>({ field: null, direction: 'asc' })
 
-  const parentResultsSummary = useMemo(
-    () => buildResultsSummary(parentQueue.totalItems),
-    [parentQueue.totalItems]
-  )
+  // Create / edit modal
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false)
+  const [editingParentId, setEditingParentId] = useState<string | null>(null)
+  const [parentForm, setParentForm] = useState(getEmptyParentForm())
+  const [formApiError, setFormApiError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const resetModal = useCallback(() => {
-    setModalState(null)
-    setModalValues(getDefaultFormValues())
-    setSelectionMode(null)
-    setModalApiError(null)
-  }, [])
+  // Delete modal
+  const [parentToDeleteId, setParentToDeleteId] = useState<string | null>(null)
 
-  const openModal = useCallback((nextMode: ApprovalActionModalMode) => {
-    setSelectionMode(null)
-    setModalState(nextMode)
+  // Row menu
+  const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null)
+  const [selectedParentId, setSelectedParentId] = useState<string | null>(null)
 
-    if (nextMode.type === 'parent') {
-      const guardian =
-        nextMode.item?.kind === 'parent' ? nextMode.item.guardian : undefined
+  // Batch modal
+  const [isBatchOpen, setIsBatchOpen] = useState(false)
+  const [batchFile, setBatchFile] = useState<File | null>(null)
+  const [batchSuccess, setBatchSuccess] = useState(false)
 
-      setModalValues({
-        type: 'parent',
-        childName:
-          nextMode.item?.kind === 'parent'
-            ? (nextMode.item.childName ?? '')
-            : '',
-        email: guardian?.email ?? '',
-        first_name: guardian?.first_name ?? '',
-        last_name: guardian?.last_name ?? '',
-        password: '',
-        phone_number: guardian?.phone_number ?? '',
-      })
+  const activePageRef = useRef(1)
+  const sentinelRef = useRef<HTMLDivElement>(null)
+  const isFetchingMoreRef = useRef(false)
+  const isLoadingRef = useRef(true)
+  const hasMoreRef = useRef(true)
+  const activeQueryRef = useRef('')
+  const activeStatusRef = useRef('all')
 
-      return
+  useEffect(() => {
+    isFetchingMoreRef.current = isFetchingMore
+  })
+  useEffect(() => {
+    isLoadingRef.current = isLoading
+  })
+  useEffect(() => {
+    hasMoreRef.current = hasMore
+  })
+  useEffect(() => {
+    activeQueryRef.current = activeQuery
+  }, [activeQuery])
+  useEffect(() => {
+    activeStatusRef.current = statusFilter
+  }, [statusFilter])
+
+  // Search debounce
+  useEffect(() => {
+    const timer = setTimeout(() => setActiveQuery(inputQuery), 350)
+    return () => clearTimeout(timer)
+  }, [inputQuery])
+
+  // First page fetch
+  useEffect(() => {
+    if (!canView) return
+    activePageRef.current = 1
+    let active = true
+
+    async function fetchFirstPage() {
+      setParents([])
+      setHasMore(true)
+      setIsLoading(true)
+      try {
+        const result = await parentApprovalService.getParentQueue({
+          page: 1,
+          pageSize: PAGE_SIZE,
+          query: activeQuery,
+          status: statusFilter,
+        } as ApprovalQueueQuery)
+        if (!active) return
+        setParents(result.items)
+        setTotal(result.totalItems)
+        setHasMore(result.currentPage < result.totalPages)
+      } catch {
+        if (!active) return
+        setParents([])
+        setTotal(0)
+        setHasMore(false)
+      } finally {
+        if (active) setIsLoading(false)
+      }
     }
 
-    setModalValues({
-      type: 'content',
-      description: '',
-      requestedAt:
-        nextMode.action === 'create'
-          ? getTodayRequestDate()
-          : (nextMode.item?.requestedAt ?? getTodayRequestDate()),
-      subjectId: 'default',
-      title: nextMode.item?.kind === 'content' ? nextMode.item.title : '',
+    void fetchFirstPage()
+    return () => {
+      active = false
+    }
+  }, [activeQuery, statusFilter, refreshKey, canView])
+
+  // Infinite scroll
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+
+    function loadMore() {
+      if (
+        isFetchingMoreRef.current ||
+        isLoadingRef.current ||
+        !hasMoreRef.current
+      )
+        return
+      const nextPage = activePageRef.current + 1
+      activePageRef.current = nextPage
+      setIsFetchingMore(true)
+
+      void parentApprovalService
+        .getParentQueue({
+          page: nextPage,
+          pageSize: PAGE_SIZE,
+          query: activeQueryRef.current,
+          status: activeStatusRef.current,
+        } as ApprovalQueueQuery)
+        .then(result => {
+          setParents(prev => [...prev, ...result.items])
+          setHasMore(result.currentPage < result.totalPages)
+        })
+        .catch(() => setHasMore(false))
+        .finally(() => setIsFetchingMore(false))
+    }
+
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting) loadMore()
+      },
+      { rootMargin: '200px' }
+    )
+
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [canView])
+
+  const sortedParents = useMemo(
+    () => sortParents(parents, sort),
+    [parents, sort]
+  )
+
+  const pendingCount = useMemo(
+    () => parents.filter(p => p.status === 'pendingValidation').length,
+    [parents]
+  )
+
+  const selectedParent = parents.find(p => p.id === selectedParentId)
+
+  const emailIsValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+    parentForm.email.trim()
+  )
+
+  const canSaveParent =
+    parentForm.first_name.trim() !== '' &&
+    parentForm.last_name.trim() !== '' &&
+    parentForm.phone_number.trim() !== '' &&
+    emailIsValid &&
+    (editingParentId !== null || parentForm.password.trim() !== '')
+
+  function handleSort(field: SortField) {
+    setSort(current => ({
+      field,
+      direction:
+        current.field === field && current.direction === 'asc' ? 'desc' : 'asc',
+    }))
+  }
+
+  function openCreateModal() {
+    setEditingParentId(null)
+    setParentForm(getEmptyParentForm())
+    setFormApiError(null)
+    setIsFormModalOpen(true)
+  }
+
+  function openEditModal() {
+    if (!selectedParent) return
+    setEditingParentId(selectedParent.id)
+    setParentForm({
+      first_name: selectedParent.guardian?.first_name ?? '',
+      last_name: selectedParent.guardian?.last_name ?? '',
+      email: selectedParent.guardian?.email ?? '',
+      phone_number: selectedParent.guardian?.phone_number ?? '',
+      password: '',
     })
-  }, [])
+    setFormApiError(null)
+    setIsFormModalOpen(true)
+  }
 
-  const toggleSelectionMode = useCallback((action: 'edit' | 'delete') => {
-    setSelectionMode(current => (current === action ? null : action))
-  }, [])
-
-  const handleParentItemSelect = useCallback(
-    (item: ParentApprovalItem) => {
-      if (!selectionMode) return
-
-      openModal({ action: selectionMode, item, type: 'parent' })
-    },
-    [openModal, selectionMode]
-  )
-
-  const handleParentStatusUpdate = useCallback(
-    async (id: string, status: ParentApprovalStatus) => {
-      await parentApprovalService.updateParentStatus(id, status)
-      setParentRefreshKey(current => current + 1)
-    },
-    []
-  )
-
-  const buildParentActions = useCallback(
-    (item: ParentApprovalItem): ApprovalCardAction[] => {
-      const success = theme.palette.success.main
-      const error = theme.palette.error.main
-
-      return [
-        {
-          accentColor: theme.palette.warning.main,
-          icon: <EditOutlinedIcon />,
-          id: `${item.id}-edit`,
-          label: 'Editar responsável',
-          onClick: () => {
-            openModal({ action: 'edit', item, type: 'parent' })
-          },
-          priority: 'secondary',
-          tooltip: 'Editar responsável',
-        },
-        {
-          accentColor: error,
-          icon: <DeleteOutlineRoundedIcon />,
-          id: `${item.id}-delete`,
-          label: 'Excluir responsável',
-          onClick: () => {
-            openModal({ action: 'delete', item, type: 'parent' })
-          },
-          priority: 'secondary',
-          tooltip: 'Excluir responsável',
-        },
-        {
-          accentColor: success,
-          icon: <CheckRoundedIcon />,
-          id: `${item.id}-approve`,
-          label: 'Validar cadastro',
-          onClick: () => {
-            void handleParentStatusUpdate(item.id, 'approved')
-          },
-          tooltip: 'Validar cadastro',
-        },
-        {
-          accentColor: error,
-          disabled: item.status === 'rejected',
-          icon: <CancelOutlinedIcon />,
-          id: `${item.id}-reject`,
-          label: 'Rejeitar cadastro',
-          onClick: () => {
-            void handleParentStatusUpdate(item.id, 'rejected')
-          },
-        },
-      ]
-    },
-    [
-      handleParentStatusUpdate,
-      openModal,
-      theme.palette.error.main,
-      theme.palette.success.main,
-      theme.palette.warning.main,
-    ]
-  )
-
-  const handleModalChange = useCallback(
-    (
-      field:
-        | keyof ContentApprovalActionFormValues
-        | keyof GuardianApprovalActionFormValues,
-      value: string | ContentApprovalResourceType
-    ) => {
-      setModalValues((current: ApprovalActionFormValues) => ({
-        ...current,
-        [field]: value,
-      }))
-    },
-    []
-  )
-
-  const handleModalConfirm = useCallback(async () => {
-    if (!modalState || isModalSubmitting) {
-      return
-    }
-
-    setIsModalSubmitting(true)
-    setModalApiError(null)
-
+  async function handleSaveParent() {
+    if (!canSaveParent || isSubmitting) return
+    setIsSubmitting(true)
+    setFormApiError(null)
     try {
-      if (modalState.action === 'delete' && modalState.item) {
-        await parentApprovalService.removeParentRegistration(modalState.item.id)
-        setParentRefreshKey(current => current + 1)
-        resetModal()
-        return
-      }
-
-      if (modalState.action === 'create') {
-        if (modalValues.type !== 'parent') {
-          return
-        }
-
+      if (editingParentId) {
         const payload: ParentApprovalDraftInput = {
           guardian: {
-            email: modalValues.email.trim(),
-            first_name: modalValues.first_name.trim(),
-            last_name: modalValues.last_name.trim(),
-            password: modalValues.password,
-            phone_number: modalValues.phone_number.trim(),
+            email: parentForm.email.trim(),
+            first_name: parentForm.first_name.trim(),
+            last_name: parentForm.last_name.trim(),
+            phone_number: parentForm.phone_number.trim(),
           },
         }
-
-        await parentApprovalService.createParentRegistration(payload)
-        setParentRefreshKey(current => current + 1)
-        resetModal()
-        return
-      }
-
-      if (modalState.action === 'edit' && modalState.item) {
-        if (modalValues.type !== 'parent') {
-          return
-        }
-
-        const payload: ParentApprovalDraftInput = {
-          guardian: {
-            email: modalValues.email.trim(),
-            first_name: modalValues.first_name.trim(),
-            last_name: modalValues.last_name.trim(),
-            phone_number: modalValues.phone_number.trim(),
-          },
-        }
-
         await parentApprovalService.updateParentRegistration(
-          modalState.item.id,
+          editingParentId,
           payload
         )
-        setParentRefreshKey(current => current + 1)
-        resetModal()
-        return
+      } else {
+        const payload: ParentApprovalDraftInput = {
+          guardian: {
+            email: parentForm.email.trim(),
+            first_name: parentForm.first_name.trim(),
+            last_name: parentForm.last_name.trim(),
+            password: parentForm.password,
+            phone_number: parentForm.phone_number.trim(),
+          },
+        }
+        await parentApprovalService.createParentRegistration(payload)
       }
-
-      resetModal()
+      setIsFormModalOpen(false)
+      setParentForm(getEmptyParentForm())
+      setEditingParentId(null)
+      setRefreshKey(k => k + 1)
     } catch (err) {
       let message = 'Não foi possível salvar o cadastro. Tente novamente.'
       if (err instanceof HttpRequestError && err.response) {
@@ -346,170 +415,563 @@ export default function Page() {
             message = apiMessage
           }
         } catch {
-          // ignora
+          /* ignora */
         }
       }
-      setModalApiError(message)
+      setFormApiError(message)
     } finally {
-      setIsModalSubmitting(false)
+      setIsSubmitting(false)
     }
-  }, [isModalSubmitting, modalState, modalValues, resetModal])
+  }
 
-  const isModalConfirmDisabled = useMemo(() => {
-    if (!modalState || modalState.action === 'delete') {
-      return false
+  async function handleDeleteParent(id: string) {
+    try {
+      await parentApprovalService.removeParentRegistration(id)
+      setRefreshKey(k => k + 1)
+    } catch (error) {
+      console.error('Erro ao remover responsável:', error)
     }
+  }
 
-    if (modalValues.type !== 'parent') {
-      return true
+  async function handleStatusUpdate(id: string, status: ParentApprovalStatus) {
+    try {
+      await parentApprovalService.updateParentStatus(id, status)
+      setRefreshKey(k => k + 1)
+    } catch (error) {
+      console.error('Erro ao atualizar status:', error)
     }
+  }
 
-    if (
-      !modalValues.first_name.trim() ||
-      !modalValues.last_name.trim() ||
-      !modalValues.email.trim() ||
-      !modalValues.phone_number.trim()
-    ) {
-      return true
-    }
+  const headerActions = (
+    <Button
+      data-testid="create-parent-button"
+      onClick={openCreateModal}
+      startIcon={<AddRoundedIcon />}
+      variant="contained"
+      disableElevation
+      sx={{
+        backgroundColor: AppColors.role.admin.secondary,
+        borderRadius: '10px',
+        fontWeight: '700',
+        px: 2.5,
+        textTransform: 'none',
+        '&:hover': { backgroundColor: theme.palette.error.dark },
+      }}
+    >
+      Cadastrar responsável
+    </Button>
+  )
 
-    if (modalState.action === 'create') {
-      return !modalValues.password.trim()
-    }
+  const cards = [
+    { id: 'total', title: 'Total de responsáveis', value: String(total) },
+    {
+      id: 'pending',
+      title: 'Aguardando validação',
+      value: String(pendingCount),
+    },
+  ]
 
-    return false
-  }, [modalState, modalValues])
-
-  useEffect(() => {
-    let isActive = true
-
-    async function loadParentQueue() {
-      try {
-        const nextParentQueue =
-          await parentApprovalService.getParentQueue(resolvedParentQuery)
-
-        if (!isActive) {
-          return
-        }
-
-        setParentError(null)
-        setParentQueue(nextParentQueue)
-      } catch {
-        if (!isActive) {
-          return
-        }
-
-        setParentError(
-          'Nenhum responsável cadastrado. Cadastre um novo responsável para revisão.'
-        )
-        setParentQueue(emptyQueueResult(DEFAULT_QUERY.pageSize))
-      }
-
-      if (isActive) {
-        setHasLoadedParents(true)
-      }
-    }
-
-    void loadParentQueue()
-
-    return () => {
-      isActive = false
-    }
-  }, [resolvedParentQuery, parentRefreshKey])
-
-  if (!isAdmin || role !== 'admin' || !hasLoadedParents) {
+  if (!canView) {
     return <LoadingScreen />
   }
 
   return (
     <AppPageContainer className="gap-4 md:gap-5">
-      <OrdinaryHeader
+      <PageHeader
+        data-testid="parents-page-header"
         title="Centro de Responsáveis"
         subtitle="Revise e valide responsáveis antes de liberar o acesso na plataforma."
+        variant="admin"
       />
 
-      <Box
-        sx={{
-          alignItems: 'start',
-          display: 'grid',
-          gap: 2,
-          gridTemplateColumns: { md: 'minmax(0, 1fr)', xs: '1fr' },
+      <OrdinaryHeader
+        title="Validação e liberação de responsáveis"
+        subtitle="Valide e libere os cadastros de responsáveis."
+        actions={headerActions}
+      />
+
+      {/* Create / edit modal */}
+      <AppActionModal
+        open={isFormModalOpen}
+        onClose={() => {
+          setIsFormModalOpen(false)
+          setFormApiError(null)
+          setEditingParentId(null)
+          setParentForm(getEmptyParentForm())
         }}
+        title={editingParentId ? 'Editar responsável' : 'Cadastrar responsável'}
+        description="Preencha os dados usados para o fluxo de liberação do responsável."
+        onConfirm={() => {
+          void handleSaveParent()
+        }}
+        confirmLabel={editingParentId ? 'Salvar alterações' : 'Salvar cadastro'}
+        cancelLabel="Cancelar"
+        confirmColor={AppColors.role.admin.secondary}
+        confirmHoverColor={theme.palette.error.dark}
+        disableConfirm={!canSaveParent || isSubmitting}
       >
-        <ApprovalComponent
-          currentPage={parentQueue.currentPage}
-          description="Valide e libere os cadastros de responsáveis."
-          emptyStateDescription={
-            parentError ??
-            'Não há responsáveis aguardando aprovação no momento.'
-          }
-          emptyStateTitle="Nenhum responsável encontrado"
-          filterOptions={parentFilterOptions}
-          items={parentQueue.items}
-          onCreate={() => {
-            openModal({ action: 'create', type: 'parent' })
-          }}
-          onEdit={() => toggleSelectionMode('edit')}
-          onDelete={() => toggleSelectionMode('delete')}
-          onItemSelect={handleParentItemSelect}
-          selectionMode={selectionMode}
-          onPageChange={page => {
-            startTransition(() => {
-              setParentQuery(currentQuery => ({
-                ...currentQuery,
-                page,
-              }))
-            })
-          }}
-          onQueryChange={query => {
-            startTransition(() => {
-              setParentQuery(currentQuery => ({
-                ...currentQuery,
-                page: DEFAULT_PAGE_INDEX,
-                query,
-              }))
-            })
-          }}
-          onStatusChange={status => {
-            startTransition(() => {
-              setParentQuery(currentQuery => ({
-                ...currentQuery,
-                page: DEFAULT_PAGE_INDEX,
-                status,
-              }))
-            })
-          }}
-          query={parentQuery.query}
-          renderItem={item => (
-            <ApprovalCard
-              actions={buildParentActions(item)}
-              item={item}
-              status={PARENT_APPROVAL_CARD_STATUS[item.status]}
-              type="parent"
-            />
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          {!editingParentId && (
+            <>
+              <Button
+                fullWidth
+                variant="outlined"
+                startIcon={<UploadFileRoundedIcon />}
+                onClick={() => {
+                  setIsFormModalOpen(false)
+                  setIsBatchOpen(true)
+                }}
+                sx={{
+                  borderColor: alpha(AppColors.role.admin.secondary, 0.4),
+                  color: AppColors.role.admin.secondary,
+                  borderRadius: '10px',
+                  fontWeight: 700,
+                  textTransform: 'none',
+                  py: 1,
+                  '&:hover': {
+                    borderColor: AppColors.role.admin.secondary,
+                    backgroundColor: alpha(
+                      AppColors.role.admin.secondary,
+                      0.05
+                    ),
+                  },
+                }}
+              >
+                Cadastrar em lote
+              </Button>
+              <Box
+                sx={{
+                  borderTop: '1px solid',
+                  borderColor: 'background.border',
+                  mt: 0.5,
+                }}
+              />
+            </>
           )}
-          resultsSummary={parentResultsSummary}
-          role={role}
+
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+              gap: 2,
+            }}
+          >
+            <Box>
+              <Typography sx={labelSx}>Nome</Typography>
+              <AppInput
+                data-testid="parent-first-name"
+                placeholder="Ex.: Mariana"
+                value={parentForm.first_name}
+                onChange={e =>
+                  setParentForm(prev => ({
+                    ...prev,
+                    first_name: e.target.value,
+                  }))
+                }
+              />
+            </Box>
+            <Box>
+              <Typography sx={labelSx}>Sobrenome</Typography>
+              <AppInput
+                data-testid="parent-last-name"
+                placeholder="Ex.: Souza"
+                value={parentForm.last_name}
+                onChange={e =>
+                  setParentForm(prev => ({
+                    ...prev,
+                    last_name: e.target.value,
+                  }))
+                }
+              />
+            </Box>
+          </Box>
+
+          <Box>
+            <Typography sx={labelSx}>E-mail do responsável</Typography>
+            <AppInput
+              data-testid="parent-email"
+              placeholder="Ex.: m.souza@email.com"
+              type="email"
+              value={parentForm.email}
+              onChange={e =>
+                setParentForm(prev => ({ ...prev, email: e.target.value }))
+              }
+              error={Boolean(parentForm.email && !emailIsValid)}
+              helperText={
+                parentForm.email && !emailIsValid
+                  ? 'Digite um e-mail válido com @ e domínio.'
+                  : undefined
+              }
+            />
+          </Box>
+
+          <Box>
+            <Typography sx={labelSx}>Telefone</Typography>
+            <AppInput
+              data-testid="parent-phone"
+              placeholder="Ex.: +55 51 98765-4321"
+              value={parentForm.phone_number}
+              onChange={e =>
+                setParentForm(prev => ({
+                  ...prev,
+                  phone_number: e.target.value,
+                }))
+              }
+            />
+          </Box>
+
+          {!editingParentId && (
+            <Box>
+              <Typography sx={labelSx}>Senha provisória</Typography>
+              <AppInput
+                data-testid="parent-password"
+                placeholder="Defina uma senha inicial"
+                type="password"
+                value={parentForm.password}
+                onChange={e =>
+                  setParentForm(prev => ({
+                    ...prev,
+                    password: e.target.value,
+                  }))
+                }
+              />
+            </Box>
+          )}
+
+          {formApiError && (
+            <Box
+              sx={{
+                borderRadius: '10px',
+                color: 'error.main',
+                fontSize: { md: 13, xs: 12 },
+                fontWeight: 600,
+                px: 1,
+                py: 0.5,
+              }}
+            >
+              ✕ {formApiError}
+            </Box>
+          )}
+        </Box>
+      </AppActionModal>
+
+      {/* Batch parent upload modal */}
+      <AppActionModal
+        open={isBatchOpen}
+        onClose={() => {
+          setIsBatchOpen(false)
+          setBatchFile(null)
+          setBatchSuccess(false)
+        }}
+        title="Cadastrar responsáveis em lote"
+        description="Envie um arquivo .csv com os dados dos responsáveis."
+        onConfirm={() => {
+          // TODO: enviar batchFile para o backend
+          setBatchSuccess(true)
+        }}
+        confirmLabel="Enviar arquivo"
+        cancelLabel="Cancelar"
+        confirmColor={AppColors.role.admin.secondary}
+        confirmHoverColor={theme.palette.error.dark}
+        disableConfirm={!batchFile}
+      >
+        <Box
+          component="label"
+          sx={{
+            border: '1px dashed',
+            borderColor: alpha(AppColors.role.admin.secondary, 0.4),
+            borderRadius: '14px',
+            p: 3,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 1,
+            cursor: 'pointer',
+            textAlign: 'center',
+            backgroundColor: alpha(AppColors.role.admin.secondary, 0.04),
+            '&:hover': {
+              backgroundColor: alpha(AppColors.role.admin.secondary, 0.08),
+            },
+          }}
+        >
+          <UploadFileRoundedIcon
+            sx={{ color: AppColors.role.admin.secondary, fontSize: 32 }}
+          />
+          <Typography sx={{ fontWeight: 700, fontSize: 14 }}>
+            {batchFile
+              ? batchFile.name
+              : 'Clique para selecionar um arquivo .csv'}
+          </Typography>
+          <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
+            Apenas arquivos .csv são aceitos.
+          </Typography>
+          <input
+            type="file"
+            accept=".csv,text/csv"
+            hidden
+            onChange={e => {
+              const file = e.target.files?.[0] ?? null
+              if (file && !file.name.toLowerCase().endsWith('.csv')) {
+                e.target.value = ''
+                return
+              }
+              setBatchFile(file)
+            }}
+          />
+        </Box>
+
+        {batchSuccess && (
+          <Box
+            sx={{
+              mt: 2,
+              borderRadius: '10px',
+              border: '1px solid',
+              borderColor: alpha('#22C55E', 0.35),
+              backgroundColor: alpha('#22C55E', 0.08),
+              color: '#22C55E',
+              fontSize: 13,
+              fontWeight: 600,
+              px: 1.5,
+              py: 1,
+            }}
+          >
+            ✓ Arquivo enviado com sucesso! Os responsáveis serão cadastrados em
+            instantes.
+          </Box>
+        )}
+      </AppActionModal>
+
+      <Box className="grid grid-cols-2 gap-3 md:gap-4">
+        {cards.map(card => (
+          <Box key={card.id} data-testid={`metric-card-${card.id}`}>
+            <MetricsCard contentClassName="p-5" {...card} />
+          </Box>
+        ))}
+      </Box>
+
+      <Box sx={{ backgroundColor: 'background.default', borderRadius: '14px' }}>
+        <SearchBarAndFilter
+          data-testid="parents-search"
+          onQueryChange={setInputQuery}
+          query={inputQuery}
+          resultsSummary={{
+            count: total,
+            singularLabel: 'resultado',
+            pluralLabel: 'resultados',
+          }}
           searchPlaceholder="Pesquisar responsáveis..."
-          selectedStatus={parentQuery.status}
-          title="Validação e liberação de responsáveis"
-          totalPages={parentQueue.totalPages}
+          filterOptions={parentFilterOptions}
+          selectedStatus={statusFilter}
+          onStatusChange={setStatusFilter}
         />
       </Box>
 
-      <ApprovalActionModal
-        mode={modalState}
-        disableConfirm={isModalConfirmDisabled}
-        isSubmitting={isModalSubmitting}
-        errorMessage={modalApiError}
-        onChange={handleModalChange}
-        onClose={resetModal}
-        onConfirm={handleModalConfirm}
-        open={modalState !== null}
-        role={role}
-        subjectOptions={[]}
-        values={modalValues}
-      />
+      <Box
+        sx={{
+          backgroundColor: 'background.paper',
+          border: '1px solid',
+          borderColor: 'background.border',
+          borderRadius: '22px',
+          p: { md: 2, xs: 1.5 },
+          width: '100%',
+        }}
+      >
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: '2fr 1.5fr 1fr 1fr 40px',
+            px: 1,
+            py: 1.5,
+            mt: 1,
+            borderBottom: `1px solid ${theme.palette.divider}`,
+          }}
+        >
+          <SortableHeader
+            label="Responsável"
+            field="name"
+            sort={sort}
+            onSort={handleSort}
+          />
+          <Typography sx={headerTextSx}>Telefone</Typography>
+          <SortableHeader
+            label="Aluno"
+            field="child"
+            sort={sort}
+            onSort={handleSort}
+          />
+          <Typography sx={headerTextSx}>Status</Typography>
+        </Box>
+
+        {isLoading ? (
+          <Box sx={{ py: 8, display: 'flex', justifyContent: 'center' }}>
+            <CircularProgress size={28} />
+          </Box>
+        ) : parents.length === 0 ? (
+          <Box sx={{ py: 6, textAlign: 'center' }}>
+            <Typography sx={{ color: 'text.secondary', fontWeight: 600 }}>
+              Nenhum responsável encontrado.
+            </Typography>
+          </Box>
+        ) : (
+          sortedParents.map(parent => (
+            <Box
+              key={parent.id}
+              data-testid={`parent-row-${parent.id}`}
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: '2fr 1.5fr 1fr 1fr 40px',
+                alignItems: 'center',
+                px: 1,
+                py: 1.75,
+                borderBottom: `1px solid ${alpha(theme.palette.divider, 0.18)}`,
+                '&:hover': {
+                  backgroundColor: alpha(theme.palette.background.hover, 0.6),
+                  borderRadius: '12px',
+                },
+              }}
+            >
+              <Box>
+                <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+                  {getParentName(parent)}
+                </Typography>
+                <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
+                  {parent.guardian?.email ?? '—'}
+                </Typography>
+              </Box>
+              <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
+                {parent.guardian?.phone_number ?? '—'}
+              </Typography>
+              <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
+                {parent.childName ?? '—'}
+              </Typography>
+              <Box sx={{ display: 'flex' }}>
+                <AppTag
+                  data-testid={`parent-status-${parent.id}`}
+                  size="sm"
+                  tag={
+                    statusConfig[parent.status] ?? {
+                      label: parent.status,
+                      color: 'default',
+                    }
+                  }
+                />
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                <IconButton
+                  data-testid={`parent-menu-${parent.id}`}
+                  size="small"
+                  onClick={e => {
+                    setSelectedParentId(parent.id)
+                    setMenuAnchorEl(e.currentTarget)
+                  }}
+                  sx={{ color: 'text.secondary' }}
+                >
+                  <MoreHorizRoundedIcon fontSize="small" />
+                </IconButton>
+              </Box>
+            </Box>
+          ))
+        )}
+
+        <Box ref={sentinelRef} sx={{ height: '1px' }} />
+        {isFetchingMore && (
+          <Box sx={{ py: 3, display: 'flex', justifyContent: 'center' }}>
+            <CircularProgress size={22} />
+          </Box>
+        )}
+
+        <Menu
+          anchorEl={menuAnchorEl}
+          open={Boolean(menuAnchorEl)}
+          onClose={() => setMenuAnchorEl(null)}
+          slotProps={{
+            paper: {
+              sx: {
+                border: '1px solid',
+                borderColor: 'background.border',
+                borderRadius: '16px',
+                minWidth: 200,
+                mt: 1,
+              },
+            },
+          }}
+        >
+          <MenuItem
+            data-testid="approve-parent-action"
+            onClick={() => {
+              setMenuAnchorEl(null)
+              if (selectedParentId)
+                void handleStatusUpdate(selectedParentId, 'approved')
+            }}
+            sx={{ color: 'success.main', gap: 1.25, py: 1.1 }}
+          >
+            <CheckRoundedIcon sx={{ fontSize: 18 }} />
+            <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+              Validar cadastro
+            </Typography>
+          </MenuItem>
+          <MenuItem
+            data-testid="reject-parent-action"
+            disabled={selectedParent?.status === 'rejected'}
+            onClick={() => {
+              setMenuAnchorEl(null)
+              if (selectedParentId)
+                void handleStatusUpdate(selectedParentId, 'rejected')
+            }}
+            sx={{ color: 'error.main', gap: 1.25, py: 1.1 }}
+          >
+            <CancelOutlinedIcon sx={{ fontSize: 18 }} />
+            <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+              Rejeitar cadastro
+            </Typography>
+          </MenuItem>
+          <MenuItem
+            data-testid="edit-parent-action"
+            onClick={() => {
+              setMenuAnchorEl(null)
+              openEditModal()
+            }}
+            sx={{ color: 'warning.main', gap: 1.25, py: 1.1 }}
+          >
+            <EditRoundedIcon sx={{ fontSize: 18 }} />
+            <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+              Editar responsável
+            </Typography>
+          </MenuItem>
+          <MenuItem
+            data-testid="delete-parent-action"
+            onClick={() => {
+              setMenuAnchorEl(null)
+              setParentToDeleteId(selectedParentId)
+            }}
+            sx={{ color: 'error.main', gap: 1.25, py: 1.1 }}
+          >
+            <DeleteOutlineRoundedIcon sx={{ fontSize: 18 }} />
+            <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+              Excluir responsável
+            </Typography>
+          </MenuItem>
+        </Menu>
+
+        <AppActionModal
+          mode="confirm"
+          open={parentToDeleteId !== null}
+          onClose={() => setParentToDeleteId(null)}
+          onConfirm={() => {
+            if (parentToDeleteId) void handleDeleteParent(parentToDeleteId)
+            setParentToDeleteId(null)
+          }}
+          title="Excluir responsável"
+          description="Essa ação remove o responsável permanentemente."
+          confirmLabel="Confirmar exclusão"
+          confirmColor={theme.palette.error.main}
+        >
+          <Typography color="text.secondary">
+            Deseja remover "
+            {selectedParent ? getParentName(selectedParent) : ''}" da lista?
+          </Typography>
+        </AppActionModal>
+      </Box>
     </AppPageContainer>
   )
 }
