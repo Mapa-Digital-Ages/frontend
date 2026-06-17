@@ -448,7 +448,6 @@ test('admin approvals page renders cards directly and provides visible actions',
   const approvalCardSource = readSource(
     'modules/admin/shared/components/ApprovalCard.tsx'
   )
-  const adminParentPageSource = readSource('modules/admin/parent/page/Page.tsx')
   const adminTypesSource = readSource('modules/admin/shared/types/types.ts')
 
   assert.match(adminTypesSource, /export interface ApprovalCardAction/)
