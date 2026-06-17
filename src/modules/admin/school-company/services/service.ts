@@ -5,7 +5,10 @@ import {
   type StudentListDto,
 } from '@/modules/admin/student/services/mapper'
 import type { StudentItem } from '@/modules/admin/student/types/types'
-import {
+import type {
+  AdminPartnership,
+  AdminPartnershipApi,
+  AdminPartnershipListApiResponse,
   Company,
   CompanyApi,
   CreateCompanyPayload,
@@ -13,7 +16,20 @@ import {
   SchoolApi,
   SchoolListApiResponse,
   CreateSchoolPayload,
+  PartnershipStatus,
 } from '../types/types'
+
+function normalizePartnershipStatus(status: string): PartnershipStatus {
+  const normalized = status.trim().toLowerCase()
+  if (
+    normalized === 'pending' ||
+    normalized === 'approved' ||
+    normalized === 'rejected'
+  ) {
+    return normalized
+  }
+  return 'pending'
+}
 
 function mapCompany(company: CompanyApi): Company {
   const firstName =
@@ -48,7 +64,26 @@ function mapCompany(company: CompanyApi): Company {
     status: company.is_active === false ? 'inativa' : 'ativa',
     description: '',
     requests: [],
-    spots: 0,
+    spots: Number(company.spots ?? 0),
+  }
+}
+
+function mapAdminPartnership(
+  partnership: AdminPartnershipApi
+): AdminPartnership {
+  return {
+    id: partnership.id,
+    schoolId: partnership.school_id,
+    schoolName: partnership.school_name,
+    companyId: partnership.company_id,
+    companyName: partnership.company_name,
+    requestId: partnership.request_id,
+    requestTitle: partnership.request_title,
+    requestedSpots: partnership.requested_spots,
+    remainingSpots: partnership.remaining_spots,
+    grantedSpots: partnership.granted_spots,
+    status: normalizePartnershipStatus(partnership.status),
+    createdAt: partnership.created_at,
   }
 }
 
@@ -89,6 +124,29 @@ export const adminCompanyService = {
 
   async deleteCompany(companyId: string): Promise<void> {
     await httpClient.delete(`company/${encodeURIComponent(companyId)}`)
+  },
+
+  async listPartnerships(
+    status?: PartnershipStatus
+  ): Promise<AdminPartnership[]> {
+    const params = new URLSearchParams()
+    if (status) params.set('partnership_status', status)
+    const qs = params.toString()
+    const response = await httpClient.get<AdminPartnershipListApiResponse>(
+      `admin/partnerships${qs ? `?${qs}` : ''}`
+    )
+    return response.data.items.map(mapAdminPartnership)
+  },
+
+  async updatePartnershipStatus(
+    partnershipId: string,
+    status: Extract<PartnershipStatus, 'approved' | 'rejected'>
+  ): Promise<AdminPartnership> {
+    const response = await httpClient.patch<AdminPartnershipApi>(
+      `admin/partnerships/${encodeURIComponent(partnershipId)}/status`,
+      { status: status.toUpperCase() }
+    )
+    return mapAdminPartnership(response.data)
   },
 }
 

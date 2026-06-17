@@ -9,6 +9,23 @@ export type Company = {
   spots: number
 }
 
+export type PartnershipStatus = 'pending' | 'approved' | 'rejected'
+
+export type AdminPartnership = {
+  id: string
+  schoolId: string
+  schoolName: string
+  companyId: string
+  companyName: string
+  requestId: string
+  requestTitle: string
+  requestedSpots: number
+  remainingSpots: number
+  grantedSpots: number
+  status: PartnershipStatus
+  createdAt: string
+}
+
 export type CompanyApi = {
   id?: string
   user_id?: string
@@ -36,6 +53,26 @@ export type CompanyApi = {
     last_name?: string
     lastName?: string
   }
+}
+
+export type AdminPartnershipApi = {
+  id: string
+  school_id: string
+  school_name: string
+  company_id: string
+  company_name: string
+  request_id: string
+  request_title: string
+  requested_spots: number
+  remaining_spots: number
+  granted_spots: number
+  status: string
+  created_at: string
+}
+
+export type AdminPartnershipListApiResponse = {
+  items: AdminPartnershipApi[]
+  total: number
 }
 
 export type CreateCompanyPayload = {
