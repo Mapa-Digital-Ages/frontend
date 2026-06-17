@@ -276,11 +276,7 @@ test('StudentsPage keeps the send button disabled until a csv is chosen', async 
 
 test('StudentsPage accepts a csv file and shows its name', async () => {
   const user = userEvent.setup()
-  const { container } = renderWithProviders(
-    <AuthContext.Provider value={authValue}>
-      <StudentsPage />
-    </AuthContext.Provider>
-  )
+  renderPage()
 
   await user.click(screen.getByRole('button', { name: /^criar aluno$/i }))
   await user.click(
@@ -289,7 +285,7 @@ test('StudentsPage accepts a csv file and shows its name', async () => {
     })
   )
 
-  const fileInput = container.querySelector(
+  const fileInput = document.querySelector(
     'input[type="file"]'
   ) as HTMLInputElement
   const csv = new File(['nome,email'], 'alunos.csv', { type: 'text/csv' })
@@ -303,11 +299,7 @@ test('StudentsPage accepts a csv file and shows its name', async () => {
 
 test('StudentsPage shows the success message after sending the file', async () => {
   const user = userEvent.setup()
-  const { container } = renderWithProviders(
-    <AuthContext.Provider value={authValue}>
-      <StudentsPage />
-    </AuthContext.Provider>
-  )
+  renderPage()
 
   await user.click(screen.getByRole('button', { name: /^criar aluno$/i }))
   await user.click(
@@ -316,7 +308,7 @@ test('StudentsPage shows the success message after sending the file', async () =
     })
   )
 
-  const fileInput = container.querySelector(
+  const fileInput = document.querySelector(
     'input[type="file"]'
   ) as HTMLInputElement
   const csv = new File(['nome,email'], 'alunos.csv', { type: 'text/csv' })
