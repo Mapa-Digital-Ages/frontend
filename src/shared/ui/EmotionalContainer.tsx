@@ -13,7 +13,7 @@ import SentimentVerySatisfiedIcon from '@mui/icons-material/SentimentVerySatisfi
 import SentimentNeutralIcon from '@mui/icons-material/SentimentNeutral'
 import SentimentVeryDissatisfiedIcon from '@mui/icons-material/SentimentVeryDissatisfied'
 import CloseIcon from '@mui/icons-material/Close'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState, useMemo, type ReactNode } from 'react'
 import { useTheme } from '@mui/material/styles'
 import { alpha } from '@mui/material/styles'
 import dayjs from 'dayjs'
@@ -121,7 +121,7 @@ function EmotionButton({
 export default function EmotionalContainer() {
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedEmotion, setSelectedEmotion] = useState('')
-  const startOfWeek = dayjs().startOf('isoWeek')
+  const startOfWeek = useMemo(() => dayjs().startOf('isoWeek'), [])
   const initialWeek = Array.from({ length: 7 }).map((_, index) => {
     const date = startOfWeek.add(index, 'day')
     return { date, mood: null as string | null }
