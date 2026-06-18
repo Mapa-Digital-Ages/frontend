@@ -37,30 +37,21 @@ function SiteLogo() {
 const lightTheme = createAppTheme('light')
 
 function AuthThemeProvider({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    const root = document.documentElement
-    const previousTheme = root.dataset.theme
-    const hadDark = root.classList.contains('dark')
-
-    root.dataset.theme = 'light'
-    root.classList.remove('dark')
-
-    return () => {
-      if (previousTheme) {
-        root.dataset.theme = previousTheme
-      } else {
-        delete root.dataset.theme
-      }
-
-      if (hadDark) {
-        root.classList.add('dark')
-      } else {
-        root.classList.remove('dark')
-      }
-    }
-  }, [])
-
-  return <ThemeProvider theme={lightTheme}>{children}</ThemeProvider>
+  return (
+    <ThemeProvider theme={lightTheme}>
+      <Box
+        sx={{
+          '--app-surface': 'rgba(255, 255, 255, 1)',
+          '--app-surface-elevated': 'rgba(255, 255, 255, 1)',
+          '--app-foreground': 'rgba(16, 42, 67, 1)',
+          '--app-border': 'rgba(217, 222, 231, 0.95)',
+          '--app-background': 'rgba(244, 247, 251, 1)',
+        }}
+      >
+        {children}
+      </Box>
+    </ThemeProvider>
+  )
 }
 
 function AuthLayout() {
