@@ -9,6 +9,26 @@
       content="Mapa Digital: base frontend organizada para autenticação, dashboards por perfil e expansão do produto."
     />
     <title>Mapa Digital</title>
+    <script>
+      ;(function () {
+        try {
+          var preference = localStorage.getItem('mapa-digital.theme.mode')
+          var mode =
+            preference === 'dark'
+              ? 'dark'
+              : preference === 'light'
+                ? 'light'
+                : window.matchMedia('(prefers-color-scheme: dark)').matches
+                  ? 'dark'
+                  : 'light'
+
+          if (mode === 'dark') {
+            document.documentElement.classList.add('dark')
+            document.documentElement.dataset.theme = 'dark'
+          }
+        } catch (e) {}
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>
