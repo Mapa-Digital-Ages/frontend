@@ -121,15 +121,23 @@ test('adopted schools page follows the same loading pattern as dashboard', () =>
   assert.match(source, /isActive = false/)
 })
 
-test('adopted schools service contains mock data for schools', () => {
+test('adopted schools service fetches approved partnerships and students', () => {
   const source = readSource(
     'modules/company/adopted-schools/services/service.ts'
   )
 
-  assert.match(source, /Escola São Paulo/)
-  assert.match(source, /Escola Horizonte/)
-  assert.match(source, /Ana Lima/)
-  assert.match(source, /Carla Souza/)
+  assert.match(source, /httpClient\.get/)
+  assert.match(source, /partnership_status: 'approved'/)
+  assert.match(source, /encodeURIComponent\(companyId\)/)
+  assert.match(source, /partnerships/)
+  assert.match(source, /httpClient\.get<StudentListApi>\('student'/)
+  assert.match(source, /supported_student_ids/)
+  assert.doesNotMatch(
+    source,
+    /students\.slice\(0, partnership\.granted_spots\)/
+  )
+  assert.match(source, /removeSchool/)
+  assert.match(source, /httpClient\.delete/)
 })
 
 test('adopted schools page supports selecting a school card', () => {

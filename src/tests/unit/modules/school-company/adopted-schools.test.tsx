@@ -14,8 +14,10 @@ test('sc adopted schools page exists and uses the enterpriseSchool variant heade
   assert.match(source, /PageHeader/)
   assert.match(source, /adoptedSchoolsService\.getTitle\(\)/)
   assert.match(source, /adoptedSchoolsService\.getSubtitle\(\)/)
-  assert.match(serviceSource, /Gestão de Escolas Adotadas/)
-  assert.match(serviceSource, /Status operacional das escolas parceiras/)
+  assert.match(
+    serviceSource,
+    /modules\/company\/adopted-schools\/services\/service/
+  )
 })
 
 test('sc adopted schools page uses SearchBarAndFilter for search and filtering', () => {
@@ -80,12 +82,16 @@ test('sc adopted schools service exposes getTitle, getSubtitle and getSchools', 
   const source = readSource(
     'modules/school-company/adopted-schools/services/service.ts'
   )
+  const companySource = readSource(
+    'modules/company/adopted-schools/services/service.ts'
+  )
 
-  assert.match(source, /getTitle/)
-  assert.match(source, /getSubtitle/)
-  assert.match(source, /getSchools/)
-  assert.match(source, /removeSchool/)
-  assert.match(source, /AdoptedSchool/)
+  assert.match(source, /adoptedSchoolsService/)
+  assert.match(companySource, /getTitle/)
+  assert.match(companySource, /getSubtitle/)
+  assert.match(companySource, /getSchools/)
+  assert.match(companySource, /removeSchool/)
+  assert.match(companySource, /AdoptedSchool/)
 })
 
 test('sc adopted schools types define AdoptedSchool and AdoptedSchoolGrade', () => {
@@ -149,15 +155,22 @@ test('sc adopted schools page follows the same loading pattern as dashboard', ()
   assert.match(source, /isActive = false/)
 })
 
-test('sc adopted schools service contains mock data for schools', () => {
+test('sc adopted schools service reuses the real company adopted schools integration', () => {
   const source = readSource(
     'modules/school-company/adopted-schools/services/service.ts'
   )
+  const companySource = readSource(
+    'modules/company/adopted-schools/services/service.ts'
+  )
 
-  assert.match(source, /Escola São Paulo/)
-  assert.match(source, /Escola Horizonte/)
-  assert.match(source, /Ana Lima/)
-  assert.match(source, /Carla Souza/)
+  assert.match(source, /modules\/company\/adopted-schools\/services\/service/)
+  assert.match(companySource, /partnership_status: 'approved'/)
+  assert.match(companySource, /httpClient\.get<StudentListApi>\('student'/)
+  assert.doesNotMatch(
+    companySource,
+    /students\.slice\(0, partnership\.granted_spots\)/
+  )
+  assert.match(companySource, /httpClient\.delete/)
 })
 
 test('sc adopted schools page supports selecting a school card', () => {

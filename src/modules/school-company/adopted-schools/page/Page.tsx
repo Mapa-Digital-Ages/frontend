@@ -84,8 +84,13 @@ export default function Page() {
   async function handleRemoveSchool() {
     if (!menuSchoolId) return
     await adoptedSchoolsService.removeSchool(menuSchoolId)
-    setSchools(current => current.filter(s => s.id !== menuSchoolId))
-    if (selectedSchoolId === menuSchoolId) setSelectedSchoolId(null)
+    setSchools(current => {
+      const nextSchools = current.filter(s => s.id !== menuSchoolId)
+      if (selectedSchoolId === menuSchoolId) {
+        setSelectedSchoolId(nextSchools[0]?.id ?? null)
+      }
+      return nextSchools
+    })
     setIsDeleteModalOpen(false)
     setMenuSchoolId(null)
   }
@@ -122,7 +127,6 @@ export default function Page() {
 
       <Box data-testid="sc-adopted-schools-search">
         <SearchBarAndFilter
-          filterOptions={FILTER_OPTIONS}
           onQueryChange={setQuery}
           onStatusChange={setFilterStatus}
           query={query}
@@ -358,7 +362,7 @@ export default function Page() {
                       fontWeight: 600,
                     }}
                   >
-                    Trilhas
+                    Alunos apoiados
                   </TableCell>
                   <TableCell
                     align="right"
@@ -443,12 +447,54 @@ export default function Page() {
                 ))}
               </TableBody>
             </Table>
+
+            <Box sx={{ mt: 3 }}>
+              <Typography
+                sx={{
+                  color: accent.primary,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  mb: 1,
+                }}
+              >
+                Alunos apoiados
+              </Typography>
+              {selectedSchool.supportedStudents.length === 0 ? (
+                <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
+                  Nenhum aluno vinculado a esta parceria.
+                </Typography>
+              ) : (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {selectedSchool.supportedStudents.map(student => (
+                    <Box
+                      key={student.id}
+                      data-testid={`sc-supported-student-${student.id}`}
+                      sx={{
+                        border: '1px solid',
+                        borderColor: 'background.border',
+                        borderRadius: '12px',
+                        p: 1.5,
+                      }}
+                    >
+                      <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
+                        {student.name}
+                      </Typography>
+                      <Typography
+                        sx={{ color: 'text.secondary', fontSize: 13 }}
+                      >
+                        {student.year ?? 'Sem ano'} &bull; {student.email}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              )}
+            </Box>
           </AppCard>
         )}
 
         <AppActionModal
           confirmLabel="Confirmar remoção"
-          description="Essa ação remove a escola da sua lista de escolas adotadas."
+          description="Essa ação encerra a parceria e remove a escola da sua lista de escolas apoiadas."
           mode="confirm"
           onClose={() => setIsDeleteModalOpen(false)}
           onConfirm={() => {
