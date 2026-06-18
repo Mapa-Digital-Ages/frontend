@@ -4,7 +4,7 @@ import { ThemeProvider } from '@mui/material/styles'
 import { Outlet } from 'react-router-dom'
 import siteLogo from '@/shared/assets/logos/white_logo.svg'
 import { APP_CONFIG } from '@/shared/constants/app'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { createAppTheme } from '../theme/core/theme'
 
 export type LayoutMode =
