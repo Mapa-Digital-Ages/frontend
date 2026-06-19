@@ -14,14 +14,13 @@ test('adopted schools page exists and uses the company variant header', () => {
   )
 })
 
-test('adopted schools page uses SearchBarAndFilter for search and filtering', () => {
+test('adopted schools page uses SearchBarAndFilter for search', () => {
   const source = readSource('modules/company/adopted-schools/page/Page.tsx')
 
   assert.match(source, /SearchBarAndFilter/)
   assert.match(source, /onQueryChange/)
-  assert.match(source, /onStatusChange/)
-  assert.match(source, /filterOptions/)
   assert.match(source, /Pesquisar empresas/)
+  assert.doesNotMatch(source, /filterOptions/)
 })
 
 test('adopted schools page applies data-testid to all major components', () => {
@@ -43,7 +42,6 @@ test('adopted schools page renders school cards with school and vagas info', () 
 
   assert.match(source, /school\.schoolName/)
   assert.match(source, /school\.grantedSpots/)
-  assert.match(source, /school\.state/)
   assert.match(source, /filteredSchools\.map/)
 })
 

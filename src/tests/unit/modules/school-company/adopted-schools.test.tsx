@@ -20,16 +20,15 @@ test('sc adopted schools page exists and uses the enterpriseSchool variant heade
   )
 })
 
-test('sc adopted schools page uses SearchBarAndFilter for search and filtering', () => {
+test('sc adopted schools page uses SearchBarAndFilter for search', () => {
   const source = readSource(
     'modules/school-company/adopted-schools/page/Page.tsx'
   )
 
   assert.match(source, /SearchBarAndFilter/)
   assert.match(source, /onQueryChange/)
-  assert.match(source, /onStatusChange/)
-  assert.match(source, /filterOptions/)
   assert.match(source, /Pesquisar empresas/)
+  assert.doesNotMatch(source, /filterOptions/)
 })
 
 test('sc adopted schools page applies data-testid to all major components', () => {
@@ -55,7 +54,6 @@ test('sc adopted schools page renders school cards with school and vagas info', 
 
   assert.match(source, /school\.schoolName/)
   assert.match(source, /school\.grantedSpots/)
-  assert.match(source, /school\.state/)
   assert.match(source, /filteredSchools\.map/)
 })
 

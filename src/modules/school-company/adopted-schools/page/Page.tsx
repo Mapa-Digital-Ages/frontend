@@ -17,23 +17,12 @@ import { SearchBarAndFilter } from '@/shared/ui/SearchBarAndFilter'
 import AppActionModal from '@/shared/ui/AppActionModal'
 import { adoptedSchoolsService } from '../services/service'
 import type { AdoptedSchool } from '../types/types'
-import type { DropdownOption } from '@/shared/ui/AppDropdown'
-
-const FILTER_OPTIONS: DropdownOption[] = [
-  { label: 'Todos', value: 'all' },
-  { label: 'São Paulo', value: 'SP' },
-  { label: 'Minas Gerais', value: 'MG' },
-  { label: 'Rio de Janeiro', value: 'RJ' },
-  { label: 'Pernambuco', value: 'PE' },
-  { label: 'Paraná', value: 'PR' },
-]
 
 export default function Page() {
   const theme = useTheme()
   const [schools, setSchools] = useState<AdoptedSchool[]>([])
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null)
   const [query, setQuery] = useState('')
-  const [filterStatus, setFilterStatus] = useState('all')
   const [isLoading, setIsLoading] = useState(true)
   const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null)
   const [menuSchoolId, setMenuSchoolId] = useState<string | null>(null)
@@ -82,15 +71,10 @@ export default function Page() {
   }
 
   const filteredSchools = useMemo(() => {
-    return schools.filter(school => {
-      const matchesQuery = school.schoolName
-        .toLowerCase()
-        .includes(query.toLowerCase())
-      const matchesFilter =
-        filterStatus === 'all' || school.state === filterStatus
-      return matchesQuery && matchesFilter
-    })
-  }, [schools, query, filterStatus])
+    return schools.filter(school =>
+      school.schoolName.toLowerCase().includes(query.toLowerCase())
+    )
+  }, [schools, query])
 
   const selectedSchool = useMemo(() => {
     return schools.find(s => s.id === selectedSchoolId) ?? null
@@ -114,7 +98,6 @@ export default function Page() {
       <Box data-testid="sc-adopted-schools-search">
         <SearchBarAndFilter
           onQueryChange={setQuery}
-          onStatusChange={setFilterStatus}
           query={query}
           resultsSummary={{
             count: filteredSchools.length,
@@ -122,7 +105,6 @@ export default function Page() {
             pluralLabel: 'resultado(s)',
           }}
           searchPlaceholder="Pesquisar empresas..."
-          selectedStatus={filterStatus}
         />
       </Box>
 
