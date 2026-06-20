@@ -287,7 +287,7 @@ export default function CreateStudentModal({
         <AppDropdown
           fullWidth
           label="Escola"
-          disabled={isLoadingOptions}
+          disabled={isLoadingOptions || !!defaultSchool}
           onChange={e => handleChange('school', String(e.target.value))}
           options={schoolDropdownOptions}
           sx={selectSx}
