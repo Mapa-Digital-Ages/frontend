@@ -49,7 +49,6 @@ test('SchoolStudentsPage filters students and count by school ID and opens creat
     </AuthContext.Provider>
   )
 
-  // Verify list & count queries were filtered by the logged-in school's ID
   await waitFor(() => {
     expect(studentService.getStudents).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -62,10 +61,8 @@ test('SchoolStudentsPage filters students and count by school ID and opens creat
     )
   })
 
-  // Open Create Student modal
   await user.click(screen.getByRole('button', { name: /criar aluno/i }))
 
-  // Verify school dropdown is pre-selected and disabled
   const dialog = screen.getByRole('dialog')
   const dropdowns = within(dialog).getAllByRole('combobox')
   const schoolDropdown = dropdowns[1]
