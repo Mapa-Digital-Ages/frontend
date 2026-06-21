@@ -636,7 +636,7 @@ test('adaptive trail content is chosen per step and inherited by sub-steps', () 
   const pageSource = readSource('modules/admin/content/page/Page.tsx')
 
   // The "Conteúdo relacionado" selector lives at the step level now.
-  assert.match(modalSource, /onStepChange\(step\.id, 'contentId'/)
+  assert.match(modalSource, /onStepChange\(\s*step\.id,\s*'contentId'/)
 
   // Sub-steps no longer carry their own content selector.
   assert.doesNotMatch(modalSource, /subStep\.id,[\s\S]{0,40}'contentId'/)
