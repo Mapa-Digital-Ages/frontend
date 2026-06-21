@@ -61,6 +61,20 @@ const inputSx = {
   },
 }
 
+const textareaSx = {
+  '& .MuiOutlinedInput-root': {
+    alignItems: 'flex-start',
+    borderRadius: '14px',
+  },
+  '& .MuiInputBase-input': {
+    fontSize: { md: 14, xs: 13 },
+    lineHeight: 1.55,
+  },
+  '& textarea.MuiInputBase-input': {
+    resize: 'vertical',
+  },
+}
+
 const selectSx = {
   '& .MuiOutlinedInput-root': {
     borderRadius: '14px',
@@ -162,7 +176,6 @@ function ApprovalActionModal({
   role,
   disableConfirm = false,
   isSubmitting = false,
-  errorMessage = null,
 }: ApprovalActionModalProps) {
   const theme = useTheme()
 
@@ -250,21 +263,6 @@ function ApprovalActionModal({
         </Box>
       ) : null}
 
-      {errorMessage && (
-        <Box
-          sx={{
-            borderRadius: '10px',
-            color: 'error.main',
-            fontSize: { md: 13, xs: 12 },
-            fontWeight: 600,
-            px: 1,
-            py: 0.5,
-          }}
-        >
-          ✕ {errorMessage}
-        </Box>
-      )}
-
       {isContentForm ? (
         <Box className="grid gap-3">
           <Box
@@ -302,12 +300,14 @@ function ApprovalActionModal({
             </Box>
           </Box>
           <AppInput
-            disabled={mode.action === 'create'}
             label="Descrição"
             labelSx={fieldLabelSx}
+            multiline
+            minRows={4}
+            maxRows={8}
             onChange={event => onChange('description', event.target.value)}
-            placeholder="Ex.: Lista de Equações do 7º ano"
-            sx={inputSx}
+            placeholder="Objetivos, habilidades e recorte do conteúdo. Ex.: equações do 1º grau com problemas contextualizados para o 7º ano."
+            sx={textareaSx}
             value={values.description}
           />
         </Box>

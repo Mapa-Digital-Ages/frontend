@@ -5,16 +5,15 @@ import OrdinaryHeader from '@/shared/ui/OrdinaryHeader'
 import Pagination from '@/shared/ui/Pagination'
 import { SearchBarAndFilter } from '@/shared/ui/SearchBarAndFilter'
 import {
-  fetchTrails,
   getTrailMetrics,
   groupTrailsBySubject,
-  type Trail,
-} from '../data/trails'
-import { studentService } from '../services/service'
+  studentService,
+} from '../services/service'
 import TrailList from '../components/TrailList'
 import MetricsCard from '@/shared/ui/MetricsCard'
 import LoadingScreen from '@/shared/ui/LoadingScreen'
 import EmptyState from '@/shared/ui/EmptyState'
+import type { Trail } from '../types/types'
 
 const TRAILS_PER_PAGE = 10
 
@@ -41,10 +40,16 @@ export default function Page() {
         return
       }
       try {
-        const data = await fetchTrails(studentId)
-        if (active) setTrails(data)
+        const data = await studentService.listTrails(studentId)
+        if (active) {
+          setTrails(data)
+          setError(null)
+        }
       } catch {
-        if (active) setError('Não foi possível carregar as trilhas.')
+        if (active) {
+          setTrails([])
+          setError('Não foi possível carregar as trilhas.')
+        }
       } finally {
         if (active) setIsLoading(false)
       }

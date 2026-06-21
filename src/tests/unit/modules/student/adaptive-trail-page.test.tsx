@@ -8,13 +8,6 @@ await jest.unstable_mockModule('@/app/auth/core/service', () => ({
   authService: { getUserId: () => 'student-123' },
 }))
 
-await jest.unstable_mockModule(
-  '@/modules/student/adaptivetrail/services/service',
-  () => ({
-    studentService: { getStudentId: () => 'student-123' },
-  })
-)
-
 const mockHttpGet = jest.fn<(...args: unknown[]) => Promise<unknown>>()
 await jest.unstable_mockModule('@/shared/lib/http/client', () => ({
   httpClient: { get: mockHttpGet },

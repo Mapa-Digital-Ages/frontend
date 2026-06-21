@@ -27,6 +27,9 @@ const mockCompleteStep = jest
     currentSubPath: 8,
     pathStatus: 'on_going',
   })
+const mockValidateAnswer = jest
+  .fn<(...args: unknown[]) => Promise<unknown>>()
+  .mockResolvedValue({ exerciseId: 'q1', optionId: 'o2', correct: true })
 const mockCompleteItem = jest.fn<(...args: unknown[]) => Promise<unknown>>()
 const mockGetCompletionRecommendations = jest
   .fn<(...args: unknown[]) => Promise<unknown>>()
@@ -42,7 +45,7 @@ const mockGetCompletionRecommendations = jest
 const mockHttpGet = jest.fn<(...args: unknown[]) => Promise<unknown>>()
 
 await jest.unstable_mockModule(
-  '@/modules/student/adaptivetrail/services/trailDetailService',
+  '@/modules/student/adaptivetrail/detail/services/service',
   () => ({
     adaptiveTrailDetailService: {
       getTrailSession: (...args: unknown[]) =>
@@ -53,6 +56,7 @@ await jest.unstable_mockModule(
       getSubStepQuestionFlow: (...args: unknown[]) =>
         mockGetSubStepQuestionFlow(...args),
       completeStep: (...args: unknown[]) => mockCompleteStep(...args),
+      validateAnswer: (...args: unknown[]) => mockValidateAnswer(...args),
       completeItem: (...args: unknown[]) => mockCompleteItem(...args),
       getCompletionRecommendations: (...args: unknown[]) =>
         mockGetCompletionRecommendations(...args),
@@ -164,6 +168,11 @@ beforeEach(() => {
     total: 0,
   })
   mockGetStudentId.mockReturnValue(null)
+  mockValidateAnswer.mockResolvedValue({
+    exerciseId: 'q1',
+    optionId: 'o2',
+    correct: true,
+  })
   getHttpGet().mockReset()
 })
 
@@ -295,6 +304,59 @@ test('StudentAdaptiveTrailDetailPage fetches the question flow when opening the 
 
   await waitFor(() => {
     expect(mockGetSubStepQuestionFlow).toHaveBeenCalled()
+  })
+})
+
+test('StudentAdaptiveTrailDetailPage validates the selected quiz answer before completion', async () => {
+  mockGetSubStepQuestionFlow.mockResolvedValue({
+    assessmentId: 'eq-quiz',
+    trailId: 'math',
+    stepId: 'equacoes-grau1',
+    subStepId: 'eq-quiz',
+    stepTitle: 'Questões de Equações do 1º Grau',
+    questions: [
+      {
+        id: 'q1',
+        question: 'Quanto vale x em 2x + 4 = 10?',
+        options: [
+          { id: 'o1', label: 'x = 2' },
+          { id: 'o2', label: 'x = 3' },
+        ],
+        subject: SUBJECTS.matematica,
+      },
+    ],
+  })
+
+  const user = userEvent.setup()
+  renderPage()
+
+  await expandTrailCard(user)
+  await user.click(
+    await screen.findByRole('button', {
+      name: /responder etapa assistir: introdução às equações do 1º grau/i,
+    })
+  )
+  await user.click(
+    await screen.findByRole('button', {
+      name: /responder etapa questões de equações do 1º grau/i,
+    })
+  )
+  await user.click(await screen.findByRole('button', { name: /x = 3/i }))
+  await user.click(screen.getByRole('button', { name: /verificar resposta/i }))
+
+  await waitFor(() => {
+    expect(mockValidateAnswer).toHaveBeenCalledWith('math', 'equacoes-grau1', {
+      exerciseId: 'q1',
+      optionId: 'o2',
+    })
+  })
+  expect(await screen.findByText(/resposta correta/i)).toBeInTheDocument()
+  expect(mockCompleteStep).not.toHaveBeenCalled()
+
+  await user.click(screen.getByRole('button', { name: /concluir etapa/i }))
+
+  await waitFor(() => {
+    expect(mockCompleteStep).toHaveBeenCalled()
   })
 })
 

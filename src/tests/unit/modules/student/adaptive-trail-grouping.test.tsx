@@ -4,10 +4,8 @@ jest.mock('@/shared/lib/http/client', () => ({
   httpClient: { get: jest.fn(), post: jest.fn() },
 }))
 
-import {
-  groupTrailsBySubject,
-  type Trail,
-} from '@/modules/student/adaptivetrail/data/trails'
+import { groupTrailsBySubject } from '@/modules/student/adaptivetrail/services/service'
+import type { Trail } from '@/modules/student/adaptivetrail/types/types'
 
 function makeTrail(
   id: string,

@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { buildStudentSubjectTrailRoute } from '@/app/router/paths'
 import { getSubjectIcon } from '@/shared/utils/subjectIcons'
 import SubjectBaseCard from '../../shared/components/SubjectBaseCard'
-import type { SubjectGroup } from '../data/trails'
+import type { SubjectGroup } from '../types/types'
 
 interface SubjectTrailCardProps {
   group: SubjectGroup
