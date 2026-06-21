@@ -143,6 +143,21 @@ beforeEach(() => {
     })
   jest.spyOn(adminCompanyService, 'listCompanies').mockResolvedValue([])
   jest.spyOn(adminCompanyService, 'countCompanies').mockResolvedValue(0)
+  jest.spyOn(adminCompanyService, 'listPartnerships').mockResolvedValue([])
+  jest.spyOn(adminCompanyService, 'updatePartnershipStatus').mockResolvedValue({
+    id: 'partnership-1',
+    schoolId: 'school-1',
+    schoolName: 'Escola São Paulo',
+    companyId: 'company-1',
+    companyName: 'Empresa',
+    requestId: 'request-1',
+    requestTitle: 'Pedido de bolsas',
+    requestedSpots: 10,
+    remainingSpots: 5,
+    grantedSpots: 5,
+    status: 'approved',
+    createdAt: '2026-01-01T00:00:00Z',
+  })
 })
 
 afterEach(() => {
