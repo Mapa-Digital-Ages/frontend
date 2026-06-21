@@ -1,6 +1,6 @@
 import { Box, Typography } from '@mui/material'
 import SubjectTrailCard from './SubjectTrailCard'
-import type { SubjectGroup } from '../data/trails'
+import type { SubjectGroup } from '../types/types'
 
 interface TrailListProps {
   groups: SubjectGroup[]

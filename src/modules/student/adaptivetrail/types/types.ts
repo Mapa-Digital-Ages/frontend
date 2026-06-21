@@ -3,6 +3,24 @@ import type { QuestionFlowPayload } from '@/modules/student/shared/types/types'
 
 export type { SummaryMetric, StudentTask } from '@/shared/types/common'
 
+export interface Trail {
+  id: string
+  name: string
+  description: string
+  subject?: SubjectContext
+  steps: number
+  completed: number
+  progress: number
+  timeEstimate: string | null
+}
+
+export interface SubjectGroup {
+  subjectId: string
+  subject?: SubjectContext
+  trails: Trail[]
+  averageProgress: number
+}
+
 export interface FilterOption {
   label: string
   value: string
@@ -48,25 +66,6 @@ export interface AdaptiveTrailSession {
   subject: SubjectContext
   timeEstimate: string
   title: string
-}
-
-export interface TrailStepQuestionFlow {
-  assessmentId: string
-  initialAnswersByQuestionId?: Record<string, string>
-  itemId: string
-  questions: AdaptiveTrailQuestion[]
-  stepId: string
-  subStepId: string
-  stepTitle: string
-  trailId: string
-}
-
-export type TrailStepAnswerInput = {
-  assessmentId: string
-  currentQuestionIndex: number
-  isCompleted?: boolean
-  optionId: string
-  questionId: string
 }
 
 export interface RecommendedContent {

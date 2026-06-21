@@ -71,3 +71,14 @@ export interface CompanyStat {
   value: string
   description: string
 }
+export interface SubjectItem {
+  id: string
+  slug?: string
+  name: string
+  color?: string
+  contentCount: number
+  tasksCount: number
+  uploadsCount: number
+  trailsCount: number
+  questionnaireCount: number
+}
