@@ -36,6 +36,9 @@ import type {
   StudentMetrics,
 } from '@/modules/admin/student/types/types'
 import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded'
+import BatchImportFeedback from '@/modules/admin/shared/components/BatchImportFeedback'
+import CsvTemplateDownloadButton from '@/modules/admin/shared/components/CsvTemplateDownloadButton'
+import type { BatchImportResult } from '@/modules/admin/shared/services/batchImport'
 
 type SortField = 'name' | 'school' | 'year'
 type SortDirection = 'asc' | 'desc'
@@ -187,7 +190,14 @@ export default function Page() {
 
   const [isBatchStudentOpen, setIsBatchStudentOpen] = useState(false)
   const [batchStudentFile, setBatchStudentFile] = useState<File | null>(null)
-  const [batchStudentSuccess, setBatchStudentSuccess] = useState(false)
+  const [batchStudentResult, setBatchStudentResult] =
+    useState<BatchImportResult | null>(null)
+  const [batchStudentError, setBatchStudentError] = useState<string | null>(
+    null
+  )
+  const [isBatchStudentSubmitting, setIsBatchStudentSubmitting] =
+    useState(false)
+  const [batchStudentRefreshKey, setBatchStudentRefreshKey] = useState(0)
 
   useEffect(() => {
     const timer = setTimeout(() => setActiveQuery(inputQuery), 350)
@@ -247,7 +257,7 @@ export default function Page() {
     }
 
     void fetchFirstPage()
-  }, [activeQuery, enrichItems])
+  }, [activeQuery, enrichItems, batchStudentRefreshKey])
 
   useEffect(() => {
     const sentinel = sentinelRef.current
@@ -403,6 +413,27 @@ export default function Page() {
     setSelectedStudentId(null)
   }
 
+  async function handleBatchStudentImport() {
+    if (!batchStudentFile || isBatchStudentSubmitting) return
+
+    setIsBatchStudentSubmitting(true)
+    setBatchStudentError(null)
+    setBatchStudentResult(null)
+    try {
+      const result = await studentService.importStudents(batchStudentFile)
+      setBatchStudentResult(result)
+      if (result.created > 0) setBatchStudentRefreshKey(key => key + 1)
+    } catch (error) {
+      setBatchStudentError(
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível importar os alunos.'
+      )
+    } finally {
+      setIsBatchStudentSubmitting(false)
+    }
+  }
+
   const headerActions = (
     <Button
       data-testid="create-student-button"
@@ -487,19 +518,18 @@ export default function Page() {
         onClose={() => {
           setIsBatchStudentOpen(false)
           setBatchStudentFile(null)
-          setBatchStudentSuccess(false)
+          setBatchStudentResult(null)
+          setBatchStudentError(null)
         }}
         title="Cadastrar alunos em lote"
         description="Envie um arquivo .csv com os dados dos alunos."
-        onConfirm={() => {
-          // TODO: enviar batchStudentFile para o backend
-          setBatchStudentSuccess(true)
-        }}
+        onConfirm={() => void handleBatchStudentImport()}
         confirmLabel="Enviar arquivo"
         cancelLabel="Cancelar"
         confirmColor={AppColors.role.admin.secondary}
         confirmHoverColor={theme.palette.error.dark}
-        disableConfirm={!batchStudentFile}
+        disableConfirm={!batchStudentFile || isBatchStudentSubmitting}
+        loading={isBatchStudentSubmitting}
       >
         <Box
           component="label"
@@ -542,29 +572,19 @@ export default function Page() {
                 return
               }
               setBatchStudentFile(file)
+              setBatchStudentResult(null)
+              setBatchStudentError(null)
             }}
           />
         </Box>
-
-        {batchStudentSuccess && (
-          <Box
-            sx={{
-              mt: 2,
-              borderRadius: '10px',
-              border: '1px solid',
-              borderColor: alpha('#22C55E', 0.35),
-              backgroundColor: alpha('#22C55E', 0.08),
-              color: '#22C55E',
-              fontSize: 13,
-              fontWeight: 600,
-              px: 1.5,
-              py: 1,
-            }}
-          >
-            ✓ Arquivo enviado com sucesso! Os alunos serão cadastrados em
-            instantes.
-          </Box>
-        )}
+        <CsvTemplateDownloadButton
+          color={AppColors.role.admin.secondary}
+          template="students"
+        />
+        <BatchImportFeedback
+          error={batchStudentError}
+          result={batchStudentResult}
+        />
       </AppActionModal>
 
       <Box className="grid grid-cols-2 gap-3 md:gap-4">

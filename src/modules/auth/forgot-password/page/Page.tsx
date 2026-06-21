@@ -8,12 +8,13 @@ import {
 import AppButton from '@/shared/ui/AppButton'
 import AppInput from '@/shared/ui/AppInput'
 import AppLink from '@/shared/ui/AppLink'
-import { useNavigate, useOutletContext } from 'react-router-dom'
+import { useLocation, useNavigate, useOutletContext } from 'react-router-dom'
 import { APP_ROUTES } from '@/app/router/paths'
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import type { LayoutMode } from '@/app/layout/AuthLayout'
 import { isValidEmail } from '@/shared/utils/validators'
 import { forgotPasswordService } from '../services/service'
+import { parsePasswordResetLink } from '../services/resetLink'
 import { HttpRequestError } from '@/shared/lib/http/client'
 
 const PASSWORD_MIN_LENGTH = 8
@@ -23,11 +24,18 @@ export default function Page() {
     setMode: (mode: LayoutMode) => void
   }>()
   const navigate = useNavigate()
+  const location = useLocation()
+  const resetLink = useMemo(
+    () => parsePasswordResetLink(location.hash),
+    [location.hash]
+  )
 
-  const [step, setStep] = useState<1 | 2 | 3>(1)
-  const [email, setEmail] = useState('')
+  const [step, setStep] = useState<1 | 2 | 3>(() => (resetLink ? 3 : 1))
+  const [email, setEmail] = useState(() => resetLink?.email ?? '')
   const [emailError, setEmailError] = useState('')
-  const [code, setCode] = useState(['', '', '', '', '', ''])
+  const [code, setCode] = useState(() =>
+    resetLink ? resetLink.code.split('') : ['', '', '', '', '', '']
+  )
   const [codeError, setCodeError] = useState('')
   const [generatedCode, setGeneratedCode] = useState<string | null>(null)
   const [password, setPassword] = useState('')
@@ -40,6 +48,12 @@ export default function Page() {
     if (step === 2) setMode('forgot_password_code')
     if (step === 3) setMode('forgot_password_new')
   }, [step, setMode])
+
+  useEffect(() => {
+    if (resetLink) {
+      navigate(APP_ROUTES.auth.forgotPassword, { replace: true })
+    }
+  }, [navigate, resetLink])
 
   const focusCodeInput = (index: number) => {
     document.getElementById(`code-input-${index}`)?.focus()
@@ -426,6 +440,14 @@ export default function Page() {
             onSubmit={handleSubmitPassword}
             noValidate
           >
+            <AppInput
+              label="E-mail"
+              type="email"
+              value={email}
+              InputProps={{ readOnly: true }}
+              labelSx={{ color: '#334155', fontWeight: 600 }}
+              backgroundColor="#f8fafc"
+            />
             <AppInput
               label="Senha"
               type="password"
