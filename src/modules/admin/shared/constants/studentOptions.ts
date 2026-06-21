@@ -31,10 +31,8 @@ interface SchoolListResponse {
 
 interface GuardianApiItem {
   id: string
-  name: string
-  first_name?: string
-  last_name?: string
-  status: string
+  first_name: string
+  last_name: string | null
 }
 
 export const studentFormOptionsService = {
@@ -54,25 +52,12 @@ export const studentFormOptionsService = {
 
   async getGuardians(): Promise<GuardianOption[]> {
     try {
-      const response = await httpClient.get<{
-        items: GuardianApiItem[]
-        total: number
-      }>('admin/users', {
-        query: { role: 'guardian', user_status: 'approved' },
-      })
-      const items = Array.isArray(response.data)
-        ? response.data
-        : ((response.data as { items: GuardianApiItem[] }).items ?? [])
-      return items.map(item => {
-        const fullName =
-          item.first_name && item.last_name
-            ? `${item.first_name} ${item.last_name}`.trim()
-            : item.name
-        return {
-          label: fullName,
-          value: item.id,
-        }
-      })
+      const response =
+        await httpClient.get<GuardianApiItem[]>('guardian/options')
+      return response.data.map(item => ({
+        label: `${item.first_name} ${item.last_name ?? ''}`.trim(),
+        value: item.id,
+      }))
     } catch {
       return []
     }
