@@ -350,7 +350,13 @@ export default function Page() {
         status: values.status as 'ativo' | 'inativo',
         birthDate: values.birthDate,
       })
-      const withNames = enrichItems([created])
+      const guardianId = values.guardian !== NONE ? values.guardian : null
+      const patchedCreated = {
+        ...created,
+        guardianId: created.guardianId ?? guardianId,
+        guardian: created.guardian ?? (values.guardianName || null),
+      }
+      const withNames = enrichItems([patchedCreated])
       setStudents(prev => [...withNames, ...prev])
       setMetrics(m => ({
         ...m,

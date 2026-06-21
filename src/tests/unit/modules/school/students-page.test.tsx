@@ -33,7 +33,9 @@ beforeEach(() => {
   jest
     .spyOn(studentFormOptionsService, 'getSchools')
     .mockResolvedValue([{ label: 'Escola São Paulo', value: 'school-1' }])
-  jest.spyOn(studentFormOptionsService, 'getGuardians').mockResolvedValue([])
+  jest
+    .spyOn(studentFormOptionsService, 'getGuardians')
+    .mockResolvedValue([{ label: 'Fernanda Silva', value: 'guardian-1' }])
 })
 
 afterEach(() => {
@@ -68,4 +70,44 @@ test('SchoolStudentsPage filters students and count by school ID and opens creat
   const schoolDropdown = dropdowns[1]
   expect(schoolDropdown).toHaveAttribute('aria-disabled', 'true')
   expect(schoolDropdown).toHaveTextContent('Escola São Paulo')
+})
+
+test('SchoolStudentsPage immediately shows the selected guardian after creating a student', async () => {
+  const user = userEvent.setup()
+  jest.spyOn(studentService, 'createStudent').mockResolvedValue({
+    id: 'student-1',
+    name: 'Ana Souza',
+    email: 'ana@example.com',
+    guardian: null,
+    guardianId: null,
+    school: 'Escola São Paulo',
+    schoolId: 'school-1',
+    year: '5º Ano',
+    status: 'ativo',
+  })
+
+  renderWithProviders(
+    <AuthContext.Provider value={authValue}>
+      <SchoolStudentsPage />
+    </AuthContext.Provider>
+  )
+
+  await user.click(screen.getByRole('button', { name: /criar aluno/i }))
+  const dialog = screen.getByRole('dialog')
+  await user.type(within(dialog).getByLabelText('Nome do aluno'), 'Ana Souza')
+  await user.type(within(dialog).getByLabelText('E-mail'), 'ana@example.com')
+  await user.type(within(dialog).getByLabelText('Senha'), 'senha1234')
+  await user.type(
+    within(dialog).getByLabelText('Data de nascimento'),
+    '2014-01-10'
+  )
+
+  const guardianDropdown = within(dialog).getAllByRole('combobox')[2]
+  await user.click(guardianDropdown)
+  await user.click(screen.getByRole('option', { name: 'Fernanda Silva' }))
+  await user.click(within(dialog).getByRole('button', { name: 'Criar aluno' }))
+
+  expect(await screen.findByTestId('student-row-student-1')).toHaveTextContent(
+    'Responsável: Fernanda Silva'
+  )
 })
