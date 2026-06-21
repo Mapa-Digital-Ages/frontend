@@ -4,22 +4,26 @@ import { AppColors } from '@/app/theme/core/colors'
 import { getSubjectTheme } from '@/shared/utils/themes'
 import type { FilterOption } from '../types/types'
 
-interface TrailFilterBarProps {
+interface SubjectFilterBarProps {
+  ariaLabel?: string
+  onSelect: (value: string) => void
   options: FilterOption[]
   selectedValue: string
-  onSelect: (value: string) => void
+  testIdPrefix?: string
 }
 
-export default function TrailFilterBar({
+export default function SubjectFilterBar({
+  ariaLabel = 'Filtrar por matéria',
+  onSelect,
   options,
   selectedValue,
-  onSelect,
-}: TrailFilterBarProps) {
+  testIdPrefix = 'subject-filter',
+}: SubjectFilterBarProps) {
   const theme = useTheme()
 
   return (
     <Box
-      aria-label="Filtrar trilhas por matéria"
+      aria-label={ariaLabel}
       role="group"
       sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}
     >
@@ -33,6 +37,7 @@ export default function TrailFilterBar({
         return (
           <Button
             aria-pressed={isSelected}
+            data-testid={`${testIdPrefix}-${option.value}`}
             key={option.value}
             onClick={() => onSelect(option.value)}
             variant="outlined"

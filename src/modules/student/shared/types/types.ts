@@ -48,3 +48,9 @@ export type QuestionFlowActionInput = {
 
 export type StudentOnboardingFlowLoaderData = QuestionFlowLoaderData
 export type StudentOnboardingFlowActionInput = QuestionFlowActionInput
+
+export interface FilterOption {
+  label: string
+  subject: SubjectContext | null
+  value: string
+}

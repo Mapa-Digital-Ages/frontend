@@ -3,11 +3,7 @@ import type { QuestionFlowPayload } from '@/modules/student/shared/types/types'
 
 export type { SummaryMetric, StudentTask } from '@/shared/types/common'
 
-export interface FilterOption {
-  label: string
-  value: string
-  subject: TagContext | null
-}
+export type { FilterOption } from '@/modules/student/shared/types/types'
 
 export type AdaptiveTrailStepKind = 'video' | 'text' | 'question'
 export type AdaptiveTrailStepStatus = 'available' | 'completed' | 'locked'
