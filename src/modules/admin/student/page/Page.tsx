@@ -35,6 +35,7 @@ import type {
   StudentItem,
   StudentMetrics,
 } from '@/modules/admin/student/types/types'
+import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded'
 
 type SortField = 'name' | 'school' | 'year'
 type SortDirection = 'asc' | 'desc'
@@ -183,6 +184,10 @@ export default function Page() {
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
     null
   )
+
+  const [isBatchStudentOpen, setIsBatchStudentOpen] = useState(false)
+  const [batchStudentFile, setBatchStudentFile] = useState<File | null>(null)
+  const [batchStudentSuccess, setBatchStudentSuccess] = useState(false)
 
   useEffect(() => {
     const timer = setTimeout(() => setActiveQuery(inputQuery), 350)
@@ -449,7 +454,118 @@ export default function Page() {
           void handleCreateStudent(values)
         }}
         apiError={createError}
+        batchButton={
+          <Button
+            fullWidth
+            variant="outlined"
+            startIcon={<UploadFileRoundedIcon />}
+            onClick={() => {
+              setIsCreateModalOpen(false)
+              setIsBatchStudentOpen(true)
+            }}
+            sx={{
+              borderColor: alpha(AppColors.role.admin.secondary, 0.4),
+              color: AppColors.role.admin.secondary,
+              borderRadius: '10px',
+              fontWeight: 700,
+              textTransform: 'none',
+              py: 1,
+              '&:hover': {
+                borderColor: AppColors.role.admin.secondary,
+                backgroundColor: alpha(AppColors.role.admin.secondary, 0.05),
+              },
+            }}
+          >
+            Cadastrar em lote
+          </Button>
+        }
       />
+
+      {/* Batch student upload modal */}
+      <AppActionModal
+        open={isBatchStudentOpen}
+        onClose={() => {
+          setIsBatchStudentOpen(false)
+          setBatchStudentFile(null)
+          setBatchStudentSuccess(false)
+        }}
+        title="Cadastrar alunos em lote"
+        description="Envie um arquivo .csv com os dados dos alunos."
+        onConfirm={() => {
+          // TODO: enviar batchStudentFile para o backend
+          setBatchStudentSuccess(true)
+        }}
+        confirmLabel="Enviar arquivo"
+        cancelLabel="Cancelar"
+        confirmColor={AppColors.role.admin.secondary}
+        confirmHoverColor={theme.palette.error.dark}
+        disableConfirm={!batchStudentFile}
+      >
+        <Box
+          component="label"
+          sx={{
+            border: '1px dashed',
+            borderColor: alpha(AppColors.role.admin.secondary, 0.4),
+            borderRadius: '14px',
+            p: 3,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 1,
+            cursor: 'pointer',
+            textAlign: 'center',
+            backgroundColor: alpha(AppColors.role.admin.secondary, 0.04),
+            '&:hover': {
+              backgroundColor: alpha(AppColors.role.admin.secondary, 0.08),
+            },
+          }}
+        >
+          <UploadFileRoundedIcon
+            sx={{ color: AppColors.role.admin.secondary, fontSize: 32 }}
+          />
+          <Typography sx={{ fontWeight: 700, fontSize: 14 }}>
+            {batchStudentFile
+              ? batchStudentFile.name
+              : 'Clique para selecionar um arquivo .csv'}
+          </Typography>
+          <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
+            Apenas arquivos .csv são aceitos.
+          </Typography>
+          <input
+            type="file"
+            accept=".csv,text/csv"
+            hidden
+            onChange={e => {
+              const file = e.target.files?.[0] ?? null
+              if (file && !file.name.toLowerCase().endsWith('.csv')) {
+                e.target.value = ''
+                return
+              }
+              setBatchStudentFile(file)
+            }}
+          />
+        </Box>
+
+        {batchStudentSuccess && (
+          <Box
+            sx={{
+              mt: 2,
+              borderRadius: '10px',
+              border: '1px solid',
+              borderColor: alpha('#22C55E', 0.35),
+              backgroundColor: alpha('#22C55E', 0.08),
+              color: '#22C55E',
+              fontSize: 13,
+              fontWeight: 600,
+              px: 1.5,
+              py: 1,
+            }}
+          >
+            ✓ Arquivo enviado com sucesso! Os alunos serão cadastrados em
+            instantes.
+          </Box>
+        )}
+      </AppActionModal>
 
       <Box className="grid grid-cols-2 gap-3 md:gap-4">
         {cards.map(card => (

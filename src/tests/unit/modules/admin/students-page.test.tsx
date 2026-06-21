@@ -129,7 +129,7 @@ test('StudentsPage opens create student modal', async () => {
 
   await user.click(
     screen.getByRole('button', {
-      name: /criar aluno/i,
+      name: /^criar aluno$/i,
     })
   )
 
@@ -144,7 +144,7 @@ test('StudentsPage creates a new student', async () => {
   const user = userEvent.setup()
   renderPage()
 
-  await user.click(screen.getByRole('button', { name: /criar aluno/i }))
+  await user.click(screen.getByRole('button', { name: /^criar aluno$/i }))
 
   const dialog = screen.getByRole('dialog')
   await user.type(
@@ -226,4 +226,97 @@ test('StudentsPage deletes a student', async () => {
     expect(screen.queryByText('Lucas Silva')).not.toBeInTheDocument()
   })
   expect(studentService.deleteStudent).toHaveBeenCalledWith('1')
+})
+
+test('StudentsPage shows the batch button inside the create modal', async () => {
+  const user = userEvent.setup()
+  renderPage()
+
+  await user.click(screen.getByRole('button', { name: /^criar aluno$/i }))
+
+  const dialog = screen.getByRole('dialog')
+  expect(
+    within(dialog).getByRole('button', { name: /cadastrar em lote/i })
+  ).toBeInTheDocument()
+})
+
+test('StudentsPage opens the batch upload modal from the create modal', async () => {
+  const user = userEvent.setup()
+  renderPage()
+
+  await user.click(screen.getByRole('button', { name: /^criar aluno$/i }))
+
+  const createDialog = screen.getByRole('dialog')
+  await user.click(
+    within(createDialog).getByRole('button', { name: /cadastrar em lote/i })
+  )
+
+  expect(screen.getByText('Cadastrar alunos em lote')).toBeInTheDocument()
+  expect(
+    screen.getByText('Apenas arquivos .csv são aceitos.')
+  ).toBeInTheDocument()
+  expect(
+    screen.getByRole('button', { name: /enviar arquivo/i })
+  ).toBeInTheDocument()
+})
+
+test('StudentsPage keeps the send button disabled until a csv is chosen', async () => {
+  const user = userEvent.setup()
+  renderPage()
+
+  await user.click(screen.getByRole('button', { name: /^criar aluno$/i }))
+  await user.click(
+    within(screen.getByRole('dialog')).getByRole('button', {
+      name: /cadastrar em lote/i,
+    })
+  )
+
+  expect(screen.getByRole('button', { name: /enviar arquivo/i })).toBeDisabled()
+})
+
+test('StudentsPage accepts a csv file and shows its name', async () => {
+  const user = userEvent.setup()
+  renderPage()
+
+  await user.click(screen.getByRole('button', { name: /^criar aluno$/i }))
+  await user.click(
+    within(screen.getByRole('dialog')).getByRole('button', {
+      name: /cadastrar em lote/i,
+    })
+  )
+
+  const fileInput = document.querySelector(
+    'input[type="file"]'
+  ) as HTMLInputElement
+  const csv = new File(['nome,email'], 'alunos.csv', { type: 'text/csv' })
+  await user.upload(fileInput, csv)
+
+  expect(await screen.findByText('alunos.csv')).toBeInTheDocument()
+  expect(
+    screen.getByRole('button', { name: /enviar arquivo/i })
+  ).not.toBeDisabled()
+})
+
+test('StudentsPage shows the success message after sending the file', async () => {
+  const user = userEvent.setup()
+  renderPage()
+
+  await user.click(screen.getByRole('button', { name: /^criar aluno$/i }))
+  await user.click(
+    within(screen.getByRole('dialog')).getByRole('button', {
+      name: /cadastrar em lote/i,
+    })
+  )
+
+  const fileInput = document.querySelector(
+    'input[type="file"]'
+  ) as HTMLInputElement
+  const csv = new File(['nome,email'], 'alunos.csv', { type: 'text/csv' })
+  await user.upload(fileInput, csv)
+
+  await user.click(screen.getByRole('button', { name: /enviar arquivo/i }))
+
+  expect(
+    await screen.findByText(/Arquivo enviado com sucesso/i)
+  ).toBeInTheDocument()
 })

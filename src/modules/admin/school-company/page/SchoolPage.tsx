@@ -18,6 +18,7 @@ import { Box, Button, IconButton, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { HttpRequestError } from '@/shared/lib/http/client'
+import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded'
 
 const SCHOOL_PAGE_SIZE = 6
 const STUDENT_PAGE_SIZE = 10
@@ -69,6 +70,10 @@ export default function SchoolPage() {
   const [newSchoolApiError, setNewSchoolApiError] = useState<string | null>(
     null
   )
+  const [isBatchSchoolOpen, setIsBatchSchoolOpen] = useState(false)
+  const [batchSchoolFile, setBatchSchoolFile] = useState<File | null>(null)
+  const [batchSchoolSuccess, setBatchSchoolSuccess] = useState(false)
+
   const [newSchool, setNewSchool] = useState({
     name: '',
     email: '',
@@ -935,6 +940,37 @@ export default function SchoolPage() {
         disableConfirm={!canCreateSchool}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          <Button
+            fullWidth
+            variant="outlined"
+            startIcon={<UploadFileRoundedIcon />}
+            onClick={() => {
+              setIsNewSchoolModalOpen(false)
+              setIsBatchSchoolOpen(true)
+            }}
+            sx={{
+              borderColor: alpha(AppColors.role.admin.secondary, 0.4),
+              color: AppColors.role.admin.secondary,
+              borderRadius: '10px',
+              fontWeight: 700,
+              textTransform: 'none',
+              py: 1,
+              '&:hover': {
+                borderColor: AppColors.role.admin.secondary,
+                backgroundColor: alpha(AppColors.role.admin.secondary, 0.05),
+              },
+            }}
+          >
+            Cadastrar em lote
+          </Button>
+
+          <Box
+            sx={{
+              borderTop: '1px solid',
+              borderColor: 'background.border',
+              mt: 0.5,
+            }}
+          />
           <Box>
             <Typography
               sx={{
@@ -1077,6 +1113,91 @@ export default function SchoolPage() {
             </Box>
           )}
         </Box>
+      </AppActionModal>
+
+      {/* Batch school upload modal */}
+      <AppActionModal
+        open={isBatchSchoolOpen}
+        onClose={() => {
+          setIsBatchSchoolOpen(false)
+          setBatchSchoolFile(null)
+          setBatchSchoolSuccess(false)
+        }}
+        title="Cadastrar escolas em lote"
+        description="Envie um arquivo .csv com os dados das escolas."
+        onConfirm={() => {
+          // TODO: enviar batchSchoolFile para o backend
+          setBatchSchoolSuccess(true)
+        }}
+        confirmLabel="Enviar arquivo"
+        cancelLabel="Cancelar"
+        confirmColor={AppColors.role.admin.secondary}
+        confirmHoverColor={theme.palette.error.dark}
+        disableConfirm={!batchSchoolFile}
+      >
+        <Box
+          component="label"
+          sx={{
+            border: '1px dashed',
+            borderColor: alpha(AppColors.role.admin.secondary, 0.4),
+            borderRadius: '14px',
+            p: 3,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 1,
+            cursor: 'pointer',
+            textAlign: 'center',
+            backgroundColor: alpha(AppColors.role.admin.secondary, 0.04),
+            '&:hover': {
+              backgroundColor: alpha(AppColors.role.admin.secondary, 0.08),
+            },
+          }}
+        >
+          <UploadFileRoundedIcon
+            sx={{ color: AppColors.role.admin.secondary, fontSize: 32 }}
+          />
+          <Typography sx={{ fontWeight: 700, fontSize: 14 }}>
+            {batchSchoolFile
+              ? batchSchoolFile.name
+              : 'Clique para selecionar um arquivo .csv'}
+          </Typography>
+          <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
+            Apenas arquivos .csv são aceitos.
+          </Typography>
+          <input
+            type="file"
+            accept=".csv,text/csv"
+            hidden
+            onChange={e => {
+              const file = e.target.files?.[0] ?? null
+              if (file && !file.name.toLowerCase().endsWith('.csv')) {
+                e.target.value = ''
+                return
+              }
+              setBatchSchoolFile(file)
+            }}
+          />
+        </Box>
+        {batchSchoolSuccess && (
+          <Box
+            sx={{
+              mt: 2,
+              borderRadius: '10px',
+              border: '1px solid',
+              borderColor: alpha('#22C55E', 0.35),
+              backgroundColor: alpha('#22C55E', 0.08),
+              color: '#22C55E',
+              fontSize: 13,
+              fontWeight: 600,
+              px: 1.5,
+              py: 1,
+            }}
+          >
+            ✓ Arquivo enviado com sucesso! As escolas serão cadastradas em
+            instantes.
+          </Box>
+        )}
       </AppActionModal>
 
       {/* New student modal */}

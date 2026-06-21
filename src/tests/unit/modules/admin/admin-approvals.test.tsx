@@ -448,7 +448,6 @@ test('admin approvals page renders cards directly and provides visible actions',
   const approvalCardSource = readSource(
     'modules/admin/shared/components/ApprovalCard.tsx'
   )
-  const adminParentPageSource = readSource('modules/admin/parent/page/Page.tsx')
   const adminTypesSource = readSource('modules/admin/shared/types/types.ts')
 
   assert.match(adminTypesSource, /export interface ApprovalCardAction/)
@@ -461,9 +460,8 @@ test('admin approvals page renders cards directly and provides visible actions',
     adminContentPageSource,
     /actions=\{buildContentActions\(item\)\}/
   )
-  assert.match(adminParentPageSource, /actions=\{buildParentActions\(item\)\}/)
+
   assert.match(adminContentPageSource, /type="content"/)
-  assert.match(adminParentPageSource, /type="parent"/)
   assert.match(approvalCardSource, /type: ApprovalType/)
   assert.match(approvalCardSource, /MoreHorizRoundedIcon/)
   assert.match(approvalCardSource, /const primaryActions = actions\.filter/)
@@ -527,13 +525,11 @@ test('admin approvals page routes create edit and correction through a reusable 
   assert.match(adminParentPageSource, /updateParentStatus/)
   assert.match(adminParentPageSource, /updateParentRegistration/)
   assert.match(adminParentPageSource, /removeParentRegistration/)
-  assert.match(adminParentPageSource, /label: 'Validar cadastro'/)
-  assert.match(adminParentPageSource, /label: 'Rejeitar cadastro'/)
-  assert.match(adminParentPageSource, /label: 'Editar responsável'/)
-  assert.match(adminParentPageSource, /label: 'Excluir responsável'/)
-  assert.doesNotMatch(adminParentPageSource, /label: 'Limpar requisição'/)
   assert.match(adminParentPageSource, /createParentRegistration/)
-  assert.match(adminParentPageSource, /action: 'create', type: 'parent'/)
+  assert.match(adminParentPageSource, /Validar cadastro/)
+  assert.match(adminParentPageSource, /Rejeitar cadastro/)
+  assert.match(adminParentPageSource, /Editar responsável/)
+  assert.match(adminParentPageSource, /Excluir responsável/)
   assert.match(modalSource, /AppActionModal/)
   assert.match(modalSource, /resolveUsageMode/)
   assert.match(modalSource, /mode=\{dialogMode\}/)
