@@ -9,6 +9,7 @@ import {
   adminSchoolService,
 } from '@/modules/admin/school-company/services/service'
 import type {
+  AdminPartnership,
   Company,
   CreateCompanyPayload,
 } from '@/modules/admin/school-company/types/types'
@@ -44,6 +45,37 @@ const companies: Company[] = [
     description: '',
     requests: [],
     spots: 0,
+  },
+]
+
+const partnerships: AdminPartnership[] = [
+  {
+    id: 'partnership-1',
+    schoolId: 'school-1',
+    schoolName: 'Escola São Paulo',
+    companyId: 'company-1',
+    companyName: 'Tech Corp',
+    requestId: 'request-1',
+    requestTitle: 'Pedido de bolsas',
+    requestedSpots: 10,
+    remainingSpots: 5,
+    grantedSpots: 5,
+    status: 'pending',
+    createdAt: '2026-01-04T00:00:00Z',
+  },
+  {
+    id: 'partnership-2',
+    schoolId: 'school-2',
+    schoolName: 'Escola Rio Branco',
+    companyId: 'company-1',
+    companyName: 'Tech Corp',
+    requestId: 'request-2',
+    requestTitle: 'Apoio tecnológico',
+    requestedSpots: 8,
+    remainingSpots: 0,
+    grantedSpots: 8,
+    status: 'approved',
+    createdAt: '2026-01-05T00:00:00Z',
   },
 ]
 
@@ -111,6 +143,16 @@ beforeEach(() => {
       spots: 0,
     }))
   jest.spyOn(adminCompanyService, 'deleteCompany').mockResolvedValue()
+  jest
+    .spyOn(adminCompanyService, 'listPartnerships')
+    .mockResolvedValue(partnerships)
+  jest
+    .spyOn(adminCompanyService, 'updatePartnershipStatus')
+    .mockImplementation(async (partnershipId, status) => {
+      const partnership = partnerships.find(item => item.id === partnershipId)
+      if (!partnership) throw new Error('Partnership not found')
+      return { ...partnership, status }
+    })
 })
 
 afterEach(() => {
@@ -138,7 +180,14 @@ test('SchoolCompanyPage shows details for the initially selected company', async
 
   expect(screen.getByText('parcerias@techcorp.com')).toBeInTheDocument()
   expect(screen.getByText('Solicitações de parceria')).toBeInTheDocument()
-  expect(screen.getByText('Nenhuma escola solicitada')).toBeInTheDocument()
+  expect(screen.getByText('Escola São Paulo')).toBeInTheDocument()
+  expect(screen.getByText(/Pedido de bolsas/)).toBeInTheDocument()
+  expect(
+    screen.getByTestId('company-company-1-pending-schools')
+  ).toHaveTextContent('1')
+  expect(
+    screen.getByTestId('company-company-1-supported-schools')
+  ).toHaveTextContent('1')
 })
 
 test('SchoolCompanyPage changes company details when another company is selected', async () => {
@@ -158,6 +207,25 @@ test('SchoolCompanyPage shows empty requests message', async () => {
   expect(
     screen.getByText('Ainda não há pedidos de apoio para esta empresa.')
   ).toBeInTheDocument()
+})
+
+test('SchoolCompanyPage approves a pending partnership', async () => {
+  const user = await goToCompanyView()
+
+  await user.click(screen.getByTestId('approve-partnership-partnership-1'))
+
+  await waitFor(() => {
+    expect(adminCompanyService.updatePartnershipStatus).toHaveBeenCalledWith(
+      'partnership-1',
+      'approved'
+    )
+  })
+  expect(
+    screen.getByTestId('company-company-1-pending-schools')
+  ).toHaveTextContent('0')
+  expect(
+    screen.getByTestId('company-company-1-supported-schools')
+  ).toHaveTextContent('2')
 })
 
 test('SchoolCompanyPage filters companies by search query', async () => {
