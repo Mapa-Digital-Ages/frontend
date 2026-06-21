@@ -19,6 +19,9 @@ dist-ssr
 coverage
 test-results
 
+# Superpowers specs and plans
+docs/superpowers/
+
 # Editor directories and files
 .vscode/*
 !.vscode/settings.json

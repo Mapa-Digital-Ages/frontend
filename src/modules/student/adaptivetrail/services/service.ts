@@ -1,4 +1,5 @@
 import { COOKIE_KEYS } from '@/shared/constants/storage'
+import { authService } from '@/app/auth/core/service'
 import { httpClient } from '@/shared/lib/http/client'
 import type { StudentTask, SummaryMetric } from '@/shared/types/common'
 import { getCookie } from '@/shared/lib/storage/cookies'
@@ -14,6 +15,10 @@ export const studentService = {
 
   getOrganization(): string | null {
     return getCookie(COOKIE_KEYS.authOrganization)
+  },
+
+  getStudentId(): string | null {
+    return authService.getUserId()
   },
 
   async getSummary() {
