@@ -19,6 +19,9 @@ import type {
   Company,
   PartnershipStatus,
 } from '../types/types'
+import BatchImportFeedback from '@/modules/admin/shared/components/BatchImportFeedback'
+import CsvTemplateDownloadButton from '@/modules/admin/shared/components/CsvTemplateDownloadButton'
+import type { BatchImportResult } from '@/modules/admin/shared/services/batchImport'
 
 const companyTypeOptions = [
   { label: 'Empresa parceira', value: 'Empresa parceira' },
@@ -73,7 +76,13 @@ export default function CompanyPage() {
 
   const [isBatchCompanyOpen, setIsBatchCompanyOpen] = useState(false)
   const [batchCompanyFile, setBatchCompanyFile] = useState<File | null>(null)
-  const [batchCompanySuccess, setBatchCompanySuccess] = useState(false)
+  const [batchCompanyResult, setBatchCompanyResult] =
+    useState<BatchImportResult | null>(null)
+  const [batchCompanyError, setBatchCompanyError] = useState<string | null>(
+    null
+  )
+  const [isBatchCompanySubmitting, setIsBatchCompanySubmitting] =
+    useState(false)
 
   const loadCompanies = useCallback(
     async (pageToLoad: number, search: string) => {
@@ -223,6 +232,35 @@ export default function CompanyPage() {
       setIsNewPartnerOpen(false)
     } catch (error) {
       console.error('Erro ao criar empresa:', error)
+    }
+  }
+
+  async function handleBatchCompanyImport() {
+    if (!batchCompanyFile || isBatchCompanySubmitting) return
+
+    setIsBatchCompanySubmitting(true)
+    setBatchCompanyError(null)
+    setBatchCompanyResult(null)
+    try {
+      const result = await adminCompanyService.importCompanies(batchCompanyFile)
+      setBatchCompanyResult(result)
+      if (result.created > 0) {
+        setPage(1)
+        setHasMore(true)
+        await loadCompanies(1, query)
+        const count = await adminCompanyService.countCompanies(
+          query || undefined
+        )
+        setTotalCount(count)
+      }
+    } catch (error) {
+      setBatchCompanyError(
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível importar as empresas.'
+      )
+    } finally {
+      setIsBatchCompanySubmitting(false)
     }
   }
 
@@ -981,19 +1019,18 @@ export default function CompanyPage() {
         onClose={() => {
           setIsBatchCompanyOpen(false)
           setBatchCompanyFile(null)
-          setBatchCompanySuccess(false)
+          setBatchCompanyResult(null)
+          setBatchCompanyError(null)
         }}
         title="Cadastrar empresas em lote"
         description="Envie um arquivo .csv com os dados das empresas."
-        onConfirm={() => {
-          // TODO: enviar batchCompanyFile para o backend
-          setBatchCompanySuccess(true)
-        }}
+        onConfirm={() => void handleBatchCompanyImport()}
         confirmLabel="Enviar arquivo"
         cancelLabel="Cancelar"
         confirmColor={AppColors.role.admin.secondary}
         confirmHoverColor={theme.palette.error.dark}
-        disableConfirm={!batchCompanyFile}
+        disableConfirm={!batchCompanyFile || isBatchCompanySubmitting}
+        loading={isBatchCompanySubmitting}
       >
         <Box
           component="label"
@@ -1036,28 +1073,19 @@ export default function CompanyPage() {
                 return
               }
               setBatchCompanyFile(file)
+              setBatchCompanyResult(null)
+              setBatchCompanyError(null)
             }}
           />
         </Box>
-        {batchCompanySuccess && (
-          <Box
-            sx={{
-              mt: 2,
-              borderRadius: '10px',
-              border: '1px solid',
-              borderColor: alpha('#22C55E', 0.35),
-              backgroundColor: alpha('#22C55E', 0.08),
-              color: '#22C55E',
-              fontSize: 13,
-              fontWeight: 600,
-              px: 1.5,
-              py: 1,
-            }}
-          >
-            ✓ Arquivo enviado com sucesso! As empresas serão cadastradas em
-            instantes.
-          </Box>
-        )}
+        <CsvTemplateDownloadButton
+          color={AppColors.role.admin.secondary}
+          template="companies"
+        />
+        <BatchImportFeedback
+          error={batchCompanyError}
+          result={batchCompanyResult}
+        />
       </AppActionModal>
 
       <AppActionModal

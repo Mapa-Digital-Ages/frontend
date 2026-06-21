@@ -39,6 +39,9 @@ import type {
   ParentApprovalItem,
   ParentApprovalStatus,
 } from '@/modules/admin/shared/types/types'
+import BatchImportFeedback from '@/modules/admin/shared/components/BatchImportFeedback'
+import CsvTemplateDownloadButton from '@/modules/admin/shared/components/CsvTemplateDownloadButton'
+import type { BatchImportResult } from '@/modules/admin/shared/services/batchImport'
 
 type SortField = 'name' | 'child'
 type SortDirection = 'asc' | 'desc'
@@ -203,7 +206,9 @@ export default function Page() {
   // Batch modal
   const [isBatchOpen, setIsBatchOpen] = useState(false)
   const [batchFile, setBatchFile] = useState<File | null>(null)
-  const [batchSuccess, setBatchSuccess] = useState(false)
+  const [batchResult, setBatchResult] = useState<BatchImportResult | null>(null)
+  const [batchError, setBatchError] = useState<string | null>(null)
+  const [isBatchSubmitting, setIsBatchSubmitting] = useState(false)
 
   const activePageRef = useRef(1)
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -430,6 +435,28 @@ export default function Page() {
       setRefreshKey(k => k + 1)
     } catch (error) {
       console.error('Erro ao remover responsável:', error)
+    }
+  }
+
+  async function handleBatchImport() {
+    if (!batchFile || isBatchSubmitting) return
+
+    setIsBatchSubmitting(true)
+    setBatchError(null)
+    setBatchResult(null)
+    try {
+      const result =
+        await parentApprovalService.importParentRegistrations(batchFile)
+      setBatchResult(result)
+      if (result.created > 0) setRefreshKey(key => key + 1)
+    } catch (error) {
+      setBatchError(
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível importar os responsáveis.'
+      )
+    } finally {
+      setIsBatchSubmitting(false)
     }
   }
 
@@ -661,19 +688,18 @@ export default function Page() {
         onClose={() => {
           setIsBatchOpen(false)
           setBatchFile(null)
-          setBatchSuccess(false)
+          setBatchResult(null)
+          setBatchError(null)
         }}
         title="Cadastrar responsáveis em lote"
         description="Envie um arquivo .csv com os dados dos responsáveis."
-        onConfirm={() => {
-          // TODO: enviar batchFile para o backend
-          setBatchSuccess(true)
-        }}
+        onConfirm={() => void handleBatchImport()}
         confirmLabel="Enviar arquivo"
         cancelLabel="Cancelar"
         confirmColor={AppColors.role.admin.secondary}
         confirmHoverColor={theme.palette.error.dark}
-        disableConfirm={!batchFile}
+        disableConfirm={!batchFile || isBatchSubmitting}
+        loading={isBatchSubmitting}
       >
         <Box
           component="label"
@@ -716,29 +742,16 @@ export default function Page() {
                 return
               }
               setBatchFile(file)
+              setBatchResult(null)
+              setBatchError(null)
             }}
           />
         </Box>
-
-        {batchSuccess && (
-          <Box
-            sx={{
-              mt: 2,
-              borderRadius: '10px',
-              border: '1px solid',
-              borderColor: alpha('#22C55E', 0.35),
-              backgroundColor: alpha('#22C55E', 0.08),
-              color: '#22C55E',
-              fontSize: 13,
-              fontWeight: 600,
-              px: 1.5,
-              py: 1,
-            }}
-          >
-            ✓ Arquivo enviado com sucesso! Os responsáveis serão cadastrados em
-            instantes.
-          </Box>
-        )}
+        <CsvTemplateDownloadButton
+          color={AppColors.role.admin.secondary}
+          template="guardians"
+        />
+        <BatchImportFeedback error={batchError} result={batchResult} />
       </AppActionModal>
 
       <Box className="grid grid-cols-2 gap-3 md:gap-4">

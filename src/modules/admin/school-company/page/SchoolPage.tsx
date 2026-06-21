@@ -19,6 +19,9 @@ import { alpha, useTheme } from '@mui/material/styles'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { HttpRequestError } from '@/shared/lib/http/client'
 import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded'
+import BatchImportFeedback from '@/modules/admin/shared/components/BatchImportFeedback'
+import CsvTemplateDownloadButton from '@/modules/admin/shared/components/CsvTemplateDownloadButton'
+import type { BatchImportResult } from '@/modules/admin/shared/services/batchImport'
 
 const SCHOOL_PAGE_SIZE = 6
 const STUDENT_PAGE_SIZE = 10
@@ -72,7 +75,10 @@ export default function SchoolPage() {
   )
   const [isBatchSchoolOpen, setIsBatchSchoolOpen] = useState(false)
   const [batchSchoolFile, setBatchSchoolFile] = useState<File | null>(null)
-  const [batchSchoolSuccess, setBatchSchoolSuccess] = useState(false)
+  const [batchSchoolResult, setBatchSchoolResult] =
+    useState<BatchImportResult | null>(null)
+  const [batchSchoolError, setBatchSchoolError] = useState<string | null>(null)
+  const [isBatchSchoolSubmitting, setIsBatchSchoolSubmitting] = useState(false)
 
   const [newSchool, setNewSchool] = useState({
     name: '',
@@ -269,6 +275,30 @@ export default function SchoolPage() {
         }
       }
       setNewSchoolApiError(message)
+    }
+  }
+
+  async function handleBatchSchoolImport() {
+    if (!batchSchoolFile || isBatchSchoolSubmitting) return
+
+    setIsBatchSchoolSubmitting(true)
+    setBatchSchoolError(null)
+    setBatchSchoolResult(null)
+    try {
+      const result = await adminSchoolService.importSchools(batchSchoolFile)
+      setBatchSchoolResult(result)
+      if (result.created > 0) {
+        setSchoolPage(1)
+        await loadSchools(1, query)
+      }
+    } catch (error) {
+      setBatchSchoolError(
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível importar as escolas.'
+      )
+    } finally {
+      setIsBatchSchoolSubmitting(false)
     }
   }
 
@@ -1121,19 +1151,18 @@ export default function SchoolPage() {
         onClose={() => {
           setIsBatchSchoolOpen(false)
           setBatchSchoolFile(null)
-          setBatchSchoolSuccess(false)
+          setBatchSchoolResult(null)
+          setBatchSchoolError(null)
         }}
         title="Cadastrar escolas em lote"
         description="Envie um arquivo .csv com os dados das escolas."
-        onConfirm={() => {
-          // TODO: enviar batchSchoolFile para o backend
-          setBatchSchoolSuccess(true)
-        }}
+        onConfirm={() => void handleBatchSchoolImport()}
         confirmLabel="Enviar arquivo"
         cancelLabel="Cancelar"
         confirmColor={AppColors.role.admin.secondary}
         confirmHoverColor={theme.palette.error.dark}
-        disableConfirm={!batchSchoolFile}
+        disableConfirm={!batchSchoolFile || isBatchSchoolSubmitting}
+        loading={isBatchSchoolSubmitting}
       >
         <Box
           component="label"
@@ -1176,28 +1205,19 @@ export default function SchoolPage() {
                 return
               }
               setBatchSchoolFile(file)
+              setBatchSchoolResult(null)
+              setBatchSchoolError(null)
             }}
           />
         </Box>
-        {batchSchoolSuccess && (
-          <Box
-            sx={{
-              mt: 2,
-              borderRadius: '10px',
-              border: '1px solid',
-              borderColor: alpha('#22C55E', 0.35),
-              backgroundColor: alpha('#22C55E', 0.08),
-              color: '#22C55E',
-              fontSize: 13,
-              fontWeight: 600,
-              px: 1.5,
-              py: 1,
-            }}
-          >
-            ✓ Arquivo enviado com sucesso! As escolas serão cadastradas em
-            instantes.
-          </Box>
-        )}
+        <CsvTemplateDownloadButton
+          color={AppColors.role.admin.secondary}
+          template="schools"
+        />
+        <BatchImportFeedback
+          error={batchSchoolError}
+          result={batchSchoolResult}
+        />
       </AppActionModal>
 
       {/* New student modal */}

@@ -85,6 +85,14 @@ beforeEach(() => {
       async id => students.find(student => student.id === id)!
     )
   jest.spyOn(studentService, 'deleteStudent').mockResolvedValue()
+  jest.spyOn(studentService, 'importStudents').mockResolvedValue({
+    status: 'completed',
+    total_processed: 1,
+    created: 1,
+    failed: 0,
+    message: 'OK',
+    errors: [],
+  })
   jest.spyOn(studentFormOptionsService, 'getSchools').mockResolvedValue([
     { label: 'Escola São Paulo', value: 'school-1' },
     { label: 'Escola Horizonte', value: 'school-2' },
@@ -258,6 +266,9 @@ test('StudentsPage opens the batch upload modal from the create modal', async ()
   expect(
     screen.getByRole('button', { name: /enviar arquivo/i })
   ).toBeInTheDocument()
+  expect(
+    screen.getByRole('button', { name: /baixar template csv/i })
+  ).toBeInTheDocument()
 })
 
 test('StudentsPage keeps the send button disabled until a csv is chosen', async () => {
@@ -297,7 +308,7 @@ test('StudentsPage accepts a csv file and shows its name', async () => {
   ).not.toBeDisabled()
 })
 
-test('StudentsPage shows the success message after sending the file', async () => {
+test('StudentsPage sends the selected CSV and shows the import result', async () => {
   const user = userEvent.setup()
   renderPage()
 
@@ -316,7 +327,8 @@ test('StudentsPage shows the success message after sending the file', async () =
 
   await user.click(screen.getByRole('button', { name: /enviar arquivo/i }))
 
+  expect(studentService.importStudents).toHaveBeenCalledWith(csv)
   expect(
-    await screen.findByText(/Arquivo enviado com sucesso/i)
+    await screen.findByText('1 de 1 registro(s) cadastrado(s).')
   ).toBeInTheDocument()
 })

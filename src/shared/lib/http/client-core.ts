@@ -50,6 +50,8 @@ export class HttpClient {
   async request<T>(path: string, options: HttpRequestOptions = {}) {
     const { body, method = 'GET', query, skipAuth = false, ...rest } = options
     const headers = new Headers(rest.headers)
+    const isFormData =
+      typeof FormData !== 'undefined' && body instanceof FormData
 
     if (!skipAuth) {
       const token = getCookie(COOKIE_KEYS.authToken)
@@ -59,13 +61,18 @@ export class HttpClient {
       }
     }
 
-    if (body !== undefined && !headers.has('Content-Type')) {
+    if (body !== undefined && !isFormData && !headers.has('Content-Type')) {
       headers.set('Content-Type', 'application/json')
     }
 
     let request = new Request(buildUrl(this.baseUrl, path, query), {
       ...rest,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body:
+        body === undefined
+          ? undefined
+          : isFormData
+            ? body
+            : JSON.stringify(body),
       headers,
       method,
     })

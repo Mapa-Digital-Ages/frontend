@@ -14,6 +14,7 @@ import {
   type GuardianListPaginatedDto,
   type GuardianResponseDto,
 } from './mapper'
+import { importCsvBatch } from '@/modules/admin/shared/services/batchImport'
 
 export type ParentApprovalApiClient = {
   delete<T>(path: string): Promise<ApiResponse<T>>
@@ -90,6 +91,12 @@ export function createParentApprovalRepository({
         { skipAuth: true }
       )
       invalidateStudentListCache()
+    },
+
+    async importParentRegistrations(file: File) {
+      const result = await importCsvBatch(client, 'guardian/batch', file)
+      if (result.created > 0) invalidateStudentListCache()
+      return result
     },
 
     async updateParentRegistration(

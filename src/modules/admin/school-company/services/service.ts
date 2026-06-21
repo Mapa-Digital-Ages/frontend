@@ -1,4 +1,5 @@
 import { httpClient } from '@/shared/lib/http/client'
+import { importCsvBatch } from '@/modules/admin/shared/services/batchImport'
 import {
   mapStudentListDto,
   type StudentDto,
@@ -112,6 +113,10 @@ export const adminCompanyService = {
     return mapCompany(response.data)
   },
 
+  async importCompanies(file: File) {
+    return importCsvBatch(httpClient, 'company/batch', file)
+  },
+
   async countCompanies(name?: string): Promise<number> {
     const params = new URLSearchParams()
     if (name) params.set('name', name)
@@ -199,6 +204,10 @@ export const adminSchoolService = {
       phone_number: null,
     })
     return mapSchool(response.data)
+  },
+
+  async importSchools(file: File) {
+    return importCsvBatch(httpClient, 'school/batch', file)
   },
 
   async listStudentsBySchool(
