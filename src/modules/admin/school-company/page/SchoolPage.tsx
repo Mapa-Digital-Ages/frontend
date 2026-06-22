@@ -43,7 +43,11 @@ const studentFilterOptions = [
   { label: 'Inativo', value: 'inativo' },
 ]
 
-export default function SchoolPage() {
+interface SchoolPageProps {
+  openCreate?: boolean
+}
+
+export default function SchoolPage({ openCreate = false }: SchoolPageProps) {
   const theme = useTheme()
 
   // Schools
@@ -67,7 +71,7 @@ export default function SchoolPage() {
   const studentSentinelRef = useRef<HTMLDivElement | null>(null)
 
   // Modals
-  const [isNewSchoolModalOpen, setIsNewSchoolModalOpen] = useState(false)
+  const [isNewSchoolModalOpen, setIsNewSchoolModalOpen] = useState(openCreate)
   const [isNewStudentModalOpen, setIsNewStudentModalOpen] = useState(false)
   const [studentApiError, setStudentApiError] = useState<string | null>(null)
   const [newSchoolApiError, setNewSchoolApiError] = useState<string | null>(

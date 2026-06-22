@@ -114,11 +114,12 @@ const authValue: AuthContextValue = {
   },
 }
 
-function renderPage() {
+function renderPage(initialEntries = ['/']) {
   renderWithProviders(
     <AuthContext.Provider value={authValue}>
       <SchoolCompanyPage />
-    </AuthContext.Provider>
+    </AuthContext.Provider>,
+    { initialEntries }
   )
 }
 
@@ -240,6 +241,23 @@ test('SchoolCompanyPage toggles to empresa view', async () => {
 
   expect(screen.getByTestId('empresa-view')).toBeInTheDocument()
   expect(screen.queryByTestId('escola-view')).not.toBeInTheDocument()
+})
+
+test('SchoolCompanyPage opens school creation from dashboard shortcut', () => {
+  renderPage(['/admin/schools-companies?create=school'])
+
+  expect(
+    screen.getByText('Cadastre uma escola para iniciar processo de ativação.')
+  ).toBeInTheDocument()
+})
+
+test('SchoolCompanyPage opens company creation from dashboard shortcut', () => {
+  renderPage(['/admin/schools-companies?create=company'])
+
+  expect(screen.getByTestId('empresa-view')).toBeInTheDocument()
+  expect(
+    screen.getByText('Cadastre uma nova empresa parceira.')
+  ).toBeInTheDocument()
 })
 
 test('SchoolCompanyPage opens new school modal and verifies current fields', async () => {

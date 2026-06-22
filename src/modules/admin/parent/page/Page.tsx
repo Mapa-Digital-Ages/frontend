@@ -42,6 +42,7 @@ import type {
 import BatchImportFeedback from '@/modules/admin/shared/components/BatchImportFeedback'
 import CsvTemplateDownloadButton from '@/modules/admin/shared/components/CsvTemplateDownloadButton'
 import type { BatchImportResult } from '@/modules/admin/shared/services/batchImport'
+import { useSearchParams } from 'react-router-dom'
 
 type SortField = 'name' | 'child'
 type SortDirection = 'asc' | 'desc'
@@ -165,6 +166,7 @@ function SortableHeader({
 
 export default function Page() {
   const theme = useTheme()
+  const [searchParams] = useSearchParams()
   const { role, isAdmin } = useUserRole()
   const canView = isAdmin && role === 'admin'
 
@@ -190,7 +192,9 @@ export default function Page() {
   const [sort, setSort] = useState<SortState>({ field: null, direction: 'asc' })
 
   // Create / edit modal
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false)
+  const [isFormModalOpen, setIsFormModalOpen] = useState(
+    searchParams.get('create') === 'parent'
+  )
   const [editingParentId, setEditingParentId] = useState<string | null>(null)
   const [parentForm, setParentForm] = useState(getEmptyParentForm())
   const [formApiError, setFormApiError] = useState<string | null>(null)
