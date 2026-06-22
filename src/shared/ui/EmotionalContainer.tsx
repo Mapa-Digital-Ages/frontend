@@ -13,7 +13,7 @@ import SentimentVerySatisfiedIcon from '@mui/icons-material/SentimentVerySatisfi
 import SentimentNeutralIcon from '@mui/icons-material/SentimentNeutral'
 import SentimentVeryDissatisfiedIcon from '@mui/icons-material/SentimentVeryDissatisfied'
 import CloseIcon from '@mui/icons-material/Close'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState, useMemo, type ReactNode } from 'react'
 import { useTheme } from '@mui/material/styles'
 import { alpha } from '@mui/material/styles'
 import dayjs from 'dayjs'
@@ -121,7 +121,7 @@ function EmotionButton({
 export default function EmotionalContainer() {
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedEmotion, setSelectedEmotion] = useState('')
-  const startOfWeek = dayjs().startOf('isoWeek')
+  const startOfWeek = useMemo(() => dayjs().startOf('isoWeek'), [])
   const initialWeek = Array.from({ length: 7 }).map((_, index) => {
     const date = startOfWeek.add(index, 'day')
     return { date, mood: null as string | null }
@@ -134,25 +134,33 @@ export default function EmotionalContainer() {
   useEffect(() => {
     if (!studentUserId) return
     let active = true
+
+    const from = startOfWeek.format('YYYY-MM-DD')
+    const to = startOfWeek.add(6, 'day').format('YYYY-MM-DD')
     const today = dayjs().format('YYYY-MM-DD')
+
     void wellBeingService
-      .getStudentDay(studentUserId, today)
-      .then(record => {
-        if (!active || !record?.humor) return
+      .getStudentHistory(studentUserId, from, to)
+      .then(entries => {
+        if (!active) return
         setWeeklyMood(prev =>
-          prev.map(day =>
-            day.date.format('YYYY-MM-DD') === today
-              ? { ...day, mood: record.humor }
-              : day
-          )
+          prev.map(day => {
+            const dateStr = day.date.format('YYYY-MM-DD')
+            const entry = entries.find(e => e.date === dateStr)
+            return entry?.mood ? { ...day, mood: entry.mood } : day
+          })
         )
-        setSelectedEmotion(HUMOR_TO_LABEL[record.humor])
+        const todayEntry = entries.find(e => e.date === today)
+        if (todayEntry?.mood) {
+          setSelectedEmotion(HUMOR_TO_LABEL[todayEntry.mood])
+        }
       })
       .catch(() => undefined)
+
     return () => {
       active = false
     }
-  }, [studentUserId])
+  }, [studentUserId, startOfWeek])
 
   async function handleEmotionSelect(emotionLabel: string) {
     const humor = LABEL_TO_HUMOR[emotionLabel]

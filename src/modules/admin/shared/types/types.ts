@@ -131,6 +131,99 @@ export interface ContentApprovalDraftInput {
   description: string
 }
 
+export type AdminTrailActivityType = 'video' | 'text' | 'question'
+
+export interface AdaptiveTrailSubStepInput {
+  order: number
+  title: string
+  description: string
+  content_id: string
+  activity: {
+    type: AdminTrailActivityType
+    question_count: number | null
+    difficulty: number | null
+  }
+}
+
+export interface AdaptiveTrailStepInput {
+  order: number
+  title: string
+  description: string
+  sub_steps: AdaptiveTrailSubStepInput[]
+}
+
+export interface AdaptiveTrailPayload {
+  title: string
+  description: string
+  subject_id: string
+  eixo: string[]
+  steps: AdaptiveTrailStepInput[]
+}
+
+export interface AdaptiveTrailMutationResult {
+  exerciseIds: number[]
+  itemIds: number[]
+  pathId: number
+  subPathIds: number[]
+}
+
+export interface AdaptiveTrailAdminStepItem {
+  id: string
+  order: number
+  title: string
+  description: string
+  subSteps?: AdaptiveTrailAdminSubStepItem[]
+  contentId: string
+  contentTitle?: string
+  activityType: AdminTrailActivityType
+  questionCount?: number | null
+  difficulty?: number | null
+}
+
+export interface AdaptiveTrailAdminSubStepItem {
+  id: string
+  order: number
+  title: string
+  description: string
+  contentId: string
+  contentTitle?: string
+  activityType: AdminTrailActivityType
+  questionCount?: number | null
+  difficulty?: number | null
+}
+
+export interface AdaptiveTrailAdminItem {
+  title: string
+  subjectId: string
+  eixo: string[]
+  steps: AdaptiveTrailAdminStepItem[]
+  contentId: string
+  contentTitle: string
+  description: string
+  id: string
+  name: string
+  questionCount: number
+  stepCount: number
+  subject?: SubjectContext
+}
+
+export interface AdaptiveTrailAdminQuery {
+  page: number
+  pageSize: number
+  query: string
+  subjectId: string
+}
+
+export interface AdaptiveTrailAdminResult {
+  currentPage: number
+  items: AdaptiveTrailAdminItem[]
+  pageSize: number
+  totalItems: number
+  totalPages: number
+}
+
+export type AdaptiveTrailUpdateInput = AdaptiveTrailPayload
+
 export interface GuardianItem {
   email: string
   first_name: string

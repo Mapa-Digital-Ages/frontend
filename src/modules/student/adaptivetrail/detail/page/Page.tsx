@@ -1,6 +1,6 @@
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded'
-import { Box, Button, Collapse, IconButton, Typography } from '@mui/material'
-import { useTheme } from '@mui/material/styles'
+import { Box, Button, Stack, Typography } from '@mui/material'
+import { alpha, useTheme } from '@mui/material/styles'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { APP_ROUTES } from '@/app/router/paths'
@@ -9,429 +9,592 @@ import AppPageContainer from '@/shared/ui/AppPageContainer'
 import AppSubjectsTags from '@/shared/ui/AppSubjectsTags'
 import EmptyState from '@/shared/ui/EmptyState'
 import LoadingScreen from '@/shared/ui/LoadingScreen'
-import OnboardingQuestionCard from '@/modules/student/shared/components/OnboardingQuestionCard'
-import TrailCompletionScreen from '../../components/TrailCompletionScreen'
-import TrailSearchBar from '../../components/TrailSearchBar'
-import TrailStepItem from '../../components/TrailStepItem'
-import { useTrailSearch } from '../../hooks/useTrailSearch'
-import { adaptiveTrailDetailService } from '../../services/trailDetailService'
+import ProgressBar from '@/shared/ui/ProgressBar'
+import { getSubjectTheme } from '@/shared/utils/themes'
 import type {
+  AdaptiveTrailQuestion,
   AdaptiveTrailSession,
   AdaptiveTrailStep,
   AdaptiveTrailSubStep,
-  TrailStepAnswerInput,
-  TrailStepCompletionResult,
-  TrailStepQuestionFlow,
 } from '../../types/types'
-import { getSubjectTheme } from '@/shared/utils/themes'
-import ProgressBar from '@/shared/ui/ProgressBar'
-import { Chat } from '@mui/icons-material'
-import TrailChatPanel from '../components/TrailChatPanel'
+import type {
+  StepAnswerPayload,
+  StepCompletionResult,
+  TrailStepQuestionFlow,
+  ValidateAnswerResult,
+} from '../types/types'
+import { adaptiveTrailDetailService } from '../services/service'
+import TrailComponent from '../components/TrailComponent'
 
-function getActiveStepId(session: AdaptiveTrailSession): string | null {
-  return session.steps.find(s => s.status === 'available')?.id ?? null
+const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F']
+
+interface ActiveQuiz {
+  flow: TrailStepQuestionFlow
+  step: AdaptiveTrailStep
+  trail: AdaptiveTrailSession
 }
 
-function applySubStepCompletion(
-  session: AdaptiveTrailSession,
-  stepId: string,
-  subStepId: string
-): AdaptiveTrailSession {
-  const steps = session.steps.map(step => {
-    if (step.id !== stepId) return step
+interface QuizSummary {
+  result: StepCompletionResult
+  stepTitle: string
+  trail: AdaptiveTrailSession
+}
 
-    const subStepIndex = step.subSteps.findIndex(ss => ss.id === subStepId)
-    if (subStepIndex === -1) return step
+function upsertSession(
+  sessions: AdaptiveTrailSession[],
+  next: AdaptiveTrailSession
+): AdaptiveTrailSession[] {
+  return sessions.map(session => (session.id === next.id ? next : session))
+}
 
-    const subSteps = step.subSteps.map((ss, i) => {
-      if (i === subStepIndex) return { ...ss, status: 'completed' as const }
-      if (i === subStepIndex + 1) return { ...ss, status: 'available' as const }
-      return ss
-    })
-
-    const allSubStepsDone = subSteps.every(ss => ss.status === 'completed')
-    return {
-      ...step,
-      status: allSubStepsDone ? ('completed' as const) : step.status,
-      subSteps,
-    }
+function QuestionCard({
+  isSubmitting,
+  onBack,
+  onSelect,
+  onSubmit,
+  question,
+  questionIndex,
+  selectedFeedback,
+  selectedOptionId,
+  totalQuestions,
+  trail,
+}: {
+  isSubmitting: boolean
+  onBack: () => void
+  onSelect: (optionId: string) => void
+  onSubmit: () => void
+  question: AdaptiveTrailQuestion
+  questionIndex: number
+  selectedFeedback: ValidateAnswerResult | null
+  selectedOptionId: string | null
+  totalQuestions: number
+  trail: AdaptiveTrailSession
+}) {
+  const theme = useTheme()
+  const subjectTheme = getSubjectTheme(trail.subject, {
+    mode: theme.palette.mode,
   })
+  const isDark = theme.palette.mode === 'dark'
+  const isLast = questionIndex === totalQuestions - 1
+  const progress = Math.round(((questionIndex + 1) / totalQuestions) * 100)
 
-  const updatedSteps = steps.map((step, i) => {
-    const prevStep = steps[i - 1]
-    if (prevStep?.status === 'completed' && step.status === 'locked') {
-      return {
-        ...step,
-        status: 'available' as const,
-        subSteps: step.subSteps.map((ss, j) =>
-          j === 0 ? { ...ss, status: 'available' as const } : ss
-        ),
-      }
-    }
-    return step
+  return (
+    <AppCard
+      sx={{
+        borderColor: subjectTheme.border.borderColor,
+        maxWidth: 820,
+        width: '100%',
+      }}
+      contentSx={{
+        display: 'grid',
+        gap: { md: 3, xs: 2 },
+        p: { md: 4, xs: 2 },
+      }}
+    >
+      <Box>
+        <Button
+          onClick={onBack}
+          size="small"
+          startIcon={<ArrowBackRoundedIcon />}
+          sx={{
+            borderRadius: 'var(--app-radius-pill)',
+            color: 'text.secondary',
+            fontWeight: 700,
+            textTransform: 'none',
+          }}
+          variant="text"
+        >
+          Voltar para etapas
+        </Button>
+      </Box>
+
+      <Stack spacing={1}>
+        <AppSubjectsTags
+          subjects={trail.subject ? [trail.subject] : []}
+          size="sm"
+        />
+        <Typography
+          component="h1"
+          sx={{
+            color: 'text.primary',
+            fontSize: { md: 26, xs: 21 },
+            fontWeight: 800,
+            lineHeight: 1.18,
+          }}
+        >
+          {trail.title}
+        </Typography>
+        <Typography sx={{ color: 'text.secondary', fontSize: 13 }}>
+          Selecione uma alternativa e confira o resultado antes de avançar.
+        </Typography>
+      </Stack>
+
+      <Box
+        sx={{
+          backgroundColor: subjectTheme.softSurface.backgroundColor,
+          border: `1px solid ${subjectTheme.softSurface.borderColor}`,
+          borderRadius: '16px',
+          display: 'grid',
+          gap: 1.5,
+          p: { md: 2.5, xs: 2 },
+        }}
+      >
+        <Typography
+          sx={{
+            color: subjectTheme.color,
+            fontSize: 12,
+            fontWeight: 800,
+            textTransform: 'uppercase',
+          }}
+        >
+          Pergunta {questionIndex + 1} de {totalQuestions}
+        </Typography>
+        <ProgressBar
+          subject={trail.subject}
+          thickness={8}
+          value={progress}
+          valueLabelVariant="plain"
+        />
+      </Box>
+
+      <Box
+        sx={{
+          backgroundColor: 'background.paper',
+          border: `1px solid ${subjectTheme.border.borderColor}`,
+          borderRadius: '16px',
+          display: 'grid',
+          gap: 2,
+          p: { md: 3, xs: 2 },
+        }}
+      >
+        <Typography
+          sx={{
+            color: 'text.primary',
+            fontSize: { md: 22, xs: 18 },
+            fontWeight: 800,
+            lineHeight: 1.25,
+          }}
+        >
+          {question.question}
+        </Typography>
+
+        <Box sx={{ display: 'grid', gap: 1.25 }}>
+          {question.options.map((option, index) => {
+            const isSelected = selectedOptionId === option.id
+            const isValidatedOption = selectedFeedback?.optionId === option.id
+            const validationColor = selectedFeedback?.correct
+              ? theme.palette.success.main
+              : theme.palette.error.main
+            const selectedBackground = alpha(
+              isValidatedOption ? validationColor : subjectTheme.color,
+              isDark ? 0.16 : 0.09
+            )
+
+            return (
+              <Button
+                key={option.id}
+                disabled={isSubmitting || Boolean(selectedFeedback)}
+                onClick={() => onSelect(option.id)}
+                sx={{
+                  backgroundColor: isSelected
+                    ? selectedBackground
+                    : 'transparent',
+                  borderColor: isSelected
+                    ? isValidatedOption
+                      ? validationColor
+                      : subjectTheme.color
+                    : alpha(subjectTheme.color, isDark ? 0.34 : 0.22),
+                  borderRadius: 'var(--app-radius-control)',
+                  color: 'text.primary',
+                  fontWeight: 700,
+                  justifyContent: 'flex-start',
+                  minHeight: 50,
+                  px: 2,
+                  py: 1.25,
+                  textAlign: 'left',
+                  textTransform: 'none',
+                  whiteSpace: 'normal',
+                  '&:hover': {
+                    backgroundColor: isSelected
+                      ? selectedBackground
+                      : alpha(subjectTheme.color, isDark ? 0.14 : 0.08),
+                    borderColor: subjectTheme.color,
+                  },
+                }}
+                variant="outlined"
+              >
+                <Box component="span" sx={{ color: subjectTheme.color, mr: 1 }}>
+                  {OPTION_LETTERS[index] ?? index + 1}.
+                </Box>
+                {option.label}
+              </Button>
+            )
+          })}
+        </Box>
+
+        {selectedFeedback ? (
+          <Typography
+            sx={{
+              color: selectedFeedback.correct ? 'success.main' : 'error.main',
+              fontSize: 14,
+              fontWeight: 800,
+            }}
+          >
+            {selectedFeedback.correct
+              ? 'Resposta correta.'
+              : 'Resposta incorreta.'}
+          </Typography>
+        ) : null}
+
+        <Button
+          disabled={!selectedOptionId || isSubmitting}
+          onClick={onSubmit}
+          sx={{
+            backgroundColor: subjectTheme.solidSurface.backgroundColor,
+            borderRadius: 'var(--app-radius-pill)',
+            boxShadow: 'none',
+            color: subjectTheme.solidSurface.color,
+            fontWeight: 800,
+            minHeight: 46,
+            textTransform: 'none',
+            '&:hover': {
+              backgroundColor: subjectTheme.solidSurface.backgroundColor,
+              opacity: 0.92,
+            },
+          }}
+          variant="contained"
+        >
+          {selectedFeedback
+            ? isLast
+              ? 'Concluir etapa'
+              : 'Próxima pergunta'
+            : 'Verificar resposta'}
+        </Button>
+      </Box>
+    </AppCard>
+  )
+}
+
+function QuizFinishedCard({
+  onRestart,
+  summary,
+}: {
+  onRestart: () => void
+  summary: QuizSummary
+}) {
+  const theme = useTheme()
+  const subjectTheme = getSubjectTheme(summary.trail.subject, {
+    mode: theme.palette.mode,
   })
+  const { correct, total, passed } = summary.result
 
-  const completedCount = updatedSteps.filter(
-    s => s.status === 'completed'
-  ).length
-  const progress =
-    updatedSteps.length > 0
-      ? Math.round((completedCount / updatedSteps.length) * 100)
-      : 0
-
-  return {
-    ...session,
-    steps: updatedSteps,
-    completedSteps: completedCount,
-    progress,
-  }
+  return (
+    <AppCard
+      sx={{ borderColor: subjectTheme.border.borderColor, maxWidth: 720 }}
+      contentSx={{ display: 'grid', gap: 2.5, p: { md: 4, xs: 2 } }}
+    >
+      <AppSubjectsTags
+        subjects={summary.trail.subject ? [summary.trail.subject] : []}
+        size="sm"
+      />
+      <Typography
+        component="h1"
+        sx={{
+          color: 'text.primary',
+          fontSize: { md: 26, xs: 21 },
+          fontWeight: 800,
+          lineHeight: 1.18,
+        }}
+      >
+        {passed ? 'Etapa concluída' : 'Continue praticando'}
+      </Typography>
+      <Typography
+        sx={{ color: 'text.secondary', fontSize: 14, lineHeight: 1.6 }}
+      >
+        {passed
+          ? 'Você concluiu esta etapa e avançou na trilha.'
+          : 'Revise o conteúdo e tente novamente para avançar na trilha.'}
+      </Typography>
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 1.25,
+          gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+        }}
+      >
+        <Box>
+          <Typography
+            sx={{ color: subjectTheme.color, fontSize: 28, fontWeight: 900 }}
+          >
+            {correct}
+          </Typography>
+          <Typography
+            sx={{ color: 'text.secondary', fontSize: 12, fontWeight: 700 }}
+          >
+            Corretas
+          </Typography>
+        </Box>
+        <Box>
+          <Typography
+            sx={{ color: subjectTheme.color, fontSize: 28, fontWeight: 900 }}
+          >
+            {total}
+          </Typography>
+          <Typography
+            sx={{ color: 'text.secondary', fontSize: 12, fontWeight: 700 }}
+          >
+            Respondidas
+          </Typography>
+        </Box>
+      </Box>
+      <Button
+        onClick={onRestart}
+        sx={{
+          backgroundColor: subjectTheme.solidSurface.backgroundColor,
+          borderRadius: 'var(--app-radius-pill)',
+          boxShadow: 'none',
+          color: subjectTheme.solidSurface.color,
+          fontWeight: 800,
+          minHeight: 46,
+          textTransform: 'none',
+          '&:hover': {
+            backgroundColor: subjectTheme.solidSurface.backgroundColor,
+            opacity: 0.92,
+          },
+        }}
+        variant="contained"
+      >
+        Voltar para etapas
+      </Button>
+    </AppCard>
+  )
 }
 
 export default function Page() {
-  const theme = useTheme()
-  const { trailId } = useParams<{ trailId: string }>()
-  const [isExpanded, setIsExpanded] = useState(false)
-  const [isLocked] = useState(false)
-  const [session, setSession] = useState<AdaptiveTrailSession | null>(null)
-  const [questionFlow, setQuestionFlow] =
-    useState<TrailStepQuestionFlow | null>(null)
-  const [completionResult, setCompletionResult] =
-    useState<TrailStepCompletionResult | null>(null)
+  const { subjectId } = useParams<{ subjectId: string }>()
+  const [sessions, setSessions] = useState<AdaptiveTrailSession[]>([])
+  const [quiz, setQuiz] = useState<ActiveQuiz | null>(null)
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [answers, setAnswers] = useState<StepAnswerPayload[]>([])
+  const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null)
+  const [summary, setSummary] = useState<QuizSummary | null>(null)
+  const [selectedFeedback, setSelectedFeedback] =
+    useState<ValidateAnswerResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [expandedStepId, setExpandedStepId] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const loadSessions = useCallback(async () => {
+    if (!subjectId) {
+      setError('Matéria não informada.')
+      setIsLoading(false)
+      return
+    }
+    const nextSessions =
+      await adaptiveTrailDetailService.getSubjectTrailSessions(subjectId)
+    setSessions(nextSessions)
+    setError(
+      nextSessions.length > 0
+        ? null
+        : 'Nenhuma trilha foi encontrada para esta matéria.'
+    )
+  }, [subjectId])
 
   useEffect(() => {
     let isActive = true
+    setIsLoading(true)
+    loadSessions()
+      .catch(() => {
+        if (isActive)
+          setError('Não foi possível carregar as trilhas desta matéria.')
+      })
+      .finally(() => {
+        if (isActive) setIsLoading(false)
+      })
+    return () => {
+      isActive = false
+    }
+  }, [loadSessions])
 
-    async function loadTrailSession() {
-      if (!trailId) {
-        setError('Trilha não informada.')
-        setIsLoading(false)
+  const resetQuizState = useCallback(() => {
+    setQuiz(null)
+    setCurrentIndex(0)
+    setAnswers([])
+    setSelectedOptionId(null)
+    setSelectedFeedback(null)
+  }, [])
+
+  const handleAnswerSubStep = useCallback(
+    async (
+      trailId: string,
+      step: AdaptiveTrailStep,
+      subStep: AdaptiveTrailSubStep
+    ) => {
+      if (subStep.status === 'locked') return
+      const trail = sessions.find(session => session.id === trailId)
+      if (!trail) return
+
+      setError(null)
+
+      if (subStep.kind !== 'question') {
+        if (!subStep.itemId) return
+        try {
+          const { session } = await adaptiveTrailDetailService.completeItem(
+            trailId,
+            subStep.itemId,
+            []
+          )
+          setSessions(current => upsertSession(current, session))
+        } catch {
+          setError('Não foi possível concluir esta etapa.')
+        }
         return
       }
 
       try {
-        const nextSession =
-          await adaptiveTrailDetailService.getTrailSession(trailId)
-
-        if (!isActive) return
-
-        setSession(nextSession)
-        setError(nextSession ? null : 'A trilha solicitada não foi encontrada.')
-
-        if (nextSession) {
-          const activeId = getActiveStepId(nextSession)
-          setExpandedStepId(activeId)
-        }
-      } catch {
-        if (isActive) setError('Não foi possível carregar esta trilha.')
-      } finally {
-        if (isActive) setIsLoading(false)
-      }
-    }
-
-    void loadTrailSession()
-    return () => {
-      isActive = false
-    }
-  }, [trailId])
-
-  const { query, setQuery, filteredSteps, expandedBySearch } = useTrailSearch(
-    session?.steps ?? []
-  )
-
-  const progressValue = session?.progress ?? 0
-
-  const subjectTheme = getSubjectTheme(session?.subject, {
-    mode: theme.palette.mode,
-  })
-
-  const handleExpandStep = useCallback((step: AdaptiveTrailStep) => {
-    if (step.status === 'locked') return
-    setExpandedStepId(id => (id === step.id ? null : step.id))
-  }, [])
-
-  const handleAnswerSubStep = useCallback(
-    async (step: AdaptiveTrailStep, subStep: AdaptiveTrailSubStep) => {
-      if (!trailId || subStep.status === 'locked') return
-
-      if (subStep.kind === 'question') {
-        const nextFlow =
-          await adaptiveTrailDetailService.getSubStepQuestionFlow(
-            trailId,
-            step.id,
-            subStep.id
-          )
-        setQuestionFlow(nextFlow)
-      } else {
-        // video/text: mark as done immediately
-        setSession(current =>
-          current ? applySubStepCompletion(current, step.id, subStep.id) : null
-        )
-      }
-    },
-    [trailId]
-  )
-
-  const handleAnswer = useCallback(async (input: TrailStepAnswerInput) => {
-    await adaptiveTrailDetailService.saveStepAnswer(input)
-  }, [])
-
-  const handleQuizComplete = useCallback(
-    async (answersByQuestionId: Record<string, string>) => {
-      if (!trailId || !questionFlow) return
-
-      const { questions, stepId, subStepId } = questionFlow
-      const correct = questions.filter(
-        q => answersByQuestionId[q.id] === q.correctOptionId
-      ).length
-
-      setSession(current =>
-        current ? applySubStepCompletion(current, stepId, subStepId) : null
-      )
-
-      const result =
-        await adaptiveTrailDetailService.getCompletionRecommendations(
+        const flow = await adaptiveTrailDetailService.getSubStepQuestionFlow(
           trailId,
-          questionFlow.stepTitle,
-          correct,
-          questions.length
+          step.id,
+          subStep.id
         )
-
-      setCompletionResult(result)
+        if (flow.questions.length === 0) {
+          setError('Esta etapa não possui questões disponíveis.')
+          return
+        }
+        resetQuizState()
+        setQuiz({ flow, step, trail })
+        setSummary(null)
+      } catch {
+        setError('Não foi possível iniciar o quiz desta etapa.')
+      }
     },
-    [trailId, questionFlow]
+    [resetQuizState, sessions]
   )
 
-  const handleContinueFromResult = useCallback(() => {
-    setCompletionResult(null)
-    setQuestionFlow(null)
-    setSession(current => {
-      if (!current) return null
-      const activeId = getActiveStepId(current)
-      setExpandedStepId(activeId)
-      return current
-    })
-  }, [])
+  const handleSubmitAnswer = useCallback(async () => {
+    if (!quiz || !selectedOptionId) return
+
+    const question = quiz.flow.questions[currentIndex]
+    if (!selectedFeedback) {
+      setIsSubmitting(true)
+      try {
+        const validation = await adaptiveTrailDetailService.validateAnswer(
+          quiz.trail.id,
+          quiz.step.id,
+          { exerciseId: question.id, optionId: selectedOptionId }
+        )
+        setSelectedFeedback(validation)
+      } catch {
+        setError('Não foi possível validar esta alternativa.')
+      } finally {
+        setIsSubmitting(false)
+      }
+      return
+    }
+
+    const nextAnswers: StepAnswerPayload[] = [
+      ...answers,
+      { exerciseId: question.id, optionId: selectedOptionId },
+    ]
+
+    if (currentIndex < quiz.flow.questions.length - 1) {
+      setAnswers(nextAnswers)
+      setCurrentIndex(index => index + 1)
+      setSelectedOptionId(null)
+      setSelectedFeedback(null)
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      const result = await adaptiveTrailDetailService.completeStep(
+        quiz.trail.id,
+        quiz.step.id,
+        nextAnswers
+      )
+      setSummary({
+        result,
+        stepTitle: quiz.flow.stepTitle,
+        trail: quiz.trail,
+      })
+      resetQuizState()
+      await loadSessions().catch(() => undefined)
+    } catch {
+      setError('Não foi possível enviar as respostas desta etapa.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }, [
+    answers,
+    currentIndex,
+    loadSessions,
+    quiz,
+    resetQuizState,
+    selectedFeedback,
+    selectedOptionId,
+  ])
+
+  const handleBackToTrail = useCallback(() => {
+    resetQuizState()
+    setSummary(null)
+    setError(null)
+  }, [resetQuizState])
 
   if (isLoading) return <LoadingScreen />
 
-  if (error || !session) {
+  if (error && sessions.length === 0) {
+    return (
+      <AppPageContainer>
+        <EmptyState title="Trilha indisponível" description={error} />
+      </AppPageContainer>
+    )
+  }
+
+  if (sessions.length === 0) {
     return (
       <AppPageContainer>
         <EmptyState
-          description={error ?? 'A trilha solicitada não foi encontrada.'}
           title="Trilha indisponível"
+          description="Nenhuma trilha foi encontrada para esta matéria."
         />
       </AppPageContainer>
     )
   }
 
-  if (completionResult) {
-    return (
-      <TrailCompletionScreen
-        result={completionResult}
-        onContinue={handleContinueFromResult}
-      />
-    )
-  }
-
-  if (questionFlow) {
-    return (
-      <AppPageContainer
-        sx={{
-          alignItems: 'center',
-          justifyItems: 'center',
-          maxWidth: 'none',
-          minHeight: { md: '80vh', xs: 'auto' },
-          py: { md: 4, xs: 2 },
-        }}
-      >
-        <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-          <OnboardingQuestionCard
-            assessmentId={questionFlow.assessmentId}
-            initialAnswersByQuestionId={questionFlow.initialAnswersByQuestionId}
-            onAnswer={handleAnswer}
-            onBack={() => setQuestionFlow(null)}
-            onComplete={handleQuizComplete}
-            questions={questionFlow.questions}
-            title={questionFlow.stepTitle ?? 'Questionário da trilha'}
-          />
-        </Box>
-      </AppPageContainer>
-    )
-  }
-
-  const chatPanelWidth = 440
-
   return (
     <AppPageContainer sx={{ maxWidth: 'none' }}>
-      <Button
-        component={Link}
-        startIcon={<ArrowBackRoundedIcon />}
-        sx={{
-          borderRadius: '999px',
-          color: 'text.secondary',
-          fontWeight: 700,
-          textTransform: 'none',
-          width: 'fit-content',
-        }}
-        to={APP_ROUTES.student.adaptiveTrail}
-        variant="text"
-      >
-        Voltar para trilhas
-      </Button>
+      {error ? <EmptyState title="Erro na trilha" description={error} /> : null}
 
-      <Box sx={{ display: 'flex', gap: 2, alignItems: 'stretch' }}>
-        <Box
-          sx={{
-            flex: 1,
-            minWidth: 0,
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          <AppCard
-            sx={{ flex: 1 }}
-            contentSx={{
-              display: 'grid',
-              gap: { md: 3, xs: 2 },
-              p: { md: 3, xs: 1.5 },
-            }}
-          >
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: { md: 'row', xs: 'column' },
-                alignItems: { md: 'center', xs: 'flex-start' },
-                justifyContent: 'space-between',
-                gap: { md: 0, xs: 2 },
-              }}
-            >
-              <Box className="grid gap-2">
-                <AppSubjectsTags
-                  subjects={session.subject ? [session.subject] : []}
-                  size="sm"
-                />
-                <Typography
-                  component="h1"
-                  sx={{
-                    color: 'text.primary',
-                    fontSize: { md: 30, xs: 22 },
-                    fontWeight: 900,
-                    lineHeight: 1.15,
-                  }}
-                >
-                  {session.title}
-                </Typography>
-                <Typography
-                  sx={{
-                    color: 'text.secondary',
-                    fontSize: { md: 15, xs: 14 },
-                    maxWidth: 860,
-                  }}
-                >
-                  {session.description}
-                </Typography>
-              </Box>
-              <IconButton
-                onClick={() => setIsExpanded(prev => !prev)}
-                sx={{
-                  color: isExpanded ? '#fff' : subjectTheme.color,
-                  height: 32,
-                  width: 32,
-                  borderRadius: 'var(--app-radius-control)',
-                  textTransform: 'none',
-                  flexShrink: 0,
-                  border: '1px solid',
-                  borderColor: subjectTheme.color,
-                  backgroundColor: isExpanded
-                    ? subjectTheme.color
-                    : 'transparent',
-                  '&:hover': {
-                    backgroundColor: isExpanded
-                      ? subjectTheme.color
-                      : subjectTheme.softSurface.backgroundColor,
-                  },
-                  '& .MuiSvgIcon-root': {
-                    fontSize: 18,
-                  },
-                }}
-              >
-                <Chat />
-              </IconButton>
-            </Box>
-
-            <Box>
-              <ProgressBar
-                subject={session.subject}
-                thickness={10}
-                showValueLabel
-                value={progressValue}
-                valueLabelVariant="plain"
-              />
-            </Box>
-
-            <TrailSearchBar
-              onChange={setQuery}
-              query={query}
-              subjectColor={subjectTheme.color}
-            />
-
-            <Box sx={{ display: 'grid' }}>
-              {filteredSteps.map((step, index) => (
-                <TrailStepItem
-                  key={step.id}
-                  isExpanded={
-                    query.trim()
-                      ? expandedBySearch.has(step.id)
-                      : expandedStepId === step.id
-                  }
-                  isFirst={index === 0}
-                  isLast={index === filteredSteps.length - 1}
-                  prevStatus={
-                    index > 0 ? filteredSteps[index - 1].status : undefined
-                  }
-                  onAnswerSubStep={handleAnswerSubStep}
-                  onExpand={handleExpandStep}
-                  searchQuery={query}
-                  step={step}
-                  subjectColor={subjectTheme.color}
-                />
-              ))}
-              {query.trim() && filteredSteps.length === 0 && (
-                <EmptyState
-                  description="Tente outros termos de busca."
-                  title="Nenhuma etapa encontrada"
-                />
-              )}
-            </Box>
-          </AppCard>
+      {summary ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+          <QuizFinishedCard summary={summary} onRestart={handleBackToTrail} />
         </Box>
-
-        <Collapse
-          in={isExpanded && !isLocked}
-          orientation="horizontal"
-          unmountOnExit
-          sx={{
-            '& .MuiCollapse-wrapperInner': { height: '100%' },
-            '& .MuiCollapse-wrapper': { height: '100%' },
-          }}
-        >
-          <Box
-            sx={{
-              width: chatPanelWidth,
-              height: '100%',
+      ) : quiz ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+          <QuestionCard
+            isSubmitting={isSubmitting}
+            onBack={handleBackToTrail}
+            onSelect={optionId => {
+              setSelectedOptionId(optionId)
+              setSelectedFeedback(null)
             }}
-          >
-            <TrailChatPanel
-              subjectTheme={subjectTheme}
-              subjectLabel={session.subject?.label ?? 'Trilha'}
-            />
-          </Box>
-        </Collapse>
-      </Box>
+            onSubmit={handleSubmitAnswer}
+            question={quiz.flow.questions[currentIndex]}
+            questionIndex={currentIndex}
+            selectedFeedback={selectedFeedback}
+            selectedOptionId={selectedOptionId}
+            totalQuestions={quiz.flow.questions.length}
+            trail={quiz.trail}
+          />
+        </Box>
+      ) : (
+        <TrailComponent
+          emptyDescription="Nenhuma trilha de quiz disponível no momento."
+          emptyTitle="Nenhuma trilha encontrada"
+          onAnswerSubStep={handleAnswerSubStep}
+          sessions={sessions}
+        />
+      )}
     </AppPageContainer>
   )
 }

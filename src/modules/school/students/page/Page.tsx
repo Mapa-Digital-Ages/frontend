@@ -36,6 +36,8 @@ import type {
   StudentItem,
   StudentMetrics,
 } from '@/modules/admin/student/types/types'
+import { authService } from '@/app/auth/core/service'
+import { useAuth } from '@/app/auth/hook'
 
 type SortField = 'name' | 'school' | 'year'
 type SortDirection = 'asc' | 'desc'
@@ -134,10 +136,20 @@ function SortableHeader({
 
 export default function Page() {
   const theme = useTheme()
+  const { user } = useAuth()
+  const schoolId = authService.getUserId() ?? undefined
   const statusConfig: Record<string, TagContext> = {
     ativo: { label: 'Ativo', color: theme.palette.success.main },
     inativo: { label: 'Inativo', color: theme.palette.warning.main },
   }
+
+  const defaultSchool = useMemo(() => {
+    if (!schoolId) return null
+    return {
+      value: schoolId,
+      label: user?.name ?? 'Minha Escola',
+    }
+  }, [schoolId, user?.name])
 
   const [students, setStudents] = useState<StudentItem[]>([])
   const [metrics, setMetrics] = useState<StudentMetrics>({
@@ -215,10 +227,10 @@ export default function Page() {
   }, [])
 
   useEffect(() => {
-    void studentService.countStudents().then(total => {
+    void studentService.countStudents(undefined, schoolId).then(total => {
       setMetrics(m => ({ ...m, total }))
     })
-  }, [])
+  }, [schoolId])
 
   useEffect(() => {
     activePageRef.current = 1
@@ -231,6 +243,7 @@ export default function Page() {
         const result = await studentService.getStudents({
           query: activeQuery,
           page: 1,
+          schoolId: schoolId ?? null,
         })
         const items = enrichItems(result.items)
         setStudents(items)
@@ -246,7 +259,7 @@ export default function Page() {
     }
 
     void fetchFirstPage()
-  }, [activeQuery, enrichItems])
+  }, [activeQuery, enrichItems, schoolId])
 
   useEffect(() => {
     const sentinel = sentinelRef.current
@@ -264,7 +277,11 @@ export default function Page() {
       setIsFetchingMore(true)
 
       void studentService
-        .getStudents({ query: activeQueryRef.current, page: nextPage })
+        .getStudents({
+          query: activeQueryRef.current,
+          page: nextPage,
+          schoolId: schoolId ?? null,
+        })
         .then(result => {
           const items = enrichItems(result.items)
           setStudents(prev => {
@@ -291,7 +308,7 @@ export default function Page() {
 
     observer.observe(sentinel)
     return () => observer.disconnect()
-  }, [enrichItems])
+  }, [enrichItems, schoolId])
 
   function handleSort(field: SortField) {
     setSort(current => ({
@@ -333,7 +350,13 @@ export default function Page() {
         status: values.status as 'ativo' | 'inativo',
         birthDate: values.birthDate,
       })
-      const withNames = enrichItems([created])
+      const guardianId = values.guardian !== NONE ? values.guardian : null
+      const patchedCreated = {
+        ...created,
+        guardianId: created.guardianId ?? guardianId,
+        guardian: created.guardian ?? (values.guardianName || null),
+      }
+      const withNames = enrichItems([patchedCreated])
       setStudents(prev => [...withNames, ...prev])
       setMetrics(m => ({
         ...m,
@@ -439,6 +462,7 @@ export default function Page() {
         }}
         apiError={createError}
         confirmColor={AppColors.role.escola.primary}
+        defaultSchool={defaultSchool}
       />
 
       <Box className="grid grid-cols-2 gap-3 md:gap-4">

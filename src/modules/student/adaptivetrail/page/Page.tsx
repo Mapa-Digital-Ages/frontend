@@ -1,12 +1,19 @@
 import { Box, Stack } from '@mui/material'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import AppPageContainer from '@/shared/ui/AppPageContainer'
 import OrdinaryHeader from '@/shared/ui/OrdinaryHeader'
 import Pagination from '@/shared/ui/Pagination'
 import { SearchBarAndFilter } from '@/shared/ui/SearchBarAndFilter'
-import { trails, getTrailMetrics } from '../data/trails'
+import {
+  getTrailMetrics,
+  groupTrailsBySubject,
+  studentService,
+} from '../services/service'
 import TrailList from '../components/TrailList'
 import MetricsCard from '@/shared/ui/MetricsCard'
+import LoadingScreen from '@/shared/ui/LoadingScreen'
+import EmptyState from '@/shared/ui/EmptyState'
+import type { Trail } from '../types/types'
 
 const TRAILS_PER_PAGE = 10
 
@@ -15,13 +22,48 @@ function normalizeText(value: string) {
 }
 
 export default function Page() {
+  const [trails, setTrails] = useState<Trail[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
-  const metricCards = useMemo(() => getTrailMetrics(), [])
+
+  useEffect(() => {
+    let active = true
+    async function load() {
+      const studentId = studentService.getStudentId()
+      if (!studentId) {
+        if (active) {
+          setError('Usuário não autenticado.')
+          setIsLoading(false)
+        }
+        return
+      }
+      try {
+        const data = await studentService.listTrails(studentId)
+        if (active) {
+          setTrails(data)
+          setError(null)
+        }
+      } catch {
+        if (active) {
+          setTrails([])
+          setError('Não foi possível carregar as trilhas.')
+        }
+      } finally {
+        if (active) setIsLoading(false)
+      }
+    }
+    void load()
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const metricCards = useMemo(() => getTrailMetrics(trails), [trails])
 
   const filteredTrails = useMemo(() => {
     const normalizedQuery = normalizeText(query.trim())
-
     return trails.filter(trail => {
       const searchableText = normalizeText(
         [trail.name, trail.subject?.label, trail.description].join(' ')
@@ -30,15 +72,20 @@ export default function Page() {
         normalizedQuery.length === 0 || searchableText.includes(normalizedQuery)
       )
     })
-  }, [query])
+  }, [query, trails])
+
+  const subjectGroups = useMemo(
+    () => groupTrailsBySubject(filteredTrails),
+    [filteredTrails]
+  )
 
   const totalPages = Math.max(
     1,
-    Math.ceil(filteredTrails.length / TRAILS_PER_PAGE)
+    Math.ceil(subjectGroups.length / TRAILS_PER_PAGE)
   )
   const activePage = Math.min(currentPage, totalPages)
   const pageStartIndex = (activePage - 1) * TRAILS_PER_PAGE
-  const visibleTrails = filteredTrails.slice(
+  const visibleGroups = subjectGroups.slice(
     pageStartIndex,
     pageStartIndex + TRAILS_PER_PAGE
   )
@@ -46,6 +93,16 @@ export default function Page() {
   function handleQueryChange(nextQuery: string) {
     setQuery(nextQuery)
     setCurrentPage(1)
+  }
+
+  if (isLoading) return <LoadingScreen />
+
+  if (error) {
+    return (
+      <AppPageContainer>
+        <EmptyState title="Erro ao carregar trilhas" description={error} />
+      </AppPageContainer>
+    )
   }
 
   return (
@@ -79,14 +136,13 @@ export default function Page() {
             onQueryChange={handleQueryChange}
             query={query}
             resultsSummary={{
-              count: filteredTrails.length,
-              singularLabel: 'resultado',
-              pluralLabel: 'resultados',
+              count: subjectGroups.length,
+              singularLabel: 'matéria',
+              pluralLabel: 'matérias',
             }}
             searchPlaceholder="Pesquisar trilhas..."
           />
-
-          <TrailList trails={visibleTrails} />
+          <TrailList groups={visibleGroups} />
         </Stack>
 
         <Box sx={{ mt: 'auto', pt: { md: 2, xs: 1.5 }, width: '100%' }}>

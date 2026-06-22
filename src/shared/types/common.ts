@@ -7,6 +7,7 @@ export interface SidebarItem {
   icon: ReactNode
   roles?: UserRole[]
   description?: string
+  section?: string
 }
 
 export interface RouteConfig {
@@ -69,4 +70,15 @@ export interface CompanyStat {
   label: string
   value: string
   description: string
+}
+export interface SubjectItem {
+  id: string
+  slug?: string
+  name: string
+  color?: string
+  contentCount: number
+  tasksCount: number
+  uploadsCount: number
+  trailsCount: number
+  questionnaireCount: number
 }

@@ -4,6 +4,7 @@ import {
   APP_ROUTES,
   buildAdminCorrectionRoute,
   buildParentStudentDetailsRoute,
+  buildStudentSubjectTrailRoute,
   buildStudentTrailRoute,
   DEFAULT_ROUTE_BY_ROLE,
 } from '../../../app/router/paths'
@@ -48,5 +49,9 @@ test('route builders encode dynamic path segments safely', () => {
   assert.equal(
     buildStudentTrailRoute('trail/matemática'),
     '/student/adaptive-trail/trail%2Fmatem%C3%A1tica'
+  )
+  assert.equal(
+    buildStudentSubjectTrailRoute('matemática'),
+    '/student/adaptive-trail/subject/matem%C3%A1tica'
   )
 })

@@ -41,6 +41,7 @@ interface ApprovalActionModalProps {
   role: UserRole
   disableConfirm?: boolean
   isSubmitting?: boolean
+  errorMessage?: string | null
 }
 
 const fieldLabelSx = {
@@ -57,6 +58,20 @@ const inputSx = {
   },
   '& .MuiInputBase-input': {
     fontSize: { md: 14, xs: 13 },
+  },
+}
+
+const textareaSx = {
+  '& .MuiOutlinedInput-root': {
+    alignItems: 'flex-start',
+    borderRadius: '14px',
+  },
+  '& .MuiInputBase-input': {
+    fontSize: { md: 14, xs: 13 },
+    lineHeight: 1.55,
+  },
+  '& textarea.MuiInputBase-input': {
+    resize: 'vertical',
   },
 }
 
@@ -285,12 +300,14 @@ function ApprovalActionModal({
             </Box>
           </Box>
           <AppInput
-            disabled={mode.action === 'create'}
             label="Descrição"
             labelSx={fieldLabelSx}
+            multiline
+            minRows={4}
+            maxRows={8}
             onChange={event => onChange('description', event.target.value)}
-            placeholder="Ex.: Lista de Equações do 7º ano"
-            sx={inputSx}
+            placeholder="Objetivos, habilidades e recorte do conteúdo. Ex.: equações do 1º grau com problemas contextualizados para o 7º ano."
+            sx={textareaSx}
             value={values.description}
           />
         </Box>

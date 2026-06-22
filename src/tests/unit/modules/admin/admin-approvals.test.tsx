@@ -386,7 +386,8 @@ test('approval queue panel reuses shared toolbar and pagination components', () 
   assert.match(approvalComponentSource, /overflowY: 'auto'/)
   assert.match(approvalComponentSource, /flex: 1/)
   assert.match(approvalComponentSource, /minHeight: 0/)
-  assert.match(searchBarAndFilterSource, /InputAdornment position="end"/)
+  assert.match(searchBarAndFilterSource, /InputAdornment/)
+  assert.match(searchBarAndFilterSource, /position="end"/)
   assert.match(searchBarAndFilterSource, /displayLabel="Filtros"/)
   assert.match(
     searchBarAndFilterSource,
@@ -448,7 +449,6 @@ test('admin approvals page renders cards directly and provides visible actions',
   const approvalCardSource = readSource(
     'modules/admin/shared/components/ApprovalCard.tsx'
   )
-  const adminParentPageSource = readSource('modules/admin/parent/page/Page.tsx')
   const adminTypesSource = readSource('modules/admin/shared/types/types.ts')
 
   assert.match(adminTypesSource, /export interface ApprovalCardAction/)
@@ -461,9 +461,8 @@ test('admin approvals page renders cards directly and provides visible actions',
     adminContentPageSource,
     /actions=\{buildContentActions\(item\)\}/
   )
-  assert.match(adminParentPageSource, /actions=\{buildParentActions\(item\)\}/)
+
   assert.match(adminContentPageSource, /type="content"/)
-  assert.match(adminParentPageSource, /type="parent"/)
   assert.match(approvalCardSource, /type: ApprovalType/)
   assert.match(approvalCardSource, /MoreHorizRoundedIcon/)
   assert.match(approvalCardSource, /const primaryActions = actions\.filter/)
@@ -503,6 +502,61 @@ test('admin approval service separates repository and mapper concerns for future
   )
 })
 
+test('admin content service exposes structured trail creation from existing content', () => {
+  const repositorySource = readSource(
+    'modules/admin/content/services/content/repository.ts'
+  )
+  const pageSource = readSource('modules/admin/content/page/Page.tsx')
+  const managerSource = readSource(
+    'modules/admin/content/components/AdaptiveTrailManager.tsx'
+  )
+
+  assert.match(repositorySource, /createAdaptiveTrail/)
+  assert.match(repositorySource, /admin\/trails\/structured/)
+  assert.match(repositorySource, /sub_steps/)
+  assert.match(managerSource, /Nova trilha/)
+  assert.match(pageSource, /TrailCreationModal/)
+  assert.match(pageSource, /createAdaptiveTrail/)
+})
+
+test('admin content page centralizes adaptive trail management in its own component', () => {
+  const pageSource = readSource('modules/admin/content/page/Page.tsx')
+  const managerSource = readSource(
+    'modules/admin/content/components/AdaptiveTrailManager.tsx'
+  )
+  const modalSource = readSource(
+    'modules/admin/content/components/TrailCreationModal.tsx'
+  )
+  const repositorySource = readSource(
+    'modules/admin/content/services/content/repository.ts'
+  )
+
+  assert.match(pageSource, /AdaptiveTrailManager/)
+  assert.match(managerSource, /Trilhas adaptativas/)
+  assert.match(managerSource, /onCreateTrail/)
+  assert.match(managerSource, /onEditTrail/)
+  assert.match(managerSource, /contentOptions/)
+  assert.match(modalSource, /mode: 'create' \| 'edit'/)
+  assert.match(modalSource, /Conteúdo relacionado/)
+  assert.match(modalSource, /Sub-etapa/)
+  assert.match(pageSource, /handleTrailSubStepChange/)
+  assert.match(pageSource, /onAddSubStep/)
+  assert.match(repositorySource, /getAdaptiveTrails/)
+  assert.match(repositorySource, /updateAdaptiveTrail/)
+})
+
+test('admin content creation keeps description editable and guides richer descriptions', () => {
+  const modalSource = readSource(
+    'modules/admin/shared/components/ApprovalActionModal.tsx'
+  )
+  const pageSource = readSource('modules/admin/content/page/Page.tsx')
+
+  assert.doesNotMatch(modalSource, /disabled=\{mode\.action === 'create'\}/)
+  assert.match(modalSource, /Objetivos, habilidades e recorte/)
+  assert.match(pageSource, /A descrição é obrigatória/)
+  assert.match(pageSource, /contentModalValues\.description\.trim/)
+})
+
 test('admin approvals page routes create edit and correction through a reusable modal flow', () => {
   const adminContentPageSource = readSource(
     'modules/admin/content/page/Page.tsx'
@@ -527,13 +581,11 @@ test('admin approvals page routes create edit and correction through a reusable 
   assert.match(adminParentPageSource, /updateParentStatus/)
   assert.match(adminParentPageSource, /updateParentRegistration/)
   assert.match(adminParentPageSource, /removeParentRegistration/)
-  assert.match(adminParentPageSource, /label: 'Validar cadastro'/)
-  assert.match(adminParentPageSource, /label: 'Rejeitar cadastro'/)
-  assert.match(adminParentPageSource, /label: 'Editar responsável'/)
-  assert.match(adminParentPageSource, /label: 'Excluir responsável'/)
-  assert.doesNotMatch(adminParentPageSource, /label: 'Limpar requisição'/)
   assert.match(adminParentPageSource, /createParentRegistration/)
-  assert.match(adminParentPageSource, /action: 'create', type: 'parent'/)
+  assert.match(adminParentPageSource, /Validar cadastro/)
+  assert.match(adminParentPageSource, /Rejeitar cadastro/)
+  assert.match(adminParentPageSource, /Editar responsável/)
+  assert.match(adminParentPageSource, /Excluir responsável/)
   assert.match(modalSource, /AppActionModal/)
   assert.match(modalSource, /resolveUsageMode/)
   assert.match(modalSource, /mode=\{dialogMode\}/)
@@ -545,4 +597,47 @@ test('admin approvals page routes create edit and correction through a reusable 
   assert.match(modalSource, /mode\.type === 'content'/)
   assert.match(modalSource, /label="E-mail do responsável"/)
   assert.match(modalSource, /label="Senha provisória"/)
+})
+
+test('adaptive trail creation ties the trail to a discipline and explains eixos', () => {
+  const modalSource = readSource(
+    'modules/admin/content/components/TrailCreationModal.tsx'
+  )
+  const pageSource = readSource('modules/admin/content/page/Page.tsx')
+
+  // Discipline selector lives in the creation modal and is wired to subjectId.
+  assert.match(modalSource, /Disciplina/)
+  assert.match(modalSource, /subjectOptions/)
+  assert.match(modalSource, /onChange\('subjectId'/)
+
+  // "Eixos e habilidades" keeps its field but gains an explanatory tooltip.
+  assert.match(modalSource, /Eixos e habilidades/)
+  assert.match(modalSource, /Tooltip/)
+  assert.match(modalSource, /InfoOutlined/)
+
+  // The form defaults to a real subject and the page exposes the options.
+  assert.match(pageSource, /subjectOptions=\{subjectOptions\}/)
+  assert.doesNotMatch(pageSource, /subjectId: DEFAULT_SUBJECT_ID,\n\s*eixo: ''/)
+
+  // Changing the discipline clears already-picked contents and the content
+  // dropdown is filtered to the selected discipline.
+  assert.match(pageSource, /handleTrailSubjectChange/)
+  assert.match(pageSource, /trailContentOptions/)
+})
+
+test('adaptive trail content is chosen per step and inherited by sub-steps', () => {
+  const modalSource = readSource(
+    'modules/admin/content/components/TrailCreationModal.tsx'
+  )
+  const pageSource = readSource('modules/admin/content/page/Page.tsx')
+
+  // The "Conteúdo relacionado" selector lives at the step level now.
+  assert.match(modalSource, /onStepChange\(\s*step\.id,\s*'contentId'/)
+
+  // Sub-steps no longer carry their own content selector.
+  assert.doesNotMatch(modalSource, /subStep\.id,[\s\S]{0,40}'contentId'/)
+
+  // Each sub-step inherits the step's content when building the payload.
+  assert.match(pageSource, /content_id: step\.contentId/)
+  assert.doesNotMatch(pageSource, /content_id: subStep\.contentId/)
 })

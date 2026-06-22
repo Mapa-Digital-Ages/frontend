@@ -35,6 +35,11 @@ import type {
   StudentItem,
   StudentMetrics,
 } from '@/modules/admin/student/types/types'
+import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded'
+import BatchImportFeedback from '@/modules/admin/shared/components/BatchImportFeedback'
+import CsvTemplateDownloadButton from '@/modules/admin/shared/components/CsvTemplateDownloadButton'
+import type { BatchImportResult } from '@/modules/admin/shared/services/batchImport'
+import { useSearchParams } from 'react-router-dom'
 
 type SortField = 'name' | 'school' | 'year'
 type SortDirection = 'asc' | 'desc'
@@ -134,6 +139,7 @@ function SortableHeader({
 
 export default function Page() {
   const theme = useTheme()
+  const [searchParams] = useSearchParams()
   const statusConfig: Record<string, TagContext> = {
     ativo: { label: 'Ativo', color: theme.palette.success.main },
     inativo: { label: 'Inativo', color: theme.palette.warning.main },
@@ -175,7 +181,9 @@ export default function Page() {
     activeQueryRef.current = activeQuery
   }, [activeQuery])
 
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(
+    searchParams.get('create') === 'student'
+  )
   const [createError, setCreateError] = useState<string | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
@@ -183,6 +191,17 @@ export default function Page() {
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
     null
   )
+
+  const [isBatchStudentOpen, setIsBatchStudentOpen] = useState(false)
+  const [batchStudentFile, setBatchStudentFile] = useState<File | null>(null)
+  const [batchStudentResult, setBatchStudentResult] =
+    useState<BatchImportResult | null>(null)
+  const [batchStudentError, setBatchStudentError] = useState<string | null>(
+    null
+  )
+  const [isBatchStudentSubmitting, setIsBatchStudentSubmitting] =
+    useState(false)
+  const [batchStudentRefreshKey, setBatchStudentRefreshKey] = useState(0)
 
   useEffect(() => {
     const timer = setTimeout(() => setActiveQuery(inputQuery), 350)
@@ -216,12 +235,6 @@ export default function Page() {
   }, [])
 
   useEffect(() => {
-    void studentService.countStudents().then(total => {
-      setMetrics(m => ({ ...m, total }))
-    })
-  }, [])
-
-  useEffect(() => {
     activePageRef.current = 1
 
     const fetchFirstPage = async () => {
@@ -239,6 +252,7 @@ export default function Page() {
         setFilteredTotal(result.total)
         setMetrics(m => ({
           ...m,
+          total: result.total,
           schools: new Set(items.map(s => s.school).filter(Boolean)).size,
         }))
       } finally {
@@ -247,7 +261,7 @@ export default function Page() {
     }
 
     void fetchFirstPage()
-  }, [activeQuery, enrichItems])
+  }, [activeQuery, enrichItems, batchStudentRefreshKey])
 
   useEffect(() => {
     const sentinel = sentinelRef.current
@@ -403,6 +417,27 @@ export default function Page() {
     setSelectedStudentId(null)
   }
 
+  async function handleBatchStudentImport() {
+    if (!batchStudentFile || isBatchStudentSubmitting) return
+
+    setIsBatchStudentSubmitting(true)
+    setBatchStudentError(null)
+    setBatchStudentResult(null)
+    try {
+      const result = await studentService.importStudents(batchStudentFile)
+      setBatchStudentResult(result)
+      if (result.created > 0) setBatchStudentRefreshKey(key => key + 1)
+    } catch (error) {
+      setBatchStudentError(
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível importar os alunos.'
+      )
+    } finally {
+      setIsBatchStudentSubmitting(false)
+    }
+  }
+
   const headerActions = (
     <Button
       data-testid="create-student-button"
@@ -454,7 +489,107 @@ export default function Page() {
           void handleCreateStudent(values)
         }}
         apiError={createError}
+        batchButton={
+          <Button
+            fullWidth
+            variant="outlined"
+            startIcon={<UploadFileRoundedIcon />}
+            onClick={() => {
+              setIsCreateModalOpen(false)
+              setIsBatchStudentOpen(true)
+            }}
+            sx={{
+              borderColor: alpha(AppColors.role.admin.secondary, 0.4),
+              color: AppColors.role.admin.secondary,
+              borderRadius: '10px',
+              fontWeight: 700,
+              textTransform: 'none',
+              py: 1,
+              '&:hover': {
+                borderColor: AppColors.role.admin.secondary,
+                backgroundColor: alpha(AppColors.role.admin.secondary, 0.05),
+              },
+            }}
+          >
+            Cadastrar em lote
+          </Button>
+        }
       />
+
+      {/* Batch student upload modal */}
+      <AppActionModal
+        open={isBatchStudentOpen}
+        onClose={() => {
+          setIsBatchStudentOpen(false)
+          setBatchStudentFile(null)
+          setBatchStudentResult(null)
+          setBatchStudentError(null)
+        }}
+        title="Cadastrar alunos em lote"
+        description="Envie um arquivo .csv com os dados dos alunos."
+        onConfirm={() => void handleBatchStudentImport()}
+        confirmLabel="Enviar arquivo"
+        cancelLabel="Cancelar"
+        confirmColor={AppColors.role.admin.secondary}
+        confirmHoverColor={theme.palette.error.dark}
+        disableConfirm={!batchStudentFile || isBatchStudentSubmitting}
+        loading={isBatchStudentSubmitting}
+      >
+        <Box
+          component="label"
+          sx={{
+            border: '1px dashed',
+            borderColor: alpha(AppColors.role.admin.secondary, 0.4),
+            borderRadius: '14px',
+            p: 3,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 1,
+            cursor: 'pointer',
+            textAlign: 'center',
+            backgroundColor: alpha(AppColors.role.admin.secondary, 0.04),
+            '&:hover': {
+              backgroundColor: alpha(AppColors.role.admin.secondary, 0.08),
+            },
+          }}
+        >
+          <UploadFileRoundedIcon
+            sx={{ color: AppColors.role.admin.secondary, fontSize: 32 }}
+          />
+          <Typography sx={{ fontWeight: 700, fontSize: 14 }}>
+            {batchStudentFile
+              ? batchStudentFile.name
+              : 'Clique para selecionar um arquivo .csv'}
+          </Typography>
+          <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
+            Apenas arquivos .csv são aceitos.
+          </Typography>
+          <input
+            type="file"
+            accept=".csv,text/csv"
+            hidden
+            onChange={e => {
+              const file = e.target.files?.[0] ?? null
+              if (file && !file.name.toLowerCase().endsWith('.csv')) {
+                e.target.value = ''
+                return
+              }
+              setBatchStudentFile(file)
+              setBatchStudentResult(null)
+              setBatchStudentError(null)
+            }}
+          />
+        </Box>
+        <CsvTemplateDownloadButton
+          color={AppColors.role.admin.secondary}
+          template="students"
+        />
+        <BatchImportFeedback
+          error={batchStudentError}
+          result={batchStudentResult}
+        />
+      </AppActionModal>
 
       <Box className="grid grid-cols-2 gap-3 md:gap-4">
         {cards.map(card => (

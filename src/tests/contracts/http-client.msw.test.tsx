@@ -49,6 +49,38 @@ test('httpClient sends auth headers, query params and JSON body through fetch', 
   expect(response.message).toBe('created')
 })
 
+test('httpClient sends FormData as multipart without JSON serialization', async () => {
+  setCookie(COOKIE_KEYS.authToken, 'token-123')
+
+  server.use(
+    rest.post('http://localhost:8000/student/batch', (req, res, ctx) => {
+      expect(req.headers.get('authorization')).toBe('Bearer token-123')
+      expect(req.headers.get('content-type')).toContain('multipart/form-data')
+      expect(req.headers.get('content-type')).not.toContain('application/json')
+
+      return res(
+        ctx.json({
+          status: 'completed',
+          total_processed: 1,
+          created: 1,
+          failed: 0,
+          message: 'OK',
+          errors: [],
+        })
+      )
+    })
+  )
+
+  const formData = new FormData()
+  formData.append('file', new File(['email'], 'alunos.csv'))
+  const response = await httpClient.post<{ created: number }>(
+    'student/batch',
+    formData
+  )
+
+  expect(response.data.created).toBe(1)
+})
+
 test('httpClient preserves path prefixes when base URL has no trailing slash', async () => {
   const apiClient = new HttpClient('http://localhost:8000/api')
 

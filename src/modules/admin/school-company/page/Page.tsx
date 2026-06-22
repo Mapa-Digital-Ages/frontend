@@ -3,13 +3,18 @@ import PageHeader from '@/shared/ui/PageHeader'
 import { Box } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 import CompanyPage from './CompanyPage'
 import SchoolPage from './SchoolPage'
 
 export default function Page() {
   const theme = useTheme()
-  const [view, setView] = useState<'escola' | 'empresa'>('escola')
+  const [searchParams] = useSearchParams()
+  const createTarget = searchParams.get('create')
+  const [view, setView] = useState<'escola' | 'empresa'>(() =>
+    createTarget === 'company' ? 'empresa' : 'escola'
+  )
 
   return (
     <AppPageContainer className="gap-4 md:gap-5">
@@ -63,7 +68,11 @@ export default function Page() {
         ))}
       </Box>
 
-      {view === 'escola' ? <SchoolPage /> : <CompanyPage />}
+      {view === 'escola' ? (
+        <SchoolPage openCreate={createTarget === 'school'} />
+      ) : (
+        <CompanyPage openCreate={createTarget === 'company'} />
+      )}
     </AppPageContainer>
   )
 }

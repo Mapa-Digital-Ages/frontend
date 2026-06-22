@@ -9,11 +9,17 @@ export default defineConfig({
     env: {
       EMAIL_LOGIN_ALUNO: process.env.VITE_EMAIL_LOGIN_ALUNO,
       PASSWORD_LOGIN_ALUNO: process.env.VITE_PASSWORD_LOGIN_ALUNO,
-      //  | 'responsavel'
-      //  | 'admin'
-      //  | 'empresa'
-      //  | 'escola'
-      //  | 'escola_empresa'
+      EMAIL_LOGIN_RESPONSAVEL: process.env.VITE_EMAIL_LOGIN_RESPONSAVEL,
+      PASSWORD_LOGIN_RESPONSAVEL: process.env.VITE_PASSWORD_LOGIN_RESPONSAVEL,
+      EMAIL_LOGIN_ADMIN: process.env.VITE_EMAIL_LOGIN_ADMIN,
+      PASSWORD_LOGIN_ADMIN: process.env.VITE_PASSWORD_LOGIN_ADMIN,
+      EMAIL_LOGIN_EMPRESA: process.env.VITE_EMAIL_LOGIN_EMPRESA,
+      PASSWORD_LOGIN_EMPRESA: process.env.VITE_PASSWORD_LOGIN_EMPRESA,
+      EMAIL_LOGIN_ESCOLA: process.env.VITE_EMAIL_LOGIN_ESCOLA,
+      PASSWORD_LOGIN_ESCOLA: process.env.VITE_PASSWORD_LOGIN_ESCOLA,
+      EMAIL_LOGIN_ESCOLA_EMPRESA: process.env.VITE_EMAIL_LOGIN_ESCOLA_EMPRESA,
+      PASSWORD_LOGIN_ESCOLA_EMPRESA:
+        process.env.VITE_PASSWORD_LOGIN_ESCOLA_EMPRESA,
     },
     setupNodeEvents(on, config) {
       return config

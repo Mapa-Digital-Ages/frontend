@@ -7,9 +7,11 @@ import AppTopbar from '@/shared/ui/AppTopbar'
 import ThemeModeToggle from '@/shared/ui/ThemeMode'
 import { APP_CONFIG } from '@/shared/constants/app'
 import { NAVIGATION_BY_ROLE } from '@/app/navigation'
+import { APP_ROUTES } from '@/app/router/paths'
 import { useAuth } from '@/app/auth/hook'
 import { useBreakpoint } from '@/shared/hooks/useBreakpoint'
 import { useUserRole } from '@/app/access/hook'
+import { useSchoolIsPrivate } from '@/modules/school/shared/hooks/useSchoolIsPrivate'
 import {
   getRoleAccentColor,
   getRoleHoverStyle,
@@ -32,7 +34,14 @@ function DashboardLayout() {
       ? tabletCollapsed
       : desktopCollapsed
   const currentRole = role ?? APP_CONFIG.defaultRole
-  const sidebarItems = NAVIGATION_BY_ROLE[currentRole]
+  const { isPrivate: isPrivateSchool } = useSchoolIsPrivate()
+  const sidebarItems = NAVIGATION_BY_ROLE[currentRole].filter(item => {
+    // Requesting a partner is reserved for public schools.
+    if (item.path === APP_ROUTES.school.requestPartner) {
+      return !isPrivateSchool
+    }
+    return true
+  })
   const userInitial = user?.name?.charAt(0).toUpperCase() ?? 'M'
   const rolePalette = getRolePalette(theme, currentRole)
   const avatarBackgroundColor = getRoleAccentColor(theme, currentRole)

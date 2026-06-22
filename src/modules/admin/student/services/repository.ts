@@ -15,6 +15,7 @@ import {
   type StudentListDto,
 } from './mapper'
 import { getCachedStudentList, invalidateStudentListCache } from './listCache'
+import { importCsvBatch } from '@/modules/admin/shared/services/batchImport'
 
 export function createStudentRepository({
   client,
@@ -25,6 +26,7 @@ export function createStudentRepository({
       const page = query.page ?? 1
       const name = query.name ?? query.query
       const email = query.email
+      const schoolId = query.schoolId
 
       return getCachedStudentList(
         {
@@ -32,6 +34,7 @@ export function createStudentRepository({
           name,
           page,
           size: pageSize,
+          schoolId,
         },
         async () => {
           const params: Record<string, string | number> = {
@@ -43,6 +46,9 @@ export function createStudentRepository({
           }
           if (email) {
             params.email = email
+          }
+          if (schoolId) {
+            params.school_id = schoolId
           }
           const response = await client.get<StudentDto[] | StudentListDto>(
             'student',
@@ -64,6 +70,12 @@ export function createStudentRepository({
       return mapStudentDto(response.data)
     },
 
+    async importStudents(file: File) {
+      const result = await importCsvBatch(client, 'student/batch', file)
+      if (result.created > 0) invalidateStudentListCache()
+      return result
+    },
+
     async updateStudent(
       id: string,
       input: UpdateStudentInput
@@ -81,9 +93,10 @@ export function createStudentRepository({
       invalidateStudentListCache()
     },
 
-    async countStudents(name?: string): Promise<number> {
+    async countStudents(name?: string, schoolId?: string): Promise<number> {
       const params: Record<string, string> = {}
       if (name) params.name = name
+      if (schoolId) params.school_id = schoolId
       const response = await client.get<{ total: number }>('student/count', {
         query: params,
       })

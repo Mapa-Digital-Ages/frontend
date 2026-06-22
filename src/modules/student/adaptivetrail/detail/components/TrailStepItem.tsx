@@ -11,8 +11,8 @@ import type {
   AdaptiveTrailStep,
   AdaptiveTrailStepStatus,
   AdaptiveTrailSubStep,
-} from '../types/types'
-import { highlightText } from '../hooks/useTrailSearch'
+} from '../../types/types'
+import { highlightText } from '../../hooks/useTrailSearch'
 
 interface TrailStepItemProps {
   isExpanded: boolean
@@ -76,9 +76,13 @@ const subStepKindLabel: Record<AdaptiveTrailSubStep['kind'], string> = {
   video: 'Vídeo',
 }
 
-// Dot sizes for the sub-step timeline indicator
-const DOT_SIZE = { md: 28, xs: 24 }
-const DOT_ICON = { md: 13, xs: 11 }
+const STEP_CIRCLE_SIZE = { md: 32, xs: 28 }
+const STEP_CIRCLE_ICON_SIZE = { md: 16, xs: 14 }
+const STEP_TOP_SPACER = { md: 20, xs: 18 }
+
+const SUB_STEP_DOT_SIZE = { md: 28, xs: 24 }
+const SUB_STEP_DOT_ICON_SIZE = { md: 13, xs: 11 }
+const SUB_STEP_TOP_SPACER = { md: 20, xs: 18 }
 
 function SubStepItem({
   isFirst,
@@ -203,7 +207,13 @@ function SubStepItem({
   )
 
   return (
-    <Box sx={{ display: 'flex', gap: { md: 1.5, xs: 1 } }}>
+    <Box
+      sx={{
+        alignItems: 'stretch',
+        display: 'flex',
+        gap: { md: 1.5, xs: 1 },
+      }}
+    >
       {/* Sub-step timeline: dot + connecting lines */}
       <Box
         sx={{
@@ -211,13 +221,16 @@ function SubStepItem({
           display: 'flex',
           flexDirection: 'column',
           flexShrink: 0,
-          width: DOT_SIZE,
+          width: SUB_STEP_DOT_SIZE,
         }}
       >
         <Box
           sx={{
             backgroundColor: topSpacerColor,
-            flex: '0 0 14px',
+            flex: {
+              md: `0 0 ${SUB_STEP_TOP_SPACER.md}px`,
+              xs: `0 0 ${SUB_STEP_TOP_SPACER.xs}px`,
+            },
             transition: 'background-color 200ms ease',
             width: 2,
           }}
@@ -230,24 +243,24 @@ function SubStepItem({
               : isLocked
                 ? alpha(theme.palette.text.secondary, isDark ? 0.1 : 0.07)
                 : alpha(subjectColor, isDark ? 0.22 : 0.14),
-            border: '2px solid',
+            border: '1px solid',
             borderColor: dotColor,
             borderRadius: '50%',
             color: dotColor,
             display: 'flex',
             flexShrink: 0,
             fontWeight: 800,
-            height: DOT_SIZE,
+            height: SUB_STEP_DOT_SIZE,
             justifyContent: 'center',
-            width: DOT_SIZE,
+            width: SUB_STEP_DOT_SIZE,
           }}
         >
           {isCompleted ? (
-            <CheckRoundedIcon sx={{ fontSize: DOT_ICON }} />
+            <CheckRoundedIcon sx={{ fontSize: SUB_STEP_DOT_ICON_SIZE }} />
           ) : isLocked ? (
-            <LockOutlinedIcon sx={{ fontSize: DOT_ICON }} />
+            <LockOutlinedIcon sx={{ fontSize: SUB_STEP_DOT_ICON_SIZE }} />
           ) : (
-            <PlayArrowRoundedIcon sx={{ fontSize: DOT_ICON }} />
+            <PlayArrowRoundedIcon sx={{ fontSize: SUB_STEP_DOT_ICON_SIZE }} />
           )}
         </Box>
         {!isLast && (
@@ -350,20 +363,6 @@ function SubStepItem({
               sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 0.5, mb: 0.4 }}
             >
               <Chip
-                label={`Etapa ${subStep.order}`}
-                size="small"
-                sx={{
-                  backgroundColor: isAvailable
-                    ? alpha(subjectColor, isDark ? 0.22 : 0.14)
-                    : alpha(theme.palette.text.secondary, isDark ? 0.14 : 0.08),
-                  color: isAvailable ? subjectColor : 'text.secondary',
-                  fontSize: 11,
-                  fontWeight: 700,
-                  height: 20,
-                  '& .MuiChip-label': { px: 0.75 },
-                }}
-              />
-              <Chip
                 icon={
                   isLocked ? (
                     <LockOutlinedIcon />
@@ -451,7 +450,6 @@ export default function TrailStepItem({
   const isCompleted = step.status === 'completed'
   const isAvailable = step.status === 'available'
 
-  const circleSize = { md: 32, xs: 28 }
   const circleColor = isCompleted
     ? theme.palette.success.main
     : isLocked
@@ -477,26 +475,34 @@ export default function TrailStepItem({
       : lineColor
 
   return (
-    <Box sx={{ display: 'flex', gap: { md: 2, xs: 1.5 } }}>
+    <Box
+      sx={{
+        alignItems: 'stretch',
+        display: 'flex',
+        gap: { md: 2, xs: 1.5 },
+      }}
+    >
       {/* Left: circle + connecting lines */}
       <Box
         sx={{
-          alignItems: 'center',
           display: 'flex',
           flexDirection: 'column',
+          alignItems: 'center',
           flexShrink: 0,
-          width: circleSize,
+          width: STEP_CIRCLE_SIZE,
         }}
       >
         <Box
           sx={{
             backgroundColor: topSpacerColor,
-            flex: '0 0 20px',
+            flex: {
+              md: `0 0 ${STEP_TOP_SPACER.md}px`,
+              xs: `0 0 ${STEP_TOP_SPACER.xs}px`,
+            },
             transition: 'background-color 200ms ease',
             width: 2,
           }}
         />
-
         <Box
           sx={{
             alignItems: 'center',
@@ -505,7 +511,7 @@ export default function TrailStepItem({
               : isAvailable
                 ? alpha(subjectColor, isDark ? 0.2 : 0.12)
                 : alpha(theme.palette.text.secondary, isDark ? 0.1 : 0.06),
-            border: '2px solid',
+            border: '1px solid',
             borderColor: circleColor,
             borderRadius: '50%',
             color: circleColor,
@@ -513,17 +519,17 @@ export default function TrailStepItem({
             flexShrink: 0,
             fontSize: { md: 13, xs: 12 },
             fontWeight: 800,
-            height: circleSize,
+            height: STEP_CIRCLE_SIZE,
             justifyContent: 'center',
-            width: circleSize,
+            width: STEP_CIRCLE_SIZE,
           }}
         >
           {isCompleted ? (
-            <CheckRoundedIcon sx={{ fontSize: { md: 16, xs: 14 } }} />
+            <CheckRoundedIcon sx={{ fontSize: STEP_CIRCLE_ICON_SIZE }} />
           ) : isLocked ? (
-            <LockOutlinedIcon sx={{ fontSize: { md: 14, xs: 12 } }} />
+            <LockOutlinedIcon sx={{ fontSize: STEP_CIRCLE_ICON_SIZE }} />
           ) : (
-            <PlayArrowRoundedIcon sx={{ fontSize: { md: 16, xs: 14 } }} />
+            <PlayArrowRoundedIcon sx={{ fontSize: STEP_CIRCLE_ICON_SIZE }} />
           )}
         </Box>
 
@@ -544,39 +550,101 @@ export default function TrailStepItem({
       <Box sx={{ flex: 1, minWidth: 0, pb: isLast ? 0 : 2.5 }}>
         {/* Content section header */}
         <Box
+          aria-label={isAvailable ? `Responder etapa ${step.title}` : undefined}
+          component={isAvailable ? 'button' : 'div'}
           onClick={() => !isLocked && onExpand(step)}
+          type={isAvailable ? 'button' : undefined}
           sx={{
-            alignItems: 'flex-start',
+            alignItems: 'center',
+            appearance: 'none',
             backgroundColor: isCompleted
-              ? alpha(theme.palette.success.main, isDark ? 0.08 : 0.05)
-              : isAvailable
-                ? alpha(subjectColor, isDark ? 0.1 : 0.06)
-                : 'transparent',
+              ? alpha(theme.palette.success.main, isDark ? 0.07 : 0.04)
+              : isLocked
+                ? alpha(theme.palette.text.secondary, isDark ? 0.04 : 0.02)
+                : alpha(subjectColor, isDark ? 0.1 : 0.06),
             border: '1px solid',
             borderColor: isCompleted
               ? alpha(theme.palette.success.main, isDark ? 0.22 : 0.16)
-              : isAvailable
-                ? alpha(subjectColor, isDark ? 0.3 : 0.2)
-                : alpha(theme.palette.text.secondary, isDark ? 0.1 : 0.08),
+              : isLocked
+                ? alpha(theme.palette.text.secondary, isDark ? 0.1 : 0.08)
+                : alpha(subjectColor, isDark ? 0.3 : 0.22),
             borderRadius: '16px',
+            boxSizing: 'border-box',
             cursor: isLocked ? 'default' : 'pointer',
             display: 'flex',
             gap: 1.5,
-            p: { md: 2, xs: 1.5 },
+            minHeight: { md: 76, xs: 68 },
+            opacity: isLocked ? 0.72 : 1,
+            p: { md: 1.75, xs: 1.25 },
             transition: 'all 160ms ease',
-            '&:hover': isLocked
-              ? {}
-              : {
-                  backgroundColor: isCompleted
-                    ? alpha(theme.palette.success.main, isDark ? 0.13 : 0.09)
-                    : alpha(subjectColor, isDark ? 0.15 : 0.1),
-                  borderColor: isCompleted
-                    ? alpha(theme.palette.success.main, isDark ? 0.32 : 0.24)
-                    : alpha(subjectColor, isDark ? 0.4 : 0.3),
-                },
+            textAlign: 'left',
+            width: '100%',
+            '&:focus-visible': isAvailable
+              ? {
+                  borderColor: subjectColor,
+                  outline: `3px solid ${alpha(subjectColor, 0.22)}`,
+                  outlineOffset: 2,
+                }
+              : {},
+            '&:hover': isAvailable
+              ? {
+                  backgroundColor: alpha(subjectColor, isDark ? 0.15 : 0.1),
+                  borderColor: alpha(subjectColor, isDark ? 0.4 : 0.3),
+                }
+              : {},
           }}
         >
+          {/* Kind icon */}
+          <Box
+            sx={{
+              alignItems: 'center',
+              backgroundColor: isCompleted
+                ? alpha(theme.palette.success.main, isDark ? 0.2 : 0.12)
+                : isLocked
+                  ? alpha(theme.palette.text.secondary, isDark ? 0.12 : 0.08)
+                  : alpha(subjectColor, isDark ? 0.2 : 0.12),
+              borderRadius: '10px',
+              color: isCompleted
+                ? theme.palette.success.main
+                : isLocked
+                  ? 'text.secondary'
+                  : subjectColor,
+              display: 'flex',
+              flexShrink: 0,
+              height: { md: 34, xs: 30 },
+              justifyContent: 'center',
+              width: { md: 34, xs: 30 },
+            }}
+          >
+            {isCompleted ? (
+              <CheckRoundedIcon sx={{ fontSize: { md: 16, xs: 14 } }} />
+            ) : isLocked ? (
+              <LockOutlinedIcon sx={{ fontSize: { md: 15, xs: 13 } }} />
+            ) : (
+              // subStepKindIcon[subStep.kind]
+              <CheckRoundedIcon sx={{ fontSize: { md: 16, xs: 14 } }} />
+            )}
+          </Box>
           <Box flex={1} minWidth={0}>
+            <Stack
+              direction="row"
+              sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 0.5, mb: 0.4 }}
+            >
+              <Chip
+                label={`Etapa ${step.order}`}
+                size="small"
+                sx={{
+                  backgroundColor: isAvailable
+                    ? alpha(subjectColor, isDark ? 0.22 : 0.14)
+                    : alpha(theme.palette.text.secondary, isDark ? 0.14 : 0.08),
+                  color: isAvailable ? subjectColor : 'text.secondary',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  height: 20,
+                  '& .MuiChip-label': { px: 0.75 },
+                }}
+              />
+            </Stack>
             <Typography
               sx={{
                 color: 'text.primary',

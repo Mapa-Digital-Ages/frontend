@@ -17,6 +17,11 @@ import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded'
 import { Box, Button, IconButton, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { HttpRequestError } from '@/shared/lib/http/client'
+import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded'
+import BatchImportFeedback from '@/modules/admin/shared/components/BatchImportFeedback'
+import CsvTemplateDownloadButton from '@/modules/admin/shared/components/CsvTemplateDownloadButton'
+import type { BatchImportResult } from '@/modules/admin/shared/services/batchImport'
 
 const SCHOOL_PAGE_SIZE = 6
 const STUDENT_PAGE_SIZE = 10
@@ -38,7 +43,11 @@ const studentFilterOptions = [
   { label: 'Inativo', value: 'inativo' },
 ]
 
-export default function SchoolPage() {
+interface SchoolPageProps {
+  openCreate?: boolean
+}
+
+export default function SchoolPage({ openCreate = false }: SchoolPageProps) {
   const theme = useTheme()
 
   // Schools
@@ -62,9 +71,19 @@ export default function SchoolPage() {
   const studentSentinelRef = useRef<HTMLDivElement | null>(null)
 
   // Modals
-  const [isNewSchoolModalOpen, setIsNewSchoolModalOpen] = useState(false)
+  const [isNewSchoolModalOpen, setIsNewSchoolModalOpen] = useState(openCreate)
   const [isNewStudentModalOpen, setIsNewStudentModalOpen] = useState(false)
   const [studentApiError, setStudentApiError] = useState<string | null>(null)
+  const [newSchoolApiError, setNewSchoolApiError] = useState<string | null>(
+    null
+  )
+  const [isBatchSchoolOpen, setIsBatchSchoolOpen] = useState(false)
+  const [batchSchoolFile, setBatchSchoolFile] = useState<File | null>(null)
+  const [batchSchoolResult, setBatchSchoolResult] =
+    useState<BatchImportResult | null>(null)
+  const [batchSchoolError, setBatchSchoolError] = useState<string | null>(null)
+  const [isBatchSchoolSubmitting, setIsBatchSchoolSubmitting] = useState(false)
+
   const [newSchool, setNewSchool] = useState({
     name: '',
     email: '',
@@ -221,6 +240,7 @@ export default function SchoolPage() {
 
   async function handleCreateSchool() {
     if (!canCreateSchool) return
+    setNewSchoolApiError(null)
     try {
       const created = await adminSchoolService.createSchool({
         name: newSchool.name.trim(),
@@ -238,9 +258,51 @@ export default function SchoolPage() {
         confirmPassword: '',
         isPrivate: false,
       })
+      setNewSchoolApiError(null)
       setIsNewSchoolModalOpen(false)
+    } catch (err) {
+      let message = 'Não foi possível criar a escola. Tente novamente.'
+      if (err instanceof HttpRequestError && err.response) {
+        try {
+          const body = (await err.response.json()) as {
+            detail?: string
+            message?: string
+          }
+          const apiMessage = (body.detail ?? body.message ?? '').toLowerCase()
+          if (apiMessage.includes('email')) {
+            message = 'Este e-mail já está cadastrado no sistema.'
+          } else if (apiMessage) {
+            message = apiMessage
+          }
+        } catch {
+          /* ignora */
+        }
+      }
+      setNewSchoolApiError(message)
+    }
+  }
+
+  async function handleBatchSchoolImport() {
+    if (!batchSchoolFile || isBatchSchoolSubmitting) return
+
+    setIsBatchSchoolSubmitting(true)
+    setBatchSchoolError(null)
+    setBatchSchoolResult(null)
+    try {
+      const result = await adminSchoolService.importSchools(batchSchoolFile)
+      setBatchSchoolResult(result)
+      if (result.created > 0) {
+        setSchoolPage(1)
+        await loadSchools(1, query)
+      }
     } catch (error) {
-      console.error('Erro ao criar escola:', error)
+      setBatchSchoolError(
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível importar as escolas.'
+      )
+    } finally {
+      setIsBatchSchoolSubmitting(false)
     }
   }
 
@@ -263,10 +325,40 @@ export default function SchoolPage() {
       setStudentPage(1)
       setHasMoreStudents(false)
       if (selectedSchoolId) loadStudents(selectedSchoolId, 1, studentQuery)
-    } catch {
-      setStudentApiError(
-        'Erro ao criar aluno. Verifique os dados e tente novamente.'
-      )
+    } catch (err) {
+      let message = 'Não foi possível criar o aluno. Tente novamente.'
+      if (err instanceof HttpRequestError && err.response) {
+        try {
+          const body = (await err.response.json()) as {
+            detail?: unknown
+            message?: string
+          }
+          const apiMessage =
+            typeof body.detail === 'string'
+              ? body.detail
+              : typeof body.message === 'string'
+                ? body.message
+                : ''
+          const searchableApiMessage =
+            `${apiMessage} ${JSON.stringify(body.detail ?? '')}`.toLowerCase()
+
+          if (searchableApiMessage.includes('email')) {
+            message = 'Este e-mail já está cadastrado no sistema.'
+          } else if (
+            searchableApiMessage.includes('last_name') ||
+            searchableApiMessage.includes('last name') ||
+            searchableApiMessage.includes('surname') ||
+            searchableApiMessage.includes('sobrenome')
+          ) {
+            message = 'Informe o nome e o sobrenome do aluno.'
+          } else if (apiMessage) {
+            message = apiMessage
+          }
+        } catch {
+          /* ignora */
+        }
+      }
+      setStudentApiError(message)
     }
   }
 
@@ -863,6 +955,7 @@ export default function SchoolPage() {
         open={isNewSchoolModalOpen}
         onClose={() => {
           setIsNewSchoolModalOpen(false)
+          setNewSchoolApiError(null)
           setNewSchool({
             name: '',
             email: '',
@@ -881,6 +974,37 @@ export default function SchoolPage() {
         disableConfirm={!canCreateSchool}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          <Button
+            fullWidth
+            variant="outlined"
+            startIcon={<UploadFileRoundedIcon />}
+            onClick={() => {
+              setIsNewSchoolModalOpen(false)
+              setIsBatchSchoolOpen(true)
+            }}
+            sx={{
+              borderColor: alpha(AppColors.role.admin.secondary, 0.4),
+              color: AppColors.role.admin.secondary,
+              borderRadius: '10px',
+              fontWeight: 700,
+              textTransform: 'none',
+              py: 1,
+              '&:hover': {
+                borderColor: AppColors.role.admin.secondary,
+                backgroundColor: alpha(AppColors.role.admin.secondary, 0.05),
+              },
+            }}
+          >
+            Cadastrar em lote
+          </Button>
+
+          <Box
+            sx={{
+              borderTop: '1px solid',
+              borderColor: 'background.border',
+              mt: 0.5,
+            }}
+          />
           <Box>
             <Typography
               sx={{
@@ -1008,7 +1132,96 @@ export default function SchoolPage() {
               }
             />
           </Box>
+          {newSchoolApiError && (
+            <Box
+              sx={{
+                borderRadius: '10px',
+                color: 'error.main',
+                fontSize: { md: 13, xs: 12 },
+                fontWeight: 600,
+                px: 1,
+                py: 0.5,
+              }}
+            >
+              ✕ {newSchoolApiError}
+            </Box>
+          )}
         </Box>
+      </AppActionModal>
+
+      {/* Batch school upload modal */}
+      <AppActionModal
+        open={isBatchSchoolOpen}
+        onClose={() => {
+          setIsBatchSchoolOpen(false)
+          setBatchSchoolFile(null)
+          setBatchSchoolResult(null)
+          setBatchSchoolError(null)
+        }}
+        title="Cadastrar escolas em lote"
+        description="Envie um arquivo .csv com os dados das escolas."
+        onConfirm={() => void handleBatchSchoolImport()}
+        confirmLabel="Enviar arquivo"
+        cancelLabel="Cancelar"
+        confirmColor={AppColors.role.admin.secondary}
+        confirmHoverColor={theme.palette.error.dark}
+        disableConfirm={!batchSchoolFile || isBatchSchoolSubmitting}
+        loading={isBatchSchoolSubmitting}
+      >
+        <Box
+          component="label"
+          sx={{
+            border: '1px dashed',
+            borderColor: alpha(AppColors.role.admin.secondary, 0.4),
+            borderRadius: '14px',
+            p: 3,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 1,
+            cursor: 'pointer',
+            textAlign: 'center',
+            backgroundColor: alpha(AppColors.role.admin.secondary, 0.04),
+            '&:hover': {
+              backgroundColor: alpha(AppColors.role.admin.secondary, 0.08),
+            },
+          }}
+        >
+          <UploadFileRoundedIcon
+            sx={{ color: AppColors.role.admin.secondary, fontSize: 32 }}
+          />
+          <Typography sx={{ fontWeight: 700, fontSize: 14 }}>
+            {batchSchoolFile
+              ? batchSchoolFile.name
+              : 'Clique para selecionar um arquivo .csv'}
+          </Typography>
+          <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
+            Apenas arquivos .csv são aceitos.
+          </Typography>
+          <input
+            type="file"
+            accept=".csv,text/csv"
+            hidden
+            onChange={e => {
+              const file = e.target.files?.[0] ?? null
+              if (file && !file.name.toLowerCase().endsWith('.csv')) {
+                e.target.value = ''
+                return
+              }
+              setBatchSchoolFile(file)
+              setBatchSchoolResult(null)
+              setBatchSchoolError(null)
+            }}
+          />
+        </Box>
+        <CsvTemplateDownloadButton
+          color={AppColors.role.admin.secondary}
+          template="schools"
+        />
+        <BatchImportFeedback
+          error={batchSchoolError}
+          result={batchSchoolResult}
+        />
       </AppActionModal>
 
       {/* New student modal */}

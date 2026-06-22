@@ -88,7 +88,7 @@ test('ListChildren calls onCreate when add button is clicked', async () => {
 
   renderListChildren({ children: MOCK_CHILDREN, onCreate })
 
-  await user.click(screen.getByRole('button', { name: /adicionar filho/i }))
+  await user.click(screen.getByRole('button', { name: /adicionar aluno/i }))
 
   expect(onCreate).toHaveBeenCalledTimes(1)
 })

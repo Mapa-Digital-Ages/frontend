@@ -192,13 +192,13 @@ test('content approval repository creates and updates content without resource t
 
   const repository = createContentApprovalRepository({ client })
   await repository.createLocalContentDraft({
-    description: '',
+    description: 'Descrição do conteúdo.',
     requestedAt: '07/04/2026',
     subject: { id: '1', label: 'Português' },
     title: 'Avaliação bimestral',
   })
   const item = await repository.updateLocalContentItem('content-10', {
-    description: '',
+    description: 'Descrição editada.',
     requestedAt: '08/04/2026',
     subject: { id: '1', label: 'Português' },
     title: 'Conteúdo editado',
@@ -208,7 +208,7 @@ test('content approval repository creates and updates content without resource t
     {
       path: 'admin/content',
       body: {
-        description: '',
+        description: 'Descrição do conteúdo.',
         subject_id: 1,
         title: 'Avaliação bimestral',
       },
@@ -216,9 +216,9 @@ test('content approval repository creates and updates content without resource t
   ])
   expect(patchCalls).toEqual([
     {
-      path: 'admin/content/content-10',
+      path: 'admin/content/10',
       body: {
-        description: '',
+        description: 'Descrição editada.',
         subject_id: 1,
         title: 'Conteúdo editado',
       },
