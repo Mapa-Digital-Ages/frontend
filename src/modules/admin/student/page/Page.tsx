@@ -39,6 +39,7 @@ import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded'
 import BatchImportFeedback from '@/modules/admin/shared/components/BatchImportFeedback'
 import CsvTemplateDownloadButton from '@/modules/admin/shared/components/CsvTemplateDownloadButton'
 import type { BatchImportResult } from '@/modules/admin/shared/services/batchImport'
+import { useSearchParams } from 'react-router-dom'
 
 type SortField = 'name' | 'school' | 'year'
 type SortDirection = 'asc' | 'desc'
@@ -138,6 +139,7 @@ function SortableHeader({
 
 export default function Page() {
   const theme = useTheme()
+  const [searchParams] = useSearchParams()
   const statusConfig: Record<string, TagContext> = {
     ativo: { label: 'Ativo', color: theme.palette.success.main },
     inativo: { label: 'Inativo', color: theme.palette.warning.main },
@@ -179,7 +181,9 @@ export default function Page() {
     activeQueryRef.current = activeQuery
   }, [activeQuery])
 
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(
+    searchParams.get('create') === 'student'
+  )
   const [createError, setCreateError] = useState<string | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)

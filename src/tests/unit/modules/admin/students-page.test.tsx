@@ -50,11 +50,12 @@ const authValue: AuthContextValue = {
   },
 }
 
-function renderPage() {
+function renderPage(initialEntries = ['/']) {
   renderWithProviders(
     <AuthContext.Provider value={authValue}>
       <StudentsPage />
-    </AuthContext.Provider>
+    </AuthContext.Provider>,
+    { initialEntries }
   )
 }
 
@@ -140,6 +141,16 @@ test('StudentsPage opens create student modal', async () => {
       name: /^criar aluno$/i,
     })
   )
+
+  expect(
+    screen.getByText(
+      'Cadastre um novo aluno. Vincule-o a uma escola e/ou a um responsável'
+    )
+  ).toBeInTheDocument()
+})
+
+test('StudentsPage opens create student modal from dashboard shortcut', () => {
+  renderPage(['/admin/students?create=student'])
 
   expect(
     screen.getByText(

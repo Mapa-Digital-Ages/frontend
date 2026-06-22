@@ -45,7 +45,11 @@ const PARTNERSHIP_STATUS_COLORS: Record<PartnershipStatus, string> = {
   rejected: '#ef4444',
 }
 
-export default function CompanyPage() {
+interface CompanyPageProps {
+  openCreate?: boolean
+}
+
+export default function CompanyPage({ openCreate = false }: CompanyPageProps) {
   const theme = useTheme()
 
   const [companies, setCompanies] = useState<Company[]>([])
@@ -62,7 +66,7 @@ export default function CompanyPage() {
   const sentinelRef = useRef<HTMLDivElement | null>(null)
   const isLoadingCompaniesRef = useRef(false)
   const [query, setQuery] = useState('')
-  const [isNewPartnerOpen, setIsNewPartnerOpen] = useState(false)
+  const [isNewPartnerOpen, setIsNewPartnerOpen] = useState(openCreate)
   const [companyToDeleteId, setCompanyToDeleteId] = useState<string | null>(
     null
   )
