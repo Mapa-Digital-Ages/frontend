@@ -2,22 +2,24 @@ import { test } from '@jest/globals'
 import { assert } from '@/tests/helpers/assert'
 import { readSource } from '@/tests/helpers/source'
 
-test('student dashboard loads active trail cards and limits them to six', () => {
+test('student dashboard loads real trail disciplines and limits cards to six', () => {
   const page = readSource('modules/student/dashboard/page/Page.tsx')
   const service = readSource('modules/student/dashboard/services/service.ts')
 
-  assert.match(page, /getActiveTrails\(\)/)
-  assert.match(page, /setActiveTrails\(items\)/)
-  assert.match(page, /activeTrails\.slice\(0, 6\)\.map/)
-  assert.match(service, /`student\/\$\{studentId\}\/trails`/)
+  assert.match(page, /getDisciplines\(\)/)
+  assert.match(page, /setDisciplines\(items\)/)
+  assert.match(page, /disciplines\.slice\(0, 6\)\.map/)
+  assert.match(service, /`student\/\$\{studentId\}\/disciplines`/)
   assert.doesNotMatch(page, /progress=\{78\}/)
 })
 
-test('student header uses the average of active trails as general progress', () => {
+test('student header uses the weighted average of started trails as general progress', () => {
   const page = readSource('modules/student/dashboard/page/Page.tsx')
 
-  assert.match(page, /const overallProgress = activeTrails\.length/)
-  assert.match(page, /activeTrails\.reduce/)
+  assert.match(page, /const startedTrailCount = disciplines\.reduce/)
+  assert.match(page, /item\.progress \* item\.startedTrailCount/)
+  assert.match(page, /const overallProgress = startedTrailCount/)
+  assert.match(page, /disciplines\.reduce/)
   assert.match(page, /progress=\{overallProgress\}/)
   assert.match(page, /Progresso geral das trilhas:/)
   assert.doesNotMatch(page, /progress=\{85\}/)
@@ -28,9 +30,7 @@ test('parent dashboard limits real discipline progress to five cards', () => {
   const service = readSource('modules/parent/dashboard/services/service.ts')
 
   assert.match(page, /disciplines\.slice\(0, 5\)\.map/)
-  assert.match(service, /getStudentTrailDisciplines/)
-  assert.match(service, /`student\/\$\{studentId\}\/trails`/)
-  assert.doesNotMatch(service, /`student\/\$\{studentId\}\/disciplines`/)
+  assert.match(service, /`student\/\$\{studentId\}\/disciplines`/)
   assert.doesNotMatch(service, /MOCK_DISCIPLINES/)
 })
 

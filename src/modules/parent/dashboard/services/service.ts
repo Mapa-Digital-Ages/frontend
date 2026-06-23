@@ -68,17 +68,6 @@ interface GuardianMeResponse {
   students: GuardianMeStudent[]
 }
 
-interface TrailApiResponse {
-  id: string
-  name: string
-  subject?: {
-    id?: string
-    label: string
-    color?: string | null
-  }
-  progress: number
-}
-
 function formatClassLabel(studentClass: string) {
   if (!studentClass) return 'Ano não informado'
   const match = studentClass.match(/(\d+)/)
@@ -144,44 +133,6 @@ async function fetchChildrenFromLinkedIds(
     .filter(child => child.id !== '')
 }
 
-function getStudentTrailDisciplines(
-  trails: TrailApiResponse[]
-): StudentDisciplineProgress[] {
-  const bySubject = new Map<
-    string,
-    {
-      color?: string | null
-      label: string
-      progressValues: number[]
-    }
-  >()
-
-  for (const trail of trails) {
-    const subjectId = trail.subject?.id ?? trail.id
-    const subject = bySubject.get(subjectId)
-    if (subject) {
-      subject.progressValues.push(trail.progress)
-      continue
-    }
-
-    bySubject.set(subjectId, {
-      color: trail.subject?.color,
-      label: trail.subject?.label ?? trail.name,
-      progressValues: [trail.progress],
-    })
-  }
-
-  return Array.from(bySubject.entries()).map(([subjectId, subject]) => ({
-    progress: Math.round(
-      subject.progressValues.reduce((sum, value) => sum + value, 0) /
-        subject.progressValues.length
-    ),
-    subjectColor: subject.color,
-    subjectId,
-    subjectLabel: subject.label,
-  }))
-}
-
 export const parentService = {
   getName(): string | null {
     return getCookie(COOKIE_KEYS.authName)
@@ -227,10 +178,10 @@ export const parentService = {
 
   async getStudentDisciplines(studentId: string) {
     try {
-      const response = await httpClient.get<TrailApiResponse[]>(
-        `student/${studentId}/trails`
+      const response = await httpClient.get<StudentDisciplineProgress[]>(
+        `student/${studentId}/disciplines`
       )
-      return getStudentTrailDisciplines(response.data ?? [])
+      return response.data ?? []
     } catch {
       return []
     }

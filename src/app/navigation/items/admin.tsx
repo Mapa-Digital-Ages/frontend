@@ -28,7 +28,7 @@ export const adminNavigation: SidebarItem[] = [
     icon: <SupervisedUserCircleRoundedIcon fontSize="medium" />,
   },
   {
-    label: 'Conteúdos',
+    label: 'Configurações da Trilha',
     path: APP_ROUTES.admin.contents,
     icon: <MenuBookRoundedIcon fontSize="medium" />,
   },
