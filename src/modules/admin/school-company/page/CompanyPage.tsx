@@ -11,7 +11,7 @@ import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded'
 import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded'
 import { Box, Button, IconButton, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { adminCompanyService } from '@/modules/admin/school-company/services/service'
 import type {
@@ -45,6 +45,84 @@ const PARTNERSHIP_STATUS_COLORS: Record<PartnershipStatus, string> = {
   rejected: '#ef4444',
 }
 
+type CompanyCardToneId =
+  | 'approved'
+  | 'inactive'
+  | 'neutral'
+  | 'pending'
+  | 'rejected'
+
+type CompanyCardTone = {
+  color: string
+  id: CompanyCardToneId
+  label: string
+}
+
+const COMPANY_CARD_TONES: Record<CompanyCardToneId, CompanyCardTone> = {
+  pending: {
+    color: PARTNERSHIP_STATUS_COLORS.pending,
+    id: 'pending',
+    label: 'Aguardando aprovação',
+  },
+  approved: {
+    color: PARTNERSHIP_STATUS_COLORS.approved,
+    id: 'approved',
+    label: 'Parceria ativa',
+  },
+  inactive: {
+    color: PARTNERSHIP_STATUS_COLORS.rejected,
+    id: 'inactive',
+    label: 'Empresa inativa',
+  },
+  rejected: {
+    color: PARTNERSHIP_STATUS_COLORS.rejected,
+    id: 'rejected',
+    label: 'Solicitação recusada',
+  },
+  neutral: {
+    color: '#64748b',
+    id: 'neutral',
+    label: 'Sem solicitações',
+  },
+}
+
+const EMPTY_PARTNERSHIP_COUNTS: Record<PartnershipStatus, number> = {
+  approved: 0,
+  pending: 0,
+  rejected: 0,
+}
+
+const COMPANY_CARD_TONE_PRIORITY: Record<CompanyCardToneId, number> = {
+  pending: 0,
+  approved: 1,
+  rejected: 2,
+  inactive: 3,
+  neutral: 4,
+}
+
+function getCompanyCardTone(
+  company: Company,
+  counts: Record<PartnershipStatus, number>
+) {
+  if (company.status === 'pendente' || counts.pending > 0) {
+    return COMPANY_CARD_TONES.pending
+  }
+
+  if (company.status === 'inativa') {
+    return COMPANY_CARD_TONES.inactive
+  }
+
+  if (counts.approved > 0) {
+    return COMPANY_CARD_TONES.approved
+  }
+
+  if (counts.rejected > 0) {
+    return COMPANY_CARD_TONES.rejected
+  }
+
+  return COMPANY_CARD_TONES.neutral
+}
+
 interface CompanyPageProps {
   openCreate?: boolean
 }
@@ -65,6 +143,7 @@ export default function CompanyPage({ openCreate = false }: CompanyPageProps) {
   const [hasMore, setHasMore] = useState(true)
   const sentinelRef = useRef<HTMLDivElement | null>(null)
   const isLoadingCompaniesRef = useRef(false)
+  const hasUserSelectedCompanyRef = useRef(false)
   const [query, setQuery] = useState('')
   const [isNewPartnerOpen, setIsNewPartnerOpen] = useState(openCreate)
   const [companyToDeleteId, setCompanyToDeleteId] = useState<string | null>(
@@ -175,10 +254,55 @@ export default function CompanyPage({ openCreate = false }: CompanyPageProps) {
     return () => observer.disconnect()
   }, [hasMore, isLoadingCompanies])
 
-  const filteredCompanies = companies
+  const partnershipCountsByCompany = useMemo(() => {
+    const countsByCompany = new Map<string, Record<PartnershipStatus, number>>()
+
+    partnerships.forEach(partnership => {
+      const counts = countsByCompany.get(partnership.companyId) ?? {
+        ...EMPTY_PARTNERSHIP_COUNTS,
+      }
+
+      countsByCompany.set(partnership.companyId, {
+        ...counts,
+        [partnership.status]: counts[partnership.status] + 1,
+      })
+    })
+
+    return countsByCompany
+  }, [partnerships])
+
+  const filteredCompanies = useMemo(
+    () =>
+      [...companies].sort((leftCompany, rightCompany) => {
+        const leftCounts =
+          partnershipCountsByCompany.get(leftCompany.id) ??
+          EMPTY_PARTNERSHIP_COUNTS
+        const rightCounts =
+          partnershipCountsByCompany.get(rightCompany.id) ??
+          EMPTY_PARTNERSHIP_COUNTS
+        const leftTone = getCompanyCardTone(leftCompany, leftCounts)
+        const rightTone = getCompanyCardTone(rightCompany, rightCounts)
+        const priorityDifference =
+          COMPANY_CARD_TONE_PRIORITY[leftTone.id] -
+          COMPANY_CARD_TONE_PRIORITY[rightTone.id]
+
+        if (priorityDifference !== 0) return priorityDifference
+
+        if (leftCounts.pending !== rightCounts.pending) {
+          return rightCounts.pending - leftCounts.pending
+        }
+
+        if (leftCounts.approved !== rightCounts.approved) {
+          return rightCounts.approved - leftCounts.approved
+        }
+
+        return leftCompany.name.localeCompare(rightCompany.name, 'pt-BR')
+      }),
+    [companies, partnershipCountsByCompany]
+  )
 
   const selectedCompany =
-    companies.find(company => company.id === selectedCompanyId) ??
+    filteredCompanies.find(company => company.id === selectedCompanyId) ??
     filteredCompanies[0]
 
   const selectedCompanyPartnerships = selectedCompany
@@ -187,14 +311,20 @@ export default function CompanyPage({ openCreate = false }: CompanyPageProps) {
       )
     : []
 
-  const countCompanyPartnerships = (
-    companyId: string,
-    status: PartnershipStatus
-  ) =>
-    partnerships.filter(
-      partnership =>
-        partnership.companyId === companyId && partnership.status === status
-    ).length
+  useEffect(() => {
+    if (filteredCompanies.length === 0) {
+      setSelectedCompanyId('')
+      return
+    }
+
+    const selectedCompanyIsVisible = filteredCompanies.some(
+      company => company.id === selectedCompanyId
+    )
+
+    if (!selectedCompanyIsVisible || !hasUserSelectedCompanyRef.current) {
+      setSelectedCompanyId(filteredCompanies[0].id)
+    }
+  }, [filteredCompanies, selectedCompanyId])
 
   const emailIsValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
     newPartner.email.trim()
@@ -225,6 +355,7 @@ export default function CompanyPage({ openCreate = false }: CompanyPageProps) {
       })
 
       setCompanies(prev => [newCompany, ...prev])
+      hasUserSelectedCompanyRef.current = true
       setSelectedCompanyId(newCompany.id)
       setNewPartner({
         name: '',
@@ -445,31 +576,55 @@ export default function CompanyPage({ openCreate = false }: CompanyPageProps) {
 
             {filteredCompanies.map(company => {
               const isSelected = company.id === selectedCompanyId
-              const pendingCount = countCompanyPartnerships(
-                company.id,
-                'pending'
-              )
-              const approvedCount = countCompanyPartnerships(
-                company.id,
-                'approved'
-              )
+              const partnershipCounts =
+                partnershipCountsByCompany.get(company.id) ??
+                EMPTY_PARTNERSHIP_COUNTS
+              const cardTone = getCompanyCardTone(company, partnershipCounts)
+              const pendingCount = partnershipCounts.pending
+              const approvedCount = partnershipCounts.approved
+              const pendingMetricColor =
+                pendingCount > 0
+                  ? PARTNERSHIP_STATUS_COLORS.pending
+                  : cardTone.color
+              const approvedMetricColor =
+                approvedCount > 0
+                  ? PARTNERSHIP_STATUS_COLORS.approved
+                  : cardTone.color
 
               return (
                 <Box
                   key={company.id}
-                  onClick={() => setSelectedCompanyId(company.id)}
+                  onClick={() => {
+                    hasUserSelectedCompanyRef.current = true
+                    setSelectedCompanyId(company.id)
+                  }}
                   data-testid={`company-item-${company.id}`}
+                  data-selected={isSelected ? 'true' : 'false'}
+                  data-status-tone={cardTone.id}
                   sx={{
                     backgroundColor: isSelected
-                      ? alpha(AppColors.role.admin.secondary, 0.07)
-                      : 'background.paper',
+                      ? alpha(cardTone.color, 0.16)
+                      : cardTone.id === 'neutral'
+                        ? 'background.paper'
+                        : alpha(cardTone.color, 0.08),
                     border: '1px solid',
                     borderColor: isSelected
-                      ? alpha(AppColors.role.admin.secondary, 0.28)
-                      : 'background.border',
+                      ? alpha(cardTone.color, 0.64)
+                      : cardTone.id === 'neutral'
+                        ? 'background.border'
+                        : alpha(cardTone.color, 0.38),
                     borderRadius: '14px',
                     cursor: 'pointer',
                     p: 2,
+                    transition:
+                      'background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease',
+                    '&:hover': {
+                      backgroundColor: isSelected
+                        ? alpha(cardTone.color, 0.19)
+                        : alpha(cardTone.color, 0.11),
+                      borderColor: alpha(cardTone.color, 0.58),
+                      transform: 'translateY(-1px)',
+                    },
                   }}
                 >
                   <Box
@@ -485,24 +640,22 @@ export default function CompanyPage({ openCreate = false }: CompanyPageProps) {
                         width: 36,
                         height: 36,
                         borderRadius: '10px',
-                        backgroundColor: alpha(
-                          AppColors.role.admin.secondary,
-                          0.12
-                        ),
+                        backgroundColor: alpha(cardTone.color, 0.14),
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
+                        flexShrink: 0,
                       }}
                     >
                       <BusinessTwoToneIcon
                         sx={{
-                          color: AppColors.role.admin.secondary,
+                          color: cardTone.color,
                           fontSize: 20,
                         }}
                       />
                     </Box>
 
-                    <Box>
+                    <Box sx={{ minWidth: 0 }}>
                       <Typography sx={{ fontWeight: 700, fontSize: 16 }}>
                         {company.name}
                       </Typography>
@@ -512,6 +665,25 @@ export default function CompanyPage({ openCreate = false }: CompanyPageProps) {
                         {company.type}
                       </Typography>
                     </Box>
+
+                    <Typography
+                      data-testid={`company-${company.id}-status-tone`}
+                      sx={{
+                        border: '1px solid',
+                        borderColor: alpha(cardTone.color, 0.35),
+                        borderRadius: '999px',
+                        color: cardTone.color,
+                        flexShrink: 0,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        lineHeight: 1,
+                        ml: 'auto',
+                        px: 1,
+                        py: 0.5,
+                      }}
+                    >
+                      {cardTone.label}
+                    </Typography>
                   </Box>
                   <Box
                     sx={{
@@ -522,11 +694,15 @@ export default function CompanyPage({ openCreate = false }: CompanyPageProps) {
                     }}
                   >
                     <Box
+                      data-testid={`company-${company.id}-pending-card`}
+                      data-status-tone={
+                        pendingCount > 0 ? 'pending' : cardTone.id
+                      }
                       sx={{
                         border: '1px solid',
-                        borderColor: 'background.border',
+                        borderColor: alpha(pendingMetricColor, 0.38),
                         borderRadius: '10px',
-                        backgroundColor: 'background.default',
+                        backgroundColor: alpha(pendingMetricColor, 0.08),
                         p: 1.5,
                       }}
                     >
@@ -537,18 +713,25 @@ export default function CompanyPage({ openCreate = false }: CompanyPageProps) {
                       </Typography>
                       <Typography
                         data-testid={`company-${company.id}-pending-schools`}
-                        sx={{ fontWeight: 700 }}
+                        sx={{
+                          color: pendingMetricColor,
+                          fontWeight: 700,
+                        }}
                       >
                         {pendingCount}
                       </Typography>
                     </Box>
 
                     <Box
+                      data-testid={`company-${company.id}-supported-card`}
+                      data-status-tone={
+                        approvedCount > 0 ? 'approved' : cardTone.id
+                      }
                       sx={{
                         border: '1px solid',
-                        borderColor: 'background.border',
+                        borderColor: alpha(approvedMetricColor, 0.36),
                         borderRadius: '10px',
-                        backgroundColor: 'background.default',
+                        backgroundColor: alpha(approvedMetricColor, 0.07),
                         p: 1.5,
                       }}
                     >
@@ -559,7 +742,10 @@ export default function CompanyPage({ openCreate = false }: CompanyPageProps) {
                       </Typography>
                       <Typography
                         data-testid={`company-${company.id}-supported-schools`}
-                        sx={{ fontWeight: 700 }}
+                        sx={{
+                          color: approvedMetricColor,
+                          fontWeight: 700,
+                        }}
                       >
                         {approvedCount}
                       </Typography>

@@ -17,16 +17,6 @@ import { renderWithProviders } from '@/tests/helpers/render'
 
 const companies: Company[] = [
   {
-    id: 'company-1',
-    name: 'Tech Corp',
-    email: 'parcerias@techcorp.com',
-    type: 'Empresa parceira',
-    status: 'ativa',
-    description: '',
-    requests: [],
-    spots: 0,
-  },
-  {
     id: 'company-2',
     name: 'Futuro S/A',
     email: 'contato@futurosa.com',
@@ -40,6 +30,16 @@ const companies: Company[] = [
     id: 'company-3',
     name: 'Educa Mais',
     email: 'parcerias@educamais.com',
+    type: 'Empresa parceira',
+    status: 'ativa',
+    description: '',
+    requests: [],
+    spots: 0,
+  },
+  {
+    id: 'company-1',
+    name: 'Tech Corp',
+    email: 'parcerias@techcorp.com',
     type: 'Empresa parceira',
     status: 'ativa',
     description: '',
@@ -175,9 +175,42 @@ test('SchoolCompanyPage renders all company cards', async () => {
   expect(screen.getByText('Educa Mais')).toBeInTheDocument()
 })
 
+test('SchoolCompanyPage orders company cards by partnership priority', async () => {
+  await goToCompanyView()
+
+  const companyCards = screen.getAllByTestId(/^company-item-/)
+
+  expect(companyCards.map(card => card.getAttribute('data-testid'))).toEqual([
+    'company-item-company-1',
+    'company-item-company-3',
+    'company-item-company-2',
+  ])
+  expect(companyCards[0]).toHaveAttribute('data-status-tone', 'pending')
+  expect(companyCards[0]).toHaveAttribute('data-selected', 'true')
+})
+
 test('SchoolCompanyPage shows details for the initially selected company', async () => {
   await goToCompanyView()
 
+  await waitFor(() => {
+    expect(screen.getByTestId('company-item-company-1')).toHaveAttribute(
+      'data-selected',
+      'true'
+    )
+  })
+
+  const selectedCompanyCard = screen.getByTestId('company-item-company-1')
+  expect(selectedCompanyCard).toHaveAttribute('data-status-tone', 'pending')
+  expect(screen.getByTestId('company-company-1-pending-card')).toHaveAttribute(
+    'data-status-tone',
+    'pending'
+  )
+  expect(
+    screen.getByTestId('company-company-1-supported-card')
+  ).toHaveAttribute('data-status-tone', 'approved')
+  expect(
+    within(selectedCompanyCard).getByText('Aguardando aprovação')
+  ).toBeInTheDocument()
   expect(screen.getByText('parcerias@techcorp.com')).toBeInTheDocument()
   expect(screen.getByText('Solicitações de parceria')).toBeInTheDocument()
   expect(screen.getByText('Escola São Paulo')).toBeInTheDocument()
@@ -195,6 +228,17 @@ test('SchoolCompanyPage changes company details when another company is selected
 
   await user.click(screen.getByTestId('company-item-company-2'))
 
+  expect(screen.getByTestId('company-item-company-2')).toHaveAttribute(
+    'data-status-tone',
+    'neutral'
+  )
+  expect(screen.getByTestId('company-company-2-pending-card')).toHaveAttribute(
+    'data-status-tone',
+    'neutral'
+  )
+  expect(
+    screen.getByTestId('company-company-2-supported-card')
+  ).toHaveAttribute('data-status-tone', 'neutral')
   expect(screen.getByText('contato@futurosa.com')).toBeInTheDocument()
 })
 
@@ -226,6 +270,22 @@ test('SchoolCompanyPage approves a pending partnership', async () => {
   expect(
     screen.getByTestId('company-company-1-supported-schools')
   ).toHaveTextContent('2')
+  expect(screen.getByTestId('company-item-company-1')).toHaveAttribute(
+    'data-status-tone',
+    'approved'
+  )
+  expect(screen.getByTestId('company-company-1-pending-card')).toHaveAttribute(
+    'data-status-tone',
+    'approved'
+  )
+  expect(
+    screen.getByTestId('company-company-1-supported-card')
+  ).toHaveAttribute('data-status-tone', 'approved')
+  expect(
+    within(screen.getByTestId('company-item-company-1')).getByText(
+      'Parceria ativa'
+    )
+  ).toBeInTheDocument()
 })
 
 test('SchoolCompanyPage filters companies by search query', async () => {
