@@ -125,6 +125,7 @@ export default function Page() {
           contentClassName="gap-4 p-5"
           title="Desempenho por Disciplina"
           titleClassName="text-2xl font-bold md:text-3xl"
+          className="self-start"
         >
           {disciplines.slice(0, 5).map(item => {
             const subject = getSubjectTagContextByLabel(item.subjectLabel) ??
@@ -155,7 +156,7 @@ export default function Page() {
           })}
           {disciplines.length === 0 && (
             <EmptyState
-              title="Sem dados de disciplinas"
+              title="Ainda não iniciou nenhuma trilha"
               description="Nenhum progresso registrado ainda."
             />
           )}
