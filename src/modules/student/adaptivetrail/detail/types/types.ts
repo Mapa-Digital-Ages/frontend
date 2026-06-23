@@ -60,6 +60,11 @@ export interface ItemCompletionApiResponse extends TrailDetailApiResponse {
   last_completion?: { correct: number; total: number; passed: boolean }
 }
 
+export interface SubStepCompletionApiResponse extends ItemCompletionApiResponse {
+  current_sub_path: number
+  path_status: 'on_going' | 'completed' | 'paused' | null
+}
+
 export interface QuestionFlowApiResponse {
   assessmentId: string
   trailId: string
@@ -86,6 +91,11 @@ export interface ItemCompletionResult {
   correct: number
   total: number
   passed: boolean
+  session: AdaptiveTrailSession
+}
+
+export interface SubStepCompletionResult {
+  result: StepCompletionResult
   session: AdaptiveTrailSession
 }
 
