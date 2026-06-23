@@ -7,10 +7,20 @@ test('student dashboard loads real trail disciplines and limits cards to six', (
   const service = readSource('modules/student/dashboard/services/service.ts')
 
   assert.match(page, /getDisciplines\(\)/)
-  assert.match(page, /items\.slice\(0, 6\)/)
-  assert.match(page, /disciplines\.map/)
+  assert.match(page, /setDisciplines\(items\)/)
+  assert.match(page, /disciplines\.slice\(0, 6\)\.map/)
   assert.match(service, /`student\/\$\{studentId\}\/disciplines`/)
   assert.doesNotMatch(page, /progress=\{78\}/)
+})
+
+test('student header uses the average of every trail subject as general progress', () => {
+  const page = readSource('modules/student/dashboard/page/Page.tsx')
+
+  assert.match(page, /const overallProgress = disciplines\.length/)
+  assert.match(page, /disciplines\.reduce/)
+  assert.match(page, /progress=\{overallProgress\}/)
+  assert.match(page, /Progresso geral das trilhas:/)
+  assert.doesNotMatch(page, /progress=\{85\}/)
 })
 
 test('parent dashboard limits real discipline progress to five cards', () => {

@@ -116,7 +116,7 @@ export default function Page() {
       .getDisciplines()
       .then(items => {
         if (isMounted) {
-          setDisciplines(items.slice(0, 6))
+          setDisciplines(items)
         }
       })
       .catch(() => {
@@ -130,18 +130,25 @@ export default function Page() {
     }
   }, [])
 
+  const overallProgress = disciplines.length
+    ? Math.round(
+        disciplines.reduce((total, item) => total + item.progress, 0) /
+          disciplines.length
+      )
+    : 0
+
   return (
     <AppPageContainer className="gap-4 md:gap-5">
       <PageHeader
         variant="aluno"
         title="Continue sua jornada no Mapa Digital"
-        subtitle="Progresso até o próximo nível:"
+        subtitle="Progresso geral das trilhas:"
         tag={studentClassLabel}
-        progress={85}
+        progress={overallProgress}
       />
 
       <Box className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {disciplines.map(item => {
+        {disciplines.slice(0, 6).map(item => {
           const subject = getSubjectTagContextByLabel(item.subjectLabel) ??
             SUBJECTS[item.subjectId] ?? {
               id: item.subjectId,
