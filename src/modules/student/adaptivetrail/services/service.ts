@@ -59,26 +59,33 @@ export function getTrailMetrics(trails: Trail[]): SummaryMetric[] {
 export function groupTrailsBySubject(trails: Trail[]): SubjectGroup[] {
   const groups = new Map<string, SubjectGroup>()
 
+  const calculateStartedAverage = (items: Trail[]) => {
+    const started = items.filter(item => item.progress > 0)
+    if (started.length === 0) return 0
+    return Math.round(
+      started.reduce((sum, item) => sum + item.progress, 0) / started.length
+    )
+  }
+
   trails.forEach(trail => {
     const subjectId = trail.subject?.id ?? 'geral'
     const group = groups.get(subjectId)
     if (group) {
       group.trails.push(trail)
-      group.averageProgress = Math.round(
-        group.trails.reduce((sum, item) => sum + item.progress, 0) /
-          group.trails.length
-      )
+      group.averageProgress = calculateStartedAverage(group.trails)
       return
     }
     groups.set(subjectId, {
       subjectId,
       subject: trail.subject,
       trails: [trail],
-      averageProgress: Math.round(trail.progress),
+      averageProgress: calculateStartedAverage([trail]),
     })
   })
 
-  return Array.from(groups.values())
+  return Array.from(groups.values()).sort(
+    (first, second) => second.averageProgress - first.averageProgress
+  )
 }
 
 export const studentService = {

@@ -13,6 +13,8 @@ import type {
   StepApiResponse,
   StepCompletionApiResponse,
   StepCompletionResult,
+  SubStepCompletionApiResponse,
+  SubStepCompletionResult,
   SubStepApiResponse,
   TrailDetailApiResponse,
   TrailStepQuestionFlow,
@@ -125,13 +127,41 @@ export const adaptiveTrailDetailService = {
   async getSubStepQuestionFlow(
     trailId: string,
     stepId: string,
-    _subStepId: string
+    subStepId: string
   ): Promise<TrailStepQuestionFlow> {
     const studentId = requireStudentId()
     const response = await httpClient.get<QuestionFlowApiResponse>(
-      `student/${studentId}/trails/${trailId}/steps/${stepId}/questions`
+      `student/${studentId}/trails/${trailId}/steps/${stepId}/sub-steps/${encodeURIComponent(subStepId)}/questions`
     )
     return mapQuestionFlow(response.data)
+  },
+
+  async completeSubStep(
+    trailId: string,
+    stepId: string,
+    subStepId: string,
+    answers: StepAnswerPayload[]
+  ): Promise<SubStepCompletionResult> {
+    const studentId = requireStudentId()
+    const response = await httpClient.post<SubStepCompletionApiResponse>(
+      `student/${studentId}/trails/${trailId}/steps/${stepId}/sub-steps/${encodeURIComponent(subStepId)}/complete`,
+      toAnswersPayload(answers)
+    )
+    const completion = response.data.last_completion ?? {
+      correct: 0,
+      total: 0,
+      passed: false,
+    }
+    return {
+      result: {
+        correct: completion.correct,
+        total: completion.total,
+        passed: completion.passed,
+        currentSubPath: response.data.current_sub_path,
+        pathStatus: response.data.path_status,
+      },
+      session: mapSession(response.data),
+    }
   },
 
   async completeStep(

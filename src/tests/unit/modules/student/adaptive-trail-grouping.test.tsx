@@ -25,21 +25,23 @@ function makeTrail(
 }
 
 describe('groupTrailsBySubject', () => {
-  test('groups trails by subject and averages their progress', () => {
+  test('groups trails by subject and averages only started trails', () => {
     const groups = groupTrailsBySubject([
       makeTrail('a', 'mat', 100),
       makeTrail('b', 'por', 0),
-      makeTrail('c', 'mat', 67),
+      makeTrail('c', 'mat', 50),
+      makeTrail('d', 'mat', 0),
     ])
 
     expect(groups).toHaveLength(2)
     const mat = groups.find(g => g.subjectId === 'mat')!
-    expect(mat.trails.map(t => t.id)).toEqual(['a', 'c'])
-    expect(mat.averageProgress).toBe(84) // round((100 + 67) / 2)
+    expect(mat.trails.map(t => t.id)).toEqual(['a', 'c', 'd'])
+    expect(mat.averageProgress).toBe(75)
 
     const por = groups.find(g => g.subjectId === 'por')!
     expect(por.trails).toHaveLength(1)
     expect(por.averageProgress).toBe(0)
+    expect(groups[0].subjectId).toBe('mat')
   })
 
   test('preserves first-appearance order of subjects', () => {
