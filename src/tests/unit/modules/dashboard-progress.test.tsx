@@ -16,7 +16,9 @@ test('student dashboard loads real trail disciplines and limits cards to six', (
 test('student header uses the average of every trail subject as general progress', () => {
   const page = readSource('modules/student/dashboard/page/Page.tsx')
 
-  assert.match(page, /const overallProgress = disciplines\.length/)
+  assert.match(page, /const startedTrailCount = disciplines\.reduce/)
+  assert.match(page, /item\.progress \* item\.startedTrailCount/)
+  assert.match(page, /const overallProgress = startedTrailCount/)
   assert.match(page, /disciplines\.reduce/)
   assert.match(page, /progress=\{overallProgress\}/)
   assert.match(page, /Progresso geral das trilhas:/)

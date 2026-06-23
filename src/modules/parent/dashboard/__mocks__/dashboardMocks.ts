@@ -21,11 +21,36 @@ export const MOCK_METRICS: SummaryMetric[] = [
 ]
 
 export const MOCK_DISCIPLINES: StudentDisciplineProgress[] = [
-  { subjectId: 'mat', subjectLabel: 'Matemática', progress: 78 },
-  { subjectId: 'por', subjectLabel: 'Português', progress: 85 },
-  { subjectId: 'cie', subjectLabel: 'Ciências', progress: 62 },
-  { subjectId: 'his', subjectLabel: 'História', progress: 90 },
-  { subjectId: 'geo', subjectLabel: 'Geografia', progress: 71 },
+  {
+    subjectId: 'mat',
+    subjectLabel: 'Matemática',
+    startedTrailCount: 1,
+    progress: 78,
+  },
+  {
+    subjectId: 'por',
+    subjectLabel: 'Português',
+    startedTrailCount: 1,
+    progress: 85,
+  },
+  {
+    subjectId: 'cie',
+    subjectLabel: 'Ciências',
+    startedTrailCount: 1,
+    progress: 62,
+  },
+  {
+    subjectId: 'his',
+    subjectLabel: 'História',
+    startedTrailCount: 1,
+    progress: 90,
+  },
+  {
+    subjectId: 'geo',
+    subjectLabel: 'Geografia',
+    startedTrailCount: 1,
+    progress: 71,
+  },
 ]
 
 const today = dayjs()

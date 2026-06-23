@@ -1288,7 +1288,7 @@ export default function Page() {
   return (
     <AppPageContainer className="gap-4 md:gap-5">
       <PageHeader
-        title="Conteúdos"
+        title="Configrações da Trilha"
         subtitle="Revise conteúdos enviados e valide materiais antes de liberar o acesso na plataforma."
         variant="admin"
       />
