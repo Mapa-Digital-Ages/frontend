@@ -15,10 +15,52 @@ export interface StudentDisciplineProgress {
   progress: number
 }
 
+interface TrailApiResponse {
+  id: string
+  name: string
+  description?: string | null
+  subject?: {
+    id?: string
+    label: string
+    color?: string | null
+  }
+  progress: number
+}
+
+export interface StudentActiveTrail {
+  id: string
+  name: string
+  subject?: {
+    id?: string
+    label: string
+    color?: string | null
+  }
+  progress: number
+}
+
 function formatClassLabel(studentClass?: string | null) {
   if (!studentClass) return undefined
   const match = studentClass.match(/(\d+)/)
   return match ? `${match[1]}º Ano` : studentClass
+}
+
+function mapActiveTrail(raw: TrailApiResponse): StudentActiveTrail {
+  return {
+    id: raw.id,
+    name: raw.name,
+    progress: raw.progress,
+    subject: raw.subject
+      ? {
+          id: raw.subject.id,
+          label: raw.subject.label,
+          color: raw.subject.color,
+        }
+      : undefined,
+  }
+}
+
+function isActiveTrail(trail: StudentActiveTrail) {
+  return trail.progress > 0 && trail.progress < 100
 }
 
 export const studentService = {
@@ -52,6 +94,16 @@ export const studentService = {
       `student/${studentId}/disciplines`
     )
     return response.data
+  },
+
+  async getActiveTrails(): Promise<StudentActiveTrail[]> {
+    const studentId = authService.getUserId()
+    if (!studentId) return []
+
+    const response = await httpClient.get<TrailApiResponse[]>(
+      `student/${studentId}/trails`
+    )
+    return response.data.map(mapActiveTrail).filter(isActiveTrail)
   },
 
   async getSummary() {

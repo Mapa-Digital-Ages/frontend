@@ -11,7 +11,7 @@ import EmotionalContainer from '@/shared/ui/EmotionalContainer'
 import PageHeader from '@/shared/ui/PageHeader'
 import { SUBJECTS, getSubjectTagContextByLabel } from '@/shared/utils/themes'
 import { studentService } from '@/modules/student/dashboard/services/service'
-import type { StudentDisciplineProgress } from '@/modules/student/dashboard/services/service'
+import type { StudentActiveTrail } from '@/modules/student/dashboard/services/service'
 import { studentService as routineService } from '@/modules/student/routine/services/service'
 import { authService } from '@/app/auth/core/service'
 
@@ -73,9 +73,7 @@ export default function Page() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loadingTasks, setLoadingTasks] = useState(true)
   const [studentClassLabel, setStudentClassLabel] = useState<string>()
-  const [disciplines, setDisciplines] = useState<StudentDisciplineProgress[]>(
-    []
-  )
+  const [activeTrails, setActiveTrails] = useState<StudentActiveTrail[]>([])
 
   useEffect(() => {
     let isMounted = true
@@ -113,15 +111,15 @@ export default function Page() {
       })
 
     void studentService
-      .getDisciplines()
+      .getActiveTrails()
       .then(items => {
         if (isMounted) {
-          setDisciplines(items)
+          setActiveTrails(items)
         }
       })
       .catch(() => {
         if (isMounted) {
-          setDisciplines([])
+          setActiveTrails([])
         }
       })
 
@@ -130,10 +128,10 @@ export default function Page() {
     }
   }, [])
 
-  const overallProgress = disciplines.length
+  const overallProgress = activeTrails.length
     ? Math.round(
-        disciplines.reduce((total, item) => total + item.progress, 0) /
-          disciplines.length
+        activeTrails.reduce((total, item) => total + item.progress, 0) /
+          activeTrails.length
       )
     : 0
 
@@ -148,20 +146,23 @@ export default function Page() {
       />
 
       <Box className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {disciplines.slice(0, 6).map(item => {
-          const subject = getSubjectTagContextByLabel(item.subjectLabel) ??
-            SUBJECTS[item.subjectId] ?? {
-              id: item.subjectId,
-              label: item.subjectLabel,
-              color: item.subjectColor ?? undefined,
+        {activeTrails.slice(0, 6).map(item => {
+          const subjectLabel = item.subject?.label ?? item.name
+          const subjectId = item.subject?.id ?? item.id
+          const subject = getSubjectTagContextByLabel(subjectLabel) ??
+            SUBJECTS[subjectId] ?? {
+              id: subjectId,
+              label: subjectLabel,
+              color: item.subject?.color ?? undefined,
             }
           return (
             <SubjectBaseCard
-              key={item.subjectId}
-              icon={getSubjectIcon(item.subjectLabel)}
+              key={item.id}
+              icon={getSubjectIcon(subjectLabel)}
               progress={item.progress}
+              progressLabel={`${item.name} - ${Math.round(item.progress)}% concluído`}
               subject={subject}
-              title={item.subjectLabel}
+              title={subjectLabel}
             />
           )
         })}
