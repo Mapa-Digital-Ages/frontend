@@ -11,6 +11,7 @@ import EmotionalContainer from '@/shared/ui/EmotionalContainer'
 import PageHeader from '@/shared/ui/PageHeader'
 import { SUBJECTS, getSubjectTagContextByLabel } from '@/shared/utils/themes'
 import { studentService } from '@/modules/student/dashboard/services/service'
+import type { StudentDisciplineProgress } from '@/modules/student/dashboard/services/service'
 import { studentService as routineService } from '@/modules/student/routine/services/service'
 import { authService } from '@/app/auth/core/service'
 
@@ -54,10 +55,27 @@ function mapApiTask(t: Task): Task {
   return mapped
 }
 
+function getSubjectIcon(label: string) {
+  const normalized = label
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+  if (normalized.includes('matemat')) {
+    return <CalculateRoundedIcon fontSize="medium" />
+  }
+  if (normalized.includes('geograf')) {
+    return <PublicRoundedIcon fontSize="medium" />
+  }
+  return <MenuBookRoundedIcon fontSize="medium" />
+}
+
 export default function Page() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loadingTasks, setLoadingTasks] = useState(true)
   const [studentClassLabel, setStudentClassLabel] = useState<string>()
+  const [disciplines, setDisciplines] = useState<StudentDisciplineProgress[]>(
+    []
+  )
 
   useEffect(() => {
     let isMounted = true
@@ -94,42 +112,59 @@ export default function Page() {
         }
       })
 
+    void studentService
+      .getDisciplines()
+      .then(items => {
+        if (isMounted) {
+          setDisciplines(items)
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setDisciplines([])
+        }
+      })
+
     return () => {
       isMounted = false
     }
   }, [])
+
+  const overallProgress = disciplines.length
+    ? Math.round(
+        disciplines.reduce((total, item) => total + item.progress, 0) /
+          disciplines.length
+      )
+    : 0
 
   return (
     <AppPageContainer className="gap-4 md:gap-5">
       <PageHeader
         variant="aluno"
         title="Continue sua jornada no Mapa Digital"
-        subtitle="Progresso até o próximo nível:"
+        subtitle="Progresso geral das trilhas:"
         tag={studentClassLabel}
-        progress={85}
+        progress={overallProgress}
       />
 
       <Box className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <SubjectBaseCard
-          icon={<MenuBookRoundedIcon fontSize="medium" />}
-          progress={78}
-          subject={SUBJECTS.portugues}
-          title="Português"
-        />
-
-        <SubjectBaseCard
-          icon={<CalculateRoundedIcon fontSize="medium" />}
-          progress={55}
-          subject={SUBJECTS.matematica}
-          title="Matemática"
-        />
-
-        <SubjectBaseCard
-          icon={<PublicRoundedIcon fontSize="medium" />}
-          progress={20}
-          subject={SUBJECTS.geografia}
-          title="Geografia"
-        />
+        {disciplines.slice(0, 6).map(item => {
+          const subject = getSubjectTagContextByLabel(item.subjectLabel) ??
+            SUBJECTS[item.subjectId] ?? {
+              id: item.subjectId,
+              label: item.subjectLabel,
+              color: item.subjectColor ?? undefined,
+            }
+          return (
+            <SubjectBaseCard
+              key={item.subjectId}
+              icon={getSubjectIcon(item.subjectLabel)}
+              progress={item.progress}
+              subject={subject}
+              title={item.subjectLabel}
+            />
+          )
+        })}
       </Box>
 
       <Box className="grid grid-cols-1 gap-4 lg:grid-cols-[1.1fr_1fr]">
