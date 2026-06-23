@@ -8,6 +8,13 @@ interface CurrentStudentResponse {
   student_class?: string | null
 }
 
+export interface StudentDisciplineProgress {
+  subjectId: string
+  subjectLabel: string
+  subjectColor?: string | null
+  progress: number
+}
+
 function formatClassLabel(studentClass?: string | null) {
   if (!studentClass) return undefined
   const match = studentClass.match(/(\d+)/)
@@ -35,6 +42,16 @@ export const studentService = {
       `student/${studentId}`
     )
     return formatClassLabel(response.data.student_class)
+  },
+
+  async getDisciplines(): Promise<StudentDisciplineProgress[]> {
+    const studentId = authService.getUserId()
+    if (!studentId) return []
+
+    const response = await httpClient.get<StudentDisciplineProgress[]>(
+      `student/${studentId}/disciplines`
+    )
+    return response.data
   },
 
   async getSummary() {

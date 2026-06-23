@@ -8,12 +8,20 @@ import BusinessTwoToneIcon from '@mui/icons-material/BusinessTwoTone'
 import CancelRoundedIcon from '@mui/icons-material/CancelRounded'
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded'
+import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded'
 import { Box, Button, IconButton, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { adminCompanyService } from '@/modules/admin/school-company/services/service'
-import { Company } from '../types/types'
+import type {
+  AdminPartnership,
+  Company,
+  PartnershipStatus,
+} from '../types/types'
+import BatchImportFeedback from '@/modules/admin/shared/components/BatchImportFeedback'
+import CsvTemplateDownloadButton from '@/modules/admin/shared/components/CsvTemplateDownloadButton'
+import type { BatchImportResult } from '@/modules/admin/shared/services/batchImport'
 
 const companyTypeOptions = [
   { label: 'Empresa parceira', value: 'Empresa parceira' },
@@ -25,19 +33,40 @@ const companyTypeOptions = [
 
 const PAGE_SIZE = 10
 
-export default function CompanyPage() {
+const PARTNERSHIP_STATUS_LABELS: Record<PartnershipStatus, string> = {
+  pending: 'Pendente',
+  approved: 'Aprovada',
+  rejected: 'Recusada',
+}
+
+const PARTNERSHIP_STATUS_COLORS: Record<PartnershipStatus, string> = {
+  pending: '#f59e0b',
+  approved: '#22c55e',
+  rejected: '#ef4444',
+}
+
+interface CompanyPageProps {
+  openCreate?: boolean
+}
+
+export default function CompanyPage({ openCreate = false }: CompanyPageProps) {
   const theme = useTheme()
 
   const [companies, setCompanies] = useState<Company[]>([])
+  const [partnerships, setPartnerships] = useState<AdminPartnership[]>([])
   const [totalCount, setTotalCount] = useState<number | null>(null)
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('')
   const [isLoadingCompanies, setIsLoadingCompanies] = useState(false)
+  const [isLoadingPartnerships, setIsLoadingPartnerships] = useState(false)
+  const [partnershipActionId, setPartnershipActionId] = useState<string | null>(
+    null
+  )
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const sentinelRef = useRef<HTMLDivElement | null>(null)
   const isLoadingCompaniesRef = useRef(false)
   const [query, setQuery] = useState('')
-  const [isNewPartnerOpen, setIsNewPartnerOpen] = useState(false)
+  const [isNewPartnerOpen, setIsNewPartnerOpen] = useState(openCreate)
   const [companyToDeleteId, setCompanyToDeleteId] = useState<string | null>(
     null
   )
@@ -48,6 +77,16 @@ export default function CompanyPage() {
     confirmPassword: '',
     type: '',
   })
+
+  const [isBatchCompanyOpen, setIsBatchCompanyOpen] = useState(false)
+  const [batchCompanyFile, setBatchCompanyFile] = useState<File | null>(null)
+  const [batchCompanyResult, setBatchCompanyResult] =
+    useState<BatchImportResult | null>(null)
+  const [batchCompanyError, setBatchCompanyError] = useState<string | null>(
+    null
+  )
+  const [isBatchCompanySubmitting, setIsBatchCompanySubmitting] =
+    useState(false)
 
   const loadCompanies = useCallback(
     async (pageToLoad: number, search: string) => {
@@ -78,16 +117,29 @@ export default function CompanyPage() {
     []
   )
 
+  const loadPartnerships = useCallback(async () => {
+    try {
+      setIsLoadingPartnerships(true)
+      const data = await adminCompanyService.listPartnerships()
+      setPartnerships(data)
+    } catch (error) {
+      console.error('Erro ao carregar parcerias:', error)
+    } finally {
+      setIsLoadingPartnerships(false)
+    }
+  }, [])
+
   useEffect(() => {
     setPage(1)
     setHasMore(true)
     setCompanies([])
     loadCompanies(1, '')
+    loadPartnerships()
     adminCompanyService
       .countCompanies()
       .then(setTotalCount)
       .catch(() => {})
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loadCompanies, loadPartnerships])
 
   useEffect(() => {
     setPage(1)
@@ -128,6 +180,21 @@ export default function CompanyPage() {
   const selectedCompany =
     companies.find(company => company.id === selectedCompanyId) ??
     filteredCompanies[0]
+
+  const selectedCompanyPartnerships = selectedCompany
+    ? partnerships.filter(
+        partnership => partnership.companyId === selectedCompany.id
+      )
+    : []
+
+  const countCompanyPartnerships = (
+    companyId: string,
+    status: PartnershipStatus
+  ) =>
+    partnerships.filter(
+      partnership =>
+        partnership.companyId === companyId && partnership.status === status
+    ).length
 
   const emailIsValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
     newPartner.email.trim()
@@ -172,10 +239,42 @@ export default function CompanyPage() {
     }
   }
 
+  async function handleBatchCompanyImport() {
+    if (!batchCompanyFile || isBatchCompanySubmitting) return
+
+    setIsBatchCompanySubmitting(true)
+    setBatchCompanyError(null)
+    setBatchCompanyResult(null)
+    try {
+      const result = await adminCompanyService.importCompanies(batchCompanyFile)
+      setBatchCompanyResult(result)
+      if (result.created > 0) {
+        setPage(1)
+        setHasMore(true)
+        await loadCompanies(1, query)
+        const count = await adminCompanyService.countCompanies(
+          query || undefined
+        )
+        setTotalCount(count)
+      }
+    } catch (error) {
+      setBatchCompanyError(
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível importar as empresas.'
+      )
+    } finally {
+      setIsBatchCompanySubmitting(false)
+    }
+  }
+
   async function handleDeleteCompany(companyId: string) {
     try {
       await adminCompanyService.deleteCompany(companyId)
       setCompanies(prev => prev.filter(company => company.id !== companyId))
+      setPartnerships(prev =>
+        prev.filter(partnership => partnership.companyId !== companyId)
+      )
 
       if (selectedCompanyId === companyId) {
         const remaining = companies.filter(company => company.id !== companyId)
@@ -183,6 +282,28 @@ export default function CompanyPage() {
       }
     } catch (error) {
       console.error('Erro ao remover empresa:', error)
+    }
+  }
+
+  async function handleUpdatePartnershipStatus(
+    partnershipId: string,
+    status: Extract<PartnershipStatus, 'approved' | 'rejected'>
+  ) {
+    try {
+      setPartnershipActionId(partnershipId)
+      const updated = await adminCompanyService.updatePartnershipStatus(
+        partnershipId,
+        status
+      )
+      setPartnerships(prev =>
+        prev.map(partnership =>
+          partnership.id === partnershipId ? updated : partnership
+        )
+      )
+    } catch (error) {
+      console.error('Erro ao atualizar parceria:', error)
+    } finally {
+      setPartnershipActionId(null)
     }
   }
 
@@ -324,6 +445,14 @@ export default function CompanyPage() {
 
             {filteredCompanies.map(company => {
               const isSelected = company.id === selectedCompanyId
+              const pendingCount = countCompanyPartnerships(
+                company.id,
+                'pending'
+              )
+              const approvedCount = countCompanyPartnerships(
+                company.id,
+                'approved'
+              )
 
               return (
                 <Box
@@ -406,7 +535,12 @@ export default function CompanyPage() {
                       >
                         Escolas que deseja patrocinar
                       </Typography>
-                      <Typography sx={{ fontWeight: 700 }}>0</Typography>
+                      <Typography
+                        data-testid={`company-${company.id}-pending-schools`}
+                        sx={{ fontWeight: 700 }}
+                      >
+                        {pendingCount}
+                      </Typography>
                     </Box>
 
                     <Box
@@ -423,7 +557,12 @@ export default function CompanyPage() {
                       >
                         Escolas apoiadas
                       </Typography>
-                      <Typography sx={{ fontWeight: 700 }}>0</Typography>
+                      <Typography
+                        data-testid={`company-${company.id}-supported-schools`}
+                        sx={{ fontWeight: 700 }}
+                      >
+                        {approvedCount}
+                      </Typography>
                     </Box>
                   </Box>
                 </Box>
@@ -512,19 +651,28 @@ export default function CompanyPage() {
                   Solicitações de parceria
                 </Typography>
 
-                <Box
-                  sx={{
-                    border: '1px solid',
-                    borderColor: 'background.border',
-                    borderRadius: '12px',
-                    p: 1.5,
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    gap: 2,
-                  }}
-                >
-                  <Box>
+                {isLoadingPartnerships ? (
+                  <Box
+                    sx={{
+                      border: '1px solid',
+                      borderColor: 'background.border',
+                      borderRadius: '12px',
+                      p: 1.5,
+                    }}
+                  >
+                    <Typography sx={{ color: 'text.secondary', fontSize: 13 }}>
+                      Carregando solicitações...
+                    </Typography>
+                  </Box>
+                ) : selectedCompanyPartnerships.length === 0 ? (
+                  <Box
+                    sx={{
+                      border: '1px solid',
+                      borderColor: 'background.border',
+                      borderRadius: '12px',
+                      p: 1.5,
+                    }}
+                  >
                     <Typography sx={{ fontWeight: 700, fontSize: 15 }}>
                       Nenhuma escola solicitada
                     </Typography>
@@ -532,49 +680,152 @@ export default function CompanyPage() {
                       Ainda não há pedidos de apoio para esta empresa.
                     </Typography>
                   </Box>
+                ) : (
+                  <Box
+                    sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}
+                  >
+                    {selectedCompanyPartnerships.map(partnership => {
+                      const isPending = partnership.status === 'pending'
+                      const isUpdating = partnershipActionId === partnership.id
+                      const statusColor =
+                        PARTNERSHIP_STATUS_COLORS[partnership.status]
 
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Box
-                      sx={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: '50%',
-                        border: '1px solid',
-                        borderColor: alpha('#22C55E', 0.35),
-                        backgroundColor: alpha('#22C55E', 0.08),
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'not-allowed',
-                        opacity: 0.5,
-                      }}
-                    >
-                      <CheckCircleRoundedIcon
-                        sx={{ color: '#22C55E', fontSize: 17 }}
-                      />
-                    </Box>
+                      return (
+                        <Box
+                          key={partnership.id}
+                          data-testid={`partnership-item-${partnership.id}`}
+                          sx={{
+                            border: '1px solid',
+                            borderColor: 'background.border',
+                            borderRadius: '12px',
+                            p: 1.5,
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            gap: 2,
+                          }}
+                        >
+                          <Box sx={{ minWidth: 0 }}>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
+                                flexWrap: 'wrap',
+                              }}
+                            >
+                              <Typography
+                                sx={{
+                                  fontWeight: 700,
+                                  fontSize: 15,
+                                  overflowWrap: 'anywhere',
+                                }}
+                              >
+                                {partnership.schoolName || 'Escola sem nome'}
+                              </Typography>
+                              <Typography
+                                sx={{
+                                  border: '1px solid',
+                                  borderColor: alpha(statusColor, 0.32),
+                                  borderRadius: '999px',
+                                  color: statusColor,
+                                  fontSize: 11,
+                                  fontWeight: 700,
+                                  lineHeight: 1,
+                                  px: 1,
+                                  py: 0.5,
+                                }}
+                              >
+                                {PARTNERSHIP_STATUS_LABELS[partnership.status]}
+                              </Typography>
+                            </Box>
+                            <Typography
+                              sx={{
+                                color: 'text.secondary',
+                                fontSize: 13,
+                                overflowWrap: 'anywhere',
+                              }}
+                            >
+                              {partnership.requestTitle} &bull;{' '}
+                              {partnership.grantedSpots} vaga(s)
+                            </Typography>
+                            <Typography
+                              sx={{ color: 'text.secondary', fontSize: 12 }}
+                            >
+                              Solicitadas: {partnership.requestedSpots} &bull;
+                              Restantes: {partnership.remainingSpots}
+                            </Typography>
+                          </Box>
 
-                    <Box
-                      sx={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: '50%',
-                        border: '1px solid',
-                        borderColor: alpha('#EF4444', 0.35),
-                        backgroundColor: alpha('#EF4444', 0.08),
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'not-allowed',
-                        opacity: 0.5,
-                      }}
-                    >
-                      <CancelRoundedIcon
-                        sx={{ color: '#EF4444', fontSize: 17 }}
-                      />
-                    </Box>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                              flexShrink: 0,
+                            }}
+                          >
+                            <IconButton
+                              aria-label={`Aprovar parceria com ${partnership.schoolName}`}
+                              data-testid={`approve-partnership-${partnership.id}`}
+                              disabled={!isPending || isUpdating}
+                              onClick={() =>
+                                handleUpdatePartnershipStatus(
+                                  partnership.id,
+                                  'approved'
+                                )
+                              }
+                              sx={{
+                                width: 30,
+                                height: 30,
+                                border: '1px solid',
+                                borderColor: alpha('#22C55E', 0.35),
+                                backgroundColor: alpha('#22C55E', 0.08),
+                                color: '#22C55E',
+                                '&:hover': {
+                                  backgroundColor: alpha('#22C55E', 0.14),
+                                },
+                                '&.Mui-disabled': {
+                                  color: alpha('#22C55E', 0.45),
+                                },
+                              }}
+                            >
+                              <CheckCircleRoundedIcon sx={{ fontSize: 17 }} />
+                            </IconButton>
+
+                            <IconButton
+                              aria-label={`Recusar parceria com ${partnership.schoolName}`}
+                              data-testid={`reject-partnership-${partnership.id}`}
+                              disabled={!isPending || isUpdating}
+                              onClick={() =>
+                                handleUpdatePartnershipStatus(
+                                  partnership.id,
+                                  'rejected'
+                                )
+                              }
+                              sx={{
+                                width: 30,
+                                height: 30,
+                                border: '1px solid',
+                                borderColor: alpha('#EF4444', 0.35),
+                                backgroundColor: alpha('#EF4444', 0.08),
+                                color: '#EF4444',
+                                '&:hover': {
+                                  backgroundColor: alpha('#EF4444', 0.14),
+                                },
+                                '&.Mui-disabled': {
+                                  color: alpha('#EF4444', 0.45),
+                                },
+                              }}
+                            >
+                              <CancelRoundedIcon sx={{ fontSize: 17 }} />
+                            </IconButton>
+                          </Box>
+                        </Box>
+                      )
+                    })}
                   </Box>
-                </Box>
+                )}
               </Box>
             </Box>
           )}
@@ -594,6 +845,37 @@ export default function CompanyPage() {
         disableConfirm={!canCreatePartner}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          <Button
+            fullWidth
+            variant="outlined"
+            startIcon={<UploadFileRoundedIcon />}
+            onClick={() => {
+              setIsNewPartnerOpen(false)
+              setIsBatchCompanyOpen(true)
+            }}
+            sx={{
+              borderColor: alpha(AppColors.role.admin.secondary, 0.4),
+              color: AppColors.role.admin.secondary,
+              borderRadius: '10px',
+              fontWeight: 700,
+              textTransform: 'none',
+              py: 1,
+              '&:hover': {
+                borderColor: AppColors.role.admin.secondary,
+                backgroundColor: alpha(AppColors.role.admin.secondary, 0.05),
+              },
+            }}
+          >
+            Cadastrar em lote
+          </Button>
+
+          <Box
+            sx={{
+              borderTop: '1px solid',
+              borderColor: 'background.border',
+              mt: 0.5,
+            }}
+          />
           <Box>
             <Typography
               sx={{
@@ -733,6 +1015,81 @@ export default function CompanyPage() {
             />
           </Box>
         </Box>
+      </AppActionModal>
+
+      {/* Batch company upload modal */}
+      <AppActionModal
+        open={isBatchCompanyOpen}
+        onClose={() => {
+          setIsBatchCompanyOpen(false)
+          setBatchCompanyFile(null)
+          setBatchCompanyResult(null)
+          setBatchCompanyError(null)
+        }}
+        title="Cadastrar empresas em lote"
+        description="Envie um arquivo .csv com os dados das empresas."
+        onConfirm={() => void handleBatchCompanyImport()}
+        confirmLabel="Enviar arquivo"
+        cancelLabel="Cancelar"
+        confirmColor={AppColors.role.admin.secondary}
+        confirmHoverColor={theme.palette.error.dark}
+        disableConfirm={!batchCompanyFile || isBatchCompanySubmitting}
+        loading={isBatchCompanySubmitting}
+      >
+        <Box
+          component="label"
+          sx={{
+            border: '1px dashed',
+            borderColor: alpha(AppColors.role.admin.secondary, 0.4),
+            borderRadius: '14px',
+            p: 3,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 1,
+            cursor: 'pointer',
+            textAlign: 'center',
+            backgroundColor: alpha(AppColors.role.admin.secondary, 0.04),
+            '&:hover': {
+              backgroundColor: alpha(AppColors.role.admin.secondary, 0.08),
+            },
+          }}
+        >
+          <UploadFileRoundedIcon
+            sx={{ color: AppColors.role.admin.secondary, fontSize: 32 }}
+          />
+          <Typography sx={{ fontWeight: 700, fontSize: 14 }}>
+            {batchCompanyFile
+              ? batchCompanyFile.name
+              : 'Clique para selecionar um arquivo .csv'}
+          </Typography>
+          <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
+            Apenas arquivos .csv são aceitos.
+          </Typography>
+          <input
+            type="file"
+            accept=".csv,text/csv"
+            hidden
+            onChange={e => {
+              const file = e.target.files?.[0] ?? null
+              if (file && !file.name.toLowerCase().endsWith('.csv')) {
+                e.target.value = ''
+                return
+              }
+              setBatchCompanyFile(file)
+              setBatchCompanyResult(null)
+              setBatchCompanyError(null)
+            }}
+          />
+        </Box>
+        <CsvTemplateDownloadButton
+          color={AppColors.role.admin.secondary}
+          template="companies"
+        />
+        <BatchImportFeedback
+          error={batchCompanyError}
+          result={batchCompanyResult}
+        />
       </AppActionModal>
 
       <AppActionModal

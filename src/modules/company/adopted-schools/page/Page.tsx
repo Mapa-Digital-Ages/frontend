@@ -1,17 +1,6 @@
 import AccountBalanceRoundedIcon from '@mui/icons-material/AccountBalanceRounded'
 import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded'
-import {
-  Box,
-  IconButton,
-  Menu,
-  MenuItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Typography,
-} from '@mui/material'
+import { Box, IconButton, Menu, MenuItem, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import {
   getRoleHoverStyle,
@@ -26,32 +15,18 @@ import PageHeader from '@/shared/ui/PageHeader'
 import { SearchBarAndFilter } from '@/shared/ui/SearchBarAndFilter'
 import { adoptedSchoolsService } from '../services/service'
 import type { AdoptedSchool } from '../types/types'
-import type { DropdownOption } from '@/shared/ui/AppDropdown'
 import { useCompanyRole } from '@/modules/company/shared/hooks/useCompanyRole'
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 import AppActionModal from '@/shared/ui/AppActionModal'
-
-const FILTER_OPTIONS: DropdownOption[] = [
-  { label: 'Todos', value: 'all' },
-  { label: 'São Paulo', value: 'SP' },
-  { label: 'Minas Gerais', value: 'MG' },
-  { label: 'Rio de Janeiro', value: 'RJ' },
-  { label: 'Pernambuco', value: 'PE' },
-  { label: 'Paraná', value: 'PR' },
-]
 
 export default function Page() {
   const theme = useTheme()
   const [schools, setSchools] = useState<AdoptedSchool[]>([])
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null)
   const [query, setQuery] = useState('')
-  const [filterStatus, setFilterStatus] = useState('all')
   const [isLoading, setIsLoading] = useState(true)
   const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null)
   const [menuSchoolId, setMenuSchoolId] = useState<string | null>(null)
-  const [gradeMenuAnchorEl, setGradeMenuAnchorEl] =
-    useState<HTMLElement | null>(null)
-  const [gradeMenuKey, setGradeMenuKey] = useState<string | null>(null)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const role = useCompanyRole()
   const accent = getRolePalette(theme, role)
@@ -85,22 +60,22 @@ export default function Page() {
   async function handleRemoveSchool() {
     if (!menuSchoolId) return
     await adoptedSchoolsService.removeSchool(menuSchoolId)
-    setSchools(current => current.filter(s => s.id !== menuSchoolId))
-    if (selectedSchoolId === menuSchoolId) setSelectedSchoolId(null)
+    setSchools(current => {
+      const nextSchools = current.filter(s => s.id !== menuSchoolId)
+      if (selectedSchoolId === menuSchoolId) {
+        setSelectedSchoolId(nextSchools[0]?.id ?? null)
+      }
+      return nextSchools
+    })
     setIsDeleteModalOpen(false)
     setMenuSchoolId(null)
   }
 
   const filteredSchools = useMemo(() => {
-    return schools.filter(school => {
-      const matchesQuery = school.schoolName
-        .toLowerCase()
-        .includes(query.toLowerCase())
-      const matchesFilter =
-        filterStatus === 'all' || school.state === filterStatus
-      return matchesQuery && matchesFilter
-    })
-  }, [schools, query, filterStatus])
+    return schools.filter(school =>
+      school.schoolName.toLowerCase().includes(query.toLowerCase())
+    )
+  }, [schools, query])
 
   const selectedSchool = useMemo(() => {
     return schools.find(s => s.id === selectedSchoolId) ?? null
@@ -123,9 +98,7 @@ export default function Page() {
 
       <Box data-testid="adopted-schools-search">
         <SearchBarAndFilter
-          filterOptions={FILTER_OPTIONS}
           onQueryChange={setQuery}
-          onStatusChange={setFilterStatus}
           query={query}
           resultsSummary={{
             count: filteredSchools.length,
@@ -133,7 +106,6 @@ export default function Page() {
             pluralLabel: 'resultado(s)',
           }}
           searchPlaceholder="Pesquisar empresas..."
-          selectedStatus={filterStatus}
         />
       </Box>
 
@@ -204,7 +176,7 @@ export default function Page() {
                           fontSize: 13,
                         }}
                       >
-                        {school.students} alunos
+                        {school.grantedSpots} vagas
                       </Typography>
                     </Box>
                   </Box>
@@ -267,39 +239,6 @@ export default function Page() {
           </MenuItem>
         </Menu>
 
-        <Menu
-          anchorEl={gradeMenuAnchorEl}
-          open={Boolean(gradeMenuAnchorEl)}
-          onClose={() => {
-            setGradeMenuAnchorEl(null)
-            setGradeMenuKey(null)
-          }}
-          slotProps={{
-            paper: {
-              sx: {
-                border: '1px solid',
-                borderColor: 'background.border',
-                borderRadius: '16px',
-                minWidth: 200,
-                mt: 1,
-              },
-            },
-          }}
-        >
-          <MenuItem
-            data-testid="view-grade-trails-action"
-            onClick={() => {
-              setGradeMenuAnchorEl(null)
-              setGradeMenuKey(null)
-            }}
-            sx={{ gap: 1.25, py: 1.1 }}
-          >
-            <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
-              Ver trilhas
-            </Typography>
-          </MenuItem>
-        </Menu>
-
         {/* School Details Panel */}
         {selectedSchool && (
           <AppCard contentClassName="p-5" data-testid="school-details-panel">
@@ -323,136 +262,34 @@ export default function Page() {
               >
                 {selectedSchool.schoolName}
               </Typography>
-              <Typography
-                sx={{
-                  color: 'text.secondary',
-                  fontSize: 14,
-                }}
-              >
-                {selectedSchool.students} alunos
-              </Typography>
             </Box>
 
-            <Table
-              size="small"
-              data-testid="school-details-table"
+            <Box
+              data-testid="school-details-spots"
               sx={{
-                '& .MuiTableCell-root': {
-                  borderColor: theme.palette.background.border,
-                  py: 1.5,
-                },
+                border: '1px solid',
+                borderColor: 'background.border',
+                borderRadius: '12px',
+                p: 2,
               }}
             >
-              <TableHead>
-                <TableRow>
-                  <TableCell
-                    sx={{
-                      color: 'text.secondary',
-                      fontSize: 13,
-                      fontWeight: 600,
-                    }}
-                  >
-                    Ano
-                  </TableCell>
-                  <TableCell
-                    align="center"
-                    sx={{
-                      color: 'text.secondary',
-                      fontSize: 13,
-                      fontWeight: 600,
-                    }}
-                  >
-                    Trilhas
-                  </TableCell>
-                  <TableCell
-                    align="right"
-                    sx={{
-                      color: 'text.secondary',
-                      fontSize: 13,
-                      fontWeight: 600,
-                    }}
-                  >
-                    Por Matéria
-                  </TableCell>
-                  <TableCell sx={{ width: 40 }} />
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {selectedSchool.grades.map(grade => (
-                  <TableRow
-                    key={grade.year}
-                    data-testid={`school-details-grade-${grade.year}`}
-                  >
-                    <TableCell>
-                      <Typography
-                        sx={{
-                          color: 'text.primary',
-                          fontSize: 16,
-                          fontWeight: 700,
-                        }}
-                      >
-                        {grade.year}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="center">
-                      <Typography
-                        sx={{
-                          color: 'text.primary',
-                          fontSize: 15,
-                          fontWeight: 600,
-                        }}
-                      >
-                        {grade.trails}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="right">
-                      <Typography
-                        sx={{
-                          color: 'text.primary',
-                          fontSize: 15,
-                          fontWeight: 600,
-                        }}
-                      >
-                        {grade.subject}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="center">
-                      <IconButton
-                        aria-label={`Opções ${grade.year}`}
-                        data-testid={`grade-menu-${grade.year}`}
-                        size="small"
-                        onClick={e => {
-                          setGradeMenuAnchorEl(e.currentTarget)
-                          setGradeMenuKey(grade.year)
-                        }}
-                        sx={{
-                          color:
-                            gradeMenuKey === grade.year
-                              ? accent.primary
-                              : 'text.secondary',
-                          backgroundColor:
-                            gradeMenuKey === grade.year
-                              ? selectedStyle.backgroundColor
-                              : 'transparent',
-                          '&:hover': {
-                            backgroundColor: hoverStyle.backgroundColor,
-                            color: accent.primary,
-                          },
-                        }}
-                      >
-                        <MoreHorizRoundedIcon fontSize="small" />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+              <Typography
+                sx={{ color: 'text.secondary', fontSize: 13, fontWeight: 600 }}
+              >
+                Vagas apoiadas
+              </Typography>
+              <Typography
+                sx={{ color: 'text.primary', fontSize: 24, fontWeight: 700 }}
+              >
+                {selectedSchool.grantedSpots}
+              </Typography>
+            </Box>
           </AppCard>
         )}
 
         <AppActionModal
           confirmLabel="Confirmar remoção"
-          description="Essa ação remove a escola da sua lista de escolas adotadas."
+          description="Essa ação encerra a parceria e remove a escola da sua lista de escolas apoiadas."
           mode="confirm"
           onClose={() => setIsDeleteModalOpen(false)}
           onConfirm={() => {

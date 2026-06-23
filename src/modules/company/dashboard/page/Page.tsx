@@ -1,11 +1,13 @@
 import AccountBalanceRoundedIcon from '@mui/icons-material/AccountBalanceRounded'
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded'
-import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded'
-import { Box, IconButton, Tooltip, Typography } from '@mui/material'
-import { alpha, useTheme } from '@mui/material/styles'
+import { Alert, Box, Typography } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import { useEffect, useState } from 'react'
+import { HttpRequestError } from '@/shared/lib/http/client'
 import LoadingScreen from '@/shared/ui/LoadingScreen'
+import AppActionModal from '@/shared/ui/AppActionModal'
+import AppButton from '@/shared/ui/AppButton'
 import AppCard from '@/shared/ui/AppCard'
 import AppPageContainer from '@/shared/ui/AppPageContainer'
 import MetricsCard from '@/shared/ui/MetricsCard'
@@ -17,11 +19,22 @@ import type { IconVariantName } from '@/app/theme/core/palette'
 import type { SupportedSchool, SupportRequest } from '../types/types'
 import { getHoverStyle, getRolePalette } from '@/app/theme/core/roles'
 import { useCompanyRole } from '@/modules/company/shared/hooks/useCompanyRole'
+import AppInput from '@/shared/ui/AppInput'
 
 const STATUS_MAP: Record<string, TagContext> = {
   aguardando: {
     id: 'aguardando',
     label: 'Aguardando Retorno',
+    color: '#e65100',
+  },
+  pendente: {
+    id: 'pendente',
+    label: 'Aguardando Aprovação',
+    color: '#e65100',
+  },
+  pending: {
+    id: 'pending',
+    label: 'Aguardando Aprovação',
     color: '#e65100',
   },
   apoiada: {
@@ -36,6 +49,22 @@ const STATUS_MAP: Record<string, TagContext> = {
   },
 }
 
+async function resolveErrorMessage(error: unknown): Promise<string> {
+  if (error instanceof HttpRequestError) {
+    const body = (await error.response?.json().catch(() => null)) as {
+      detail?: string
+    } | null
+
+    return body?.detail ?? 'Não foi possível concluir a ação. Tente novamente.'
+  }
+
+  if (error instanceof Error) {
+    return error.message
+  }
+
+  return 'Não foi possível concluir a ação. Tente novamente.'
+}
+
 export default function Page() {
   const theme = useTheme()
   const [stats, setStats] = useState<CompanyStat[]>([])
@@ -44,45 +73,114 @@ export default function Page() {
     []
   )
   const [isLoading, setIsLoading] = useState(true)
+  const [errorMessage, setErrorMessage] = useState('')
+  const [spotsByRequest, setSpotsByRequest] = useState<Record<string, string>>(
+    {}
+  )
+  const [pendingRequest, setPendingRequest] = useState<SupportRequest | null>(
+    null
+  )
+  const [isConfirming, setIsConfirming] = useState(false)
   const role = useCompanyRole()
   const accent = getRolePalette(theme, role)
   const hoverStyle = getHoverStyle(theme, accent.primary)
 
-  function handleApprove(request: SupportRequest) {
-    setSupportRequests(prev => prev.filter(r => r.id !== request.id))
-    setSupportedSchools(prev => [
-      ...prev,
-      {
-        id: request.id,
-        schoolName: request.schoolName,
-        description: request.description,
-        status: 'apoiada' as const,
-      },
+  async function refreshData() {
+    const [nextRequests, nextSchools] = await Promise.all([
+      companyDashboardService.getSupportRequests(),
+      companyDashboardService.getSupportedSchools(),
     ])
+
+    setSupportRequests(nextRequests)
+    setSupportedSchools(nextSchools)
+    setStats(companyDashboardService.getStats(nextSchools))
   }
 
-  function handleReject(requestId: string) {
-    setSupportRequests(prev => prev.filter(r => r.id !== requestId))
+  function getSpotsValue(request: SupportRequest) {
+    return spotsByRequest[request.id] ?? String(request.remainingSpots)
+  }
+
+  function handleSpotsChange(requestId: string, value: string) {
+    setSpotsByRequest(prev => ({
+      ...prev,
+      [requestId]: value,
+    }))
+  }
+
+  function requestApproval(request: SupportRequest) {
+    setErrorMessage('')
+
+    const grantedSpots = Number(getSpotsValue(request))
+
+    if (
+      !Number.isInteger(grantedSpots) ||
+      grantedSpots < 1 ||
+      grantedSpots > request.remainingSpots
+    ) {
+      setErrorMessage(
+        `Informe um número de vagas entre 1 e ${request.remainingSpots}.`
+      )
+      return
+    }
+
+    setPendingRequest(request)
+  }
+
+  async function confirmApproval() {
+    if (!pendingRequest) {
+      return
+    }
+
+    const request = pendingRequest
+    const grantedSpots = Number(getSpotsValue(request))
+
+    setIsConfirming(true)
+
+    try {
+      await companyDashboardService.acceptRequest(request, grantedSpots)
+      setSpotsByRequest(prev => {
+        const next = { ...prev }
+        delete next[request.id]
+        return next
+      })
+      setPendingRequest(null)
+      await refreshData()
+    } catch (error) {
+      setPendingRequest(null)
+      setErrorMessage(await resolveErrorMessage(error))
+    } finally {
+      setIsConfirming(false)
+    }
   }
 
   useEffect(() => {
     let isActive = true
 
     async function loadPage() {
-      const [nextStats, nextRequests, nextSchools] = await Promise.all([
-        companyDashboardService.getStats(),
-        companyDashboardService.getSupportRequests(),
-        companyDashboardService.getSupportedSchools(),
-      ])
+      try {
+        const [nextRequests, nextSchools] = await Promise.all([
+          companyDashboardService.getSupportRequests(),
+          companyDashboardService.getSupportedSchools(),
+        ])
 
-      if (!isActive) {
-        return
+        if (!isActive) {
+          return
+        }
+
+        setSupportRequests(nextRequests)
+        setSupportedSchools(nextSchools)
+        setStats(companyDashboardService.getStats(nextSchools))
+      } catch (error) {
+        const message = await resolveErrorMessage(error)
+
+        if (isActive) {
+          setErrorMessage(message)
+        }
+      } finally {
+        if (isActive) {
+          setIsLoading(false)
+        }
       }
-
-      setStats(nextStats)
-      setSupportRequests(nextRequests)
-      setSupportedSchools(nextSchools)
-      setIsLoading(false)
     }
 
     void loadPage()
@@ -129,6 +227,18 @@ export default function Page() {
         subtitle="Acompanhe indicadores de resultado e investimento social"
         variant="company"
       />
+
+      {errorMessage ? (
+        <Alert
+          data-testid="company-dashboard-error"
+          icon={false}
+          severity="error"
+          variant="outlined"
+          sx={{ borderRadius: '10px', fontSize: 14 }}
+        >
+          {errorMessage}
+        </Alert>
+      ) : null}
 
       <Box
         className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4"
@@ -194,11 +304,33 @@ export default function Page() {
                 </Typography>
                 <Typography
                   sx={{
-                    color: 'text.secondary',
-                    fontSize: 14,
+                    color: 'text.primary',
+                    fontSize: 15,
+                    fontWeight: 500,
                   }}
                 >
-                  {request.description}
+                  {request.title}
+                </Typography>
+                {request.description ? (
+                  <Typography
+                    sx={{
+                      color: 'text.secondary',
+                      fontSize: 14,
+                    }}
+                  >
+                    {request.description}
+                  </Typography>
+                ) : null}
+                <Typography
+                  data-testid={`support-request-spots-${request.id}`}
+                  sx={{
+                    color: accent.primary,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    mt: 0.5,
+                  }}
+                >
+                  {request.remainingSpots} vaga(s) disponível(is)
                 </Typography>
                 <Box sx={{ mt: 0.5 }}>
                   <AppTag
@@ -212,60 +344,36 @@ export default function Page() {
                   />
                 </Box>
               </Box>
-              <Box className="flex items-center gap-1 shrink-0">
-                <Tooltip title="Aprovar solicitação">
-                  <IconButton
-                    aria-label="Aprovar solicitação"
-                    data-testid={`approve-request-${request.id}`}
-                    onClick={() => handleApprove(request)}
-                    size="small"
-                    sx={{
-                      border: '1px solid',
-                      borderColor: 'background.border',
-                      borderRadius: 'var(--app-radius-control)',
-                      color: theme.palette.success.main,
-                      height: 32,
-                      width: 32,
-                      '& .MuiSvgIcon-root': {
-                        fontSize: 16,
-                      },
-                      '&:hover': {
-                        borderColor: alpha(theme.palette.success.main, 0.3),
-                        backgroundColor: alpha(
-                          theme.palette.success.main,
-                          0.15
-                        ),
-                      },
-                    }}
-                  >
-                    <CheckCircleOutlineRoundedIcon />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Recusar solicitação">
-                  <IconButton
-                    aria-label="Recusar solicitação"
-                    data-testid={`reject-request-${request.id}`}
-                    onClick={() => handleReject(request.id)}
-                    size="small"
-                    sx={{
-                      border: '1px solid',
-                      borderColor: 'background.border',
-                      borderRadius: 'var(--app-radius-control)',
-                      color: theme.palette.error.main,
-                      height: 32,
-                      width: 32,
-                      '& .MuiSvgIcon-root': {
-                        fontSize: 16,
-                      },
-                      '&:hover': {
-                        borderColor: alpha(theme.palette.error.main, 0.3),
-                        backgroundColor: alpha(theme.palette.error.main, 0.15),
-                      },
-                    }}
-                  >
-                    <CancelOutlinedIcon />
-                  </IconButton>
-                </Tooltip>
+              <Box className="flex flex-col items-end shrink-0">
+                <AppInput
+                  data-testid={`spots-input-${request.id}`}
+                  inputMode="numeric"
+                  label="Vagas"
+                  onChange={e =>
+                    handleSpotsChange(
+                      request.id,
+                      e.target.value.replace(/\D/g, '')
+                    )
+                  }
+                  inputSize="small"
+                  value={getSpotsValue(request)}
+                  sx={{
+                    width: 80,
+                    '& .MuiInputBase-input': {
+                      textAlign: 'center',
+                      fontSize: 14,
+                    },
+                  }}
+                />
+                <AppButton
+                  data-testid={`approve-request-${request.id}`}
+                  onClick={() => requestApproval(request)}
+                  size="small"
+                  sx={{ gap: 0.5, fontSize: 12, px: 1.5, py: 0.4, mt: 2 }}
+                >
+                  <CheckCircleOutlineRoundedIcon sx={{ fontSize: 14 }} />
+                  Aceitar apoio
+                </AppButton>
               </Box>
             </Box>
           ))}
@@ -342,6 +450,30 @@ export default function Page() {
           ))}
         </AppCard>
       </Box>
+
+      <AppActionModal
+        cancelLabel="Cancelar"
+        confirmLabel="Aceitar apoio"
+        confirmTone="success.main"
+        description={
+          pendingRequest
+            ? `Você está prestes a apoiar ${pendingRequest.schoolName}.`
+            : undefined
+        }
+        loading={isConfirming}
+        mode="confirm"
+        onClose={() => setPendingRequest(null)}
+        onConfirm={() => void confirmApproval()}
+        open={pendingRequest !== null}
+        title="Confirmar apoio"
+      >
+        {pendingRequest ? (
+          <Typography sx={{ color: 'text.secondary', fontSize: 15 }}>
+            Confirmar a doação de {getSpotsValue(pendingRequest)} vaga(s) para a
+            solicitação “{pendingRequest.title}”?
+          </Typography>
+        ) : null}
+      </AppActionModal>
     </AppPageContainer>
   )
 }

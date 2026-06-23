@@ -12,7 +12,7 @@ await jest.unstable_mockModule('@/shared/lib/http/client', () => ({
 }))
 
 const { adaptiveTrailDetailService } =
-  await import('@/modules/student/adaptivetrail/services/trailDetailService')
+  await import('@/modules/student/adaptivetrail/detail/services/service')
 
 function getHttp() {
   return {
@@ -134,5 +134,28 @@ describe('adaptiveTrailDetailService.completeStep', () => {
     expect(result.passed).toBe(true)
     expect(result.currentSubPath).toBe(8)
     expect(result.pathStatus).toBe('on_going')
+  })
+})
+
+describe('adaptiveTrailDetailService.validateAnswer', () => {
+  test('posts one selected answer and returns correctness', async () => {
+    getHttp().post.mockResolvedValue({
+      data: { exercise_id: 1, option_id: 2, correct: false },
+    })
+
+    const result = await adaptiveTrailDetailService.validateAnswer('3', '5', {
+      exerciseId: '1',
+      optionId: '2',
+    })
+
+    expect(getHttp().post).toHaveBeenCalledWith(
+      'student/student-1/trails/3/steps/5/answers/validate',
+      { exercise_id: '1', option_id: '2' }
+    )
+    expect(result).toEqual({
+      exerciseId: '1',
+      optionId: '2',
+      correct: false,
+    })
   })
 })

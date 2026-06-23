@@ -6,6 +6,7 @@ import SchoolDashboardPage from '@/modules/school/dashboard/page/Page'
 import SchoolClassesPage from '@/modules/school/classes/page/Page'
 import SchoolStudentsPage from '@/modules/school/students/page/Page'
 import SchoolRequestPartnerPage from '@/modules/school/request-partner/page/Page'
+import { PublicSchoolRoute } from '@/modules/school/shared/guards/PublicSchoolRoute'
 
 export const schoolRoutes: RouteObject[] = [
   {
@@ -34,8 +35,13 @@ export const schoolRoutes: RouteObject[] = [
                 element: <SchoolDashboardPage />,
               },
               {
-                path: APP_ROUTES.school.requestPartner,
-                element: <SchoolRequestPartnerPage />,
+                element: <PublicSchoolRoute />,
+                children: [
+                  {
+                    path: APP_ROUTES.school.requestPartner,
+                    element: <SchoolRequestPartnerPage />,
+                  },
+                ],
               },
             ],
           },

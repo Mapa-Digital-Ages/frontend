@@ -37,6 +37,7 @@ import type {
   StudentMetrics,
 } from '@/modules/admin/student/types/types'
 import { authService } from '@/app/auth/core/service'
+import { useAuth } from '@/app/auth/hook'
 
 type SortField = 'name' | 'school' | 'year'
 type SortDirection = 'asc' | 'desc'
@@ -135,11 +136,20 @@ function SortableHeader({
 
 export default function Page() {
   const theme = useTheme()
+  const { user } = useAuth()
   const schoolId = authService.getUserId() ?? undefined
   const statusConfig: Record<string, TagContext> = {
     ativo: { label: 'Ativo', color: theme.palette.success.main },
     inativo: { label: 'Inativo', color: theme.palette.warning.main },
   }
+
+  const defaultSchool = useMemo(() => {
+    if (!schoolId) return null
+    return {
+      value: schoolId,
+      label: user?.name ?? 'Minha Escola',
+    }
+  }, [schoolId, user?.name])
 
   const [students, setStudents] = useState<StudentItem[]>([])
   const [metrics, setMetrics] = useState<StudentMetrics>({
@@ -340,7 +350,13 @@ export default function Page() {
         status: values.status as 'ativo' | 'inativo',
         birthDate: values.birthDate,
       })
-      const withNames = enrichItems([created])
+      const guardianId = values.guardian !== NONE ? values.guardian : null
+      const patchedCreated = {
+        ...created,
+        guardianId: created.guardianId ?? guardianId,
+        guardian: created.guardian ?? (values.guardianName || null),
+      }
+      const withNames = enrichItems([patchedCreated])
       setStudents(prev => [...withNames, ...prev])
       setMetrics(m => ({
         ...m,
@@ -446,6 +462,7 @@ export default function Page() {
         }}
         apiError={createError}
         confirmColor={AppColors.role.escola.primary}
+        defaultSchool={defaultSchool}
       />
 
       <Box className="grid grid-cols-2 gap-3 md:gap-4">

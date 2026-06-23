@@ -114,11 +114,12 @@ const authValue: AuthContextValue = {
   },
 }
 
-function renderPage() {
+function renderPage(initialEntries = ['/']) {
   renderWithProviders(
     <AuthContext.Provider value={authValue}>
       <SchoolCompanyPage />
-    </AuthContext.Provider>
+    </AuthContext.Provider>,
+    { initialEntries }
   )
 }
 
@@ -143,6 +144,21 @@ beforeEach(() => {
     })
   jest.spyOn(adminCompanyService, 'listCompanies').mockResolvedValue([])
   jest.spyOn(adminCompanyService, 'countCompanies').mockResolvedValue(0)
+  jest.spyOn(adminCompanyService, 'listPartnerships').mockResolvedValue([])
+  jest.spyOn(adminCompanyService, 'updatePartnershipStatus').mockResolvedValue({
+    id: 'partnership-1',
+    schoolId: 'school-1',
+    schoolName: 'Escola São Paulo',
+    companyId: 'company-1',
+    companyName: 'Empresa',
+    requestId: 'request-1',
+    requestTitle: 'Pedido de bolsas',
+    requestedSpots: 10,
+    remainingSpots: 5,
+    grantedSpots: 5,
+    status: 'approved',
+    createdAt: '2026-01-01T00:00:00Z',
+  })
 })
 
 afterEach(() => {
@@ -225,6 +241,23 @@ test('SchoolCompanyPage toggles to empresa view', async () => {
 
   expect(screen.getByTestId('empresa-view')).toBeInTheDocument()
   expect(screen.queryByTestId('escola-view')).not.toBeInTheDocument()
+})
+
+test('SchoolCompanyPage opens school creation from dashboard shortcut', () => {
+  renderPage(['/admin/schools-companies?create=school'])
+
+  expect(
+    screen.getByText('Cadastre uma escola para iniciar processo de ativação.')
+  ).toBeInTheDocument()
+})
+
+test('SchoolCompanyPage opens company creation from dashboard shortcut', () => {
+  renderPage(['/admin/schools-companies?create=company'])
+
+  expect(screen.getByTestId('empresa-view')).toBeInTheDocument()
+  expect(
+    screen.getByText('Cadastre uma nova empresa parceira.')
+  ).toBeInTheDocument()
 })
 
 test('SchoolCompanyPage opens new school modal and verifies current fields', async () => {

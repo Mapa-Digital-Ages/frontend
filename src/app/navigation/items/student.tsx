@@ -18,11 +18,11 @@ export const studentNavigation: SidebarItem[] = [
     path: APP_ROUTES.student.adaptiveTrail,
     icon: <RouteRoundedIcon fontSize="medium" />,
   },
-  {
-    label: 'Conteúdos',
-    path: APP_ROUTES.student.contents,
-    icon: <PlayCircleFilledWhiteOutlinedIcon fontSize="medium" />,
-  },
+  // {
+  //   label: 'Conteúdos',
+  //   path: APP_ROUTES.student.contents,
+  //   icon: <PlayCircleFilledWhiteOutlinedIcon fontSize="medium" />,
+  // },
   {
     label: 'Upload de Tarefas',
     path: APP_ROUTES.student.uploads,

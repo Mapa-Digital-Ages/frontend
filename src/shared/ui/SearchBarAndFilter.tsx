@@ -2,8 +2,7 @@ import SearchRoundedIcon from '@mui/icons-material/SearchRounded'
 import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined'
 import InputAdornment from '@mui/material/InputAdornment'
 import Typography from '@mui/material/Typography'
-import { Box, useMediaQuery } from '@mui/material'
-import { useTheme } from '@mui/material/styles'
+import { Box } from '@mui/material'
 import type { SxProps, Theme } from '@mui/material/styles'
 import type { DropdownOption } from '@/shared/ui/AppDropdown'
 import type { ApprovalResultsSummary } from '@/modules/admin/shared/types/types'
@@ -61,9 +60,8 @@ export function SearchBarAndFilter({
   searchPlaceholder,
   selectedStatus,
 }: SearchBarAndFilterProps) {
-  const theme = useTheme()
-  const isMobileLayout = useMediaQuery(theme.breakpoints.down('md'))
   const resultLabel = getResultsLabel(resultsSummary)
+
   const showFilter =
     filterOptions != null &&
     filterOptions.length > 0 &&
@@ -76,44 +74,102 @@ export function SearchBarAndFilter({
         alignItems: 'stretch',
         display: 'grid',
         gap: 1.5,
-        gridTemplateColumns: showFilter ? 'minmax(0, 1fr) auto' : '1fr',
+        gridTemplateColumns: {
+          xs: showFilter ? 'minmax(0, 1fr) 44px' : 'minmax(0, 1fr)',
+          md: showFilter ? 'minmax(0, 1fr) auto' : 'minmax(0, 1fr)',
+        },
+        maxWidth: '100%',
+        minWidth: 0,
+        overflow: 'hidden',
+        width: '100%',
       }}
     >
       <AppInput
-        className="min-w-0"
-        icon={
-          <SearchRoundedIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
-        }
         onChange={event => onQueryChange(event.target.value)}
         placeholder={searchPlaceholder}
         type="search"
         value={query}
-        InputProps={{
-          endAdornment: isMobileLayout ? null : (
-            <InputAdornment position="end">
-              <Typography
+        slotProps={{
+          input: {
+            startAdornment: (
+              <InputAdornment
+                position="start"
                 sx={{
-                  color: 'text.secondary',
-                  fontSize: { md: 15, xs: 13 },
-                  fontWeight: 600,
-                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                  mr: 1,
                 }}
               >
-                {resultLabel}
-              </Typography>
-            </InputAdornment>
-          ),
+                <SearchRoundedIcon
+                  sx={{
+                    color: 'text.secondary',
+                    fontSize: 22,
+                  }}
+                />
+              </InputAdornment>
+            ),
+            endAdornment: (
+              <InputAdornment
+                position="end"
+                sx={{
+                  flexShrink: 0,
+                  ml: 1,
+                }}
+              >
+                <Typography
+                  component="span"
+                  sx={{
+                    color: 'text.secondary',
+                    fontSize: {
+                      xs: 14,
+                      md: 15,
+                    },
+                    fontWeight: 600,
+                    maxWidth: {
+                      xs: 96,
+                      sm: 140,
+                      md: 180,
+                    },
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {resultLabel}
+                </Typography>
+              </InputAdornment>
+            ),
+          },
         }}
         sx={{
+          maxWidth: '100%',
+          minWidth: 0,
+          width: '100%',
+
           '& .MuiOutlinedInput-root': {
+            alignItems: 'center',
             backgroundColor: 'background.paper',
             borderRadius: '14px',
+            boxSizing: 'border-box',
+            display: 'flex',
             height: 44,
+            maxWidth: '100%',
             minHeight: 44,
+            minWidth: 0,
+            overflow: 'hidden',
+            px: {
+              xs: 1.75,
+              md: 2,
+            },
+            width: '100%',
           },
-          '& .MuiInputAdornment-positionStart': {
-            marginRight: 1,
+
+          '& .MuiInputBase-input': {
+            boxSizing: 'border-box',
+            minWidth: 0,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
           },
+
           ...outlineFieldBorderSx,
         }}
       />
@@ -123,10 +179,8 @@ export function SearchBarAndFilter({
           borderRadius="12px"
           displayLabel="Filtros"
           fullWidth={false}
-          hideLabel={isMobileLayout}
-          inputProps={
-            isMobileLayout ? { 'aria-label': 'Filtrar resultados' } : undefined
-          }
+          hideLabel
+          inputProps={{ 'aria-label': 'Filtrar resultados' }}
           leadingIcon={
             <FilterAltOutlinedIcon
               sx={{
@@ -135,9 +189,9 @@ export function SearchBarAndFilter({
               }}
             />
           }
-          menuAlign={isMobileLayout ? 'right' : 'left'}
+          menuAlign="right"
           menuMaxHeight={240}
-          menuWidth={isMobileLayout ? 220 : 200}
+          menuWidth={220}
           MenuProps={{
             PaperProps: {
               sx: {
@@ -149,71 +203,78 @@ export function SearchBarAndFilter({
           onChange={event => onStatusChange(String(event.target.value))}
           options={filterOptions}
           sx={{
-            ...(isMobileLayout && {
-              '& .MuiInputBase-input': {
-                padding: '0 !important',
-              },
-              '& .MuiOutlinedInput-input': {
-                padding: '0 !important',
-              },
-            }),
+            alignSelf: 'stretch',
+            backgroundColor: 'background.paper',
+            maxWidth: {
+              xs: 44,
+              md: 'none',
+            },
+            minHeight: 44,
+            minWidth: {
+              xs: 44,
+              md: 'auto',
+            },
+            width: {
+              xs: 44,
+              md: 'auto',
+            },
+
             '& .MuiOutlinedInput-root': {
               alignItems: 'center',
               display: 'flex',
               height: 44,
+              justifyContent: 'center',
               minHeight: 44,
-              ...(isMobileLayout && {
-                justifyContent: 'center',
-                padding: 0,
-              }),
+              padding: {
+                xs: 0,
+                md: undefined,
+              },
             },
+
+            '& .MuiInputBase-input': {
+              padding: {
+                xs: '0 !important',
+                md: undefined,
+              },
+            },
+
+            '& .MuiOutlinedInput-input': {
+              padding: {
+                xs: '0 !important',
+                md: undefined,
+              },
+            },
+
             '& .MuiSelect-icon': {
               color: 'text.secondary',
               fontSize: 20,
             },
+
             '& .MuiSelect-select': {
               alignItems: 'center',
-              ...(isMobileLayout
-                ? {
-                    gap: 0,
-                    justifyContent: 'center',
-                    padding: '0 !important',
-                    paddingRight: '0 !important',
-                  }
-                : {
-                    gap: 1,
-                    paddingBlock: '10px',
-                    paddingInline: '14px',
-                  }),
+              display: 'flex',
+              justifyContent: {
+                xs: 'center',
+                md: 'flex-start',
+              },
+              minWidth: 0,
+              padding: {
+                xs: '0 !important',
+                md: '10px 14px',
+              },
+              paddingRight: {
+                xs: '0 !important',
+                md: undefined,
+              },
             },
-            alignSelf: 'stretch',
-            backgroundColor: 'background.paper',
-            minHeight: 44,
+
             ...outlineFieldBorderSx,
           }}
           triggerVariant="ghost"
           value={selectedStatus}
-          width={isMobileLayout ? 44 : 'auto'}
+          width={44}
         />
       ) : null}
-      <Box
-        sx={{
-          display: { xs: 'flex', sm: 'none' },
-          gridColumn: showFilter ? '1 / -1' : '1',
-          justifyContent: 'flex-end',
-        }}
-      >
-        <Typography
-          sx={{
-            color: 'text.secondary',
-            fontSize: 12,
-            fontWeight: 600,
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {resultLabel}
-        </Typography>
-      </Box>
     </Box>
   )
 }

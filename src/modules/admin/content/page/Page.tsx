@@ -2,7 +2,7 @@ import CheckRoundedIcon from '@mui/icons-material/CheckRounded'
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import RuleFolderOutlinedIcon from '@mui/icons-material/RuleFolderOutlined'
-import { Box } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -16,6 +16,7 @@ import {
 import LoadingScreen from '@/shared/ui/LoadingScreen'
 import PageHeader from '@/shared/ui/PageHeader'
 import AppPageContainer from '@/shared/ui/AppPageContainer'
+import AppActionModal from '@/shared/ui/AppActionModal'
 import { buildAdminCorrectionRoute } from '@/app/router/paths'
 import { useUserRole } from '@/app/access/hook'
 import { contentApprovalService } from '@/modules/admin/content/services/runtime'
@@ -26,6 +27,9 @@ import type {
   ApprovalQueueQuery,
   ApprovalQueueResult,
   ApprovalResultsSummary,
+  AdaptiveTrailAdminQuery,
+  AdaptiveTrailAdminItem,
+  AdaptiveTrailAdminResult,
   ContentApprovalDraftInput,
   ContentApprovalItem,
 } from '@/modules/admin/shared/types/types'
@@ -56,7 +60,9 @@ import UploadApprovalCard from '../components/UploadApprovalCard'
 import UploadActionModal, {
   type UploadActionModalMode,
 } from '../components/UploadActionModal'
+import AdaptiveTrailManager from '../components/AdaptiveTrailManager'
 import ContentCard from '../components/ContentCard'
+import TrailCreationModal from '../components/TrailCreationModal'
 import MetricsCard from '@/shared/ui/MetricsCard'
 import SubjectComponent from '../components/SubjectComponent'
 import SubjectCard from '../components/SubjectCard'
@@ -65,6 +71,11 @@ import SubjectActionModal, {
   type SubjectFormValues,
 } from '../components/SubjectActionModal'
 import type { SubjectItem } from '@/modules/admin/shared/types/types'
+import {
+  AdminTrailSubStepFormValues,
+  AdminTrailStepFormValues,
+  TrailCreationFormValues,
+} from '../types/trail'
 
 const DEFAULT_PAGE_INDEX = 1
 
@@ -81,6 +92,13 @@ const DEFAULT_UPLOAD_QUERY: UploadApprovalQuery = {
   pageSize: 10,
   query: '',
   status: 'all',
+}
+
+const DEFAULT_TRAIL_QUERY: AdaptiveTrailAdminQuery = {
+  page: DEFAULT_PAGE_INDEX,
+  pageSize: 6,
+  query: '',
+  subjectId: 'all',
 }
 
 const contentFilterOptions: ApprovalStatusOption[] = [
@@ -107,6 +125,8 @@ function isUploadActivityFilter(
 }
 
 const DEFAULT_SUBJECT_ID = 'default'
+const CONTENT_DESCRIPTION_REQUIRED =
+  'A descrição é obrigatória para orientar a geração de trilhas e questionários.'
 
 function emptyContentQueue(
   pageSize: number
@@ -121,6 +141,16 @@ function emptyContentQueue(
 }
 
 function emptyUploadQueue(pageSize: number): UploadApprovalResult {
+  return {
+    currentPage: DEFAULT_PAGE_INDEX,
+    items: [],
+    pageSize,
+    totalItems: 0,
+    totalPages: 1,
+  }
+}
+
+function emptyTrailQueue(pageSize: number): AdaptiveTrailAdminResult {
   return {
     currentPage: DEFAULT_PAGE_INDEX,
     items: [],
@@ -150,6 +180,78 @@ function getDefaultContentFormValues(
   }
 }
 
+function createEmptyTrailSubStep(): AdminTrailSubStepFormValues {
+  return {
+    id: crypto.randomUUID(),
+    title: '',
+    description: '',
+    activityType: 'question',
+    questionCount: '5',
+    difficulty: '2',
+  }
+}
+
+function createEmptyTrailStep(): AdminTrailStepFormValues {
+  return {
+    id: crypto.randomUUID(),
+    title: '',
+    description: '',
+    contentId: '',
+    subSteps: [createEmptyTrailSubStep()],
+  }
+}
+
+function getDefaultTrailFormValues(
+  _item?: ContentApprovalItem | null,
+  trail?: AdaptiveTrailAdminItem | null
+): TrailCreationFormValues {
+  if (trail) {
+    return {
+      title: trail.title ?? trail.name,
+      description: trail.description,
+      subjectId: trail.subjectId ?? trail.subject?.id ?? DEFAULT_SUBJECT_ID,
+      eixo:
+        Array.isArray(trail.eixo) && trail.eixo.length > 0
+          ? trail.eixo.join(', ')
+          : (trail.contentTitle ?? trail.name ?? ''),
+      steps: trail.steps?.map(step => ({
+        id: step.id,
+        title: step.title,
+        description: step.description,
+        contentId: step.contentId ?? step.subSteps?.[0]?.contentId ?? '',
+        subSteps:
+          step.subSteps && step.subSteps.length > 0
+            ? step.subSteps.map(subStep => ({
+                id: subStep.id,
+                title: subStep.title,
+                description: subStep.description,
+                activityType: subStep.activityType,
+                questionCount: String(subStep.questionCount ?? 5),
+                difficulty: String(subStep.difficulty ?? 2) as '1' | '2' | '3',
+              }))
+            : [
+                {
+                  id: crypto.randomUUID(),
+                  title: step.title,
+                  description: step.description,
+                  activityType: step.activityType,
+                  questionCount: String(step.questionCount ?? 5),
+                  difficulty: String(step.difficulty ?? 2) as '1' | '2' | '3',
+                },
+              ],
+      })) ?? [createEmptyTrailStep()],
+    }
+  }
+
+  return {
+    title: '',
+    description: '',
+    subjectId: '',
+    eixo: '',
+    steps: [createEmptyTrailStep()],
+  }
+}
+
 function getDefaultUploadEditValues(
   item?: UploadApprovalItem
 ): UploadEditFormValues {
@@ -170,6 +272,9 @@ export default function Page() {
   const [contentQueue, setContentQueue] = useState<
     ApprovalQueueResult<ContentApprovalItem>
   >(emptyContentQueue(DEFAULT_CONTENT_QUERY.pageSize))
+  const [trailSourceContents, setTrailSourceContents] = useState<
+    ContentApprovalItem[]
+  >([])
   const [contentError, setContentError] = useState<string | null>(null)
   const [hasLoadedContent, setHasLoadedContent] = useState(false)
   const [contentRefreshKey, setContentRefreshKey] = useState(0)
@@ -182,6 +287,22 @@ export default function Page() {
   const [contentSelectionMode, setContentSelectionMode] = useState<
     'edit' | 'delete' | null
   >(null)
+  const [isTrailCreateModalOpen, setIsTrailCreateModalOpen] = useState(false)
+  const [trailModalTrail, setTrailModalTrail] =
+    useState<AdaptiveTrailAdminItem | null>(null)
+  const [trailModalValues, setTrailModalValues] =
+    useState<TrailCreationFormValues>(getDefaultTrailFormValues())
+  const [isTrailModalSubmitting, setIsTrailModalSubmitting] = useState(false)
+  const [trailQuery, setTrailQuery] =
+    useState<AdaptiveTrailAdminQuery>(DEFAULT_TRAIL_QUERY)
+  const [trailQueue, setTrailQueue] = useState<AdaptiveTrailAdminResult>(
+    emptyTrailQueue(DEFAULT_TRAIL_QUERY.pageSize)
+  )
+  const [trailError, setTrailError] = useState<string | null>(null)
+  const [hasLoadedTrails, setHasLoadedTrails] = useState(false)
+  const [trailRefreshKey, setTrailRefreshKey] = useState(0)
+  const [trailDeleteTarget, setTrailDeleteTarget] =
+    useState<AdaptiveTrailAdminItem | null>(null)
 
   const deferredContentSearch = useDeferredValue(contentQuery.query)
   const resolvedContentQuery = useMemo(
@@ -195,6 +316,10 @@ export default function Page() {
     emptyUploadQueue(DEFAULT_UPLOAD_QUERY.pageSize)
   )
   const [uploadTotals, setUploadTotals] = useState<{
+    total: number
+    bySubject: Record<string, number>
+  }>({ total: 0, bySubject: {} })
+  const [trailTotals, setTrailTotals] = useState<{
     total: number
     bySubject: Record<string, number>
   }>({ total: 0, bySubject: {} })
@@ -215,6 +340,11 @@ export default function Page() {
     () => ({ ...uploadQuery, query: deferredUploadSearch }),
     [uploadQuery, deferredUploadSearch]
   )
+  const deferredTrailSearch = useDeferredValue(trailQuery.query)
+  const resolvedTrailQuery = useMemo(
+    () => ({ ...trailQuery, query: deferredTrailSearch }),
+    [deferredTrailSearch, trailQuery]
+  )
 
   const contentResultsSummary = useMemo(
     () => buildResultsSummary(contentQueue.totalItems),
@@ -224,6 +354,14 @@ export default function Page() {
     () => buildResultsSummary(uploadQueue.totalItems),
     [uploadQueue.totalItems]
   )
+  const trailResultsSummary = useMemo(
+    () => ({
+      count: trailQueue.totalItems,
+      pluralLabel: 'trilhas',
+      singularLabel: 'trilha',
+    }),
+    [trailQueue.totalItems]
+  )
   const subjectOptions = useMemo(
     () =>
       subjects.map(subject => ({
@@ -231,6 +369,20 @@ export default function Page() {
         value: subject.id,
       })),
     [subjects]
+  )
+  const trailContentOptions = useMemo(
+    () =>
+      trailSourceContents
+        .filter(content =>
+          trailModalValues.subjectId
+            ? content.subject?.id === trailModalValues.subjectId
+            : true
+        )
+        .map(content => ({
+          label: content.title,
+          value: content.id,
+        })),
+    [trailSourceContents, trailModalValues.subjectId]
   )
   const defaultSubjectId = subjectOptions[0]?.value ?? DEFAULT_SUBJECT_ID
   const selectedUploadFilter: UploadApprovalFilter =
@@ -415,8 +567,8 @@ export default function Page() {
       const payload: ContentApprovalDraftInput = {
         requestedAt: contentModalValues.requestedAt,
         subject: getSubjectById(contentModalValues.subjectId),
-        title: contentModalValues.title || 'Novo conteúdo',
-        description: contentModalValues.description || '',
+        title: contentModalValues.title.trim(),
+        description: contentModalValues.description.trim(),
       }
       if (contentModalState.action === 'create') {
         await contentApprovalService.createLocalContentDraft(payload)
@@ -442,8 +594,327 @@ export default function Page() {
   const isContentModalConfirmDisabled = useMemo(() => {
     if (!contentModalState || contentModalState.action === 'delete')
       return false
-    return !contentModalValues.title.trim()
-  }, [contentModalState, contentModalValues.title])
+    return (
+      !contentModalValues.title.trim() || !contentModalValues.description.trim()
+    )
+  }, [
+    contentModalState,
+    contentModalValues.description,
+    contentModalValues.title,
+  ])
+
+  const contentModalDescriptionError = useMemo(() => {
+    if (!contentModalState || contentModalState.action === 'delete') return null
+    return contentModalValues.description.trim()
+      ? null
+      : CONTENT_DESCRIPTION_REQUIRED
+  }, [contentModalState, contentModalValues.description])
+
+  const resetTrailModal = useCallback(() => {
+    setIsTrailCreateModalOpen(false)
+    setTrailModalTrail(null)
+    setTrailModalValues(getDefaultTrailFormValues())
+  }, [])
+
+  const openTrailCreateModal = useCallback(() => {
+    setTrailModalTrail(null)
+    setIsTrailCreateModalOpen(true)
+    setTrailModalValues({
+      ...getDefaultTrailFormValues(),
+      subjectId: subjectOptions[0]?.value ?? '',
+    })
+  }, [subjectOptions])
+
+  const openTrailEditModal = useCallback((trail: AdaptiveTrailAdminItem) => {
+    setTrailModalTrail(trail)
+    setIsTrailCreateModalOpen(false)
+    setTrailModalValues(getDefaultTrailFormValues(null, trail))
+  }, [])
+
+  // Switching the discipline clears already-picked step contents, since the
+  // backend rejects a trail whose contents do not all belong to the subject.
+  const handleTrailSubjectChange = useCallback((subjectId: string) => {
+    setTrailModalValues(current => ({
+      ...current,
+      subjectId,
+      steps: current.steps.map(step => ({
+        ...step,
+        contentId: '',
+      })),
+    }))
+  }, [])
+
+  const handleTrailModalChange = useCallback(
+    (field: keyof Omit<TrailCreationFormValues, 'steps'>, value: string) => {
+      if (field === 'subjectId') {
+        handleTrailSubjectChange(value)
+        return
+      }
+      setTrailModalValues(current => ({ ...current, [field]: value }))
+    },
+    [handleTrailSubjectChange]
+  )
+
+  const createBlankTrailSubStep = useCallback(
+    (): AdminTrailSubStepFormValues => ({
+      id: crypto.randomUUID(),
+      title: '',
+      description: '',
+      activityType: 'question',
+      questionCount: '5',
+      difficulty: '2',
+    }),
+    []
+  )
+
+  const createBlankTrailStep = useCallback(
+    (): AdminTrailStepFormValues => ({
+      id: crypto.randomUUID(),
+      title: '',
+      description: '',
+      contentId: '',
+      subSteps: [createBlankTrailSubStep()],
+    }),
+    [createBlankTrailSubStep]
+  )
+
+  const handleTrailStepChange = useCallback(
+    (
+      stepId: string,
+      field: keyof Omit<AdminTrailStepFormValues, 'id' | 'subSteps'>,
+      value: string
+    ) => {
+      setTrailModalValues(current => ({
+        ...current,
+        steps: current.steps.map(step =>
+          step.id === stepId ? { ...step, [field]: value } : step
+        ),
+      }))
+    },
+    []
+  )
+
+  const handleTrailSubStepChange = useCallback(
+    (
+      stepId: string,
+      subStepId: string,
+      field: keyof AdminTrailSubStepFormValues,
+      value: string
+    ) => {
+      setTrailModalValues(current => ({
+        ...current,
+        steps: current.steps.map(step => {
+          if (step.id !== stepId) return step
+
+          return {
+            ...step,
+            subSteps: step.subSteps.map(subStep => {
+              if (subStep.id !== subStepId) return subStep
+
+              const nextSubStep = {
+                ...subStep,
+                [field]: value,
+              }
+
+              if (field === 'activityType' && value !== 'question') {
+                return {
+                  ...nextSubStep,
+                  questionCount: '',
+                  difficulty: '2',
+                }
+              }
+
+              if (field === 'activityType' && value === 'question') {
+                return {
+                  ...nextSubStep,
+                  questionCount: nextSubStep.questionCount || '5',
+                  difficulty: nextSubStep.difficulty || '2',
+                }
+              }
+
+              return nextSubStep
+            }),
+          }
+        }),
+      }))
+    },
+    []
+  )
+
+  const handleAddTrailStep = useCallback(() => {
+    setTrailModalValues(current => ({
+      ...current,
+      steps: [...current.steps, createBlankTrailStep()],
+    }))
+  }, [createBlankTrailStep])
+
+  const handleRemoveTrailStep = useCallback((stepId: string) => {
+    setTrailModalValues(current => ({
+      ...current,
+      steps:
+        current.steps.length > 1
+          ? current.steps.filter(step => step.id !== stepId)
+          : current.steps,
+    }))
+  }, [])
+
+  const handleAddTrailSubStep = useCallback(
+    (stepId: string) => {
+      setTrailModalValues(current => ({
+        ...current,
+        steps: current.steps.map(step =>
+          step.id === stepId
+            ? {
+                ...step,
+                subSteps: [...step.subSteps, createBlankTrailSubStep()],
+              }
+            : step
+        ),
+      }))
+    },
+    [createBlankTrailSubStep]
+  )
+
+  const handleRemoveTrailSubStep = useCallback(
+    (stepId: string, subStepId: string) => {
+      setTrailModalValues(current => ({
+        ...current,
+        steps: current.steps.map(step =>
+          step.id === stepId && step.subSteps.length > 1
+            ? {
+                ...step,
+                subSteps: step.subSteps.filter(
+                  subStep => subStep.id !== subStepId
+                ),
+              }
+            : step
+        ),
+      }))
+    },
+    []
+  )
+
+  const handleTrailModalConfirm = useCallback(async () => {
+    if (isTrailModalSubmitting) return
+
+    const eixo = trailModalValues.eixo
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean)
+
+    const payload = {
+      title: trailModalValues.title.trim(),
+      description: trailModalValues.description.trim(),
+      subject_id: trailModalValues.subjectId,
+      eixo,
+      steps: trailModalValues.steps.map((step, index) => ({
+        order: index + 1,
+        title: step.title.trim(),
+        description: step.description.trim(),
+        sub_steps: step.subSteps.map((subStep, subStepIndex) => ({
+          order: subStepIndex + 1,
+          title: subStep.title.trim(),
+          description: subStep.description.trim(),
+          content_id: step.contentId,
+          activity: {
+            type: subStep.activityType,
+            question_count:
+              subStep.activityType === 'question'
+                ? Number(subStep.questionCount)
+                : null,
+            difficulty:
+              subStep.activityType === 'question'
+                ? Number(subStep.difficulty)
+                : null,
+          },
+        })),
+      })),
+    }
+
+    setIsTrailModalSubmitting(true)
+
+    try {
+      if (trailModalTrail) {
+        await contentApprovalService.updateAdaptiveTrail(
+          trailModalTrail.id,
+          payload
+        )
+      } else {
+        await contentApprovalService.createAdaptiveTrail(payload)
+      }
+
+      setTrailRefreshKey(k => k + 1)
+      resetTrailModal()
+    } finally {
+      setIsTrailModalSubmitting(false)
+    }
+  }, [
+    isTrailModalSubmitting,
+    resetTrailModal,
+    trailModalTrail,
+    trailModalValues,
+  ])
+
+  const isTrailModalConfirmDisabled = useMemo(() => {
+    if (
+      !trailModalValues.title.trim() ||
+      !trailModalValues.description.trim() ||
+      !trailModalValues.subjectId ||
+      !trailModalValues.eixo.trim() ||
+      trailModalValues.steps.length === 0
+    ) {
+      return true
+    }
+
+    return trailModalValues.steps.some(step => {
+      if (
+        !step.title.trim() ||
+        !step.description.trim() ||
+        !step.contentId ||
+        step.subSteps.length === 0
+      ) {
+        return true
+      }
+
+      return step.subSteps.some(subStep => {
+        if (
+          !subStep.title.trim() ||
+          !subStep.description.trim() ||
+          !subStep.activityType
+        ) {
+          return true
+        }
+
+        if (subStep.activityType !== 'question') {
+          return false
+        }
+
+        const questionCount = Number(subStep.questionCount)
+        const difficulty = Number(subStep.difficulty)
+
+        return (
+          !Number.isFinite(questionCount) ||
+          questionCount < 1 ||
+          questionCount > 20 ||
+          !Number.isFinite(difficulty) ||
+          difficulty < 1 ||
+          difficulty > 3
+        )
+      })
+    })
+  }, [trailModalValues])
+
+  const handleTrailDeleteConfirm = useCallback(async () => {
+    if (!trailDeleteTarget || isTrailModalSubmitting) return
+    setIsTrailModalSubmitting(true)
+    try {
+      await contentApprovalService.removeAdaptiveTrail(trailDeleteTarget.id)
+      setTrailRefreshKey(k => k + 1)
+      setTrailDeleteTarget(null)
+    } finally {
+      setIsTrailModalSubmitting(false)
+    }
+  }, [isTrailModalSubmitting, trailDeleteTarget])
 
   const resetUploadModal = useCallback(() => {
     setUploadModalState(null)
@@ -633,6 +1104,57 @@ export default function Page() {
 
   useEffect(() => {
     let isActive = true
+
+    async function loadTrailTotals() {
+      try {
+        const allTrails = await contentApprovalService.getAdaptiveTrails({
+          ...DEFAULT_TRAIL_QUERY,
+          pageSize: 100,
+          page: DEFAULT_PAGE_INDEX,
+          query: '',
+          subjectId: 'all',
+        })
+
+        if (!isActive) return
+
+        const bySubject = allTrails.items.reduce<Record<string, number>>(
+          (acc, trail) => {
+            const subjectId =
+              trail.subjectId ??
+              (trail.subject?.id ? String(trail.subject.id) : null)
+
+            if (subjectId) {
+              acc[subjectId] = (acc[subjectId] ?? 0) + 1
+            }
+
+            return acc
+          },
+          {}
+        )
+
+        setTrailTotals({
+          total: allTrails.totalItems,
+          bySubject,
+        })
+      } catch {
+        if (!isActive) return
+
+        setTrailTotals({
+          total: 0,
+          bySubject: {},
+        })
+      }
+    }
+
+    void loadTrailTotals()
+
+    return () => {
+      isActive = false
+    }
+  }, [trailRefreshKey])
+
+  useEffect(() => {
+    let isActive = true
     async function loadContentQueue() {
       try {
         const nextContentQueue =
@@ -654,6 +1176,50 @@ export default function Page() {
       isActive = false
     }
   }, [resolvedContentQuery, contentRefreshKey])
+
+  useEffect(() => {
+    let isActive = true
+    async function loadTrailSourceContents() {
+      try {
+        const sourceQueue = await contentApprovalService.getContentQueue({
+          ...DEFAULT_CONTENT_QUERY,
+          pageSize: 1000,
+        })
+        if (!isActive) return
+        setTrailSourceContents(sourceQueue.items)
+      } catch {
+        if (!isActive) return
+        setTrailSourceContents([])
+      }
+    }
+    void loadTrailSourceContents()
+    return () => {
+      isActive = false
+    }
+  }, [contentRefreshKey])
+
+  useEffect(() => {
+    let isActive = true
+    async function loadTrails() {
+      try {
+        const nextTrails =
+          await contentApprovalService.getAdaptiveTrails(resolvedTrailQuery)
+        if (!isActive) return
+        setTrailError(null)
+        setTrailQueue(nextTrails)
+      } catch {
+        if (!isActive) return
+        setTrailError('Não foi possível carregar as trilhas adaptativas.')
+        setTrailQueue(emptyTrailQueue(DEFAULT_TRAIL_QUERY.pageSize))
+      } finally {
+        if (isActive) setHasLoadedTrails(true)
+      }
+    }
+    void loadTrails()
+    return () => {
+      isActive = false
+    }
+  }, [resolvedTrailQuery, trailRefreshKey])
 
   useEffect(() => {
     let isActive = true
@@ -683,7 +1249,7 @@ export default function Page() {
       try {
         const allUploads = await uploadApprovalService.getUploadQueue({
           ...DEFAULT_UPLOAD_QUERY,
-          pageSize: 1000,
+          pageSize: 100,
         })
         if (!isActive) return
         const bySubject = allUploads.items.reduce<Record<string, number>>(
@@ -713,7 +1279,8 @@ export default function Page() {
     role !== 'admin' ||
     !hasLoadedSubjects ||
     !hasLoadedContent ||
-    !hasLoadedUploads
+    !hasLoadedUploads ||
+    !hasLoadedTrails
   ) {
     return <LoadingScreen />
   }
@@ -748,7 +1315,7 @@ export default function Page() {
           renderItem={item => (
             <SubjectCard
               item={item}
-              activitiesCount={uploadTotals.bySubject[item.id] ?? 0}
+              trailCount={trailTotals.bySubject[item.id] ?? item.trailsCount}
               onDelete={subject => {
                 setSubjectModalMode({
                   action: 'delete',
@@ -773,6 +1340,47 @@ export default function Page() {
           title="Cadastro de disciplinas"
         />
       </Box>
+
+      <AdaptiveTrailManager
+        contentOptions={trailContentOptions}
+        currentPage={trailQueue.currentPage}
+        emptyStateDescription={
+          trailError ??
+          'Crie uma trilha a partir de um conteúdo cadastrado ou ajuste os filtros.'
+        }
+        filterOptions={[
+          { label: 'Todas as disciplinas', value: 'all' },
+          ...subjectOptions,
+        ]}
+        contents={trailSourceContents}
+        isLoading={!hasLoadedTrails}
+        onCreateTrail={openTrailCreateModal}
+        onDeleteTrail={trail => setTrailDeleteTarget(trail)}
+        onEditTrail={openTrailEditModal}
+        onPageChange={page => {
+          startTransition(() => setTrailQuery(q => ({ ...q, page })))
+        }}
+        onQueryChange={query => {
+          startTransition(() =>
+            setTrailQuery(q => ({ ...q, page: DEFAULT_PAGE_INDEX, query }))
+          )
+        }}
+        onSubjectChange={subjectId => {
+          startTransition(() =>
+            setTrailQuery(q => ({
+              ...q,
+              page: DEFAULT_PAGE_INDEX,
+              subjectId,
+            }))
+          )
+        }}
+        query={trailQuery.query}
+        resultsSummary={trailResultsSummary}
+        role={role}
+        selectedSubjectId={trailQuery.subjectId}
+        totalPages={trailQueue.totalPages}
+        trails={trailQueue.items}
+      />
 
       <Box
         sx={{
@@ -880,8 +1488,46 @@ export default function Page() {
         open={contentModalState !== null}
         role={role}
         subjectOptions={subjectOptions}
+        errorMessage={contentModalDescriptionError}
         values={contentModalValues}
       />
+
+      <TrailCreationModal
+        content={null}
+        contentOptions={trailContentOptions}
+        disableConfirm={isTrailModalConfirmDisabled}
+        isSubmitting={isTrailModalSubmitting}
+        mode={trailModalTrail ? 'edit' : 'create'}
+        onChange={handleTrailModalChange}
+        onClose={resetTrailModal}
+        onConfirm={handleTrailModalConfirm}
+        open={isTrailCreateModalOpen || trailModalTrail !== null}
+        subjectOptions={subjectOptions}
+        trail={trailModalTrail}
+        values={trailModalValues}
+        onStepChange={handleTrailStepChange}
+        onSubStepChange={handleTrailSubStepChange}
+        onAddStep={handleAddTrailStep}
+        onRemoveStep={handleRemoveTrailStep}
+        onAddSubStep={handleAddTrailSubStep}
+        onRemoveSubStep={handleRemoveTrailSubStep}
+      />
+
+      <AppActionModal
+        confirmLabel="Excluir trilha"
+        confirmTone="error.main"
+        description="Esta ação remove a trilha e seus vínculos de progresso. O conteúdo base permanece cadastrado."
+        loading={isTrailModalSubmitting}
+        mode="confirm"
+        onClose={() => setTrailDeleteTarget(null)}
+        onConfirm={handleTrailDeleteConfirm}
+        open={trailDeleteTarget !== null}
+        title="Excluir trilha adaptativa"
+      >
+        <Typography sx={{ color: 'text.primary', fontSize: 14 }}>
+          Deseja excluir a trilha &quot;{trailDeleteTarget?.name}&quot;?
+        </Typography>
+      </AppActionModal>
 
       <UploadActionModal
         mode={uploadModalState}

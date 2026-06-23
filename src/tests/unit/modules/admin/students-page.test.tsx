@@ -50,11 +50,12 @@ const authValue: AuthContextValue = {
   },
 }
 
-function renderPage() {
+function renderPage(initialEntries = ['/']) {
   renderWithProviders(
     <AuthContext.Provider value={authValue}>
       <StudentsPage />
-    </AuthContext.Provider>
+    </AuthContext.Provider>,
+    { initialEntries }
   )
 }
 
@@ -85,6 +86,14 @@ beforeEach(() => {
       async id => students.find(student => student.id === id)!
     )
   jest.spyOn(studentService, 'deleteStudent').mockResolvedValue()
+  jest.spyOn(studentService, 'importStudents').mockResolvedValue({
+    status: 'completed',
+    total_processed: 1,
+    created: 1,
+    failed: 0,
+    message: 'OK',
+    errors: [],
+  })
   jest.spyOn(studentFormOptionsService, 'getSchools').mockResolvedValue([
     { label: 'Escola São Paulo', value: 'school-1' },
     { label: 'Escola Horizonte', value: 'school-2' },
@@ -129,9 +138,19 @@ test('StudentsPage opens create student modal', async () => {
 
   await user.click(
     screen.getByRole('button', {
-      name: /criar aluno/i,
+      name: /^criar aluno$/i,
     })
   )
+
+  expect(
+    screen.getByText(
+      'Cadastre um novo aluno. Vincule-o a uma escola e/ou a um responsável'
+    )
+  ).toBeInTheDocument()
+})
+
+test('StudentsPage opens create student modal from dashboard shortcut', () => {
+  renderPage(['/admin/students?create=student'])
 
   expect(
     screen.getByText(
@@ -144,7 +163,7 @@ test('StudentsPage creates a new student', async () => {
   const user = userEvent.setup()
   renderPage()
 
-  await user.click(screen.getByRole('button', { name: /criar aluno/i }))
+  await user.click(screen.getByRole('button', { name: /^criar aluno$/i }))
 
   const dialog = screen.getByRole('dialog')
   await user.type(
@@ -226,4 +245,101 @@ test('StudentsPage deletes a student', async () => {
     expect(screen.queryByText('Lucas Silva')).not.toBeInTheDocument()
   })
   expect(studentService.deleteStudent).toHaveBeenCalledWith('1')
+})
+
+test('StudentsPage shows the batch button inside the create modal', async () => {
+  const user = userEvent.setup()
+  renderPage()
+
+  await user.click(screen.getByRole('button', { name: /^criar aluno$/i }))
+
+  const dialog = screen.getByRole('dialog')
+  expect(
+    within(dialog).getByRole('button', { name: /cadastrar em lote/i })
+  ).toBeInTheDocument()
+})
+
+test('StudentsPage opens the batch upload modal from the create modal', async () => {
+  const user = userEvent.setup()
+  renderPage()
+
+  await user.click(screen.getByRole('button', { name: /^criar aluno$/i }))
+
+  const createDialog = screen.getByRole('dialog')
+  await user.click(
+    within(createDialog).getByRole('button', { name: /cadastrar em lote/i })
+  )
+
+  expect(screen.getByText('Cadastrar alunos em lote')).toBeInTheDocument()
+  expect(
+    screen.getByText('Apenas arquivos .csv são aceitos.')
+  ).toBeInTheDocument()
+  expect(
+    screen.getByRole('button', { name: /enviar arquivo/i })
+  ).toBeInTheDocument()
+  expect(
+    screen.getByRole('button', { name: /baixar template csv/i })
+  ).toBeInTheDocument()
+})
+
+test('StudentsPage keeps the send button disabled until a csv is chosen', async () => {
+  const user = userEvent.setup()
+  renderPage()
+
+  await user.click(screen.getByRole('button', { name: /^criar aluno$/i }))
+  await user.click(
+    within(screen.getByRole('dialog')).getByRole('button', {
+      name: /cadastrar em lote/i,
+    })
+  )
+
+  expect(screen.getByRole('button', { name: /enviar arquivo/i })).toBeDisabled()
+})
+
+test('StudentsPage accepts a csv file and shows its name', async () => {
+  const user = userEvent.setup()
+  renderPage()
+
+  await user.click(screen.getByRole('button', { name: /^criar aluno$/i }))
+  await user.click(
+    within(screen.getByRole('dialog')).getByRole('button', {
+      name: /cadastrar em lote/i,
+    })
+  )
+
+  const fileInput = document.querySelector(
+    'input[type="file"]'
+  ) as HTMLInputElement
+  const csv = new File(['nome,email'], 'alunos.csv', { type: 'text/csv' })
+  await user.upload(fileInput, csv)
+
+  expect(await screen.findByText('alunos.csv')).toBeInTheDocument()
+  expect(
+    screen.getByRole('button', { name: /enviar arquivo/i })
+  ).not.toBeDisabled()
+})
+
+test('StudentsPage sends the selected CSV and shows the import result', async () => {
+  const user = userEvent.setup()
+  renderPage()
+
+  await user.click(screen.getByRole('button', { name: /^criar aluno$/i }))
+  await user.click(
+    within(screen.getByRole('dialog')).getByRole('button', {
+      name: /cadastrar em lote/i,
+    })
+  )
+
+  const fileInput = document.querySelector(
+    'input[type="file"]'
+  ) as HTMLInputElement
+  const csv = new File(['nome,email'], 'alunos.csv', { type: 'text/csv' })
+  await user.upload(fileInput, csv)
+
+  await user.click(screen.getByRole('button', { name: /enviar arquivo/i }))
+
+  expect(studentService.importStudents).toHaveBeenCalledWith(csv)
+  expect(
+    await screen.findByText('1 de 1 registro(s) cadastrado(s).')
+  ).toBeInTheDocument()
 })

@@ -28,15 +28,15 @@ test('company dashboard renders metric cards for schools and students', () => {
   assert.match(source, /impacted-students/)
 })
 
-test('company dashboard contains support requests section with approve and reject actions', () => {
+test('company dashboard contains support requests section with an accept action', () => {
   const source = readSource('modules/company/dashboard/page/Page.tsx')
 
   assert.match(source, /Solicitações de Apoio/)
   assert.match(source, /support-requests-section/)
   assert.match(source, /approve-request-/)
-  assert.match(source, /reject-request-/)
+  assert.match(source, /Aceitar apoio/)
   assert.match(source, /CheckCircleOutlineRoundedIcon/)
-  assert.match(source, /CancelOutlinedIcon/)
+  assert.doesNotMatch(source, /reject-request-/)
 })
 
 test('company dashboard contains supported schools section', () => {
@@ -45,6 +45,28 @@ test('company dashboard contains supported schools section', () => {
   assert.match(source, /supported-schools-section/)
   assert.match(source, /Escolas Apoiadas/)
   assert.match(source, /supportedSchools\.map/)
+})
+
+test('company dashboard shows pending partnerships as awaiting approval', () => {
+  const source = readSource('modules/company/dashboard/page/Page.tsx')
+  const serviceSource = readSource(
+    'modules/company/dashboard/services/service.ts'
+  )
+
+  assert.match(
+    serviceSource,
+    /normalizedStatus = status\.trim\(\)\.toLowerCase\(\)/
+  )
+  assert.match(serviceSource, /normalizedStatus === 'pending'/)
+  assert.match(serviceSource, /return 'pendente'/)
+  assert.match(
+    source,
+    /pending:\s*\{\s*id: 'pending',\s*label: 'Aguardando Aprovação'/
+  )
+  assert.match(
+    source,
+    /pendente:\s*\{\s*id: 'pendente',\s*label: 'Aguardando Aprovação'/
+  )
 })
 
 test('company dashboard applies data-testid to all major components', () => {

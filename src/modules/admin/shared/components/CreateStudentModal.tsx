@@ -57,6 +57,7 @@ interface CreateStudentModalProps extends BoxProps {
   apiError?: string | null
   defaultSchool?: SchoolOption | null
   confirmColor?: string
+  batchButton?: React.ReactNode
 }
 
 export interface StudentFormValues {
@@ -112,6 +113,7 @@ export default function CreateStudentModal({
   apiError,
   defaultSchool = null,
   confirmColor: confirmColorProp,
+  batchButton,
   ...props
 }: CreateStudentModalProps) {
   const theme = useTheme()
@@ -225,6 +227,18 @@ export default function CreateStudentModal({
       confirmColor={confirmColor}
     >
       <Box className="grid gap-3">
+        {batchButton && (
+          <>
+            {batchButton}
+            <Box
+              sx={{
+                borderTop: '1px solid',
+                borderColor: 'background.border',
+                mt: 0.5,
+              }}
+            />
+          </>
+        )}
         <AppInput
           label="Nome do aluno"
           labelSx={fieldLabelSx}
@@ -287,7 +301,7 @@ export default function CreateStudentModal({
         <AppDropdown
           fullWidth
           label="Escola"
-          disabled={isLoadingOptions}
+          disabled={isLoadingOptions || !!defaultSchool}
           onChange={e => handleChange('school', String(e.target.value))}
           options={schoolDropdownOptions}
           sx={selectSx}

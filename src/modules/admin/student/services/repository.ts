@@ -15,6 +15,7 @@ import {
   type StudentListDto,
 } from './mapper'
 import { getCachedStudentList, invalidateStudentListCache } from './listCache'
+import { importCsvBatch } from '@/modules/admin/shared/services/batchImport'
 
 export function createStudentRepository({
   client,
@@ -67,6 +68,12 @@ export function createStudentRepository({
       )
       invalidateStudentListCache()
       return mapStudentDto(response.data)
+    },
+
+    async importStudents(file: File) {
+      const result = await importCsvBatch(client, 'student/batch', file)
+      if (result.created > 0) invalidateStudentListCache()
+      return result
     },
 
     async updateStudent(
