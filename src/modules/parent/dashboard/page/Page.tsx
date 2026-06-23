@@ -1,4 +1,4 @@
-import { Box, IconButton, Tooltip } from '@mui/material'
+import { Box } from '@mui/material'
 import AppPageContainer from '@/shared/ui/AppPageContainer'
 import LoadingScreen from '@/shared/ui/LoadingScreen'
 import EmptyState from '@/shared/ui/EmptyState'
@@ -14,6 +14,28 @@ import { useParentDashboard } from '../hooks/useParentDashboard'
 import { SUBJECTS, getSubjectTagContextByLabel } from '@/shared/utils/themes'
 import ChildSwitcher from '@/modules/parent/shared/components/ChildSwitcher'
 import ParentEmotionalSummary from '@/modules/parent/shared/components/ParentEmotionalSummary'
+import type { SummaryMetric } from '@/shared/types/common'
+
+function normalizeMetricText(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+}
+
+function findMetric(
+  metrics: SummaryMetric[],
+  ids: string[],
+  titleNeedles: string[]
+) {
+  return (
+    metrics.find(metric => ids.includes(metric.id)) ??
+    metrics.find(metric => {
+      const title = normalizeMetricText(metric.title)
+      return titleNeedles.some(needle => title.includes(needle))
+    })
+  )
+}
 
 export default function Page() {
   const {
@@ -32,20 +54,24 @@ export default function Page() {
     return <LoadingScreen />
   }
 
-  const streak = metrics[0]
-  const complete = metrics[1]
+  const completedTasks = findMetric(
+    metrics,
+    ['completed-tasks'],
+    ['tarefas concluidas']
+  )
+  const activities = findMetric(metrics, ['activities'], ['atividades feitas'])
   const cards = [
     {
-      id: 'streak',
-      title: streak?.title ?? 'Sequência do Aluno',
-      value: streak ? `${streak.value}` : '—',
+      id: 'completed-tasks',
+      title: completedTasks?.title ?? 'Tarefas Concluídas',
+      value: completedTasks ? `${completedTasks.value}` : '—',
       icon: <TrendingUpRoundedIcon />,
       iconVariant: 'green' as const,
     },
     {
-      id: 'activity',
-      title: complete?.title ?? 'Atividades Feitas',
-      value: complete ? `${complete.value}` : '—',
+      id: 'activities',
+      title: activities?.title ?? 'Atividades Feitas',
+      value: activities ? `${activities.value}` : '—',
       icon: <TrackChangesRoundedIcon />,
       iconVariant: 'purple' as const,
     },
