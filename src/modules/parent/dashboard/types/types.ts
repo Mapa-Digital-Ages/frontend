@@ -11,6 +11,7 @@ export interface ParentDashboardChild {
 export interface StudentDisciplineProgress {
   subjectId: string
   subjectLabel: string
+  subjectColor?: string | null
   progress: number
 }
 

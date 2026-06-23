@@ -2,7 +2,13 @@ export type SchoolClassCard = {
   id: string
   grade: string
   studentCount: number
-  tutorName: string
+  disciplines: SchoolDisciplineProgress[]
+}
+
+export type SchoolDisciplineProgress = {
+  subjectId: string
+  subjectLabel: string
+  subjectColor?: string | null
   progress: number
 }
 
