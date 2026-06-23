@@ -724,6 +724,7 @@ export default function Page() {
         title="Conteúdos"
         subtitle="Revise conteúdos enviados e valide materiais antes de liberar o acesso na plataforma."
         variant="admin"
+        eyebrow=""
       />
 
       <Box className="grid grid-cols-1 xs:grid-cols-1 lg:grid-cols-3 md:grid-cols-3 gap-3 md:gap-4 xl:grid-cols-3">

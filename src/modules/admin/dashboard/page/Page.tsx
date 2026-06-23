@@ -14,6 +14,7 @@ import type { Stat } from '@/shared/types/common'
 import PageHeader from '@/shared/ui/PageHeader'
 import MetricsCard from '@/shared/ui/MetricsCard'
 import AppCard from '@/shared/ui/AppCard'
+import AdminContentPage from '@/modules/admin/content/page/Page'
 
 const RECENT_ACTIVITY = [
   {
@@ -177,6 +178,8 @@ export default function Page() {
           })}
         </AppCard>
       </Box>
+
+      <AdminContentPage />
     </AppPageContainer>
   )
 }

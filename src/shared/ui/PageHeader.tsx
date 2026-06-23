@@ -52,8 +52,8 @@ function PageHeader({
   const headerRole = getHeaderRole(variant)
   const headerPalette = getRolePalette(theme, headerRole)
   const headerBackground = getRoleGradient(theme, headerRole)
-  const resolvedEyebrow =
-    eyebrow ?? (user?.name ? `Olá, ${user.name}` : undefined)
+  const defaultEyebrow = user?.name ? `Olá, ${user.name}` : undefined
+  const resolvedEyebrow = eyebrow ?? defaultEyebrow
 
   return (
     <Stack
