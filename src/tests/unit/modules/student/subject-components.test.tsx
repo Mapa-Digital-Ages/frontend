@@ -139,3 +139,14 @@ test('SubjectBaseCard uses AppCard as the reusable card shell', () => {
   assert.doesNotMatch(source, /<Card/)
   assert.doesNotMatch(source, /<CardContent/)
 })
+
+test('completed quiz sub-steps remain actionable for another attempt', () => {
+  const source = readSource(
+    'modules/student/adaptivetrail/detail/components/TrailStepItem.tsx'
+  )
+
+  assert.match(source, /isCompleted && subStep\.kind === 'question'/)
+  assert.match(source, /Refazer questionário/)
+  assert.match(source, /component=\{canAnswer \? 'button' : 'div'\}/)
+  assert.match(source, /ReplayRoundedIcon/)
+})

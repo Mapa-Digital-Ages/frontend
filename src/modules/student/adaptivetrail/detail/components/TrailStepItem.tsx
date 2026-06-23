@@ -4,6 +4,7 @@ import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownR
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded'
 import QuizOutlinedIcon from '@mui/icons-material/QuizOutlined'
+import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded'
 import { Box, Chip, Collapse, Stack, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import { Fragment, type ReactElement } from 'react'
@@ -106,6 +107,7 @@ function SubStepItem({
   const isLocked = subStep.status === 'locked'
   const isCompleted = subStep.status === 'completed'
   const isAvailable = subStep.status === 'available'
+  const canAnswer = isAvailable || (isCompleted && subStep.kind === 'question')
 
   const dotColor = isCompleted
     ? theme.palette.success.main
@@ -170,6 +172,23 @@ function SubStepItem({
         </Typography>
       </Stack>
     </>
+  ) : isCompleted && subStep.kind === 'question' ? (
+    <Box
+      sx={{
+        alignItems: 'center',
+        border: '1px solid',
+        borderColor: alpha(subjectColor, isDark ? 0.5 : 0.4),
+        borderRadius: '10px',
+        color: subjectColor,
+        display: 'flex',
+        flexShrink: 0,
+        height: 32,
+        justifyContent: 'center',
+        width: 32,
+      }}
+    >
+      <ReplayRoundedIcon sx={{ fontSize: 18 }} />
+    </Box>
   ) : isCompleted ? (
     <Box
       sx={{
@@ -280,11 +299,15 @@ function SubStepItem({
       <Box sx={{ flex: 1, minWidth: 0, pb: isLast ? 0 : 1.5 }}>
         <Box
           aria-label={
-            isAvailable ? `Responder etapa ${subStep.title}` : undefined
+            canAnswer
+              ? isCompleted
+                ? `Refazer questionário ${subStep.title}`
+                : `Responder etapa ${subStep.title}`
+              : undefined
           }
-          component={isAvailable ? 'button' : 'div'}
-          onClick={isAvailable ? () => onAnswer(subStep) : undefined}
-          type={isAvailable ? 'button' : undefined}
+          component={canAnswer ? 'button' : 'div'}
+          onClick={canAnswer ? () => onAnswer(subStep) : undefined}
+          type={canAnswer ? 'button' : undefined}
           sx={{
             alignItems: 'center',
             appearance: 'none',
@@ -301,7 +324,7 @@ function SubStepItem({
                 : alpha(subjectColor, isDark ? 0.3 : 0.22),
             borderRadius: '14px',
             boxSizing: 'border-box',
-            cursor: isAvailable ? 'pointer' : 'default',
+            cursor: canAnswer ? 'pointer' : 'default',
             display: 'flex',
             font: 'inherit',
             gap: 1.5,
@@ -310,14 +333,14 @@ function SubStepItem({
             textAlign: 'left',
             transition: 'all 160ms ease',
             width: '100%',
-            '&:focus-visible': isAvailable
+            '&:focus-visible': canAnswer
               ? {
                   borderColor: subjectColor,
                   outline: `3px solid ${alpha(subjectColor, 0.22)}`,
                   outlineOffset: 2,
                 }
               : {},
-            '&:hover': isAvailable
+            '&:hover': canAnswer
               ? {
                   backgroundColor: alpha(subjectColor, isDark ? 0.15 : 0.1),
                   borderColor: alpha(subjectColor, isDark ? 0.4 : 0.3),
