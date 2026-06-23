@@ -110,102 +110,131 @@ export default function Page() {
       </Box>
 
       <Box
-        className="grid grid-cols-1 gap-4 xl:grid-cols-2"
+        className={`grid grid-cols-1 gap-4 ${filteredSchools.length > 0 ? 'xl:grid-cols-2' : ''}`}
         data-testid="adopted-schools-content"
       >
-        {/* School Cards List */}
         <AppCard
           contentClassName="gap-3 p-5"
           contentSx={{ maxHeight: 500, overflowY: 'auto' }}
           data-testid="adopted-schools-list"
         >
-          {filteredSchools.map(school => {
-            const isSelected = selectedSchoolId === school.id
-            return (
-              <Box
-                className="cursor-pointer rounded-2xl px-4 py-3 transition-all"
-                data-testid={`school-card-${school.id}`}
-                key={school.id}
-                onClick={() => setSelectedSchoolId(school.id)}
+          {filteredSchools.length === 0 ? (
+            <Box
+              className="flex flex-col items-center justify-center py-10 gap-2"
+              data-testid="adopted-schools-empty"
+            >
+              <AccountBalanceRoundedIcon
                 sx={{
-                  backgroundColor: isSelected
-                    ? selectedStyle.backgroundColor
-                    : theme.palette.background.paper,
-                  border: `1px solid ${
-                    isSelected
-                      ? selectedStyle.borderColor
-                      : theme.palette.background.border
-                  }`,
-                  '&:hover': {
-                    backgroundColor: hoverStyle.backgroundColor,
-                    borderColor: hoverStyle.borderColor,
-                  },
+                  fontSize: 40,
+                  color: alpha(theme.palette.role.empresa.primary, 0.4),
+                }}
+              />
+              <Typography
+                sx={{
+                  color: 'text.primary',
+                  fontWeight: 600,
+                  fontSize: 16,
+                  textAlign: 'center',
                 }}
               >
-                <Box className="flex items-center justify-between">
-                  <Box className="flex items-center gap-3 min-w-0">
-                    <Box
-                      className="flex items-center justify-center rounded-xl"
+                Nenhuma escola apoiada até o momento
+              </Typography>
+              <Typography
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: 13,
+                  textAlign: 'center',
+                }}
+              >
+                Aguarde solicitações para apoio
+              </Typography>
+            </Box>
+          ) : (
+            filteredSchools.map(school => {
+              const isSelected = selectedSchoolId === school.id
+              return (
+                <Box
+                  className="cursor-pointer rounded-2xl px-4 py-3 transition-all"
+                  data-testid={`school-card-${school.id}`}
+                  key={school.id}
+                  onClick={() => setSelectedSchoolId(school.id)}
+                  sx={{
+                    backgroundColor: isSelected
+                      ? selectedStyle.backgroundColor
+                      : theme.palette.background.paper,
+                    border: `1px solid ${
+                      isSelected
+                        ? selectedStyle.borderColor
+                        : theme.palette.background.border
+                    }`,
+                    '&:hover': {
+                      backgroundColor: hoverStyle.backgroundColor,
+                      borderColor: hoverStyle.borderColor,
+                    },
+                  }}
+                >
+                  <Box className="flex items-center justify-between">
+                    <Box className="flex items-center gap-3 min-w-0">
+                      <Box
+                        className="flex items-center justify-center rounded-xl"
+                        sx={{
+                          backgroundColor: alpha(
+                            theme.palette.role.empresa.primary,
+                            0.1
+                          ),
+                          border: `1px solid ${alpha(theme.palette.role.empresa.primary, 0.3)}`,
+                          color: theme.palette.role.empresa.primary,
+                          height: 40,
+                          width: 40,
+                          flexShrink: 0,
+                        }}
+                      >
+                        <AccountBalanceRoundedIcon fontSize="small" />
+                      </Box>
+                      <Box className="min-w-0">
+                        <Typography
+                          sx={{
+                            color: 'text.primary',
+                            fontSize: { md: 16, xs: 14 },
+                            fontWeight: 600,
+                          }}
+                        >
+                          {school.schoolName}
+                        </Typography>
+                        <Typography
+                          sx={{ color: 'text.secondary', fontSize: 13 }}
+                        >
+                          {school.grantedSpots} vagas
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <IconButton
+                      aria-label="Mais opções"
+                      data-testid={`school-card-menu-${school.id}`}
+                      size="small"
+                      onClick={e => {
+                        e.stopPropagation()
+                        setMenuAnchorEl(e.currentTarget)
+                        setMenuSchoolId(school.id)
+                      }}
                       sx={{
-                        backgroundColor: alpha(
-                          theme.palette.role.empresa.primary,
-                          0.1
-                        ),
-                        border: `1px solid ${alpha(theme.palette.role.empresa.primary, 0.3)}`,
-                        color: theme.palette.role.empresa.primary,
-                        height: 40,
-                        width: 40,
-                        flexShrink: 0,
+                        color: isSelected ? accent.primary : 'text.secondary',
+                        backgroundColor: isSelected
+                          ? selectedStyle.backgroundColor
+                          : 'transparent',
+                        '&:hover': {
+                          backgroundColor: hoverStyle.backgroundColor,
+                          color: accent.primary,
+                        },
                       }}
                     >
-                      <AccountBalanceRoundedIcon fontSize="small" />
-                    </Box>
-                    <Box className="min-w-0">
-                      <Typography
-                        sx={{
-                          color: 'text.primary',
-                          fontSize: { md: 16, xs: 14 },
-                          fontWeight: 600,
-                        }}
-                      >
-                        {school.schoolName}
-                      </Typography>
-                      <Typography
-                        sx={{
-                          color: 'text.secondary',
-                          fontSize: 13,
-                        }}
-                      >
-                        {school.grantedSpots} vagas
-                      </Typography>
-                    </Box>
+                      <MoreHorizRoundedIcon />
+                    </IconButton>
                   </Box>
-                  <IconButton
-                    aria-label="Mais opções"
-                    data-testid={`school-card-menu-${school.id}`}
-                    size="small"
-                    onClick={e => {
-                      e.stopPropagation()
-                      setMenuAnchorEl(e.currentTarget)
-                      setMenuSchoolId(school.id)
-                    }}
-                    sx={{
-                      color: isSelected ? accent.primary : 'text.secondary',
-                      backgroundColor: isSelected
-                        ? selectedStyle.backgroundColor
-                        : 'transparent',
-                      '&:hover': {
-                        backgroundColor: hoverStyle.backgroundColor,
-                        color: accent.primary,
-                      },
-                    }}
-                  >
-                    <MoreHorizRoundedIcon />
-                  </IconButton>
                 </Box>
-              </Box>
-            )
-          })}
+              )
+            })
+          )}
         </AppCard>
 
         <Menu
