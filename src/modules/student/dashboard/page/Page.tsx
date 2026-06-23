@@ -130,10 +130,16 @@ export default function Page() {
     }
   }, [])
 
-  const overallProgress = disciplines.length
+  const startedTrailCount = disciplines.reduce(
+    (total, item) => total + item.startedTrailCount,
+    0
+  )
+  const overallProgress = startedTrailCount
     ? Math.round(
-        disciplines.reduce((total, item) => total + item.progress, 0) /
-          disciplines.length
+        disciplines.reduce(
+          (total, item) => total + item.progress * item.startedTrailCount,
+          0
+        ) / startedTrailCount
       )
     : 0
 

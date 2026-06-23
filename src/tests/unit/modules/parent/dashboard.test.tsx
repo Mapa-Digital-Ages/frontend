@@ -39,9 +39,21 @@ test('parent dashboard keeps child selection read-only', () => {
   assert.match(serviceSource, /`student\/\$\{studentId\}\/summary`/)
   assert.match(serviceSource, /`student\/\$\{studentId\}\/disciplines`/)
   assert.match(serviceSource, /`student\/\$\{studentId\}\/calendar`/)
+  assert.doesNotMatch(serviceSource, /MOCK_TASKS/)
+  assert.doesNotMatch(serviceSource, /fall through to mock/)
   assert.doesNotMatch(serviceSource, /register\/student/)
   assert.doesNotMatch(serviceSource, /parent\/student/)
   assert.doesNotMatch(source, /ApprovalActionModal/)
+})
+
+test('parent dashboard maps summary metrics by backend ids', () => {
+  const source = readSource('modules/parent/dashboard/page/Page.tsx')
+
+  assert.match(source, /findMetric/)
+  assert.match(source, /completed-tasks/)
+  assert.match(source, /activities/)
+  assert.doesNotMatch(source, /metrics\[0\]/)
+  assert.doesNotMatch(source, /metrics\[1\]/)
 })
 
 test('parent settings uses real student endpoints and no local mock fallback', () => {

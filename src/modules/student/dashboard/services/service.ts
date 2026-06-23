@@ -12,6 +12,7 @@ export interface StudentDisciplineProgress {
   subjectId: string
   subjectLabel: string
   subjectColor?: string | null
+  startedTrailCount: number
   progress: number
 }
 

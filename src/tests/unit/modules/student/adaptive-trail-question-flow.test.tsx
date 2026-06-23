@@ -55,7 +55,7 @@ describe('adaptiveTrailDetailService.getSubStepQuestionFlow', () => {
     )
 
     expect(getHttp().get).toHaveBeenCalledWith(
-      'student/student-1/trails/3/steps/5/questions'
+      'student/student-1/trails/3/steps/5/sub-steps/quiz-5/questions'
     )
     expect(flow.stepId).toBe('5')
     expect(flow.subStepId).toBe('quiz-5')
@@ -134,6 +134,47 @@ describe('adaptiveTrailDetailService.completeStep', () => {
     expect(result.passed).toBe(true)
     expect(result.currentSubPath).toBe(8)
     expect(result.pathStatus).toBe('on_going')
+  })
+})
+
+describe('adaptiveTrailDetailService.completeSubStep', () => {
+  test('completes only the selected quiz sub-step and returns the updated session', async () => {
+    getHttp().post.mockResolvedValue({
+      data: {
+        id: '3',
+        title: 'Álgebra',
+        description: 'Equações.',
+        subject: { id: '1', label: 'Mat', color: '#000' },
+        progress: 0,
+        completed_steps: 0,
+        level_label: null,
+        time_estimate: null,
+        steps: [],
+        current_sub_path: 5,
+        path_status: 'on_going',
+        last_completion: { correct: 1, total: 1, passed: true },
+      },
+    })
+
+    const completion = await adaptiveTrailDetailService.completeSubStep(
+      '3',
+      '5',
+      'quiz-5-group-2',
+      [{ exerciseId: 'e1', optionId: 'o2' }]
+    )
+
+    expect(getHttp().post).toHaveBeenCalledWith(
+      'student/student-1/trails/3/steps/5/sub-steps/quiz-5-group-2/complete',
+      { answers: [{ exercise_id: 'e1', option_id: 'o2' }] }
+    )
+    expect(completion.result).toEqual({
+      correct: 1,
+      total: 1,
+      passed: true,
+      currentSubPath: 5,
+      pathStatus: 'on_going',
+    })
+    expect(completion.session.id).toBe('3')
   })
 })
 

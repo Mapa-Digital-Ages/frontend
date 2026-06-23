@@ -27,6 +27,7 @@ const mockCompleteStep = jest
     currentSubPath: 8,
     pathStatus: 'on_going',
   })
+const mockCompleteSubStep = jest.fn<(...args: unknown[]) => Promise<unknown>>()
 const mockValidateAnswer = jest
   .fn<(...args: unknown[]) => Promise<unknown>>()
   .mockResolvedValue({ exerciseId: 'q1', optionId: 'o2', correct: true })
@@ -56,6 +57,7 @@ await jest.unstable_mockModule(
       getSubStepQuestionFlow: (...args: unknown[]) =>
         mockGetSubStepQuestionFlow(...args),
       completeStep: (...args: unknown[]) => mockCompleteStep(...args),
+      completeSubStep: (...args: unknown[]) => mockCompleteSubStep(...args),
       validateAnswer: (...args: unknown[]) => mockValidateAnswer(...args),
       completeItem: (...args: unknown[]) => mockCompleteItem(...args),
       getCompletionRecommendations: (...args: unknown[]) =>
@@ -149,6 +151,16 @@ const MOCK_SESSION: AdaptiveTrailSession = {
 beforeEach(() => {
   mockGetTrailSession.mockResolvedValue(MOCK_SESSION)
   mockGetSubjectTrailSessions.mockResolvedValue([MOCK_SESSION])
+  mockCompleteSubStep.mockResolvedValue({
+    result: {
+      correct: 1,
+      total: 1,
+      passed: true,
+      currentSubPath: 8,
+      pathStatus: 'on_going',
+    },
+    session: MOCK_SESSION,
+  })
   mockCompleteItem.mockResolvedValue({
     correct: 0,
     passed: true,
@@ -351,12 +363,17 @@ test('StudentAdaptiveTrailDetailPage validates the selected quiz answer before c
     })
   })
   expect(await screen.findByText(/resposta correta/i)).toBeInTheDocument()
-  expect(mockCompleteStep).not.toHaveBeenCalled()
+  expect(mockCompleteSubStep).not.toHaveBeenCalled()
 
   await user.click(screen.getByRole('button', { name: /concluir etapa/i }))
 
   await waitFor(() => {
-    expect(mockCompleteStep).toHaveBeenCalled()
+    expect(mockCompleteSubStep).toHaveBeenCalledWith(
+      'math',
+      'equacoes-grau1',
+      'eq-quiz',
+      [{ exerciseId: 'q1', optionId: 'o2' }]
+    )
   })
 })
 

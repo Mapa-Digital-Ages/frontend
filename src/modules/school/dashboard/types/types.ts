@@ -9,6 +9,7 @@ export type SchoolDisciplineProgress = {
   subjectId: string
   subjectLabel: string
   subjectColor?: string | null
+  startedTrailCount: number
   progress: number
 }
 

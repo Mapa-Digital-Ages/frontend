@@ -47,7 +47,7 @@ const CREATION_SHORTCUTS = [
   {
     id: 'open-contents',
     icon: <LibraryBooksRoundedIcon />,
-    label: 'Conteúdos',
+    label: 'Configurar a Trilha',
     to: APP_ROUTES.admin.contents,
   },
 ]

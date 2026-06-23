@@ -507,18 +507,20 @@ export default function Page() {
 
     setIsSubmitting(true)
     try {
-      const result = await adaptiveTrailDetailService.completeStep(
-        quiz.trail.id,
-        quiz.step.id,
-        nextAnswers
-      )
+      const { result, session } =
+        await adaptiveTrailDetailService.completeSubStep(
+          quiz.trail.id,
+          quiz.step.id,
+          quiz.flow.subStepId,
+          nextAnswers
+        )
+      setSessions(current => upsertSession(current, session))
       setSummary({
         result,
         stepTitle: quiz.flow.stepTitle,
-        trail: quiz.trail,
+        trail: session,
       })
       resetQuizState()
-      await loadSessions().catch(() => undefined)
     } catch {
       setError('Não foi possível enviar as respostas desta etapa.')
     } finally {
@@ -527,7 +529,6 @@ export default function Page() {
   }, [
     answers,
     currentIndex,
-    loadSessions,
     quiz,
     resetQuizState,
     selectedFeedback,
