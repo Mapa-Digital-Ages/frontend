@@ -32,9 +32,7 @@ test('AdminDashboardPage links creation shortcuts to their forms', async () => {
     </AuthContext.Provider>
   )
 
-  expect(
-    await screen.findByText('Atalhos para novos cadastros')
-  ).toBeInTheDocument()
+  expect(await screen.findByText('Atalhos administrativos')).toBeInTheDocument()
   expect(screen.getByTestId('create-student')).toHaveAttribute(
     'href',
     '/admin/students?create=student'
@@ -50,5 +48,12 @@ test('AdminDashboardPage links creation shortcuts to their forms', async () => {
   expect(screen.getByTestId('create-parent')).toHaveAttribute(
     'href',
     '/admin/parents?create=parent'
+  )
+  expect(screen.getByTestId('open-contents')).toHaveAttribute(
+    'href',
+    '/admin/contents'
+  )
+  expect(screen.getByTestId('open-contents').parentElement).toHaveClass(
+    'md:grid-cols-5'
   )
 })

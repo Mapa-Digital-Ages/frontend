@@ -100,10 +100,12 @@ export default function Page() {
           title="Desempenho por Disciplina"
           titleClassName="text-2xl font-bold md:text-3xl"
         >
-          {disciplines.map(item => {
+          {disciplines.slice(0, 5).map(item => {
             const subject = getSubjectTagContextByLabel(item.subjectLabel) ??
               SUBJECTS[item.subjectId] ?? {
+                id: item.subjectId,
                 label: item.subjectLabel,
+                color: item.subjectColor ?? undefined,
               }
             return (
               <Box

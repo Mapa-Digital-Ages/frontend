@@ -1,7 +1,6 @@
 import { Box, Typography } from '@mui/material'
 import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded'
 import PeopleAltRoundedIcon from '@mui/icons-material/PeopleAltRounded'
-import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded'
 import AppPageContainer from '@/shared/ui/AppPageContainer'
 import PageHeader from '@/shared/ui/PageHeader'
 import MetricsCard from '@/shared/ui/MetricsCard'
@@ -10,6 +9,8 @@ import ProgressBar from '@/shared/ui/ProgressBar'
 import { useEffect, useState } from 'react'
 import { schoolDashboardService } from '../services/service'
 import type { SchoolDashboardData } from '../types/types'
+import { AppSubjectTag } from '@/shared/ui/AppSubjectsTags'
+import { SUBJECTS, getSubjectTagContextByLabel } from '@/shared/utils/themes'
 
 export default function Page() {
   const [data, setData] = useState<SchoolDashboardData | null>(null)
@@ -61,15 +62,32 @@ export default function Page() {
                 <Typography
                   sx={{ fontSize: 13, color: 'text.secondary', mt: 0.25 }}
                 >
-                  {cls.studentCount} alunos · Tutor: {cls.tutorName}
+                  {cls.studentCount} alunos
                 </Typography>
               </Box>
             </Box>
-            <ProgressBar
-              label="Progresso da trilha"
-              value={cls.progress}
-              valueLabelVariant="plain"
-            />
+            <Box sx={{ display: 'grid', gap: 2 }}>
+              {cls.disciplines.map(item => {
+                const subject = getSubjectTagContextByLabel(
+                  item.subjectLabel
+                ) ??
+                  SUBJECTS[item.subjectId] ?? {
+                    id: item.subjectId,
+                    label: item.subjectLabel,
+                    color: item.subjectColor ?? undefined,
+                  }
+                return (
+                  <ProgressBar
+                    key={item.subjectId}
+                    headerSlot={<AppSubjectTag size="sm" subject={subject} />}
+                    subject={subject}
+                    value={item.progress}
+                    valueLabelVariant="subject"
+                    valueLabel={`Progresso: ${item.progress}%`}
+                  />
+                )
+              })}
+            </Box>
           </AppCard>
         ))}
       </Box>

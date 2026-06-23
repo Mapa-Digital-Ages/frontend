@@ -1,5 +1,6 @@
 import BusinessRoundedIcon from '@mui/icons-material/BusinessRounded'
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded'
+import LibraryBooksRoundedIcon from '@mui/icons-material/LibraryBooksRounded'
 import PersonAddRoundedIcon from '@mui/icons-material/PersonAddRounded'
 import NotificationsActiveRoundedIcon from '@mui/icons-material/NotificationsActiveRounded'
 import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded'
@@ -42,6 +43,12 @@ const CREATION_SHORTCUTS = [
     icon: <PersonAddRoundedIcon />,
     label: 'Cadastrar responsável',
     to: `${APP_ROUTES.admin.parents}?create=parent`,
+  },
+  {
+    id: 'open-contents',
+    icon: <LibraryBooksRoundedIcon />,
+    label: 'Conteúdos',
+    to: APP_ROUTES.admin.contents,
   },
 ]
 
@@ -138,9 +145,9 @@ export default function Page() {
       </Box>
 
       <AppCard
-        contentClassName="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 xl:grid-cols-4"
-        title="Atalhos para novos cadastros"
-        subtitle="Acesse rapidamente os formulários de criação."
+        contentClassName="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 md:grid-cols-5"
+        title="Atalhos administrativos"
+        subtitle="Acesse rapidamente os formulários e conteúdos."
       >
         {CREATION_SHORTCUTS.map(shortcut => (
           <Button
@@ -156,23 +163,23 @@ export default function Page() {
               borderRadius: '14px',
               color: '#fff',
               justifyContent: 'flex-start',
-              minHeight: { md: 120, xs: 96 },
-              px: { md: 3, xs: 2.5 },
-              py: 2,
+              minHeight: { md: 88, xs: 80 },
+              px: { md: 2, xs: 2.5 },
+              py: 1.5,
               textTransform: 'none',
               width: '100%',
               '& .MuiButton-startIcon': {
                 alignItems: 'center',
                 backgroundColor: 'rgba(255, 255, 255, 0.16)',
-                borderRadius: '12px',
+                borderRadius: '10px',
                 display: 'flex',
-                height: 52,
+                height: 40,
                 justifyContent: 'center',
-                mr: 2,
-                width: 52,
+                mr: 1.5,
+                width: 40,
               },
               '& .MuiButton-startIcon svg': {
-                fontSize: 28,
+                fontSize: 22,
               },
               '&:hover': {
                 backgroundColor: theme.palette.error.dark,
@@ -189,15 +196,15 @@ export default function Page() {
             >
               <Typography
                 component="span"
-                sx={{ color: 'inherit', fontSize: 16, fontWeight: 700 }}
+                sx={{ color: 'inherit', fontSize: 14, fontWeight: 700 }}
               >
                 {shortcut.label}
               </Typography>
               <Typography
                 component="span"
-                sx={{ color: 'rgba(255, 255, 255, 0.78)', fontSize: 13 }}
+                sx={{ color: 'rgba(255, 255, 255, 0.78)', fontSize: 11 }}
               >
-                Abrir formulário
+                Abrir atalho
               </Typography>
             </Box>
           </Button>
