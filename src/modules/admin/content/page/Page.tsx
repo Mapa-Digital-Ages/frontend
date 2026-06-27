@@ -1339,48 +1339,6 @@ export default function Page() {
           title="Cadastro de disciplinas"
         />
       </Box>
-
-      <AdaptiveTrailManager
-        contentOptions={trailContentOptions}
-        currentPage={trailQueue.currentPage}
-        emptyStateDescription={
-          trailError ??
-          'Crie uma trilha a partir de um conteúdo cadastrado ou ajuste os filtros.'
-        }
-        filterOptions={[
-          { label: 'Todas as disciplinas', value: 'all' },
-          ...subjectOptions,
-        ]}
-        contents={trailSourceContents}
-        isLoading={!hasLoadedTrails}
-        onCreateTrail={openTrailCreateModal}
-        onDeleteTrail={trail => setTrailDeleteTarget(trail)}
-        onEditTrail={openTrailEditModal}
-        onPageChange={page => {
-          startTransition(() => setTrailQuery(q => ({ ...q, page })))
-        }}
-        onQueryChange={query => {
-          startTransition(() =>
-            setTrailQuery(q => ({ ...q, page: DEFAULT_PAGE_INDEX, query }))
-          )
-        }}
-        onSubjectChange={subjectId => {
-          startTransition(() =>
-            setTrailQuery(q => ({
-              ...q,
-              page: DEFAULT_PAGE_INDEX,
-              subjectId,
-            }))
-          )
-        }}
-        query={trailQuery.query}
-        resultsSummary={trailResultsSummary}
-        role={role}
-        selectedSubjectId={trailQuery.subjectId}
-        totalPages={trailQueue.totalPages}
-        trails={trailQueue.items}
-      />
-
       <Box
         sx={{
           alignItems: 'stretch',
@@ -1476,6 +1434,46 @@ export default function Page() {
           totalPages={uploadQueue.totalPages}
         />
       </Box>
+      <AdaptiveTrailManager
+        contentOptions={trailContentOptions}
+        currentPage={trailQueue.currentPage}
+        emptyStateDescription={
+          trailError ??
+          'Crie uma trilha a partir de um conteúdo cadastrado ou ajuste os filtros.'
+        }
+        filterOptions={[
+          { label: 'Todas as disciplinas', value: 'all' },
+          ...subjectOptions,
+        ]}
+        contents={trailSourceContents}
+        isLoading={!hasLoadedTrails}
+        onCreateTrail={openTrailCreateModal}
+        onDeleteTrail={trail => setTrailDeleteTarget(trail)}
+        onEditTrail={openTrailEditModal}
+        onPageChange={page => {
+          startTransition(() => setTrailQuery(q => ({ ...q, page })))
+        }}
+        onQueryChange={query => {
+          startTransition(() =>
+            setTrailQuery(q => ({ ...q, page: DEFAULT_PAGE_INDEX, query }))
+          )
+        }}
+        onSubjectChange={subjectId => {
+          startTransition(() =>
+            setTrailQuery(q => ({
+              ...q,
+              page: DEFAULT_PAGE_INDEX,
+              subjectId,
+            }))
+          )
+        }}
+        query={trailQuery.query}
+        resultsSummary={trailResultsSummary}
+        role={role}
+        selectedSubjectId={trailQuery.subjectId}
+        totalPages={trailQueue.totalPages}
+        trails={trailQueue.items}
+      />
 
       <ApprovalActionModal
         mode={contentModalState}
